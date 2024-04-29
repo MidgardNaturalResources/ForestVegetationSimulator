@@ -227,11 +227,13 @@ C----------
         DO I=1,MAXSP
         IF(TOPD(I) .LE. 0.) TOPD(I) = 4.5
         IF(BFTOPD(I) .LE. 0.) BFTOPD(I) = 4.5
+        IF(SCFTOPD(I) .LE. 0.) SCFTOPD(I) = 4.5
         END DO
       CASE DEFAULT
         DO I=1,MAXSP
         IF(TOPD(I) .LE. 0.) TOPD(I) = 6.
         IF(BFTOPD(I) .LE. 0.) BFTOPD(I) = 6.
+        IF(SCFTOPD(I) .LE. 0.) SCFTOPD(I) = 6
         END DO
       END SELECT
 C----------
@@ -261,6 +263,18 @@ C
      &     (VEQNNC(ISPC).EQ.'          '))THEN
         CALL VOLEQDEF(VAR,IREGN,FORST,DIST,IFIASP,PROD,VOLEQ,ERRFLAG)
         VEQNNC(ISPC)=VOLEQ
+      ELSE IF(METHC(ISPC).EQ.10) THEN
+        CALL NVBEQ(IFIASP,VOLEQ)
+        VEQNNC(ISPC)=VOLEQ
+        DBHMIN(ISPC)=5
+        TOPD(ISPC)=4
+        IF(IFIASP .LT. 300) THEN
+          SCFMIND=9
+          SCFTOPD=7
+        ELSE
+          SCFMIND=11
+          SCFTOPD=9
+        END IF
       ENDIF
       IF(((METHB(ISPC).EQ.6).OR.(METHB(ISPC).EQ.9)).AND.
      &     (VEQNNB(ISPC).EQ.'          '))THEN

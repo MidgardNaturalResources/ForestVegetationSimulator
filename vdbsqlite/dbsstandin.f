@@ -61,7 +61,7 @@ COMMONS
       CHARACTER(LEN=*) SQLSTR
       CHARACTER(LEN=MxMsg) Msg
       CHARACTER*10 KARD2
-      CHARACTER(LEN=11) CHAB,CECOREG
+      CHARACTER(LEN=10) CHAB,CECOREG
       CHARACTER(LEN=15) CFotoCode
       CHARACTER(LEN=LEN(DBCN)+1) TMP_DBCN
       CHARACTER(LEN=LEN(NPLT)+1) CSTAND
@@ -265,7 +265,8 @@ C     GET NUMBER OF COLUMNS RETURNED
           iRet = fsql3_coltext (IinDBref,ColNumber,CECOREG,
      >                          LEN(CECOREG),NullChar)
           if (iRet.LT.LEN(CECOREG)) CECOREG((iRet+1):) = ' '
-          IF (CECOREG .ne. NullChar) Ecoregion_LI = 1
+          IF (CECOREG .ne. NullChar 
+     >      .and. LEN_TRIM(ADJUSTL(CECOREG)) .GT. 0) Ecoregion_LI = 1
 
          CASE('LOCATION')
            ISTANDDATA(4) = fsql3_colint(IinDBref,ColNumber,NullInt)
@@ -596,8 +597,12 @@ C     SET DEFAULT LOCATION CODE IF NOT PRESENT IN INPUT DATA
       ENDIF
 
       IF(Ecoregion_LI.GT.0) THEN
+         CECOREG = ADJUSTL(CECOREG)
+         ECOREG = CECOREG
+         I = SCAN(ECOREG, '0123456789', .TRUE.)
+         ECOREG(I:I) = '0'
+         ECOREG = ECOREG(:I)
         IF (VARACD.EQ.'SN') THEN
-          CECOREG = ADJUSTL(CECOREG)
           READ (CECOREG,'(I10)',ERR=41)  ISTANDDATA(54)
           GOTO 46
    41     CONTINUE

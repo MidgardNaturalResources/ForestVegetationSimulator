@@ -29,7 +29,7 @@ C----------
       CHARACTER*4 CONSPEC,FIASP
       CHARACTER*10 EQNC,EQNB,VOLEQ
       INTEGER CUTFLG,BFPFLG,CUPFLG,CDPFLG,SPFLG
-      INTEGER IT,ITRNC,ISPC,INTFOR,IERR,IZERO
+      INTEGER IT,ITRNC,ISPC,INTFOR,IERR,IZERO,FIASPCD
       INTEGER I1,IREGN,IFC
       INTEGER I,II,I3,I7,I15,I20,I21,I01,I02
       INTEGER ITD,BADUM,SIDUM,HTTDUM,IDIST,TLOGS
@@ -41,6 +41,7 @@ C----------
       REAL HT1PRD,HT2PRD,MTOPP,MTOPS,STUMP,TOPDIAM
       REAL XTOPD,HTC1,HTC2
       REAL DRCOB,UPSHT1,UPSHT2,UPSD1,UPSD2,AVGZ1,AVGZ2
+      REAL TCFVOL,MCFVOL,SCFVOL
       LOGICAL TKILL,CTKFLG,BTKFLG,LCONE,DEBUG
 C----- New Variables added for 03/2023 Version of NVEL
       INTEGER CRATIO, CULL, DECAYCD, MRULFLG, BRKHT, BRKTD
@@ -50,8 +51,10 @@ C----- New Variables added for 03/2023 Version of NVEL
 C----------
 C  NATIONAL CRUISE SYSTEM ROUTINES (METHOD = 6)
 C----------
-      ENTRY NATCRS (VN,VM,BBFV,ISPC,D,H,TKILL,BARK,ITRNC,VMAX,
-     1              CTKFLG,BTKFLG,IT)
+!      ENTRY NATCRS (VN,VM,BBFV,ISPC,D,H,TKILL,BARK,ITRNC,VMAX,
+!     1              CTKFLG,BTKFLG,IT)
+      ENTRY NATCRS (TCFVOL,MCFVOL,SCFVOL,BBFV,ISPC,D,H,TKILL,BARK,
+     1              ITRNC,VMAX,CTKFLG,BTKFLG,IT)
 C-----------
 C  SEE IF WE NEED TO DO SOME DEBUG.
 C-----------
@@ -69,6 +72,9 @@ C-----------
       IF(DEBUG)WRITE(JOSTND,*)' ENTERING NATCRS ISPC,D,H,TKILL,BARK,',
      &'ITRNC,CTKFLG,BTKFLG,IT= ',ISPC,D,H,TKILL,BARK,ITRNC,CTKFLG,
      & BTKFLG,IT
+
+      VOLEQ=VEQNNC(ISPC)
+      READ(FIAJSP(ISPC), '(I4)')FIASPCD
 
       IDIST=1
       IF(KODFOR.GT.10000)THEN
@@ -110,6 +116,7 @@ C-----------
       HTTYPE='F'
       IERR=0
       DBTBH = D*(1-BARK)
+      BBFV=0.
       IF(DEBUG)WRITE(JOSTND,*)' INTFOR, IREGN= ',INTFOR, IREGN
       DO 100 IZERO=1,15
       TVOL(IZERO)=0.
@@ -124,10 +131,10 @@ C  MTOPP (primary product - BdFt, Sawlog)
 C  MTOPS (secondary product - Cuft, Pulpwood)
 C
       IF((IREGN.EQ.8).OR.(IREGN.EQ.9))THEN
-        MTOPP=BFTOPD(ISPC)
+        MTOPP=SCFTOPD(ISPC)
         MTOPS=TOPD(ISPC)
       ELSE
-        MTOPP=BFTOPD(ISPC)*BARK
+        MTOPP=SCFTOPD(ISPC)*BARK
         MTOPS=TOPD(ISPC)*BARK
       ENDIF
 C----------
@@ -138,24 +145,23 @@ C----------
      &  'IREGN,ISPC,D,BFMIND,DBHMIN,MTOPP,MTOPS = ',
      &  IREGN,ISPC,D,BFMIND(ISPC),DBHMIN(ISPC),MTOPP,MTOPS
      
-      IF(D.LT.DBHMIN(ISPC))THEN
+!      IF(D.LT.DBHMIN(ISPC))THEN
 C
 C       Tree DBH does not meet min merch for Pulp/CuFT or Saw/BdFt
 C
-        TVOL(1)=0.
-        TVOL(4)=0.
-        TVOL(7)=0.
-        BBFV=0.
+!       TVOL(1)=0.
+!       TVOL(4)=0.
+!       TVOL(7)=0.
+!       BBFV=0.
 C
 C       EASTERN VARIANTS DO NOT NEED TOTAL VOLUME SO GO TO NEXT TREE
 C       FOR WESTERN VARIANTS CALCULATE TOTAL CUBIC FOR ALL TREES
 C
-        IF(IREGN.EQ.8 .OR. IREGN.EQ.9) GO TO 500
-      ENDIF
+!   IF(IREGN.EQ.8 .OR. IREGN.EQ.9) GO TO 500
+!      ENDIF
 
-      VOLEQ=VEQNNC(ISPC)
-      STUMP=STMP(ISPC)
-      PROD='02'
+!      VOLEQ=VEQNNC(ISPC)
+      
 
 C     Setting top diameter spec for calculating height to diameter for
 C     Merch CuFt.
@@ -165,18 +171,20 @@ C     other regions need top diameter set at secondary product for this
 C     step of process. That is why TOPDIAM for Region 9 is set to MTOPP
 C     here which is the saw timber spec instead of typical CuFt spec, MTOPS.
 C
-      IF(IREGN.EQ.5) THEN
-        TOPDIAM=TOPD(ISPC)*BARK
-      ELSE
-        TOPDIAM=MTOPS
-      ENDIF
+!      IF(IREGN.EQ.5) THEN
+!       TOPDIAM=TOPD(ISPC)*BARK
+!    ELSE
+!      TOPDIAM=MTOPS
+!    ENDIF
 
       DBTBH = D*(1-BARK)
+      STUMP=STMP(ISPC)
 
-      IF((IREGN.EQ.9 .OR. IREGN.EQ.8) .AND. D.GE.BFMIND(ISPC))THEN
-        STUMP=BFSTMP(ISPC)
-        TOPDIAM=MTOPP
+      IF(D.GE.SCFMIND(ISPC)) THEN
         PROD='01'
+        STUMP = SCFSTMP(ISPC)
+      ELSE
+        PROD='02'
       ENDIF
 C
 C       Tree DBH meets min merch for Pulp/CuFT only
@@ -220,6 +228,7 @@ C----------
 C  CONSTANT CHARACTER ARGUMENTS
 C----------
       CTYPE='F'
+      IF (LFIANVB) CTYPE = 'I'
 C----------
 C  PRODUCT FLAGS
 C----------
@@ -230,7 +239,7 @@ C  BF
 C  MERCH CUBIC
       CUPFLG=1
 C  CORDWOOD
-      CDPFLG=1
+      CDPFLG=0
 C  SECONDARY PRODUCT
       SPFLG=1
 C----------
@@ -255,7 +264,7 @@ C
       SIDUM=0
       BADUM=0
       HTTDUM=0
-      LIVEDUM=' '
+      LIVEDUM='L'
       CONSPEC='    '
 
       IF(DEBUG)WRITE(JOSTND,*)
@@ -274,10 +283,13 @@ C
       IF(DEBUG)WRITE(JOSTND,*)'  CTYPE,IERR,IDIST = ',
      &                           CTYPE,IERR,IDIST
 
+C  XXXXXXXXXXXXXXX
+C     TESTING IF FOLLOWING STATEMENT IS STILL REVELANT< IT CURRENTLY DOESN"T APPEAR SO (4/5/2024 DW)
 C     It does not appear that the secondary product top diameter MTOPS,
 C     5th argument, functions. So it is used in primary product position on
 C     this call to compute the height to merch cubic top diameter. Region 5
 C     is a special case and so TOPDIAM is set above.
+C  XXXXXXXXXXXXXXXXX
 
 C      CALL VOLINIT(IREGN,FORST,VOLEQ,TOPDIAM,MTOPS,STUMP,
 C     & D,DRCOB,HTTYPE,H,HTLOG,HT1PRD,HT2PRD,UPSHT1,UPSHT2,UPSD1,UPSD2,
@@ -287,12 +299,12 @@ C     & BOLHT,TLOGS,NOLOGP,NOLOGS,CUTFLG,BFPFLG,CUPFLG,CDPFLG,
 C    & SPFLG,CONSPEC,PROD,HTTDUM,LIVEDUM,
 C     & BADUM,SIDUM,CTYPE,IERR,IDIST)
 
-      CALL VOLINITNVB(IREGN,FORST,VOLEQ,TOPDIAM,MTOPS,STUMP,D,
+      CALL VOLINITNVB(IREGN,FORST,VOLEQ,MTOPP,MTOPS,STUMP,D,
      +   DRCOB,HTTYPE,H,HTLOG,HT1PRD,HT2PRD,UPSHT1,UPSHT2,UPSD1,
      +   UPSD2,HTREF,AVGZ1,AVGZ2,IFC,DBTBH,BARK*100,CRATIO,CULL,DECAYCD,
      +   TVOL,LOGVOL,LOGDIA,LOGLEN,BOLHT,TLOGS,NOLOGP,NOLOGS,CUTFLG,
      +   BFPFLG,CUPFLG,CDPFLG,SPFLG,CONSPEC,PROD,HTTDUM,LIVEDUM,
-     +   BADUM,SIDUM,CTYPE,IERR,IDIST,BRKHT,BRKTD,ISPC,BIODRY,
+     +   BADUM,SIDUM,CTYPE,IERR,IDIST,BRKHT,BRKTD,FIASPCD,BIODRY,
      +   BIOGRN,MRULFLG,MERRLS)
 C
       IF(DEBUG)WRITE(JOSTND,*)
@@ -319,7 +331,7 @@ C----------
 C  Old R8, pulpwood process no longer needed, need to store pulp ht here
 C    -DW August 2022
 C----------
-      IF(D.GE.BFMIND(ISPC))THEN
+      IF(D.GE.SCFMIND(ISPC))THEN
         IF(IT.GT.0)HT2TD(IT,1)=HT1PRD
 C     Region 8 requires at least 10 feet of product from the tree 
 C     for the tree volume to be included.
@@ -484,40 +496,21 @@ C
 C----------
 C  SET RETURN VALUES.
 C----------
-      IF((IREGN.EQ.8).OR.(IREGN.EQ.9))THEN
-        IF(D.LT.BFMIND(ISPC))THEN
-          VN=TVOL(4)
-          VM=0.
-        ELSE
-          VN=TVOL(4)+TVOL(7)
-          VM=TVOL(4)
-        ENDIF
-        IF(VN.LT.0.)VN=0.
-        VMAX=VN
-      ELSE                  ! ALL OTHER REGIONS
-        VN=TVOL(1)
-        IF(VN.LT.0.)VN=0.
-        VMAX=VN
-        IF(D .LT. DBHMIN(ISPC))THEN
-          VM = 0.
-        ELSE
-          VM=TVOL(4)
-          IF(VM.LT.0.)VM=0.
-        ENDIF
-      ENDIF
+      TCFVOL = TVOL(1)
+      MCFVOL = TVOL(4) + TVOL(7)
+      SCFVOL = TVOL(4)
+      VMAX = TCFVOL
 
-      IF(D.LT.BFMIND(ISPC))THEN
-        BBFV=0.
+      IF(METHB(ISPC).EQ.9) THEN
+        BBFV=TVOL(10)
       ELSE
-        IF(METHB(ISPC).EQ.9) THEN
-          BBFV=TVOL(10)
-        ELSE
-          BBFV=TVOL(2)
-        ENDIF
-        IF(BBFV.LT.0.)BBFV=0.
+        BBFV=TVOL(2)
       ENDIF
-      IF(DEBUG)WRITE(JOSTND,*)'  IN FVSVOL D, VN, VM, VMAX, BBFV = ',
-     &                            D, VN, VM, VMAX, BBFV
+      IF(BBFV.LT.0.)BBFV=0.
+
+      IF(DEBUG)WRITE(JOSTND,*)'  IN FVSVOL D, TCFVOL,' 
+     &                           'MCFVOL, SCFVOL, VMAX, BBFV = ',
+     &                            D, TCFVOL, MCFVOL, SCFVOL, VMAX, BBFV
       CTKFLG = .TRUE.
       BTKFLG = .TRUE.
       RETURN

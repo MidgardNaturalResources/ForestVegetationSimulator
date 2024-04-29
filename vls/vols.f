@@ -254,8 +254,7 @@ C----------
 C
       IF(METHB(ISPC).EQ.5 .OR.
      +   METHB(ISPC).EQ.6 .OR.
-     +   METHB(ISPC).EQ.9 .OR.
-     +   METHB(ISPC).EQ. 10) THEN
+     +   METHB(ISPC).EQ.9) THEN
         IF(METHC(ISPC).EQ.6 .OR. METHC(ISPC).EQ.10) THEN
           GO TO 100
         ELSE

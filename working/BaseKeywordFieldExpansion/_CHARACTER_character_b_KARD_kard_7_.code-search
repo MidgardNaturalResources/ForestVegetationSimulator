@@ -1,0 +1,265 @@
+# Query: (CHARACTER|character)\\b.*(KARD|kard)\\(7\\)
+# Flags: RegExp
+# ContextLines: 1
+
+52 results - 52 files
+
+archive\bgc\src\bgcin.f:
+  30        CHARACTER*8 TABLE, KEYWRD, PASKEY
+  31:       CHARACTER*10 KARD(7)
+  32        LOGICAL LNOTBK,LKECHO
+
+base\evif.f:
+  38        CHARACTER*8 KEYWRD
+  39:       CHARACTER RECORD*(*),KARD(7)*10
+  40  C
+
+base\evtact.f:
+  37        LOGICAL LNOTBK(7),DEBUG,LKECHO
+  38:       CHARACTER KEYWRD*8,KARD(7)*10,RECORD*80
+  39        REAL ARRAY(7)
+
+base\exfert.f:
+  12        CHARACTER*8 KEYWRD
+  13:       CHARACTER*10 KARD(7)
+  14        REAL RDANUW
+
+base\ffin.f:
+  18        CHARACTER*8 KEYWRD
+  19:       CHARACTER*10 KARD(7)
+  20  C
+
+base\keydmp.f:
+  7        REAL ARRAY(7)
+  8:       CHARACTER*10 KARD(7)
+  9        CHARACTER*8 KEYWRD
+
+base\keyopn.f:
+  21        REAL ARRAY(7)
+  22:       CHARACTER RECORD*(*),KARD(7)*10,KEYWRD*8,CSTAT*7,CFOUR*4
+  23        CHARACTER EXTENSION*3
+
+base\opnewc.f:
+  39        EQUIVALENCE (RECORD,WKSTR3)
+  40:       CHARACTER*10 KARD(7)
+  41        CHARACTER*8 KEYWRD
+
+base\sdefet.f:
+  28        CHARACTER*8 KEYWRD
+  29:       CHARACTER*10 KARD(7)
+  30        REAL ARRAY(7),XX(6),YY(6)
+
+base\sdefln.f:
+  24        CHARACTER*8 KEYWRD
+  25:       CHARACTER*10 KARD(7)
+  26        REAL ARRAY(7),B0(MAXSP),B1(MAXSP)
+
+base\spdecd.f:
+  28        INTEGER IRECNT,JOSTND,ISP,IPOS,IFLAG,J,I
+  29:       CHARACTER*10 KARD(7)
+  30        CHARACTER*8  KEYWRD
+
+canada\bc\initre.f:
+  83        CHARACTER*250 RECORD
+  84:       CHARACTER*10 KARD(7),PVRDUM
+  85        CHARACTER*2 FORST,FORDUM,DIST,PROD
+
+canada\bc\keyopn.f:
+  21        REAL ARRAY(7)
+  22:       CHARACTER RECORD*(*),KARD(7)*10,KEYWRD*8,CSTAT*7,CFOUR*4
+  23        CHARACTER EXTENSION*3      
+
+clim\base\clin.f:
+  21        CHARACTER*8  TABLE(KWCNT), KEYWRD, PASKEY
+  22:       CHARACTER*10 KARD(7)
+  23        CHARACTER*2048 CHTMP,FMT
+
+covr\cvin.f:
+   99        REAL TEMPHT,TEMPPC
+  100:       CHARACTER*10 KARD(7)
+  101        CHARACTER*8 TABLE(20),KEYWRD,PASKEY
+
+dbs\dbsin.f:
+  27        CHARACTER*(*) KEYWRD
+  28:       CHARACTER*10 KARD(7)
+  29        CHARACTER*20 TABLENAME,COLUMN
+
+dbsqlite\dbsin.f:
+  28        CHARACTER*(*) KEYWRD
+  29:       CHARACTER*10 KARD(7)
+  30        CHARACTER*20 COLUMN
+
+dfb\dfbin.f:
+  94        CHARACTER*8 PASKEY, TABLE(20), KEYWRD
+  95:       CHARACTER*10 KARD(7)
+  96        CHARACTER*80 PNAME
+
+dfb\dfbincr.f:
+  96        CHARACTER*8 PASKEY, TABLE(20), KEYWRD
+  97:       CHARACTER*10 KARD(7)
+  98        CHARACTER*80 PNAME
+
+dftm\dftmin.f:
+  40        CHARACTER*8 TABLE(50), KEYWRD, PASKEY   
+  41:       CHARACTER*10 KARD(7) 
+  42        CHARACTER*80 PNAME
+
+estb\esin.f:
+  49        CHARACTER*8 TABLE(IKYSIZ),KEYWRD,PASKEY
+  50:       CHARACTER*10 KARD(7)
+  51        CHARACTER*150 RECORD
+
+estb\esprin.f:
+  20        CHARACTER*8 KEYWRD
+  21:       CHARACTER*10 KARD(7)
+  22        IF(LNOTBK(1)) GO TO 25
+
+lpmpb\mpbin.f:
+  35        CHARACTER*8 PASKEY,TABLE(40),KEYWRD
+  36:       CHARACTER*10 KARD(7)
+  37        CHARACTER*80 PNAME
+
+metric\base\ffin.f:
+  19        CHARACTER*8 KEYWRD
+  20:       CHARACTER*10 KARD(7)
+  21  C
+
+metric\clim\clin.f:
+  23        CHARACTER*8  TABLE(KWCNT), KEYWRD, PASKEY
+  24:       CHARACTER*10 KARD(7)
+  25        CHARACTER*2048 CHTMP,FMT
+
+metric\dbsqlite\dbsin.f:
+  73        CHARACTER*(*) KEYWRD
+  74:       CHARACTER*10 KARD(7)
+  75        CHARACTER*20 COLUMN
+
+metric\dfb\dfbin.f:
+  91        CHARACTER*8 PASKEY, TABLE(20), KEYWRD
+  92:       CHARACTER*10 KARD(7)
+  93        CHARACTER*80 PNAME
+
+metric\estb\esin.f:
+  52        CHARACTER*8 TABLE(IKYSIZ),KEYWRD,PASKEY
+  53:       CHARACTER*10 KARD(7)
+  54        CHARACTER*150 RECORD
+
+metric\newmist\misin.f:
+  125        CHARACTER*8  TABLE(ISIZE),KEYWRD,PASKEY,LTNM
+  126:       CHARACTER*10 KARD(7)
+  127        CHARACTER*8  RTYPE(2)
+
+metric\ppbase\ppin.f:
+  33        REAL XWT,DMULT,AMULT,SNEI
+  34:       CHARACTER*10 KARD(7),CNEWID
+  35        CHARACTER*80 RECORD
+
+metric\rd\rdin.f:
+  115        CHARACTER*12 DISTYP(0:ITOTRR)
+  116:       CHARACTER*10 KARD(7), T1, T2, T3
+  117        CHARACTER*8  TABLE(42), KEYWRD, PASKEY
+
+metric\rd\rdinca.f:
+  119        CHARACTER*12 DISTYP(0:ITOTRR)
+  120:       CHARACTER*10 KARD(7), T1, T2, T3
+  121        CHARACTER*8  TABLE(42), KEYWRD, PASKEY
+
+metric\rd\rdincr.f:
+  122        CHARACTER*12 DISTYP(0:ITOTRR)
+  123:       CHARACTER*10 KARD(7), T1, T2, T3
+  124        CHARACTER*8  TABLE(42), KEYWRD, PASKEY
+
+metric\rd\rdinie.f:
+  118        CHARACTER*12 DISTYP(0:ITOTRR)
+  119:       CHARACTER*10 KARD(7), T1, T2, T3
+  120        CHARACTER*8  TABLE(42), KEYWRD, PASKEY
+
+metric\rd\rdinso33.f:
+  117        CHARACTER*12 DISTYP(0:ITOTRR)
+  118:       CHARACTER*10 KARD(7), T1, T2, T3
+  119        CHARACTER*8  TABLE(42), KEYWRD, PASKEY
+
+metric\rd\rdinut.f:
+  123        CHARACTER*12 DISTYP(0:ITOTRR)
+  124:       CHARACTER*10 KARD(7), T1, T2, T3
+  125        CHARACTER*8  TABLE(42), KEYWRD, PASKEY
+
+metric\strp\esin.f:
+  47        CHARACTER*8 TABLE(IKYSIZ),KEYWRD,PASKEY
+  48:       CHARACTER*10 KARD(7)
+  49        CHARACTER*150 RECORD
+
+metric\vbase\initre.f:
+  82        CHARACTER*250 RECORD
+  83:       CHARACTER*10 KARD(7),PVRDUM
+  84        CHARACTER*2 FORST,FORDUM,DIST,PROD
+
+metric\wwpb\bmppin.f:
+  109        CHARACTER*80  RECORD
+  110:       CHARACTER*10  KARD(7)
+  111        CHARACTER*250 OUTNAM
+
+mistoe\misin.f:
+  106        CHARACTER*8 TABLE(ISIZE),KEYWRD,PASKEY
+  107:       CHARACTER*10 KARD(7)
+  108  
+
+rd\rdin.f:
+  142        CHARACTER*12 DISTYP(0:ITOTRR)
+  143:       CHARACTER*10 KARD(7), T1, T2, T3
+  144        CHARACTER*8  TABLE(42), KEYWRD, PASKEY
+
+rd\rdinca.f:
+  133        CHARACTER*12 DISTYP(0:ITOTRR)
+  134:       CHARACTER*10 KARD(7), T1, T2, T3
+  135        CHARACTER*8  TABLE(42), KEYWRD, PASKEY
+
+strp\esin.f:
+  45        CHARACTER*8 TABLE(IKYSIZ),KEYWRD,PASKEY
+  46:       CHARACTER*10 KARD(7)
+  47        CHARACTER*150 RECORD
+
+strp\esprin.f:
+  20        CHARACTER*8 KEYWRD
+  21:       CHARACTER*10 KARD(7)
+  22        IF(LNOTBK(1)) GO TO 25
+
+vbase\initre.f:
+  78        CHARACTER*250 RECORD
+  79:       CHARACTER*10 KARD(7),PVRDUM
+  80        CHARACTER*2 FORST,FORDUM,DIST,PROD
+
+vorganon\orin.f:
+  37        CHARACTER*8  KEYWRD
+  38:       CHARACTER*10 KARD(7)
+  39        CHARACTER    FNAME*80
+
+wpbr\brin.f:
+  87        CHARACTER*8  TABLE(20),KEYWRD,PASKEY
+  88:       CHARACTER*10 KARD(7)
+  89        CHARACTER*80 RECORD,DNAME,TNAME,CNAME
+
+wsbwe\bwein.f:
+  160        CHARACTER*7 CSTAT
+  161:       CHARACTER*10 KARD(7)
+  162        CHARACTER*6 STAGE(3)
+
+wsbwe\bwekdp.f:
+  10  C----------
+  11:       CHARACTER*10 KARD(7)
+  12        CHARACTER*8 KEYWRD
+
+wsbwe\bwekrd.f:
+  38        CHARACTER*80 RECORD
+  39:       CHARACTER*10 KARD(7)
+  40        CHARACTER*8  KEYWRD
+
+wwpb\bmin.f:
+  26        CHARACTER*8  TABLE(KWCNT), KEYWRD, PASKEY
+  27:       CHARACTER*10 KARD(7)
+  28        CHARACTER*250 OUTNAM
+
+wwpb\bmppin.f:
+  109        CHARACTER*80  RECORD
+  110:       CHARACTER*10  KARD(7)
+  111        CHARACTER*250 OUTNAM

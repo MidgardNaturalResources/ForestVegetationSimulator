@@ -1,0 +1,270 @@
+# Query: (REAL|real)\\b.*(ARRAY|array)\\(7\\)
+# Flags: RegExp
+# ContextLines: 1
+
+53 results - 53 files
+
+base\evif.f:
+  35        INTEGER JOSTND,IREAD,IRECNT,IWAIT,IRC,IRTNCD
+  36:       REAL ARRAY(7)
+  37        LOGICAL LNOTBK(7),LDEBUG,LKECHO
+
+base\evtact.f:
+  38        CHARACTER KEYWRD*8,KARD(7)*10,RECORD*80
+  39:       REAL ARRAY(7)
+  40        INTEGER IPRMPT,IRECNT,IREAD,JOSTND,ICEX,J,K,I,IAMP,IRC,IRTNCD
+
+base\evusrv.f:
+  34        INTEGER IRTNCD
+  35:       REAL ARRAY(7)
+  36        LOGICAL LDEBUG,LNOTBK(7)
+
+base\exbgc.f:
+  10        INTEGER I1,I2
+  11:       REAL ARRAY(7)
+  12        LOGICAL LNOTBK(7),L,LKECHO
+
+base\exbrus.f:
+  14        CHARACTER*8 KEYWRD,NOBR
+  15:       REAL ARRAY(7),PROB(*),WEIGHT,TIME
+  16        INTEGER IND(*),IND1(*)
+
+base\excov.f:
+  7  C----------
+  8:       REAL ARRAY(7)
+  9        REAL XDUM(*)
+
+base\exdfb.f:
+  10        CHARACTER*8 KEYWRD,NODFB
+  11:       REAL ARRAY(7)
+  12        DIMENSION LNOTBK(7)
+
+base\exfert.f:
+   9        LOGICAL LNOTBK(7),LKECHO
+  10:       REAL ARRAY(7)
+  11        INTEGER IRECNT,JOSTND
+
+base\exmist.f:
+  46        LOGICAL LNOTBK(7),DMFLAG,MFLAG,NFLAG,LKECHO
+  47:       REAL ARRAY(7),PRFCUT(MAXSP),WK3(MAXTRE)
+  48        INTEGER ICODE(6),MSPCNT(MAXSP),IARRAY(MAXTRE)
+
+base\exmpb.f:
+  13        INTEGER ICODES(6)
+  14:       REAL ARRAY(7)
+  15        INTEGER MGMID,II,KEY
+
+base\exrd.f:
+  15        INTEGER ILIMIT,IPNT,II2,III2,KEY
+  16:       REAL ARRAY(7),R1(*),RR2,RR1,OLD,WK3
+  17        LOGICAL L,LNOTBK(7),LTR,LTEE,LDUM,LKECHO
+
+base\ffin.f:
+  15        LOGICAL LNOTBK(7),LKECHO
+  16:       REAL ARRAY(7)
+  17        INTEGER IRECNT,JOSTND,IDT,KODE,I,IPRMPT,IRTNCD,ICYC,IREAD
+
+base\keydmp.f:
+  6        INTEGER IRECNT,IOUT
+  7:       REAL ARRAY(7)
+  8        CHARACTER*10 KARD(7)
+
+base\keyopn.f:
+  20        INTEGER IRTNCD
+  21:       REAL ARRAY(7)
+  22        CHARACTER RECORD*(*),KARD(7)*10,KEYWRD*8,CSTAT*7,CFOUR*4
+
+base\keyrdr.f:
+  32        INTEGER KODE,IRECNT,IOUT,INUNIT,I,ISTLNB,NF,IP,J,K
+  33:       REAL ARRAY(7)
+  34        CHARACTER*110 CKEYFN
+
+base\ksstag.f:
+  25        CHARACTER*8  KEYWRD
+  26:       REAL         ARRAY(7)
+  27        INTEGER      IPRINT
+
+base\sdefet.f:
+  29        CHARACTER*10 KARD(7)
+  30:       REAL ARRAY(7),XX(6),YY(6)
+  31        INTEGER IPRMPT,IACTK,IDT,KODE,IS,N,I,ILEN,IGRP,IULIM,IG,IGSP
+
+base\sdefln.f:
+  25        CHARACTER*10 KARD(7)
+  26:       REAL ARRAY(7),B0(MAXSP),B1(MAXSP)
+  27        INTEGER IS,IGRP,IULIM,IG,IGSP,ILEN,I,JS
+
+base\spdecd.f:
+  31        CHARACTER*4  CNSP(MAXSP),TEMP
+  32:       REAL ARRAY(7)
+  33  C
+
+base\svkey.f:
+  26        LOGICAL LNOTBK(7),LOPEN
+  27:       REAL ARRAY(7)
+  28        CHARACTER*8 KEYWRD
+
+canada\bc\initre.f:
+  73        REAL    CAPHT,CAPFLG,CAPPRP,CAPDBH,DUM1,XTMP,X,TB,XXG
+  74:       REAL    TC,SDHI,SDLO,ARRAY(7),PRMS(10),XBAF
+  75        INTEGER ITOPD8,IACT,IRC,IDBCYC,NP,K,I1,IGSP,IG,IULIM,IGRP,ISETQFA
+
+canada\bc\keyopn.f:
+  20        INTEGER IRTNCD
+  21:       REAL ARRAY(7)
+  22        CHARACTER RECORD*(*),KARD(7)*10,KEYWRD*8,CSTAT*7,CFOUR*4
+
+clim\base\clin.f:
+  26        LOGICAL      LNOTBK(7),LKECHO,DEBUG
+  27:       REAL         ARRAY(7),TMPATTRS(MXCLATTRS),PRMS(8)
+  28        INTEGER      KODE,IPRMPT,NUMBER,I,I1,I2,IYRTMP,IUTMP,IRTNCD,
+
+covr\cvin.f:
+  95        LOGICAL LNOTBK(7),LSORT
+  96:       REAL ARRAY(7),ARRAY2(8)
+  97        INTEGER KNDEX(33)
+
+dfb\dfbin.f:
+   99  
+  100:       REAL ARRAY(7), PRMS(5)
+  101  
+
+dfb\dfbincr.f:
+  101  
+  102:       REAL ARRAY(7), PRMS(5)
+  103  
+
+dftm\dftmin.f:
+  44        INTEGER K2,K3,KEY,ISIZE,KODE,NUMBER
+  45:       REAL    REGG(6),DEGG(6),PRMS(1),ARRAY(7),EFFIC
+  46        REAL    RSEED
+
+estb\esin.f:
+  42        INTEGER IULIM,IG,IGSP,IGRP,NSPCNT,IRTNCD
+  43:       REAL TH1,TH2,ARRAY(7)
+  44        PARAMETER (IKYSIZ=29)
+
+estb\esprin.f:
+  17        INTEGER JOSTND,IRECNT,IDSDAT,IACTK,IDT,KODE
+  18:       REAL ARRAY(7)
+  19        LOGICAL LNOTBK(7)
+
+lpmpb\mpbin.f:
+  42        
+  43:       REAL ARRAY(7)
+  44        
+
+metric\base\ffin.f:
+  16        LOGICAL LNOTBK(7),LKECHO
+  17:       REAL ARRAY(7)
+  18        INTEGER IRECNT,JOSTND,IDT,KODE,I
+
+metric\base\ksstag.f:
+  26        CHARACTER*8  KEYWRD
+  27:       REAL         ARRAY(7)
+  28        INTEGER      IPRINT
+
+metric\clim\clin.f:
+  28        LOGICAL      LNOTBK(7),LKECHO,DEBUG
+  29:       REAL         ARRAY(7),TMPATTRS(MXCLATTRS),PRMS(8)
+  30        INTEGER      KODE,IPRMPT,NUMBER,I,I1,I2,IYRTMP,IUTMP,IRTNCD,
+
+metric\dfb\dfbin.f:
+  96  
+  97:       REAL ARRAY(7), PRMS(5)
+  98  
+
+metric\estb\esin.f:
+  45        INTEGER IULIM,IG,IGSP,IGRP,NSPCNT
+  46:       REAL TH1,TH2,ARRAY(7)
+  47        PARAMETER (IKYSIZ=29)
+
+metric\newmist\misin.f:
+  123        REAL         DMLRX(2,2,4),X
+  124:       REAL         ARRAY(7)
+  125        CHARACTER*8  TABLE(ISIZE),KEYWRD,PASKEY,LTNM
+
+metric\ppbase\ppin.f:
+  40        LOGICAL LNOTBK(7),LALL,LPRT,LKECHO
+  41:       REAL ARRAY(7)
+  42        DATA TABLE /
+
+metric\strp\esin.f:
+  41        INTEGER IULIM,IG,IGSP,IGRP,NSPCNT,IRTNCD
+  42:       REAL ARRAY(7)
+  43        PARAMETER (IKYSIZ=29)
+
+metric\vbase\initre.f:
+  71        REAL    CAPHT,CAPFLG,CAPPRP,CAPDBH,DUM1,XTMP,X,TB,XXG
+  72:       REAL    TC,SDHI,SDLO,ARRAY(7),PRMS(10)
+  73        REAL    XBAF
+
+metric\wwpb\bmppin.f:
+  115        INTEGER MYLST1(MXSTND), MYLST2(MXSTND)
+  116:       REAL DEFYRS,ARRAY(7),HISTNUM
+  117        DIMENSION PRMS(8)
+
+mistoe\misin.f:
+  103        LOGICAL LNOTBK(7),DEBUG,LKECHO
+  104:       REAL ARRAY(7)
+  105        INTEGER I,IDT,ISPL,KEY,KODE,NUMBR,IRTNCD
+
+rd\rdin.f:
+  151  
+  152:       REAL     ANS, ARRAY(7), DEN, DIAM, PRMS(10), RDPRP, RTD, TT 
+  153  
+
+rd\rdinca.f:
+  142  
+  143:       REAL     ANS, ARRAY(7), DEN, DIAM, PRMS(10), RDPRP, RTD, TT 
+  144  
+
+strp\esin.f:
+  39        INTEGER IULIM,IG,IGSP,IGRP,NSPCNT,IRTNCD
+  40:       REAL ARRAY(7)
+  41        PARAMETER (IKYSIZ=29)
+
+strp\esprin.f:
+  17        LOGICAL LNOTBK(7)
+  18:       REAL ARRAY(7)
+  19        INTEGER JOSTND,IRECNT,IDSDAT,IACTK,IDT,KODE
+
+vbase\initre.f:
+  68        REAL CAPHT,CAPFLG,CAPPRP,CAPDBH,DUM1,XTMP,X,TB,XXG
+  69:       REAL TC,SDHI,SDLO,ARRAY(7),PRMS(10)
+  70        INTEGER ITOPD8,IACT,IRC,IDBCYC,NP,K,I1,IGSP,IG,IULIM,IGRP,ISETQFA
+
+vorganon\orin.f:
+  42  C
+  43:       REAL         ARRAY(7)
+  44  C----------
+
+wpbr\brin.f:
+  84       &        J, KSP, KODE, LENTH, NP, NMBER
+  85:       REAL    ARRAY(7),PRMS(10),EXCESS,BOTMP,BRTMP,REDFAC
+  86        CHARACTER*4  C4TMP
+
+wsbwe\bwein.f:
+  171  
+  172:       REAL ARRAY(7), RECNT, X
+  173  
+
+wsbwe\bwekdp.f:
+  13        INTEGER IOUT, IRECNT
+  14:       REAL ARRAY(7)
+  15        WRITE (IOUT,70) IRECNT,KEYWRD,ARRAY,KARD
+
+wsbwe\bwekrd.f:
+  41        INTEGER I, INUNIT, IOS, IOUT, IP, IRECNT, ISTLNB, J, K, KODE, NF
+  42:       REAL         ARRAY(7)
+  43        LOGICAL      LNOTBK(7),LCOM
+
+wwpb\bmin.f:
+  30        INTEGER      NPRMS,IDT,NUMBER,KODE,IPRMPT,MYACT,KEY
+  31:       REAL         PRMS(7), ARRAY(7)
+  32  
+
+wwpb\bmppin.f:
+  115        INTEGER MYLST1(MXSTND), MYLST2(MXSTND)
+  116:       REAL DEFYRS,ARRAY(7),HISTNUM
+  117        DIMENSION PRMS(8)

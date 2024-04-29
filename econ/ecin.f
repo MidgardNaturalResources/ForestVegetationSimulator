@@ -32,7 +32,7 @@ C  Author Fred Martin, WA DNR,
 
       character (len=8)                :: KEYWRD, keyword
       character (len=10)               :: tmpLabel
-      character (len=10), dimension(7) :: charFields
+      character (len=10), dimension(12) :: charFields
       character (len=12)               :: warn = ' ********   '
       character (len=4), intent(in), dimension(MAXSP,3) :: NSP           !Dimension defined in PLOT.F77
 
@@ -46,10 +46,10 @@ C  Author Fred Martin, WA DNR,
      &                      revDuplicate=6, lbsDupSp    =7
 
       logical                :: LMODE, LKECHO, LFLAG, hasError
-      logical, dimension (7) :: isNotBlank
+      logical, dimension (12) :: isNotBlank
 
       real                        :: price
-      real, dimension (7)         :: realFields
+      real, dimension (12)         :: realFields
       real, dimension (MAX_RATES) :: tmpRates
 
       LFLAG    = .FALSE.

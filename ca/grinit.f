@@ -86,7 +86,9 @@ C----------
       METHC(I) = 999
       BFSTMP(I) = 1.0
       BFTOPD(I) = 0.
+      SCFTOPD(I) = 0.
       BFMIND(I) = 7.0
+      SCFMIND(I) = 7.0
       BFLA0(I) = 0.0
       BFLA1(I) = 1.0
       CFLA0(I) = 0.0
@@ -151,6 +153,7 @@ C----------
       ASPECT = 0.
       LAUTON = .FALSE.
       LFIA = .FALSE.
+      LFIANVB = .FALSE.
       AUTMAX = 60.0
       AUTMIN = 45.0
       BAF = 40.

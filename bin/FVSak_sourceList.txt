@@ -48,6 +48,7 @@
 ../common/VOLSTD.F77
 ../common/WORKCM.F77
 
+../ak/AK_nvbEQ.f
 ../ak/blkdat.f
 ../ak/bratio.f
 ../ak/ccfcal.f

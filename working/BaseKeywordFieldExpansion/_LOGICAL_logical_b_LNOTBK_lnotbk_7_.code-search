@@ -1,0 +1,250 @@
+# Query: (LOGICAL|logical)\\b.*(LNOTBK|lnotbk)\\(7\\)
+# Flags: RegExp
+# ContextLines: 1
+
+49 results - 49 files
+
+base\evif.f:
+  36        REAL ARRAY(7)
+  37:       LOGICAL LNOTBK(7),LDEBUG,LKECHO
+  38        CHARACTER*8 KEYWRD
+
+base\evtact.f:
+  36  C
+  37:       LOGICAL LNOTBK(7),DEBUG,LKECHO
+  38        CHARACTER KEYWRD*8,KARD(7)*10,RECORD*80
+
+base\evusrv.f:
+  35        REAL ARRAY(7)
+  36:       LOGICAL LDEBUG,LNOTBK(7)
+  37        CHARACTER CLEFT*20,RECORD*(*),KEYWRD*8
+
+base\exbgc.f:
+  11        REAL ARRAY(7)
+  12:       LOGICAL LNOTBK(7),L,LKECHO
+  13        CHARACTER*8 KEYWRD
+
+base\exbrus.f:
+  12  C
+  13:       LOGICAL LNOTBK(7),LKECHO
+  14        CHARACTER*8 KEYWRD,NOBR
+
+base\excov.f:
+  10        INTEGER KEY,I,J,JJ,II
+  11:       LOGICAL LTHIN,LACTV,LNOTBK(7),LKECHO
+  12        CHARACTER*8 KEYWRD,NOCOV
+
+base\exfert.f:
+  8  C----------
+  9:       LOGICAL LNOTBK(7),LKECHO
+  10        REAL ARRAY(7)
+
+base\exmist.f:
+  45        INTEGER I,ITREE,IDMR,KEY,IDMR1,ISIZE,ILIMIT,IPNT
+  46:       LOGICAL LNOTBK(7),DMFLAG,MFLAG,NFLAG,LKECHO
+  47        REAL ARRAY(7),PRFCUT(MAXSP),WK3(MAXTRE)
+
+base\exrd.f:
+  16        REAL ARRAY(7),R1(*),RR2,RR1,OLD,WK3
+  17:       LOGICAL L,LNOTBK(7),LTR,LTEE,LDUM,LKECHO
+  18        CHARACTER*8 KEYWRD,NORR
+
+base\ffin.f:
+  14  C
+  15:       LOGICAL LNOTBK(7),LKECHO
+  16        REAL ARRAY(7)
+
+base\ksstag.f:
+  27        INTEGER      IPRINT
+  28:       LOGICAL      LNOTBK(7),LKECHO
+  29  
+
+base\sdefet.f:
+  26  C
+  27:       LOGICAL LNOTBK(7),LOPEVN
+  28        CHARACTER*8 KEYWRD
+
+base\sdefln.f:
+  22  C
+  23:       LOGICAL LNOTBK(7)
+  24        CHARACTER*8 KEYWRD
+
+base\svkey.f:
+  25  
+  26:       LOGICAL LNOTBK(7),LOPEN
+  27        REAL ARRAY(7)
+
+canada\bc\initre.f:
+  79        INTEGER POINTNO,IFLAG
+  80:       LOGICAL LTRERD,LFIRST,LNOTBK(7),LNOTRE
+  81        LOGICAL DEBUG,LOPEVN,LKECHO
+
+clim\base\clin.f:
+  25        CHARACTER*30 CCLIM,CYR
+  26:       LOGICAL      LNOTBK(7),LKECHO,DEBUG
+  27        REAL         ARRAY(7),TMPATTRS(MXCLATTRS),PRMS(8)
+
+covr\cvin.f:
+  94        LOGICAL DEBUG,LKECHO
+  95:       LOGICAL LNOTBK(7),LSORT
+  96        REAL ARRAY(7),ARRAY2(8)
+
+dfb\dfbin.f:
+  97  
+  98:       LOGICAL LNOTBK(7),LKECHO
+  99  
+
+dfb\dfbincr.f:
+   99  
+  100:       LOGICAL LNOTBK(7),LKECHO
+  101  
+
+dftm\dftmin.f:
+  46        REAL    RSEED
+  47:       LOGICAL LNOTBK(7),LFIRST,LKECHO
+  48        LOGICAL DEBUG     
+
+estb\esin.f:
+  44        PARAMETER (IKYSIZ=29)
+  45:       LOGICAL DEBUG,LNOTBK(7),LTALLY,LMODE,LKECHO
+  46        INTEGER IPPR(MAXPLT)
+
+estb\esprin.f:
+  18        REAL ARRAY(7)
+  19:       LOGICAL LNOTBK(7)
+  20        CHARACTER*8 KEYWRD
+
+lpmpb\mpbin.f:
+  38  
+  39:       LOGICAL LRANSD,LNOTBK(7),LACSRF,LKECHO
+  40  
+
+metric\base\ffin.f:
+  15  C
+  16:       LOGICAL LNOTBK(7),LKECHO
+  17        REAL ARRAY(7)
+
+metric\base\ksstag.f:
+  28        INTEGER      IPRINT
+  29:       LOGICAL      LNOTBK(7),LKECHO
+  30  
+
+metric\clim\clin.f:
+  27        CHARACTER*30 CCLIM,CYR
+  28:       LOGICAL      LNOTBK(7),LKECHO,DEBUG
+  29        REAL         ARRAY(7),TMPATTRS(MXCLATTRS),PRMS(8)
+
+metric\dfb\dfbin.f:
+  94  
+  95:       LOGICAL LNOTBK(7),LKECHO
+  96  
+
+metric\estb\esin.f:
+  47        PARAMETER (IKYSIZ=29)
+  48:       LOGICAL DEBUG,LNOTBK(7),LTALLY,LMODE,LKECHO
+  49        INTEGER IPPR(MAXPLT)
+
+metric\newmist\misin.f:
+  118  
+  119:       LOGICAL      LNOTBK(7),DEBUG,LCHK(2),LOK,LKECHO
+  120        INTEGER      I,IDT,ISPL,KEY,KODE,NUMBR,IKD,IPRMPT
+
+metric\ppbase\ppin.f:
+  39        CHARACTER*4 MRD1,MRD2,CFOUR
+  40:       LOGICAL LNOTBK(7),LALL,LPRT,LKECHO
+  41        REAL ARRAY(7)
+
+metric\rd\rdin.f:
+  111        LOGICAL      DEBUG,LKECHO
+  112:       LOGICAL      LNOTBK(7), LINIT
+  113  
+
+metric\rd\rdinca.f:
+  115        LOGICAL      DEBUG
+  116:       LOGICAL      LNOTBK(7),LINIT,LKECHO
+  117  
+
+metric\rd\rdincr.f:
+  118        LOGICAL      DEBUG
+  119:       LOGICAL      LNOTBK(7),LINIT,LKECHO
+  120  
+
+metric\rd\rdinie.f:
+  114        LOGICAL      DEBUG
+  115:       LOGICAL      LNOTBK(7),LINIT,LKECHO
+  116  
+
+metric\rd\rdinso33.f:
+  113        LOGICAL      DEBUG
+  114:       LOGICAL      LNOTBK(7),LINIT,LKECHO
+  115  
+
+metric\rd\rdinut.f:
+  119        LOGICAL      DEBUG,LKECHO
+  120:       LOGICAL      LNOTBK(7), LINIT
+  121  
+
+metric\strp\esin.f:
+  43        PARAMETER (IKYSIZ=29)
+  44:       LOGICAL DEBUG,LNOTBK(7),LTALLY,LMODE,LKECHO
+  45        EQUIVALENCE (PNN,IPPR)
+
+metric\vbase\initre.f:
+  78        INTEGER POINTNO,IFLAG
+  79:       LOGICAL LTRERD,LFIRST,LNOTBK(7),LNOTRE
+  80        LOGICAL DEBUG,LOPEVN,LKECHO
+
+mistoe\misin.f:
+  102  
+  103:       LOGICAL LNOTBK(7),DEBUG,LKECHO
+  104        REAL ARRAY(7)
+
+rd\rdin.f:
+  138        LOGICAL      DEBUG,LKECHO
+  139:       LOGICAL      LNOTBK(7),LINIT
+  140  
+
+rd\rdinca.f:
+  129        LOGICAL      DEBUG,LKECHO
+  130:       LOGICAL      LNOTBK(7),LINIT
+  131  
+
+strp\esin.f:
+  41        PARAMETER (IKYSIZ=29)
+  42:       LOGICAL DEBUG,LNOTBK(7),LTALLY,LMODE,LKECHO
+  43        EQUIVALENCE (PNN,IPPR)
+
+strp\esprin.f:
+  16  C
+  17:       LOGICAL LNOTBK(7)
+  18        REAL ARRAY(7)
+
+vbase\initre.f:
+  74        INTEGER POINTNO,IFLAG
+  75:       LOGICAL LTRERD,LFIRST,LNOTBK(7),LNOTRE
+  76        LOGICAL DEBUG,LOPEVN,LKECHO
+
+vorganon\orin.f:
+  31  c
+  32:       LOGICAL      LNOTBK(7)
+  33        LOGICAL      LKECHO,LNOTRE
+
+wpbr\brin.f:
+  81  
+  82:       LOGICAL DEBUG,LOPEN,LREDF,LNOTBK(7),LALLSP,LALLST,LKECHO
+  83        INTEGER I, I3, I4, I5, IACT, ICLS, IDT, IKEY, ISIZE, ITSP,
+
+wsbwe\bwein.f:
+  175        LOGICAL DEBUG,LKECHO
+  176:       LOGICAL LNOTBK(7),LSTRT, LADDS, LOUTP
+  177  
+
+wsbwe\bwekrd.f:
+  42        REAL         ARRAY(7)
+  43:       LOGICAL      LNOTBK(7),LCOM
+  44  
+
+wwpb\bmin.f:
+  28        CHARACTER*250 OUTNAM
+  29:       LOGICAL      LNOTBK(7),LKECHO
+  30        INTEGER      NPRMS,IDT,NUMBER,KODE,IPRMPT,MYACT,KEY
