@@ -154,9 +154,9 @@ C     based on cone with D = 1 inch
         IF (LMERCH) VOL2HT = MAX(X,MCF)
       ENDIF
 
-      IF (DEBUG) WRITE(IOUT,40)ISPC,D,H,LCONE,TCF
+      IF (DEBUG) WRITE(IOUT,40)ISPC,D,H,LCONE,VN,VOL2HT
  40   FORMAT(' FMSVOL ISPC=',I3,' D=',F7.3,' H=',F7.3,
-     >     ' LCONE=',L2,' TCF=',F7.3)
+     >     ' LCONE=',L2,' VN=',F7.3,' VOL2HT=',F10.3)
 
       RETURN
       END

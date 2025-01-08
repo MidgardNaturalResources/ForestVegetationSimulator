@@ -2849,6 +2849,10 @@ C
 C  ==========  OPTION NUMBER 84: OPEN      ==========================OPEN
 C
  8600 CONTINUE
+C
+C     WANT TO RESERVE THE INPUT UNIT NUMBER IREAD AND IT WILL BE RESTORED
+C     WITH FOLLOWING CLOSE KEYWORD.
+C
       CALL KEYOPN (IREAD,RECORD,JOSTND,IRECNT,KEYWRD,ARRAY,KARD)
       CALL fvsGetRtnCode(IRTNCD)
       IF (IRTNCD.NE.0) RETURN
@@ -2864,9 +2868,19 @@ C
       GOTO 10
  8710 CONTINUE
       I=INT(ARRAY(1))
-      IF(LKECHO)WRITE(JOSTND,8720) KEYWRD,I
- 8720 FORMAT (/A8,'   DATA SET REFERENCE NUMBER = ',I5)
+      IF (ARRAY(2).GT.0.0) THEN
+        I2 = INT(ARRAY(2))
+      ELSE
+        I2 = 15
+      ENDIF
+      IF(LKECHO)WRITE(JOSTND,8720) KEYWRD,I,I2
+ 8720 FORMAT (/A8,'   CLOSE DATA SET REFERENCE NUMBER = ',I5,/,
+     >  T12,'INPUT RETURNED TO FILE ASSIGNED TO REFERENCE NUMBER =',I5)
       CLOSE (UNIT=I)
+C
+C     RETURN READING TO SPECIFIED UNIT, DEFAULT IS 15 MAIN KEYWORD FILE
+C
+      IREAD = I2
       GOTO 10
 C
 C  ==========  OPTION NUMBER 86: NOSCREEN  ==========================NOSCREEN
@@ -5027,7 +5041,7 @@ C
           IF(ISPEC.NE.8888)THEN
             DO IG=2,IULIM
             IGSP = ISPGRP(IGRP,IG)
-            VEQNNC(IGSP)='          '
+            VEQNNC(IGSP)='           '
             ENDDO
             ILEN=ISPGRP(-IS,92)
             WRITE(JOSTND,13003)KEYWRD,KARD(1)(1:ILEN),IS
@@ -5089,7 +5103,7 @@ C
           IF(ISPEC.NE.8888)THEN
             DO IG=2,IULIM
             IGSP = ISPGRP(IGRP,IG)
-            VEQNNB(IGSP)='          '
+            VEQNNB(IGSP)='           '
             ENDDO
             ILEN=ISPGRP(-IS,92)
             IF(LNOTBK(2))KEYWRD='        '
@@ -5166,7 +5180,7 @@ C
 C
           IF(ISPEC.NE.8888)THEN
             DO I=1,MAXSP
-            VEQNNC(I)='          '
+            VEQNNC(I)='           '
             ENDDO
             WRITE(JOSTND,13006)KEYWRD
           ELSE
@@ -5224,7 +5238,7 @@ C
 C
           IF(ISPEC.NE.8888)THEN
             DO I=1,MAXSP
-            VEQNNB(I)='          '
+            VEQNNB(I)='           '
             ENDDO
             IF(LNOTBK(2))KEYWRD='        '
             WRITE(JOSTND,13016)KEYWRD
@@ -5298,7 +5312,7 @@ C
           ENDIF
 C
           IF(ISPEC.NE.8888)THEN
-            VEQNNC(IS)='          '
+            VEQNNC(IS)='           '
             KARD(2)='***INVALID'
            WRITE(JOSTND,13030)KEYWRD,KARD(1)(1:3),IS
          ELSE
@@ -5353,7 +5367,7 @@ C
           ENDIF
 C
           IF(ISPEC.NE.8888)THEN
-            VEQNNB(IS)='          '
+            VEQNNB(IS)='           '
             KARD(3)='***INVALID'
             IF(.NOT.LNOTBK(2))WRITE(JOSTND,13030)KEYWRD,KARD(1)(1:3),IS
           ELSE

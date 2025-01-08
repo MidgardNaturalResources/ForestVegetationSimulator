@@ -1,6 +1,6 @@
 
 all : iet01 iet02 iet03 compress iedb calibStats DBReportTest econdb \
-	firedb climdb ffe_svs climate climatePutGet maxActs ccadj
+	firedb climdb ffe_svs climate climatePutGet maxActs ccadj nested
 
 iet01 :
 	@echo Test iet01, basic functionality
@@ -55,9 +55,9 @@ calibStats :
 	@echo Test FVS_CalibStats read and write
 	rm -f calibStats.db
 	-../../bin/FVSie --keywordfile=calibStats.key
-	-sqlite3 calibStats.db ".header on" "select StandID,TreeSize,SpeciesFVS,\
-     NumTrees,round(ScaleFactor,3),round(StdErrRatio,2) \
-   from FVS_CalibStats" > calibStats_dump.txt
+	-sqlite3 calibStats.db ".header on" "select StandID,TreeSize,SpeciesFVSnum,\
+        SpeciesFVS,NumTrees,round(ScaleFactor,3),round(StdErrRatio,2) \
+        from FVS_CalibStats" > calibStats_dump.txt
 	-diff -w calibStats_dump.txt calibStats_dump.txt.save
 	@echo Test FVS_CalibStats ended
 
@@ -72,13 +72,13 @@ DBReportTest :
 
 econdb :
 	@echo Test econ database read and write
-	rm -f TestDataBase.db
-	-../../bin/FVSie --keywordfile=TestDataBase.key
-	-sqlite3 TestDataBase.db "select Year,SpeciesPlants,Total_Value \
-   from FVS_EconHarvestValue;" > TestDataBase.dump
-	-sqlite3 TestDataBase.db "select round(pnv,1),Mrch_BoardFoot_Volume \
-   from FVS_EconSummary;" >> TestDataBase.dump
-	-diff -w TestDataBase.dump TestDataBase.dump.save
+	rm -f EconDB_Out.db
+	-../../bin/FVSie --keywordfile=EconDB.key
+	-sqlite3 EconDB_Out.db "select Year,SpeciesPLANTS,Total_Value \
+   from FVS_EconHarvestValue;" > EconDB_Out.dump
+	-sqlite3 EconDB_Out.db "select round(PNV,1),Mrch_BoardFoot_Volume \
+   from FVS_EconSummary;" >> EconDB_Out.dump
+	-diff -w EconDB_Out.dump EconDB_Out.dump.save
 	@echo Test econ database ended
 
 firedb :
@@ -142,6 +142,15 @@ ccadj :
 	-diff -w ccadj.tmp ccadj.tmp.save
 	rm -f ccadj.tmp ccadj.tmp.save
 	@echo Test THINcc with a CCADJ keyword ended
+
+nested :
+	@echo Test Nested Addfile keyword
+	-../../bin/FVSie --keywordfile=NestedAddFile.key
+	-grep -v "\-999" NestedAddFile.sum      > NestedAddFile.tmp
+	-grep -v "\-999" NestedAddFile.sum.save > NestedAddFile.tmp.save
+	-diff -w NestedAddFile.tmp NestedAddFile.tmp.save
+	rm -f NestedAddFile.tmp NestedAddFile.tmp.save
+	@echo Test Nested Addfile keyword ended
 	@echo Tests\FVSie\makefile finished
 
 clean : 
@@ -171,5 +180,10 @@ clean :
 	rm -rfv iet02_db_dump.txt iet02.stop 
 #	remove iet03 files
 	rm -rfv iet03.out iet03.sng iet03.stop iet03.sum 
+#	remove Econ files
+	rm -rfv EconDB_Out.db EconDB_Out.dump EconDB.out EconDB.trl
+#	remove Nested AddFile files
+	rm -rfv NestedOut.db NestedAddFile.out NestedAddFile.sum NestedAddFile.trl NestedAddFile.chp
 #	remove test files
-	rm -rfv TestDataBase.db TestDataBase.dump TestDataBase.out TestDataBase.trl
+	rm -rfv EconDB_Out.db EconDB_Out.dump EconDB.out EconDB.trl
+
