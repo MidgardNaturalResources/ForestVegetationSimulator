@@ -33,7 +33,7 @@ C
       LOGICAL DEBUG
       REAL SICOEF1(MAXSP,MAXSP),SICOEF2(MAXSP,MAXSP),SDICON(MAXSP)
       INTEGER J,I,JJ,K,METHB8,METHC8
-      CHARACTER FORST*2,DIST*2,PROD*2,VAR*2,VOLEQ*10
+      CHARACTER FORST*2,DIST*2,PROD*2,VAR*2,VOLEQ*11
       INTEGER IFIASP,ERRFLAG,ISPC,IREGN,KFORST,IFLAG
 C----------
 C  LOAD SDI MAXIMUM VALUES 
@@ -351,6 +351,38 @@ C----------
           END SELECT
         ENDIF
       ENDIF
+      IF(SCFMIND(ISPC).LE.0.)THEN                 !SET **SCFMIND** DEFAULT
+        IF(ISPC.LE.14)THEN                     !SOFTWOODS
+          SCFMIND(ISPC)=9.
+        ELSE                                   !HARDWOODS
+          SELECT CASE(IFOR)
+          CASE(2)
+            SCFMIND(ISPC)=9.
+            IF(ISPC.GE.40.AND.ISPC.LE.42)SCFMIND(ISPC)=11.
+          CASE(5)
+            SCFMIND(ISPC)=11.
+            IF(ISPC.GE.40.AND.ISPC.LE.42)SCFMIND(ISPC)=9.
+          CASE DEFAULT
+            SCFMIND(ISPC)=11.
+          END SELECT
+        ENDIF
+      ENDIF
+      IF(SCFTOPD(ISPC).LE.0.)THEN                 !SET **SCFTOPD** DEFAULT
+        IF(ISPC.LE.14)THEN                     !SOFTWOODS
+          SCFTOPD(ISPC)=7.6
+        ELSE                                   !HARDWOODS
+          SELECT CASE(IFOR)
+          CASE(2)
+            SCFTOPD(ISPC)=7.6
+            IF(ISPC.GE.40.AND.ISPC.LE.42)SCFTOPD(ISPC)=9.6
+          CASE(5)
+            SCFTOPD(ISPC)=7.6
+            IF(ISPC.GE.40.AND.ISPC.LE.42)SCFTOPD(ISPC)=7.6
+          CASE DEFAULT
+            SCFTOPD(ISPC)=9.6
+          END SELECT
+        ENDIF
+      ENDIF
       ENDDO
 C----------
 C  LOAD VOLUME EQUATION ARRAYS FOR ALL SPECIES IF USING CLARK
@@ -383,6 +415,9 @@ C      WRITE(16,*)'PROD,IFIASP,ISPC,VEQNNC(ISPC)= ',PROD,IFIASP,ISPC,
 C     &VEQNNC(ISPC)
       ELSEIF(METHC(ISPC).EQ.8)THEN
           METHC8=METHC8+1
+      ELSEIF(METHC(ISPC).EQ.10 .AND. VEQNNC(ISPC).EQ.'           ')THEN
+        CALL NVBEQDEF(IFIASP,VOLEQ)
+        VEQNNC(ISPC)=VOLEQ
       ENDIF
       IF(((METHB(ISPC).EQ.6).OR.(METHB(ISPC).EQ.9).OR.
      &    (METHB(ISPC).EQ.5)).AND.(VEQNNB(ISPC).EQ.'          '))THEN
@@ -428,6 +463,6 @@ C----------
      &CALL VOLEQHEAD(JOSTND)
       IF((METHC8.NE.MAXSP).AND.(METHB8.NE.MAXSP))
      &WRITE(JOSTND,230)(NSP(J,1)(1:2),VEQNNC(J),VEQNNB(J),J=1,MAXSP)
- 230  FORMAT(4(2X,A2,4X,A10,1X,A10,1X))
+ 230  FORMAT(4(2X,A2,4X,A11,1X,A10,1X))
       RETURN
       END

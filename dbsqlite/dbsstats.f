@@ -1,4 +1,4 @@
-      SUBROUTINE DBSSTATS(SPECCD,TPA,BAREA,CFVOL,BFVOL,STDIST1,
+      SUBROUTINE DBSSTATS(SPECCD,TPA,BAREA,CFVOL,BFVOL,AGCARB,STDIST1,
      & STDIST2,STDIST3,STDIST4,STDIST5,STDIST6,STDIST7,STDIST8,
      & STDIST9,LABEL,TBL,IYEAR)
       IMPLICIT NONE
@@ -22,8 +22,8 @@ C
       INTEGER ColNumber,I,iret1,iret2,TBL,STDIST41,IYEAR,STDIST51
       REAL STDIST1,STDIST2,STDIST3,STDIST4,STDIST5
       REAL STDIST6,STDIST7,STDIST8,STDIST9
-      REAL TPA,BAREA,CFVOL,BFVOL
-      DOUBLE PRECISION TPA1,BAREA1,CFVOL1,BFVOL1
+      REAL TPA,BAREA,CFVOL,BFVOL,AGCARB
+      DOUBLE PRECISION TPA1,BAREA1,CFVOL1,BFVOL1,CARBON
       DOUBLE PRECISION STDIST11,STDIST21,STDIST31
       DOUBLE PRECISION STDIST61,STDIST71,STDIST81,STDIST91
       CHARACTER*2000 SQLStmtStr
@@ -62,7 +62,8 @@ C
      -              'BoardFeet real,'//
      -              'CubicFeet real,'//
      -              'TreesPerAcre real,'//
-     -              'BasalArea real);'//CHAR(0)
+     -              'BasalArea real,'//
+     -              'AboveGrndCarbon real);'//CHAR(0)
 
       iRet1 = fsql3_exec(IoutDBref,SQLStmtStr)
       IF (iRet1 .NE. 0) THEN
@@ -74,8 +75,8 @@ C
         WRITE(SQLStmtStr,*)'INSERT INTO FVS_Stats_Species',
      -    ' (CaseID,StandID,Year,',
      -    'SpeciesFVS,SpeciesPLANTS,SpeciesFIA,',
-     -    'BoardFeet,CubicFeet,TreesPerAcre,BasalArea)',
-     -    'VALUES(''',CASEID,''',''',TRIM(NPLT),''',?,?,?,?,?,?,?,?);'
+     -    'BoardFeet,CubicFeet,TreesPerAcre,BasalArea,AboveGrndCarbon)',
+     -    'VALUES(''',CASEID,''',''',TRIM(NPLT),''',?,?,?,?,?,?,?,?,?);'
 
         iRet1 = fsql3_prepare(IoutDBref,trim(SQLStmtStr)//CHAR(0))
           IF (iRet1 .NE. 0) THEN
@@ -99,6 +100,7 @@ C     ASSIGN REAL VALUES TO DOUBLE PRECISION VARS
         CFVOL1=CFVOL
         TPA1=TPA
         BAREA1=BAREA
+        CARBON=AGCARB
 
         ColNumber=1
         iRet1 = fsql3_bind_int(IoutDBref,ColNumber,IYEAR)
@@ -119,6 +121,8 @@ C     ASSIGN REAL VALUES TO DOUBLE PRECISION VARS
         iRet1 = fsql3_bind_double(IoutDBref,ColNumber,TPA1)
         ColNumber=ColNumber+1
         iRet1 = fsql3_bind_double(IoutDBref,ColNumber,BAREA1)
+        ColNumber=ColNumber+1
+        iRet1 = fsql3_bind_double(IoutDBref,ColNumber,CARBON)
         iRet1 = fsql3_step(IoutDBref)
         iRet1 = fsql3_finalize(IoutDBref)
         IF (iRet1.ne.0) then

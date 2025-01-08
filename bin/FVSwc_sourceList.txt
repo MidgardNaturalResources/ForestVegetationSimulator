@@ -1,3 +1,5 @@
+../working/nvb/nvbeqdef.f
+
 ../wc/common/ESPARM.F77
 ../wc/common/PRGPRM.F77
 
@@ -299,6 +301,8 @@
 ../vdbsqlite/dbsfmpfc.f
 ../vdbsqlite/dbsstandin.f
 ../vdbsqlite/dbssumry.f
+../vdbsqlite/dbscarbbiosumry.f
+../vdbsqlite/dbsreference.f
 
 ../dbsqlite/dbsatrtls.f
 ../dbsqlite/dbsblkd.f

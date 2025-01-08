@@ -43,13 +43,13 @@ C     LOGICAL LMERCH
       INTEGER I, J, K, L
       INTEGER SP, IDCL, IYR
       INTEGER ISNG, KSP
-      REAL    D, DIAM, HTD, AMT
+      REAL    D, DIAM, HTD, AMT,CUL
       REAL    DISIN, HTH, X, Y, ADD
       REAL    TVOLI, R1, R1SQ, R2SQ, P1, P2, SDIFF, S2
       REAL    HIHT(2), LOHT(2), DIS, DIH, OLDHTH, OLDHTS
       REAL    VHI(2), VLO(2), RHRAT, DIF, HICUT, LOCUT
       REAL    BP(0:9), BPH(0:9), SCNV(2), TOSOFT
-      INTEGER IDANUW
+      INTEGER IDANUW,CRWNRTO,DECAY,WDSTMS
 
 C     Conventional breakpoints for fuel size categories.
 
@@ -272,11 +272,16 @@ cc1      LOHT(2) = 1.
       DIAM = D
       HTD  = HTH
       SP   = KSP
+      CUL  = 0
+      DECAY = 0
+      WDSTMS = 1
       
 C     GET A TOTAL VOLUME FOR THIS TREE (created by cuts)
 
       TVOLI=-1      
-      CALL FMSVL2(SP,DIAM,HTD,TVOLI,TVOLI,.false.,.false.,JOSTND)
+      CALL FMSVL2(SP,DIAM,HTD,TVOLI,TVOLI,
+     &            CRWNRTO,CUL,DECAY,WDSTMS,
+     &            'D',.false.,.false.,JOSTND)
 
 
 C *******************************************************************

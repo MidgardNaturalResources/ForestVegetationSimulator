@@ -1,7 +1,38 @@
       SUBROUTINE ALGKEY (CTOK,LEN,NUM,IRC)
       IMPLICIT NONE
 C----------
-C BASE $Id$
+C REVISION HISTORY:
+C     Spring 2023
+C       Added Lorey's Height (Average height weighted by basal area)
+C         BHTWTBA= Before thin average height weighted by basal area (code 119)
+C         AHTWTBA= After thin average height weighted by basal area (code 219)
+C     Revised June 2024 - D Wagner
+C       Added monitor variables
+C         BSCUFT= Before Thin Sawlog Cubic Foot Volume (code 120)
+C         ASCUFT= After Thin Sawlog Cubic Foot Volume (code 220)
+C         RSCUFT= Removed Sawlog Cubic Foot Volume (code 221)
+C       CARBON AND BIOMASS VARIABLES     
+C         BABVBIO= Before thin above ground biomass (code 151)
+C         BMERBIO= Before thin merchantable (cubic volume) biomass (code 152)
+C         BSAWBIO= Before thin cubic sawtimber biomass (code 153)
+C         BFOLBIO= Before thin foliage biomass (code 154)
+C         BABVCRB= Before thin above ground carbon (code 155)
+C         BMERCRB= Before thin merchantable carbon (code 156)
+C         BSAWCRB= Before thin cubic sawlog carbon (code 157)
+C         BFOLCRB= Before thin foliage carbon (code 158)
+C         AABVBIO= After thin above ground biomass (code 222)
+C         RABVBIO= Removed above ground biomass (code 223)
+C         AMERBIO= After thin merchantable biomass (code 224)
+C         RMERBIO= Removed merchantable biomass (code 225)
+C         ASAWBIO= After thin cubic sawlog biomass (code 226)
+C         RSAWBIO= Removed cubic sawlog biomass (code 227)
+C         AABVCRB= After thin above ground carbon (code 228)
+C         RABVCRB= Removed above ground carbon (code 229)
+C         AMERCRB= After thin merchantable carbon (code 230)
+C         RMERCRB= Removed merchantable carbon (code 231)
+C         ASAWCRB= After thin cubic sawlog carbon (code 232)
+C         RSAWCRB= Removed cubic sawlog carbon (code 233)
+C
 C----------
 C     CALLED FROM ALGEBRAIC COMPILER, MATCHES KEYWORD IN ISTRNG
 C     WITH ONE OF THE KEYWORDS RECOGNIZED BY THE EVENT MONITOR
@@ -19,7 +50,7 @@ C     CTAB1 - 8 = THE TABLES THAT CONTAIN THE KEYWORDS.
 C     IOPT1 - 8 = THE TABLES THAT CONTAIN THE OPCODES.
 C
       INTEGER IRC,NUM,LEN,N1,I,N2,N3,N4,N5,N6,N7,N8
-      PARAMETER (N1=1,N2=8,N3=26,N4=21,N5=22,N6=41,N7=31,N8=34)
+      PARAMETER (N1=1,N2=8,N3=26,N4=21,N5=22,N6=44,N7=51,N8=34)
       CHARACTER CTOK*20,CTAB1(N1)*1,CTAB2(N2)*2,CTAB3(N3)*3,CTAB4(N4)*4,
      >          CTAB5(N5)*5,CTAB6(N6)*6,CTAB7(N7)*7,CTAB8(N8)*8
       INTEGER IOPT1(N1),IOPT2(N2),IOPT3(N3),IOPT4(N4),IOPT5(N5),
@@ -80,6 +111,8 @@ C   117  BRDEN
 C   118  BRDEN2
 C   119  BHTWTBA
 C
+C   120 BSCUFT Before thin sawlog cubic foot volume
+C
 C   126  HABTYPE
 C   127  SLOPE
 C   128  ASPECT
@@ -106,6 +139,16 @@ C   148  SILVAHFT
 C   149  R5 FISHER HABITAT SUITABILITY INDEX
 C   150  BSDI2
 C
+C     BIOMASS AND CARBON MEASURES ADDED SEPTEMBER 2024
+C     151 BABVBIO   BEFORE THIN ABOVE GROUND BIOMASS
+C     152 BMERBIO   BEFORE THIN MERCHANTABLE BIOMASS
+C     153 BSAWBIO   BEFORE THIN CUBIC SAWLOG BIOMASS
+C     154 BFOLBIO   BEFORE THIN FOLIAGE BIOMASS
+C     155 BABVCRB   BEFORE THIN ABOVE GROUND CARBON
+C     156 BMERCRB   BEFORE THIN MERCHANTABLE CARBON
+C     157 BSAWCRB   BEFORE THIN CUBIC SAWLOG CARBON 
+C     158 BFOLCRB   BEFORE THIN FOLIAGE CARBON
+C
 C GROUP 2 VARIABLES, SET IN PHASE 2, AFTER THINNING.
 C
 C   201  ATPA
@@ -127,6 +170,23 @@ C   216  ADBHWTBA
 C   217  ARDEN2
 C   218  ASDI2
 C   219  AHTWTBA
+C
+C   220  ASCUFT After thin sawlog cubic foot volume
+C   221  RSCUFT Removed sawlog cubic foot volume
+C
+C BIOMASS AND CARBON MEASURES ADDED SEPTEMBER 2024
+C   222 AABVBIO   AFTER THIN ABOVE GROUND BIOMASS
+C   223 RABVBIO   REMOVED ABOVE GROUND BIOMASS
+C   224 AMERBIO   AFTER THIN MERCHANTABLE BIOMASS
+C   225 RMERBIO   REMOVED MERCHANTABLE BIOMASS
+C   226 ASAWBIO   AFTER THIN CUBIC SAWLOG BIOMASS
+C   227 RSAWBIO   REMOVED CUBIC SAWLOG BIOMASS
+C   228 AABVCRB   AFTER THIN ABOVE GROUND CARBON
+C   229 RABVCRB   REMOVED ABOVE GROUND CARBON
+C   230 AMERCRB   AFTER THIN MERCHANTABLE CARBON
+C   231 RMERCRB   REMOVED MERCHANTABLE CARBON
+C   232 ASAWCRB   AFTER THIN CUBIC SAWLOG CARBON 
+C   233 RSAWCRB   REMOVED CUBIC SAWLOG CARBON 
 C
 C GROUP 3 VARIABLES, THOSE KNOWN AFTER CYCLE 1.
 C
@@ -287,12 +347,12 @@ C
      >            'LININT','BCCFSP','ACCFSP','NORMAL','COUNTY','FORTYP',
      >            'SIZCLS','STKCLS','BMAXHS','AMAXHS','BMINHS','AMINHS',
      >            'BNUMSS','ANUMSS','AGECMP','BRDEN2','ARDEN2','HTDIST',
-     >            'DWDVAL','ECCUFT','ECBDFT','ACORNS','ORG%CC','ORGAHT'
-     >            /,
+     >            'DWDVAL','ECCUFT','ECBDFT','ACORNS','ORG%CC','ORGAHT',
+     >            'BSCUFT','ASCUFT','RSCUFT'/,
      >     IOPT6 /104,105,109,202,203,207,210,211,25,31,32,33,10200,
      >            128,130,7001,7007,10800,11200,11300,11600,140,
      >            141,142,143,440,441,442,443,444,445,146,118,217,
-     >            13100,13300,449,450,13400,311,312/
+     >            13100,13300,449,450,13400,311,312,120,220,221/
 C
       DATA CTAB7 /'TM%STND','MPBTPAK','BW%STND','SUMSTAT','HABTYPE',
      >            'INVYEAR','TOTALWT','AVBBDFT','DBHDIST',
@@ -300,11 +360,18 @@ C
      >            'BSDIMAX','ASDIMAX','BSCLASS','ASCLASS','BSTRDBH',
      >            'ASTRDBH','MINSOIL','BCANCOV','ACANCOV','POTFLEN',
      >            'PCTCOST','PROPSTK','SALVVOL','POINTID','STRSTAT',
-     >            'TREEBIO','BHTWTBA','AHTWTBA'/,
+     >            'TREEBIO','BHTWTBA','AHTWTBA',
+     >            'BABVBIO','BMERBIO','BSAWBIO','BFOLBIO',
+     >            'BABVCRB','BMERCRB','BSAWCRB','AFOLBIO',
+     >            'AABVBIO','RABVBIO','AMERBIO','RMERBIO',
+     >            'ASAWBIO','RSAWBIO','AABVCRB','RABVCRB',
+     >            'AMERCRB','RMERCRB','ASAWCRB','RSAWCRB'/,
      >     IOPT7 /401,404,405,10400,126,131,7008,7004,10500,
      >            10600,133,406,7009,115,213,416,417,418,
      >            419,421,424,425,11900,436,144,12300,12400,12500,
-     >            12900,119,219/
+     >            12900,119,219,
+     >            151,152,153,154,155,156,157,158,
+     >            222,223,224,225,226,227,228,229,230,231,232,233/
 C
       DATA CTAB8 /'NUMTREES',
      >            'AVBTCUFT','AVBMCUFT','MSPERIOD','CENDYEAR',

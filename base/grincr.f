@@ -371,7 +371,8 @@ C  SET PAST VOLUME VARIABLES FOR USE NEXT CYCLE
 C----------
       DO 215 I=1,ITRN
       PTOCFV(I)=CFV(I)
-      PMRCFV(I)=WK1(I)
+      PMRCFV(I)=MCFV(I)
+      PSCFV(I)=SCFV(I)
       PMRBFV(I)=BFV(I)
       PDBH(I)=DBH(I)
       PHT(I)=HT(I)

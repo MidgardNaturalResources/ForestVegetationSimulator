@@ -154,6 +154,7 @@ C     11 = STAND DENSITY INDEX
 C     12 = SILVAH RELATIVE DENSITY
 C     13 = ZEIDE STAND DENSITY INDEX
 C     14 = CURTIS RELATIVE DENSITY
+C     15 = CUBIC SAWLOG VOLUME
 C   2ND ARGUMENT:
 C      0 = ALL SPECIES
 C     -X = SPECIES GROUP X
@@ -174,7 +175,7 @@ C----------
 C       IF THE ATTRIBUTE (L) IS OUT OF RANGE OR UNDEFINED IN THE
 C       PHASE, THEN: ISSUE ERROR CODE.
 C----------
-        IF (L.LE.0 .OR. L.GT.14) GOTO 1002
+        IF (L.LE.0 .OR. L.GT.15) GOTO 1002
 C----------
 C       IF THE SPECIES (J) IS OUT OF RANGE, THEN: ISSUE ERROR CODE.
 C       NOTE: A NEGATIVE SPECIES NUMBER INDICATES A SPECIES GROUP
@@ -320,7 +321,7 @@ C
 C
             SUMP=SUMP+TPA
             GOTO (111,112,113,114,115,116,117,118,119,120,121,122,123,
-     &            124),L
+     &            124,125),L
 
   111       CONTINUE
             XLDREG(1)=XLDREG(1)+TPA
@@ -364,7 +365,7 @@ C----------
             IF(DEAD.NE.0.) THEN
               XLDREG(1)=XLDREG(1)+(TPA*PMRCFV(I))
             ELSE
-               XLDREG(1)=XLDREG(1)+(TPA*WK1(I))
+               XLDREG(1)=XLDREG(1)+(TPA*MCFV(I))
             ENDIF
             GOTO 190
   120       CONTINUE
@@ -388,6 +389,17 @@ C           CURTIS RELATIVE DENSITY
 C----------
             IF(DBH(I).LT.DBHSTAGE)GO TO 190   ! BRANCH IF D IS LT MIN DBH
             XLDREG(1)=XLDREG(1)+(CRDTFAC + CRDDFAC*(DBH(I)**2.0))*TPA
+            GOTO 190
+C----------
+C           NEW SPMCDBH OPTIONS ADDED AS PART OF FIANVB INCLUSION, 2024 (DW)
+C----------
+C           CUBIC SAWLOG VOLUME
+  125       CONTINUE
+            IF(DEAD.NE.0.) THEN
+              XLDREG(1)=XLDREG(1)+(TPA*PSCFV(I))
+            ELSE
+              XLDREG(1)=XLDREG(1)+(TPA*SCFV(I))
+            ENDIF
             GOTO 190
 C
           ENDIF

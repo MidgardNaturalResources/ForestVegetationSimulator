@@ -27,7 +27,7 @@ C
       LOGICAL DEBUG
       REAL SDICON(MAXSP),ASITE(MAXSP),BSITE(MAXSP)
       INTEGER I,J,JJ,K
-      CHARACTER FORST*2,DIST*2,PROD*2,VAR*2,VOLEQ*10
+      CHARACTER FORST*2,DIST*2,PROD*2,VAR*2,VOLEQ*11
       INTEGER IFIASP,ERRFLAG,ISPC,IREGN,KFORST
 C----------
 C  LOAD SDI MAXIMUM VALUES 
@@ -188,6 +188,42 @@ C----------
           END SELECT
         ENDIF
       ENDIF
+      IF(SCFMIND(ISPC).LE.0.)THEN           !SET **SCFMIND** DEFAULT
+        IF(ISPC.LE.7)THEN                 !SOFTWOODS
+          SELECT CASE(IFOR)
+          CASE(1)
+            SCFMIND(ISPC)=9.
+            IF(ISPC.EQ.1)SCFMIND(ISPC)=6.
+          CASE DEFAULT
+            SCFMIND(ISPC)=9.
+          END SELECT
+        ELSE                              !HARDWOODS
+          SELECT CASE(IFOR)
+          CASE(1)
+            SCFMIND(ISPC)=9.
+          CASE DEFAULT
+            SCFMIND(ISPC)=11.
+          END SELECT
+        ENDIF
+      ENDIF
+      IF(SCFTOPD(ISPC).LE.0.)THEN          !SET **BFTOPD** DEFAULT
+        IF(ISPC.LE.7)THEN                 !SOFTWOOD
+          SELECT CASE(IFOR)
+          CASE(1)
+            SCFTOPD(ISPC)=7.6
+            IF(ISPC.EQ.1)SCFTOPD(ISPC)=5.
+          CASE DEFAULT
+            SCFTOPD(ISPC)=7.6
+          END SELECT
+        ELSE                              !HARDWOODS
+          SELECT CASE(IFOR)
+          CASE(1)
+            SCFTOPD(ISPC)=7.6
+          CASE DEFAULT
+            SCFTOPD(ISPC)=9.6
+          END SELECT
+        ENDIF
+      ENDIF
       ENDDO
 C----------
 C  LOAD VOLUME EQUATION ARRAYS FOR ALL SPECIES
@@ -214,6 +250,9 @@ C
         VEQNNC(ISPC)=VOLEQ
 C      WRITE(16,*)'PROD,IFIASP,ISPC,VEQNNC(ISPC)= ',PROD,IFIASP,ISPC,
 C     &VEQNNC(ISPC)
+      ELSE IF (METHC(ISPC).EQ.10) THEN
+        CALL NVBEQDEF(IFIASP, VOLEQ)
+        VEQNNC(ISPC)=VOLEQ
       ENDIF
       IF(((METHB(ISPC).EQ.6).OR.(METHB(ISPC).EQ.9).OR.
      &    (METHB(ISPC).EQ.5)).AND.(VEQNNB(ISPC).EQ.'          '))THEN
@@ -252,7 +291,7 @@ C  WRITE VOLUME EQUATION NUMBER TABLE
 C----------
       CALL VOLEQHEAD(JOSTND)
       WRITE(JOSTND,230)(NSP(J,1)(1:2),VEQNNC(J),VEQNNB(J),J=1,MAXSP)
- 230  FORMAT(4(2X,A2,4X,A10,1X,A10,1X))
+ 230  FORMAT(4(2X,A2,4X,A11,1X,A10,1X))
 C
       RETURN
       END

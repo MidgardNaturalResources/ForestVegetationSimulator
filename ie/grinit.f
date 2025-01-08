@@ -68,6 +68,7 @@ C
       DATA NONE/'NONE'/
 C
       VARACD = 'IE'
+      ECOREG = ''
       CALL LNKINT
       DO 5 I=1,MAXSP
       IORDER(I) = 0
@@ -128,6 +129,7 @@ C
       CALCSDI = ' '
       DBHMIN(7) = 6.0
       BFMIND(7) = 6.0
+      SCFMIND(7)= 6.0
       CFMIN = 0.
       TCFMIN = 0.
       BFMIN = 0.

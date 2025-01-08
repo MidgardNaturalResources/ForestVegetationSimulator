@@ -151,7 +151,8 @@ C----------
      &        DBH(I),DG(I),HT(I),THT,HTG(I),ICR(I),IDAMCD(1),IDAMCD(2),
      &        IDAMCD(3),IDAMCD(4),IDAMCD(5),IDAMCD(6),
      &        IMC1,KUTKOD(I),IPVARS(1),IPVARS(2),IPVARS(3),IPVARS(4),
-     &        IPVARS(5),DBSKODE,DEBUG,JOSTND,LKECHO,ABIRTH(I),LBIRTH(I))
+     &        IPVARS(5),DBSKODE,DEBUG,JOSTND,LKECHO,ABIRTH(I),LBIRTH(I),
+     &        CULL(I),DECAYCD(I),WDLDSTEM(I))
       IF(DBSKODE.EQ.0)THEN
         IF (.NOT.LCONN) INQUIRE(UNIT=ISTDAT,exist=LCONN)
         IF (LCONN) INQUIRE(UNIT=ISTDAT,opened=LCONN)
@@ -179,6 +180,7 @@ C----------
      &        DBH(I),DG(I),HT(I),THT,HTG(I),ICR(I),(IDAMCD(J),J=1,6),
      &        IMC1,KUTKOD(I),IPVARS(1),IPVARS(2),IPVARS(3),IPVARS(4),
      &        IPVARS(5),ABIRTH(I)
+C     &        ,CULL(I),DECAYCD(I),WDLDSTEM(I)
         IF(ABIRTH(I).LE.0) THEN
           ABIRTH(I) = 0
           LBIRTH(I) =.FALSE.
@@ -541,6 +543,9 @@ C----------
       ABIRTH(IREC2)=ABIRTH(I)
       LBIRTH(IREC2)=LBIRTH(I)
       KUTKOD(IREC2)=KUTKOD(I)
+      CULL(IREC2)=CULL(I)
+      DECAYCD(IREC2)=DECAYCD(I)
+      WDLDSTEM(IREC2)=WDLDSTEM(I)
       DO I3 = 1,6
         DAMSEV(I3,IREC2) = DAMSEV(I3,I)
       END DO
@@ -570,6 +575,9 @@ C----------
       ABIRTH(I)=0.
       LBIRTH(I)=.FALSE.
       KUTKOD(I)=0
+      CULL(I)=0
+      DECAYCD(I)=0
+      WDLDSTEM(I)=0
       DO I3 = 1,6
         DAMSEV(I3,I) = 0
       END DO

@@ -67,6 +67,7 @@ C----------
       DATA NONE/'NONE'/
 C----------
       VARACD = 'SN'
+      ECOREG = ''
       CALL LNKINT
       DO 5 I=1,MAXSP
       IORDER(I) = 0
@@ -78,8 +79,8 @@ C----------
       XMMULT(I) = 1.
       XMDIA1(I) = 0.
       XMDIA2(I) = 99999.
-      VEQNNB(I) = '          '
-      VEQNNC(I) = '          '
+      VEQNNB(I) = '           '
+      VEQNNC(I) = '           '
       STMP(I) = 0.5
       TOPD(I) = 0.
       DBHMIN(I) = 0.
@@ -89,6 +90,7 @@ C----------
       BFSTMP(I) = 1.0
       BFTOPD(I) = 0.
       BFMIND(I) = 0.
+      SCFSTMP(I) = 1.0
       SCFMIND(I) = 0.
       SCFTOPD(I) = 0.
       BFLA0(I) = 0.0

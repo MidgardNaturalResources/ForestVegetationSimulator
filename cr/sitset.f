@@ -44,7 +44,7 @@ C
 COMMONS
 C
 C----------
-      CHARACTER FORST*2,DIST*2,PROD*2,VAR*2,VOLEQ*10
+      CHARACTER FORST*2,DIST*2,PROD*2,VAR*2,VOLEQ*11
       INTEGER IFIASP,ERRFLAG,I,J,JJ,K,INTFOR,IREGN,ISPC
       REAL SDICON(MAXSP),TEM
       INTEGER DEFMT(23)
@@ -526,6 +526,8 @@ C----------
         IF(TOPD(I) .LE. 0.) TOPD(I) = 6.0
         IF(BFTOPD(I) .LE. 0.0) BFTOPD(I) = 6.0
         IF(BFMIND(I) .LE. 0.0) BFMIND(I) = 9.0
+        IF(SCFTOPD(I) .LE. 0.0) SCFTOPD(I) = 6.0
+        IF(SCFMIND(I) .LE. 0.0) SCFMIND(I) = 9.0
         ENDDO
       ELSEIF((IMODTY.EQ.1).OR.(IMODTY.EQ.2).OR.
      &       (IMODTY.EQ.4).OR.(IMODTY.EQ.5))THEN
@@ -533,6 +535,7 @@ C----------
         IF(DBHMIN(I) .LE. 0.) DBHMIN(I) = 5.0
         IF(TOPD(I) .LE. 0.) TOPD(I) = 4.0
         IF(BFTOPD(I) .LE. 0.0) BFTOPD(I) = 6.0
+        IF(SCFTOPD(I) .LE. 0.0) SCFTOPD(I) = 6.0
         IF(BFMIND(I) .LE. 0.0) THEN
           IF(IFOR .LT. IGFOR) THEN
             BFMIND(I) = 7.0
@@ -540,6 +543,13 @@ C----------
             BFMIND(I) = 9.0
           ENDIF
         ENDIF
+        IF(SCFMIND(I) .LE. 0.0) THEN
+            IF(IFOR .LT. IGFOR) THEN
+              SCFMIND(I) = 7.0
+            ELSE
+              SCFMIND(I) = 9.0
+            ENDIF
+          ENDIF
         ENDDO
       ENDIF
 C----------
@@ -558,6 +568,9 @@ C
       IF(((METHC(ISPC).EQ.6).OR.(METHC(ISPC).EQ.9)).AND.
      &     (VEQNNC(ISPC).EQ.'          '))THEN
         CALL VOLEQDEF(VAR,IREGN,FORST,DIST,IFIASP,PROD,VOLEQ,ERRFLAG)
+        VEQNNC(ISPC)=VOLEQ
+      ELSE IF (METHC(ISPC).EQ.10) THEN
+        CALL NVBEQDEF(IFIASP,VOLEQ)
         VEQNNC(ISPC)=VOLEQ
       ENDIF
       IF(((METHB(ISPC).EQ.6).OR.(METHB(ISPC).EQ.9)).AND.
@@ -579,7 +592,7 @@ C  WRITE VOLUME EQUATION NUMBER TABLE
 C----------
       CALL VOLEQHEAD(JOSTND)
       WRITE(JOSTND,230)(NSP(J,1)(1:2),VEQNNC(J),VEQNNB(J),J=1,MAXSP)
- 230  FORMAT(4(2X,A2,4X,A10,1X,A10,1X))
+ 230  FORMAT(4(2X,A2,4X,A11,1X,A10,1X))
 C
       RETURN
       END

@@ -1,3 +1,5 @@
+../working/nvb/nvbeqdef.f
+
 ../ak/common/CRCOEF.F77
 ../ak/common/ESPARM.F77
 ../ak/common/PRGPRM.F77
@@ -48,7 +50,6 @@
 ../common/VOLSTD.F77
 ../common/WORKCM.F77
 
-../ak/AK_nvbEQ.f
 ../ak/blkdat.f
 ../ak/bratio.f
 ../ak/ccfcal.f
@@ -301,6 +302,8 @@
 ../vdbsqlite/dbsfmpfc.f
 ../vdbsqlite/dbsstandin.f
 ../vdbsqlite/dbssumry.f
+../vdbsqlite/dbscarbbiosumry.f
+../vdbsqlite/dbsreference.f
 
 ../dbsqlite/dbsatrtls.f
 ../dbsqlite/dbsblkd.f

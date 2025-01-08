@@ -79,6 +79,7 @@ C----------
 *     NFMSVPX:   The number of pictures to render for a fire using the
 *                SVS keyword.
 *     FMORTMLT:  Tree mortality multiplier, set in FMMAIN for a given cycle
+*     FMLVCULL:  Percent live cull.  Fuel model copy for Event Monitor
 *     FTREAT:    Fuel treatment type: 0=none,1=lopping (inc.flailing),
 *                2=trampling (inc chopping, crushing, chipping)
 *     FUAREA:    Number of acres in various loading categories: for
@@ -321,6 +322,7 @@ C     VARIABLE DECLARATIONS: COMMON BLOCK FMCOM
       REAL     PREMST(MAXTRE),PREMCR(MAXTRE)
       INTEGER  ISPCC(MAXTRE)
       REAL     DBHC(MAXTRE),HTC(MAXTRE),CROWNWC(MAXTRE,0:5)
+      REAL     FMLVCULL(MAXTRE)
       INTEGER  ICYCRM,ITRNL
 
       COMMON /FMCOM/

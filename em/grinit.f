@@ -81,6 +81,7 @@ C  AS,PB USE IE AS (ORIGINALLY FROM UT VARIANT)
 C  GA,CW,BA,PW,NC,OH USE IE CO (ORIGINALLY FROM CR VARIANT)
 C----------
       VARACD = 'EM'
+      ECOREG = ''
       CALL LNKINT
       DO 5 I=1,MAXSP
       IORDER(I) = 0
@@ -103,6 +104,9 @@ C----------
       BFSTMP(I) = 1.0
       BFTOPD(I) = 4.5
       BFMIND(I) = 7.0
+      SCFSTMP(I) = 1.0
+      SCFTOPD(I) = 4.5
+      SCFMIND(I) = 7.0
       BFLA0(I) = 0.0
       BFLA1(I) = 1.0
       CFLA0(I) = 0.0
@@ -138,6 +142,7 @@ C----------
       CALCSDI = ' '
       DBHMIN(7) = 6.0
       BFMIND(7) = 6.0
+      SCFMIND(7) = 6.0
       CFMIN = 0.
       TCFMIN = 0.
       BFMIN = 0.

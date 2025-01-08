@@ -65,6 +65,7 @@ C
       DATA NONE/'NONE'/
 C----------
       VARACD = 'PN'
+      ECOREG = ''
       CALL LNKINT
       DO 5 I=1,MAXSP
       SDIDEF(I) = 0.0
@@ -88,6 +89,9 @@ C----------
       BFSTMP(I) = 1.0
       BFTOPD(I) = 0.
       BFMIND(I) = 0.
+      SCFSTMP(I) = 1.0
+      SCFTOPD(I) = 0.
+      SCFMIND(I) = 0.
       BFLA0(I) = 0.0
       BFLA1(I) = 1.0
       CFLA0(I) = 0.0

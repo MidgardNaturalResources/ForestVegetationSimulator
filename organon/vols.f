@@ -46,6 +46,9 @@ C
 C
       INCLUDE 'ORGANON.F77'
 C
+C
+      INCLUDE 'WDBKWTDATA.INC' 
+C
 COMMONS
 C
 C----------
@@ -69,10 +72,13 @@ C----------
       INTEGER DLIEQN,DLLMOD
       LOGICAL DEBUG
       REAL SPCCC(MAXSP,3),SPCAC(MAXSP,3),SPCBV(MAXSP,3),SPCMC(MAXSP,3)
-      REAL DBHCLS(9),P,D,H,BARK,BRATIO
-      REAL D2H,VM,VN,VMAX,BBFV,ALGSLP,VOLCOR,TCFTD
-      INTEGER I,J,IPASS,ILOW,IHI,ISPC,IT,IM,ICDF,IBDF,ORGFIA
+      REAL SPCSC(MAXSP,3)
+      REAL DBHCLS(9),P,D,H,BARK,BRATIO,CARBFACTOR
+      REAL D2H,VM,VN,VMAX,BBFV,ALGSLP,VOLCOR,TCFTD,TEMVOL,PULPV
+      REAL TCF,MCF,SCF,BIOMAS(15)
+      INTEGER I,J,IPASS,ILOW,IHI,ISPC,IT,IM,ICDF,IBDF,ORGFIA,IFIASP,K
       LOGICAL TKILL,LCONE,BTKFLG,CTKFLG
+      CHARACTER LIVEDEAD
 C----------
 C  ORGANON: DEFINE THE VARIABLES REQUIRED BY THE ORGANON ORGVOLS DLL
 C           AND THE VOLCAL INTERFACE FUNCTION
@@ -104,6 +110,7 @@ C-----------
           SPCCC(I,J)=0.0
           SPCAC(I,J)=0.0
           SPCMC(I,J)=0.0
+          SPCSC(I,J)=0.0
           SPCBV(I,J)=0.0
         ENDDO
       ENDDO
@@ -144,6 +151,12 @@ C----------
       ISPC=ISP(I)
       D=DBH(I)
       H = HT(I)
+
+      IF(IMC(I) .GE. 6) THEN 
+        LIVEDEAD = 'D'
+      ELSE
+        LIVEDEAD = 'L'
+      END IF
 C----------
 C  INITIALIZE TOP KILL FLAG FOR NEXT TREE; IF TOPKILLED, ASSIGN H TO
 C  NORMHT.
@@ -163,11 +176,14 @@ C  USE HT(I) INSTEAD OF NORMHT(I) FOR TRUNCATED TREES  GED 11/24/17
 C----------
       IF( LORGVOLS ) THEN
         H = HT(I)
-        VN=0.
-        VM=0.
+        TCF=0.
+        MCF=0.
+        SCF=0.
         VMAX=0.
         CFV(I)=0.
-        WK1(I)=0.
+C        WK1(I)=0.
+        MCFV(I)=0.
+        SCFV(I)=0.
         BFV(I)=0.
 C----------
 C SET FIA SPECIES CODE (ACTUAL FOR VALID ORGANON SPECIES, SURROGATE
@@ -202,7 +218,7 @@ C----------
      3                    D,H,FCR,
      4                    ORGVOL_VERROR,ORGVOL_TERROR,ORGVOL_VWARNING,
      5                    ORGVOL_TWARNING,ORGVOL_IERROR,
-     6                    VM,BBFV)
+     6                    MCF,BBFV)
 C----------
 C  ORGANON: PERFORM A BASIC ERROR CHECK.
 C         INTEGER*4   VERROR(5)  ! VOLUME ERROR FLAG BUFFER
@@ -254,16 +270,16 @@ C-----------
 C  ORGANON: ASSIGN THE FVS INTERNAL VARIABLES 
 C           TO THE VALUES SET BY THE ORGANON DLL
 C-----------
-        VN = VM
-        CFV(I)=VN
-        WK1(I)=VM
+        TCF = MCF
+        CFV(I)=TCF
+        MCFV(I)=MCF
         BFV(I)  = BBFV
         IF(DEBUG)WRITE(JOSTND,*)' IN VOLS AFTER VOLCAL I,VM,BBFV= ',
      &  I,VM,BBFV   
 C----------
 C  CALL ECON EXTENSION TO PROCESS VOLUME INFORMATION
 C----------
-        IF (WK1(I) .GT. 0.0) CALL ECVOL(IT,LOGDIA,LOGVOL,.TRUE.)
+        IF (MCFV(I) .GT. 0.0) CALL ECVOL(IT,LOGDIA,LOGVOL,.TRUE.)
         IF (BFV(I) .GT. 0.0) CALL ECVOL(IT,LOGDIA,LOGVOL,.FALSE.)
         GO TO 200
       END IF
@@ -272,14 +288,22 @@ C  ORGANON: END OF ORGANON
 C-----------
 C
 C**************************************************
-C          FVS CUBIC VOLUME SECTION               *
+C              CUBIC VOLUME SECTION               *
 C**************************************************
 C----------
 C  INITIALIZE VOLUME ESTIMATES.
 C----------
-      VN=0.
-      VM=0.
-      VMAX=0.
+      VN=0.0
+      VM=0.0
+
+      TCF=0.0
+      MCF=0.0
+      SCF=0.0
+
+      VMAX=0.0
+      BBFV=0.0
+
+      BIOMAS = 0.
       IF(DEBUG)WRITE(JOSTND,*)' CUBIC SECTION, I,ISPC,METHC= ',
      &I,ISPC,METHC(ISPC)
 C----------
@@ -287,8 +311,10 @@ C  CALCULATE TOTAL CUBIC FOOT VOLUME. CORRECT FOR TOP KILL IF NEEDED.
 C----------
       IT=I
       IF(METHC(ISPC).EQ.6 .OR. METHC(ISPC).EQ.10) THEN
-        CALL NATCRS (VN,VM,BBFV,ISPC,D,H,TKILL,BARK,ITRUNC(I),VMAX,
-     1               CTKFLG,BTKFLG,IT)
+        CALL NATCRS (TCF,MCF,SCF,BBFV,ISPC,D,H,TKILL,
+     1               ICR(I),BARK,ITRUNC(I),
+     1               VMAX,CULL(I),DECAYCD(I),WDLDSTEM(I),
+     1               BIOMAS,LIVEDEAD,CTKFLG,BTKFLG,IT)
       ELSEIF (METHC(ISPC).EQ.8) THEN
         CALL OCFVOL (VN,VM,ISPC,D,H,TKILL,BARK,ITRUNC(I),VMAX,LCONE,
      1               CTKFLG,IT)
@@ -297,11 +323,56 @@ C----------
      1              CTKFLG)
       ENDIF
       IF(CTKFLG .AND. TKILL .AND. VMAX .GT. 0.)
-     1 CALL CFTOPK (ISPC,D,H,VN,VM,VMAX,LCONE,BARK,ITRUNC(I))
+     1 CALL CFTOPK (ISPC,D,H,TCF,MCF,SCF,VMAX,LCONE,BARK,ITRUNC(I))
 C----------
 C  LOAD WK1 WITH MERCH CUBIC VOLUME PER TREE.
+C  WK1 array has been replaced with MCFV
 C----------
-      WK1(I)=VM
+!      WK1(I)=VM
+       MCFV(I)=MCF
+       IF(VARACD.EQ.'CS' .OR. VARACD.EQ.'LS' .OR. VARACD.EQ.'NE' .OR.
+     > VARACD.EQ.'SN' .OR. LFIANVB) SCFV(I)=SCF
+
+       IF(LFIANVB) THEN
+         READ(FIAJSP(ISPC),'(I4)')IFIASP
+         DO K=1,2677
+            IF(WDBKWT(K,1).EQ.IFIASP) THEN
+              CARBFACTOR = WDBKWT(K,12)
+              EXIT
+            ENDIF
+         ENDDO
+         ABVGRD_BIO(I) = BIOMAS(1)
+         FOLI_BIO(I) = BIOMAS(13)
+         ABVGRD_CARB(I) = BIOMAS(1) * CARBFACTOR
+         FOLI_CARB(I) = BIOMAS(13)*0.5
+         IF(LIVEDEAD.EQ.'L' .AND. DECAYCD(I).GT.0) DECAYCD(I) = 0
+         IF(DECAYCD(I).GT.0) THEN
+           SELECT CASE(DECAYCD(I))
+             CASE(1)
+               CARBFACTOR = 0.501
+               IF(IFIASP.GE.300) CARBFACTOR = 0.47
+             CASE(2)
+               CARBFACTOR = 0.504
+               IF(IFIASP.GE.300) CARBFACTOR = 0.473
+             CASE(3)
+               CARBFACTOR = 0.506
+               IF(IFIASP.GE.300) CARBFACTOR = 0.481
+             CASE(4)
+               CARBFACTOR = 0.52
+               IF(IFIASP.GE.300) CARBFACTOR = 0.48
+             CASE(5)
+               CARBFACTOR = 0.527
+               IF(IFIASP.GE.300) CARBFACTOR = 0.472
+           END SELECT
+         ENDIF
+         MERCH_BIO(I) = BIOMAS(6) + BIOMAS(8)
+         MERCH_CARB(I) = MERCH_BIO(I) * CARBFACTOR
+         IF(D .GT. SCFMIND(ISPC)) THEN
+           CUBSAW_BIO(I) = BIOMAS(6)
+           CUBSAW_CARB(I) = CUBSAW_BIO(I)*CARBFACTOR
+         ENDIF
+       ENDIF
+
 C----------
 C  SUMMARIZE VOLUME BY SPECIES AND TREE CLASS.  IF LSTART IS
 C  FALSE, LOAD WK5 AND SUMMARIZE ACCRETION BY SPECIES AND TREE
@@ -310,21 +381,30 @@ C----------
       IF(IPASS .EQ. 2) GO TO 15
       IM=IMC(I)
       IF(.NOT.LSTART) THEN
-        IF(CFV(I).GT.VN)THEN
+        IF(CFV(I).GT.TCF)THEN
           WK5(I)=0.
         ELSE
-          WK5(I)=(VN-CFV(I))*P/FINT
+          WK5(I)=(TCF-CFV(I))*P/FINT
         ENDIF
         SPCAC(ISPC,IM)=SPCAC(ISPC,IM)+WK5(I)
       ENDIF
-      SPCCC(ISPC,IM)=SPCCC(ISPC,IM)+VN*P
+      SPCCC(ISPC,IM)=SPCCC(ISPC,IM)+TCF*P
 C----------
 C  LOAD CFV WITH TOTAL CUBIC VOLUME PER TREE.
 C----------
    15 CONTINUE
-      CFV(I)=VN
+      CFV(I)= TCF
+      ICDF= 0
+
+      IF (VARACD .EQ. 'CS' .OR. VARACD .EQ. 'LS'
+     >     .OR. VARACD .EQ. 'NE' .OR. VARACD .EQ. 'SN') THEN
+        TEMVOL= MCFV(I)-SCFV(I)
+      ELSE
+        TEMVOL= MCFV(I)
+      END IF
+
       ICDF= DEFECT(I)/1000000
-      IF(WK1(I).GT.0.0 .AND. LCVOLS) THEN
+      IF(MCFV(I).GT.0.0 .AND. LCVOLS) THEN
 C----------
 C       COMPUTE DEFECT CORRECTION FACTOR FOR CUBIC FOOT VOLUME.
 C       TAKE LARGEST OF 1) INPUT CF DEFECT PERCENT, 2) COMPUTED LINEAR
@@ -333,12 +413,14 @@ C----------
         DLIEQN=NINT(ALGSLP(D,DBHCLS,CFDEFT(1,ISPC),9) * 100.)
         IF(DLIEQN.GT.ICDF) ICDF=DLIEQN
         IF(CFLA0(ISPC).EQ.0.0 .AND. CFLA1(ISPC).EQ.1.0) THEN
-          VOLCOR=WK1(I)
+          VOLCOR=TEMVOL
         ELSE
-          VOLCOR=EXP(CFLA0(ISPC)+CFLA1(ISPC)*ALOG(WK1(I)))
+          VOLCOR=EXP(CFLA0(ISPC)+CFLA1(ISPC)*ALOG(TEMVOL))
         ENDIF
-        DLLMOD=NINT(((WK1(I)-VOLCOR)/WK1(I)) * 100.)
+        IF(TEMVOL .EQ. 0) GO TO 25
+        DLLMOD=NINT(((TEMVOL-VOLCOR)/TEMVOL) * 100.)
         IF(DLLMOD.GT.ICDF) ICDF=DLLMOD
+   25   CONTINUE
         IF(ICDF.GT.99) ICDF=99
         IF(ICDF.LT. 0) ICDF= 0
       ENDIF
@@ -346,18 +428,37 @@ C----------
 C        CORRECT MERCHANTABLE CUBIC VOLUME FOR FORM AND DEFECT.
 C        CONSIDER 99% DEFECT AS 100% DEFECT.
 C----------
-      IF(ICDF.LT.99) THEN
-        WK1(I)=WK1(I)*(1.-FLOAT(ICDF)/100.)
+      IF (VARACD .EQ. 'CS' .OR. VARACD .EQ. 'LS'
+     >     .OR. VARACD .EQ. 'NE' .OR. VARACD .EQ. 'SN') THEN
+        PULPV= 0
+        IF (ICDF.LT.99) THEN
+          PULPV= MCFV(I)-SCFV(I)
+          PULPV= PULPV*(1.-FLOAT(ICDF)/100)
+        END IF
       ELSE
-        WK1(I)=0.
-      ENDIF
-      IF(IPASS .EQ. 1) SPCMC(ISPC,IM)=SPCMC(ISPC,IM)+WK1(I)*P
+        IF(ICDF.LT.99) THEN
+          MCFV(I)= MCFV(I)*(1.-FLOAT(ICDF)/100.)
+        ELSE
+          MCFV(I)=0.
+        END IF
+      END IF
+      CONTINUE
+      IF(IPASS .EQ. 1) THEN 
+        SPCMC(ISPC,IM)= SPCMC(ISPC,IM)+MCFV(I)*P
+        SPCSC(ISPC,IM)= SPCSC(ISPC,IM)+SCFV(I)*P
+      END IF
 C----------
 C  CALL ECON EXTENSION TO PROCESS VOLUME INFORMATION
 C----------
-      IF (WK1(I) .GT. 0.0) CALL ECVOL(IT,LOGDIA,LOGVOL,.TRUE.)
+      IF (VARACD .EQ. 'CS' .OR. VARACD .EQ. 'LS' 
+     >     .OR. VARACD .EQ. 'NE' .OR. VARACD .EQ. 'SN') THEN
+        IF (SCFV(I) .GT. 0.0) CALL ECVOL(IT,LOGDIA,LOGVOL,.TRUE.)
+      ELSE
+        IF (MCFV(I) .GT. 0.0) CALL ECVOL(IT,LOGDIA,LOGVOL,.TRUE.)
+      END IF
+*      CALL ECVOL(ISPC,IT,LOGDIA,LOGVOL,.TRUE.)
 C**************************************************
-C       FVS BOARD VOLUME SECTION                  *
+C           BOARD VOLUME SECTION                  *
 C**************************************************
 C----------
 C  COMPUTE SCRIBNER BOARD FOOT VOLUME TO A VARIABLE TOP FOR TREES
@@ -371,14 +472,18 @@ C   CALCULATE SCRIBNER BOARD FOOT VOLUME.
 C----------
       IF(DEBUG)WRITE(JOSTND,*)' BOARD SECTION, I,ISPC,D,H,METHB= ',
      &I,ISPC,D,H,METHB(ISPC)
-      IF(METHB(ISPC).EQ.6 .OR. 
-     &   METHB(ISPC).EQ.9 .OR. 
-     &   METHB(ISPC).EQ.10) THEN
+C
+      IF(((VARACD.EQ.'NE' .OR. VARACD.EQ.'CS' 
+     +    .OR. VARACD.EQ.'LS' .OR. VARACD.EQ.'SN') 
+     +    .AND. METHB(ISPC).EQ.5 )
+     +    .OR. METHB(ISPC).EQ.6 .OR. METHB(ISPC).EQ.9) THEN
         IF(METHC(ISPC).EQ.6 .OR. METHC(ISPC).EQ.10) THEN
           GO TO 100
         ELSE
-        CALL NATCRS (VN,VM,BBFV,ISPC,D,H,TKILL,BARK,ITRUNC(I),VMAX,
-     1               CTKFLG,BTKFLG,IT)
+          CALL NATCRS (TCF,MCF,SCF,BBFV,ISPC,D,H,TKILL,
+     1                 ICR(I),BARK,ITRUNC(I),
+     1                 VMAX,CULL(I),DECAYCD(I),WDLDSTEM(I),
+     1                 BIOMAS,LIVEDEAD,CTKFLG,BTKFLG,IT)
         ENDIF
       ELSEIF (METHB(ISPC).EQ.8) THEN
         IT=I
@@ -388,7 +493,8 @@ C----------
         CALL BFVOL (ISPC,D,H,D2H,BBFV,TKILL,LCONE,BARK,VMAX,ITRUNC(I),
      1              BTKFLG)
       ENDIF
-C-----------
+
+C----------
 C  CORRECT FOR TOPKILL IF NEEDED.
 C  LOAD BFV WITH SCRIBNER BOARD FOOT VOLUME CORRECTED FOR TOPKILL.
 C----------
@@ -420,13 +526,25 @@ C        CONSIDER 99% DEFECT AS 100% DEFECT.
 C----------
       IF(IBDF.LT.99) THEN
         BFV(I)=BFV(I)*(1.-FLOAT(IBDF)/100.)
+        IF(.NOT.LFIANVB) SCFV(I)=SCFV(I)*(1.-FLOAT(IBDF)/100.)
       ELSE
         BFV(I)=0.
+        IF(.NOT.LFIANVB) SCFV(I)=0.
       ENDIF
+
+C----------
+C     RECOMBINE DEFECT CORRECTED PULPWOOD AND CUBIC SAW LOG
+C     FOR EASTERN VARIANTS
+C----------
+      IF (VARACD.EQ.'NE' .OR. VARACD.EQ.'CS'
+     +    .OR. VARACD.EQ.'LS' .OR. VARACD.EQ.'SN') THEN
+        MCFV(I)= PULPV+SCFV(I)
+      END IF
 C----------
 C  CALL ECON EXTENSION TO PROCESS VOLUME INFORMATION
 C----------
       IF (BFV(I) .GT. 0.0) CALL ECVOL(IT,LOGDIA,LOGVOL,.FALSE.)
+*      CALL ECVOL(ISPC,IT,LOGDIA,LOGVOL,.FALSE.)
 C----------
 C  RESET NEGATIVE VOLUMES TO ZERO AND COMPILE TOTAL.
 C----------
@@ -446,10 +564,10 @@ C----------
 C  PRINT DEBUG OUTPUT IF DESIRED
 C----------
       IF(.NOT.DEBUG) GO TO 200
-      WRITE(JOSTND,9000)I,VN,WK1(I),WK5(I),CFV(I),
+      WRITE(JOSTND,9000)I,TCF,MCFV(I),WK5(I),CFV(I),
      &     SPCAC(ISPC,1),SPCAC(ISPC,2),SPCAC(ISPC,3),SPCCC(ISPC,1),
      &     SPCCC(ISPC,2),SPCCC(ISPC,3),ISPC,D,H
- 9000 FORMAT(' IN VOLS, I=',I4,' VN=',E15.6,' WK1=',E15.6,/,
+ 9000 FORMAT(' IN VOLS, I=',I4,' TCF=',E15.6,' MCFV=',E15.6,/,
      &  '  WK5=',E15.6,' CFV=',E15.6,
      &  ' SPCAC=',3(E15.6,',')/'  SPCCC=',3(E15.6,','),' ISPC=',I2,
      &  ' DBH=',E11.2,' NORMAL HT=',E11.2)
@@ -465,6 +583,7 @@ C----------
       CALL COMP(OSPCV,IOSPCV,SPCCC)
       CALL COMP(OSPBV,IOSPBV,SPCBV)
       CALL COMP(OSPMC,IOSPMC,SPCMC)
+      CALL COMP(OSPSC,IOSPSC,SPCSC)
 C----------
 C  DETERMINE SPECIES-TREE CLASS COMPOSITION AND PERCENTILE POINTS IN
 C  THE DISTRIBUTION OF DIAMETERS FOR ANNUAL TOTAL CUBIC FOOT ACCRETION.
@@ -488,8 +607,9 @@ C  END OF VOLS.
 C----------
   250 CONTINUE
       DO I=1,10
-      IF(DEBUG)WRITE(JOSTND,*)' LEAVING VOLS, I,CFV,BFV= ',
-     * I,CFV(I),BFV(I)
+        IF(DEBUG)WRITE(JOSTND,*)' LEAVING VOLS, I,CFV,BFV= ',
+     *    I,CFV(I),BFV(I)
       ENDDO
       RETURN
       END
+

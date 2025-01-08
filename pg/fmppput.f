@@ -155,7 +155,8 @@ C------- new FFE INTEGER variables for down wood reports --------
       CALL IFWRIT (WK3, IPNT, ILIMIT, YRDEAD, NSNAGZ      , 2)
       CALL IFWRIT (WK3, IPNT, ILIMIT, FMICR, MAXTRE       , 2)
       CALL IFWRIT (WK3, IPNT, ILIMIT, IFUELMON, MXDFMD    , 2)
-      CALL IFWRIT (WK3, IPNT, ILIMIT, ISPCC, MAXTRE       , 2)      
+      CALL IFWRIT (WK3, IPNT, ILIMIT, ISPCC, MAXTRE       , 2)
+      
       LOGICS ( 1) = LANHED
       LOGICS ( 2) = LATFUEL
       LOGICS ( 3) = LDHEAD
@@ -342,6 +343,7 @@ C------- new FFE REAL variables --------
       CALL BFWRIT (WK3, IPNT, ILIMIT, PREMST,  MAXTRE      , 2)
       CALL BFWRIT (WK3, IPNT, ILIMIT, PREMCR,  MAXTRE      , 2)
       CALL BFWRIT (WK3, IPNT, ILIMIT, DBHC,  MAXTRE        , 2)
+      CALL BFWRIT (WK3, IPNT, ILIMIT, FMLVCULL,  MAXTRE    , 2)
       CALL BFWRIT (WK3, IPNT, ILIMIT, HTC,  MAXTRE         , 2)
       CALL BFWRIT (WK3, IPNT, ILIMIT, CROWNWC,  MAXTRE*6   , 2)
       CALL BFWRIT (WK3, IPNT, ILIMIT, SETDECAY, MXFLCL*4   , 2)

@@ -70,6 +70,7 @@ C----------
       DATA NONE/'NONE'/
 C----------
       VARACD = 'CI'
+      ECOREG = ''
       CALL LNKINT
       DO 5 I=1,MAXSP
       IORDER(I) = 0
@@ -92,6 +93,9 @@ C----------
       BFSTMP(I) = 1.0
       BFTOPD(I) = 6.0
       BFMIND(I) = 8.0
+      SCFSTMP(I) = 1.0
+      SCFTOPD(I) = 6.0
+      SCFMIND(I) = 8.0
       BFLA0(I) = 0.0
       BFLA1(I) = 1.0
       CFLA0(I) = 0.0
@@ -128,6 +132,7 @@ C----------
       CALCSDI = ' '
       DBHMIN(7) = 7.0
       BFMIND(7) = 7.0
+      SCFMIND(7) = 7.0
       CFMIN = 0.
       TCFMIN = 0.
       BFMIN = 0.

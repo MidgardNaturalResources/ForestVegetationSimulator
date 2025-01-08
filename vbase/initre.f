@@ -82,6 +82,7 @@ C
       CHARACTER*4 IEND
       CHARACTER*8 KEYWRD,IAGERF,IPLTRF,TPCOM
       CHARACTER*11 CTARGET
+      INTEGER IFIACODE
       DATA IEND/'END '/
 C
 C  KEYWRD= THE KEYWORD OF INTEREST
@@ -385,40 +386,43 @@ C
 C
         CASE ('CR','UT','TT','WS')
           WRITE (JOSTND,139) KODFOR,KARD(2),KODTYP,IAGE,
-     &    ASPECT,SLOPE,ELEV,ADJUSTL(CPVREF)
+     &    ASPECT,SLOPE,ELEV,ADJUSTL(CPVREF),ADJUSTL(ECOREG),MANAGD
   139     FORMAT (/'STDINFO    FOREST-LOCATION CODE=',I6,
      >    '; HABITAT TYPE=',A10,' (CODE ',I3,')',
      >    '; AGE=',I5,'; ASPECT AZIMUTH IN DEGREES= ',F4.0,
      >    ';',/T12,' SLOPE= ' ,F4.0,'%',
-     >    ';  ELEVATION(100''S FEET)=',F5.1,'; REFERENCE CODE= ',A4)
+     >    ';  ELEVATION(100''S FEET)=',F5.1,'; REFERENCE CODE= ',A4,
+     >    'ECOREGION=', A10,';  MANAGED= ', I2)
 C
         CASE ('AK')
           WRITE (JOSTND,131) KODFOR,KODTYP,IAGE,ASPECT,
-     >                     SLOPE,ELEV,ADJUSTL(CPVREF), ADJUSTL(ECOREG)
+     >          SLOPE,ELEV,ADJUSTL(CPVREF), ADJUSTL(ECOREG),MANAGD
   131     FORMAT (/'STDINFO    FOREST-LOCATION CODE=',I8,
      >    '; HABITAT TYPE=',I3,
      >    '; AGE=',I5,'; ASPECT AZIMUTH IN DEGREES= ',F4.0,
      >    '; SLOPE= ' ,F4.0,'%'/
      >    T12,'ELEVATION(100''S FEET)=',F5.1,';  REFERENCE CODE= ',A4,
-     >    '; ECOREGION= ', A10)
+     >    '; ECOREGION= ', A10,'; MANAGED= ', I2)
 C
         CASE ('SN')
-          WRITE(JOSTND,135) KODFOR,PCOM,
-     >                    IAGE,ASPECT,SLOPE,ELEV,ADJUSTL(CPVREF)
+          WRITE(JOSTND,135) KODFOR,PCOM,IAGE,ASPECT,SLOPE,ELEV,
+     >          ADJUSTL(CPVREF),ADJUSTL(ECOREG),MANAGD
   135     FORMAT (/'STDINFO    FOREST-LOCATION CODE=',I8,
      >    '; ECOLOGICAL UNIT=',A10,
      >    '; AGE=',I5,'; ASPECT AZIMUTH IN DEGREES= ',F4.0,
      >    '; SLOPE= ',F4.0,'%'/
-     >    T12,'ELEVATION(100''S FEET)=',F5.1,';  REFERENCE CODE= ',A4)
+     >    T12,'ELEVATION(100''S FEET)=',F5.1,';  REFERENCE CODE= ',A4,
+     >    '; ECOREGION= ', A10, '; MANAGED= ', I2)
 C
         CASE DEFAULT
-          WRITE (JOSTND,138) KODFOR,KODTYP,IAGE,ASPECT,
-     >                     SLOPE,ELEV,ADJUSTL(CPVREF)
+          WRITE (JOSTND,138) KODFOR,KODTYP,IAGE,ASPECT,SLOPE,ELEV,
+     >          ADJUSTL(CPVREF),ADJUSTL(ECOREG),MANAGD
   138     FORMAT (/'STDINFO    FOREST-LOCATION CODE=',I8,
      >    '; HABITAT TYPE=',I3,
      >    '; AGE=',I5,'; ASPECT AZIMUTH IN DEGREES= ',F4.0,
      >    '; SLOPE= ' ,F4.0,'%'/
-     >    T12,'ELEVATION(100''S FEET)=',F5.1,';  REFERENCE CODE= ',A4)
+     >    T12,'ELEVATION(100''S FEET)=',F5.1,';  REFERENCE CODE= ',A4,
+     >    '; ECOREGION= ',A10,'; MANAGED= ',I2)
 C
       END SELECT
 C
@@ -857,31 +861,40 @@ C
             ECOREG(I:I) = '0'
             ECOREG = ECOREG(:I)
       END IF
-      IF ( LNOTBK(9) ) MANAGD=IFIX(ARRAY(9))
+      IF ( LNOTBK(9) ) THEN
+        MANAGD=IFIX(ARRAY(9))
+          IF(MANAGD.GT.1 .OR. MANAGD.LT.0) THEN
+            CALL ERRGRO(.TRUE.,41)
+            WRITE(JOSTND,2401) MANAGD
+ 2401     FORMAT('           STDINFO FIELD 9, MANAGED CODE OF ', I3,
+     >        ' INVALID.  DEFAULT CODE OF 0 (UNMANAGED) WILL BE USED.')
+          MANAGD=0
+          END IF
+      END IF
 C
       SELECT CASE (VARACD)
 C
         CASE ('CR','UT','TT','WS')
           IF(LKECHO)WRITE (JOSTND,2411) KEYWRD,KODFOR,KARD(2),KODTYP,
      >                    IAGE,ASPECT,SLOPE,ELEV,ADJUSTL(CPVREF), 
-     >                    ADJUSTL(ECOREG)
+     >                    ADJUSTL(ECOREG),MANAGD
  2411     FORMAT (/A8,'   FOREST-LOCATION CODE=',I6,
      >    '; HABITAT TYPE=',A10,' (CODE ',I3,')',
      >    '; AGE=',I5,'; ASPECT AZIMUTH IN DEGREES= ',F4.0,
      >    ';',/T12,' SLOPE= ' ,F4.0,'%',
      >    ';  ELEVATION(100''S FEET)=',F5.1,'; REFERENCE CODE= ',A4,
-     >    '; ECOREGION= ', A10)
+     >    '; ECOREGION= ', A10, '; MANAGED=', I2)
 C
         CASE ('AK')
           IF(LKECHO)WRITE (JOSTND,2412) KEYWRD,KODFOR,KODTYP,
      >                    IAGE,ASPECT,SLOPE,ELEV,ADJUSTL(CPVREF),
-     >                    ADJUSTL(ECOREG)
+     >                    ADJUSTL(ECOREG),MANAGD
  2412     FORMAT (/A8,'   FOREST-LOCATION CODE=',I8,
      >    '; HABITAT TYPE=',I3,
      >    '; AGE=',I5,'; ASPECT AZIMUTH IN DEGREES= ',F4.0,
      >    '; SLOPE= ',F4.0,'%'/
      >    T12,'ELEVATION(100''S FEET)=',F5.1,'; REFERENCE CODE= ',A4,
-     >    '; ECOREGION= ', A10)
+     >    '; ECOREGION= ', A10,'; MANAGED=', I2)
 C
         CASE ('SN')
           IF ( LNOTBK(2) .AND. .NOT. LNOTBK(8) ) ECOREG = KARD(2)
@@ -1733,13 +1746,18 @@ C----------
         IF (LNOTBK(5)) STMP(IGSP)  =ARRAY(5)
         IF (LNOTBK(6)) FRMCLS(IGSP)=ARRAY(6)
         IF (LNOTBK(7)) METHC(IGSP) =INT(ARRAY(7))
+        IF (LNOTBK(8)) SCFMIND(IGSP) = ARRAY(8)
+        IF (LNOTBK(9)) SCFTOPD(IGSP) = ARRAY(9) 
+        IF (LNOTBK(10)) SCFSTMP(IGSP) = ARRAY(10)
         ILEN=ISPGRP(IGRP,92)
         IF (VARACD .EQ. 'AK') THEN
           IF(LKECHO)WRITE(JOSTND,4534) KEYWRD,KARD(2)(1:ILEN),
-     &      IGSP,DBHMIN(IGSP),TOPD(IGSP),STMP(IGSP),FRMCLS(IGSP)
+     &      IGSP,DBHMIN(IGSP),TOPD(IGSP),STMP(IGSP),FRMCLS(IGSP),
+     &      SCFMIND(IGSP),SCFTOPD(IGSP),SCFSTMP(IGSP)
         ELSE
           IF(LKECHO)WRITE(JOSTND,4535) KEYWRD,KARD(2)(1:ILEN),IGSP,
-     &      DBHMIN(IGSP),TOPD(IGSP),STMP(IGSP),FRMCLS(IGSP)
+     &      DBHMIN(IGSP),TOPD(IGSP),STMP(IGSP),FRMCLS(IGSP),
+     &      SCFMIND(IGSP),SCFTOPD(IGSP),SCFSTMP(IGSP)
         ENDIF
         IF(LNOTBK(7).AND.LKECHO)WRITE(JOSTND,4536)METHC(IGSP)
  4505   CONTINUE
@@ -1754,6 +1772,9 @@ C----------
         IF (LNOTBK(5)) STMP(IS)  =ARRAY(5)
         IF (LNOTBK(6)) FRMCLS(IS)=ARRAY(6)
         IF (LNOTBK(7)) METHC(IS) =INT(ARRAY(7))
+        IF (LNOTBK(8)) SCFMIND(IS) = ARRAY(8)
+        IF (LNOTBK(9)) SCFTOPD(IS) = ARRAY(9)
+        IF (LNOTBK(10)) SCFSTMP(IS) = ARRAY(10)
  4510   CONTINUE
         IF(LKECHO)WRITE(JOSTND,4520) KEYWRD
  4520   FORMAT (/A8,'   THE FOLLOWING MERCHANTABILITY ',
@@ -1774,12 +1795,18 @@ C
           END SELECT
         ENDIF
         IF (LNOTBK(7).AND.LKECHO)WRITE(JOSTND,4525) ARRAY(7)
+        IF (LNOTBK(8).AND.LKECHO)WRITE(JOSTND,4527) ARRAY(8)
+        IF (LNOTBK(9).AND.LKECHO)WRITE(JOSTND,4528) ARRAY(9)
+        IF (LNOTBK(10).AND.LKECHO)WRITE(JOSTND,4529) ARRAY(10)
  4521   FORMAT (T22,'MINIMUM DBH =',F6.2)
  4522   FORMAT (T22,'TOP DIAMETER=',F6.2)
  4523   FORMAT (T22,'STUMP HEIGHT=',F6.2)
  4524   FORMAT (T22,'FORM CLASS  =',F6.2)
  4525   FORMAT (T22,'METHOD OF VOLUME CALCULATION IS ',F5.0)
  4526   FORMAT (T22,'LOG LENGTH  =',F6.2)
+ 4527   FORMAT (T22,'CUBIC FOOT SAWLOG MIN DBH=',F6.2)
+ 4528   FORMAT (T22,'CUBIC FOOT SAWLOG TOP DIAMETER=',F6.2)
+ 4529   FORMAT (T22,'CUBIC FOOT SAWLOG STUMP HT=',F6.2)
         GOTO 10
       ELSE
 C----------
@@ -1790,6 +1817,9 @@ C----------
         IF (LNOTBK(5)) STMP(IS)  =ARRAY(5)
         IF (LNOTBK(6)) FRMCLS(IS)=ARRAY(6)
         IF (LNOTBK(7)) METHC(IS) =INT(ARRAY(7))
+        IF (LNOTBK(8)) SCFMIND(IS) = ARRAY(8)
+        IF (LNOTBK(9)) SCFTOPD(IS) = ARRAY(9)
+        IF (LNOTBK(10)) SCFSTMP(IS) = ARRAY(10)
         ILEN=3
         IF (VARACD .EQ. 'AK') THEN
           IF(LKECHO)WRITE(JOSTND,4534) KEYWRD,KARD(2)(1:ILEN),IS,
@@ -1797,7 +1827,9 @@ C----------
  4534     FORMAT (/A8,'   MERCHANTABILITY STANDARDS FOR ',
      >        'SPECIES= ',A,' (CODE=',I3,') ARE:  MINIMUM DBH=',F6.2,
      >        '; TOP DIAMETER=',F6.2,'; STUMP HEIGHT=',F6.2,/T12,
-     >        'LOG LENGTH=',F6.2)
+     >        'LOG LENGTH=',F6.2,'; MINIMUM SAWLOG CUBIC DBH=', F6.2,
+     >        '; SAWLOG CUBIC TOP DIAMETER=',F6.2,
+     >        '; SAWLOG CUBIC STUMP HT=',F6.2)
 
         ELSE
           IF(LKECHO)WRITE(JOSTND,4535) KEYWRD,KARD(2)(1:ILEN),IS,
@@ -1805,7 +1837,9 @@ C----------
  4535     FORMAT (/A8,'   MERCHANTABILITY STANDARDS FOR ',
      >        'SPECIES= ',A,' (CODE=',I3,') ARE:  MINIMUM DBH=',F6.2,
      >        '; TOP DIAMETER=',F6.2,'; STUMP HEIGHT=',F6.2,/T12,
-     >        'FORM CLASS=',F6.2)
+     >        'FORM CLASS=',F6.2,'; MINIMUM SAWLOG CUBIC DBH=', F6.2,
+     >        '; SAWLOG CUBIC TOP DIAMETER=',F6.2,
+     >        '; SAWLOG CUBIC STUMP HT=',F6.2)
         ENDIF
         IF(LNOTBK(7).AND.LKECHO)WRITE(JOSTND,4536)METHC(IS)
  4536   FORMAT (T12,'METHOD OF VOLUME CALCULATION IS ',I6)
@@ -1830,15 +1864,18 @@ C----------
         IF (.NOT.LNOTBK(5)) ARRAY(5)=STMP(IFSP)
         IF (.NOT.LNOTBK(6)) ARRAY(6)=FRMCLS(IFSP)
         IF (.NOT.LNOTBK(7)) ARRAY(7)=METHC(IFSP)
-        CALL OPNEW(KODE,IDT,217,6,ARRAY(2))
+        IF (.NOT.LNOTBK(8)) ARRAY(8)=SCFMIND(IFSP)
+        IF (.NOT.LNOTBK(9)) ARRAY(9)=SCFTOPD(IFSP)
+        IF (.NOT.LNOTBK(10)) ARRAY(10)=SCFSTMP(IFSP)
+        CALL OPNEW(KODE,IDT,217,9,ARRAY(2))
         IF (KODE.GT.0) GOTO 10
         ILEN=ISPGRP(IGRP,92)
         IF(VARACD .EQ. 'AK') THEN
           IF(LKECHO)WRITE(JOSTND,4544) KEYWRD,IDT,KARD(2)(1:ILEN),IS,
-     >                    (ARRAY(I),I=3,7)
+     >                    (ARRAY(I),I=3,10)
         ELSE
           IF(LKECHO)WRITE(JOSTND,4545) KEYWRD,IDT,KARD(2)(1:ILEN),IS,
-     >                    (ARRAY(I),I=3,7)
+     >                    (ARRAY(I),I=3,10)
         ENDIF
 C----------
 C     IF (IS=0) ALL SPECIES WILL BE CHANGED IN FOLLOWING CODE:
@@ -1852,21 +1889,28 @@ C----------
         IF (.NOT.LNOTBK(5)) ARRAY(5)=STMP(1)
         IF (.NOT.LNOTBK(6)) ARRAY(6)=FRMCLS(1)
         IF (.NOT.LNOTBK(7)) ARRAY(7)=METHC(1)
+        IF (.NOT.LNOTBK(8)) ARRAY(8)=SCFMIND(1)
+        IF (.NOT.LNOTBK(9)) ARRAY(9)=SCFTOPD(1)
+        IF (.NOT.LNOTBK(10)) ARRAY(10)=SCFSTMP(1)
         ARRAY(2)=0.
-        CALL OPNEW(KODE,IDT,217,6,ARRAY(2))
+        CALL OPNEW(KODE,IDT,217,9,ARRAY(2))
         IF (KODE.GT.0) GOTO 10
         IF(VARACD.EQ.'AK')THEN
-          IF(LKECHO)WRITE(JOSTND,4574) KEYWRD,IDT,(ARRAY(I),I=3,7)
+          IF(LKECHO)WRITE(JOSTND,4574) KEYWRD,IDT,(ARRAY(I),I=3,10)
  4574     FORMAT(/A8,'   DATE/CYCLE=',I5,'; ALL SPECIES (CODE= 0)',
      >       '; MINIMUM DBH=',F6.2,'; TOP DIAMETER=',F6.2,
      >       '; STUMP HEIGHT=',F6.2,/T12,'LOG LENGTH=',F6.2,
-     >       '; METH OF VOL CALC=',F6.0)
+     >       '; METH OF VOL CALC=',F6.0,'; SAWLOG CUBIC MIN DBH=',
+     >       F6.2,'; SAWLOG CUBIC TOP DIA=',F6.2,
+     >       '; SAWLOG CUBIC STUMP HT=',F6.2)
         ELSE
-          IF(LKECHO)WRITE(JOSTND,4575) KEYWRD,IDT,(ARRAY(I),I=3,7)
+          IF(LKECHO)WRITE(JOSTND,4575) KEYWRD,IDT,(ARRAY(I),I=3,10)
  4575     FORMAT(/A8,'   DATE/CYCLE=',I5,'; ALL SPECIES (CODE= 0)',
      >       '; MINIMUM DBH=',F6.2,'; TOP DIAMETER=',F6.2,
      >       '; STUMP HEIGHT=',F6.2,/T12,' FORM CLASS=',F6.2,
-     >       '; METH OF VOL CALC=',F6.0)
+     >       '; METH OF VOL CALC=',F6.0,'; SAWLOG CUBIC MIN DBH=',
+     >       F6.2,'; SAWLOG CUBIC TOP DIA=',F6.2,
+     >       '; SAWLOG CUBIC STUMP HT=',F6.2)
         ENDIF
       ELSE
 C----------
@@ -1877,25 +1921,32 @@ C----------
         IF (.NOT.LNOTBK(5)) ARRAY(5)=STMP(IS)
         IF (.NOT.LNOTBK(6)) ARRAY(6)=FRMCLS(IS)
         IF (.NOT.LNOTBK(7)) ARRAY(7)=METHC(IS)
-        CALL OPNEW(KODE,IDT,217,6,ARRAY(2))
+        IF (.NOT.LNOTBK(8)) ARRAY(8)=SCFMIND(IS)
+        IF (.NOT.LNOTBK(9)) ARRAY(9)=SCFTOPD(IS)
+        IF (.NOT.LNOTBK(10)) ARRAY(10)=SCFSTMP(IS)
+        CALL OPNEW(KODE,IDT,217,9,ARRAY(2))
         IF (KODE.GT.0) GOTO 10
         ILEN=3
         IF(VARACD .EQ. 'AK') THEN
           IF(LKECHO)WRITE(JOSTND,4544) KEYWRD,IDT,KARD(2)(1:ILEN),IS,
-     >                    (ARRAY(I),I=3,7)
+     >                    (ARRAY(I),I=3,10)
  4544     FORMAT(/A8,'   DATE/CYCLE=',I5,'; SPECIES= ',A,
      >       ' (CODE= ',I3,
      >       '); MINIMUM DBH=',F6.2,'; TOP DIAMETER=',F6.2,
      >       '; STUMP HEIGHT=',F6.2,/T12,'LOG LENGTH=',F6.2,
-     >       ';  METH OF VOL CALC=',F6.0)
+     >       ';  METH OF VOL CALC=',F6.0,'; SAWLOG CUBIC MIN DBH=',
+     >       F6.2,'; SAWLOG CUBIC TOP DIA=',F6.2,
+     >       '; SAWLOG CUBIC STUMP HT=',F6.2)
         ELSE
           IF(LKECHO)WRITE(JOSTND,4545) KEYWRD,IDT,KARD(2)(1:ILEN),IS,
-     >                    (ARRAY(I),I=3,7)
+     >                    (ARRAY(I),I=3,10)
  4545     FORMAT(/A8,'   DATE/CYCLE=',I5,'; SPECIES= ',A,
      >       ' (CODE= ',I3,
      >       '); MINIMUM DBH=',F6.2,'; TOP DIAMETER=',F6.2,
      >       '; STUMP HEIGHT=',F6.2,/T12,'FORM CLASS=',F6.2,
-     >       ';  METH OF VOL CALC=',F6.0)
+     >       ';  METH OF VOL CALC=',F6.0,'; SAWLOG CUBIC MIN DBH=',
+     >       F6.2,'; SAWLOG CUBIC TOP DIA=',F6.2,
+     >       '; SAWLOG CUBIC STUMP HT=',F6.2)
         ENDIF
       ENDIF
       GOTO 10
@@ -4812,6 +4863,13 @@ C
 C  ==========  OPTION NUMBER 130: VOLEQNUM ========================VOLEQNUM
 C
 13000 CONTINUE
+      IF(LFIANVB) THEN
+        IF(LKECHO)WRITE(JOSTND,13010) KEYWRD
+13010    FORMAT (/A8'   KEYWORD REQUEST HAS BEEN RECONIGIZED BUT HAS '
+     >        'BEEN DEACTIVIATED BY A PREVIOUS CALL TO USE FIA NSVB ' 
+     >        'FOR COMPUTATION OF CUBIC FOOT VOLUMES')
+        GOTO 10 
+      END IF
 C
 C  IF WE DONT HAVE A KODFOR VALUE YET SET REGION BASED ON VARIANT
 C
@@ -6080,6 +6138,23 @@ C
       LFIANVB = .TRUE.
       DO 14710 ISPC=1,MAXSP
         METHC(ISPC) = 10
+        READ(FIAJSP(ISPC), '(I3)') IFIACODE
+
+        IF(IFIACODE.GT.0 .OR. 
+     &    (VARACD.EQ.'AK'.AND.JSP(ISPC).EQ.'LS')) THEN ! Minimum merch for both softwood and hardwood
+          DBHMIN(ISPC) = 5
+          TOPD(ISPC) = 4
+          STMP(ISPC) = 1
+          SCFSTMP = 1
+          IF(IFIACODE.LT.300) THEN              ! Softwood sawlog
+            SCFMIND(ISPC) = 9
+            SCFTOPD(ISPC) = 7
+          ELSE                                  ! Hardwood sawlog
+            SCFMIND(ISPC) = 11
+            SCFTOPD(ISPC) = 9
+          END IF
+        END IF
+
 14710 CONTINUE
       IF(LKECHO)WRITE(JOSTND,14711) KEYWRD
 14711    FORMAT (/A8, '   KEYWORD HAS BEEN REQUESTED.  '

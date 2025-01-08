@@ -82,6 +82,7 @@ C----------
       DATA NONE/'NONE'/
 C----------
       VARACD = 'TT'
+      ECOREG = ''
       CALL LNKINT
       DO 5 I=1,MAXSP
       SDIDEF(I) = 0.0
@@ -105,6 +106,9 @@ C----------
       BFSTMP(I) = 1.0
       BFTOPD(I) = 6.0
       BFMIND(I) = 8.0
+      SCFSTMP(I) = 1.0
+      SCFTOPD(I) = 6.0
+      SCFMIND(I) = 8.0
       BFLA0(I) = 0.0
       BFLA1(I) = 1.0
       CFLA0(I) = 0.0
@@ -135,6 +139,7 @@ C----------
     5 CONTINUE
       DBHMIN(7) = 7.0
       BFMIND(7) = 7.0
+      SCFMIND(7) = 7.0
       LHTDRG(13) = .FALSE.
       LHTDRG(16) = .FALSE.
 C
