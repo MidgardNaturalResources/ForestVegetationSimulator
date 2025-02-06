@@ -125,6 +125,7 @@ C----------
       LZEIDE = .FALSE.
       CALCSDI = ' '
       CFMIN = 0.
+      SCFMIN = 0.
       TCFMIN = 0.
       BFMIN = 0.
       BAMIN = 0.

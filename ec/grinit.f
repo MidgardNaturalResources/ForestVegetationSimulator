@@ -188,6 +188,7 @@ C----------
       BFMIND(7) = 6.0
       SCFMIND(7) = 6.0
       CFMIN = 0.
+      SCFMIN = 0.
       TCFMIN = 0.
       BFMIN = 0.
       BAMIN = 0.

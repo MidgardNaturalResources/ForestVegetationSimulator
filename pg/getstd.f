@@ -562,6 +562,7 @@ C
       TRSCUFT = REALS (132)
       TRTPA   = REALS (133)
       STNDSI  = REALS (134)
+      SCFMIN  = REALS (135)
 C
 C     GET THE REAL ARRAYS.
 C

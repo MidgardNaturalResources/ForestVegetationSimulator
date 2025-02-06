@@ -87,7 +87,7 @@
 ../so/avht40.f
 ../vls/morts.f
 ../vls/spctrn.f
-../vls/vols.f
+../ie/vols.f
 
 ../vbase/cuts.f
 ../vbase/disply.f

@@ -132,6 +132,7 @@ C
       CALCSDI = ' '
       BAINIT = 0.0
       CFMIN = 0.
+      SCFMIN = 0.
       TCFMIN = 0.
       BFMIN = 0.
       BAMIN = 0.

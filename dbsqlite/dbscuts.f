@@ -85,7 +85,7 @@ C     Column names change from: TCuFt, MCuFt, BdFt to MCuFt, SCuFt, SBdFt
         TBLNAME = 'FVS_CutList'
         NTCUFT  = 'TCuFt'
         NMCUFT  = 'MCuFt'
-        NSCUFT  = 'SCuFT'
+        NSCUFT  = 'SCuFt'
         NBDFT   = 'BdFt'
         NAMDCF  = 'Ht2TDCF '
         NAMDBF  = 'Ht2TDBF '

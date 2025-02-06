@@ -50,7 +50,6 @@
 ../common/VOLSTD.F77
 ../common/WORKCM.F77
 
-../ca/CA_nvbEQ.f
 ../ca/blkdat.f
 ../ca/bratio.f
 ../ca/ccfcal.f

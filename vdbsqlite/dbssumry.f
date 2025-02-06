@@ -396,7 +396,7 @@ C     DEFINE TABLENAME
 C--------
 C     CHECK TABLE FOR COLUMN(S) ADDED WITH NVB UPGRADE (2024)
 C     `SCuFt`, 
-C     `TPrdScFt`,
+C     `TPrdSCuFt`,
 C     `RSCuFt`,
 C     TO ACCOUNT FOR ADDING TO DATABASE CREATED PROIR TO UPGRADE
 C--------
@@ -404,7 +404,7 @@ C--------
      >        "SCuFt"//CHAR(0),"real"//CHAR(0))
 
       iRet= fsql3_addcolifabsent(IoutDBref,TRIM(TABLENAME)//CHAR(0),
-     >        "TPrdScFt"//CHAR(0),"real"//CHAR(0))
+     >        "TPrdSCuFt"//CHAR(0),"real"//CHAR(0))
 
       iRet= fsql3_addcolifabsent(IoutDBref,TRIM(TABLENAME)//CHAR(0),
      >        "RSCuFt"//CHAR(0),"real"//CHAR(0))

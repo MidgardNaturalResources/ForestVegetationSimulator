@@ -561,6 +561,7 @@ C----------
       VAR='NE'
 C
       DO ISPC=1,MAXSP
+        VOLEQ='           '
       READ(FIAJSP(ISPC),'(I4)')IFIASP
       IF(((METHC(ISPC).EQ.6).OR.(METHC(ISPC).EQ.9).OR.
      &    (METHC(ISPC).EQ.5)).AND.(VEQNNC(ISPC).EQ.'          '))THEN
@@ -577,6 +578,7 @@ C     &VEQNNC(ISPC)
       ENDIF
       IF(((METHB(ISPC).EQ.6).OR.(METHB(ISPC).EQ.9).OR.
      &    (METHB(ISPC).EQ.5)).AND.(VEQNNB(ISPC).EQ.'          '))THEN
+        VOLEQ='           '
         IF(METHB(ISPC).EQ.5)THEN
           VOLEQ(1:7)='900DVEE'
         ELSE

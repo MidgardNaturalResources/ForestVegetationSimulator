@@ -402,6 +402,7 @@ C
       METHC8=0
       DO ISPC=1,MAXSP
       READ(FIAJSP(ISPC),'(I4)')IFIASP
+      VOLEQ='           '
       IF(((METHC(ISPC).EQ.6).OR.(METHC(ISPC).EQ.9).OR.
      &    (METHC(ISPC).EQ.5)).AND.(VEQNNC(ISPC).EQ.'           '))THEN
         IF(METHC(ISPC).EQ.5)THEN
@@ -421,6 +422,7 @@ C     &VEQNNC(ISPC)
       ENDIF
       IF(((METHB(ISPC).EQ.6).OR.(METHB(ISPC).EQ.9).OR.
      &    (METHB(ISPC).EQ.5)).AND.(VEQNNB(ISPC).EQ.'           '))THEN
+        VOLEQ='           '
         IF(METHB(ISPC).EQ.5)THEN
           IF((KFORST.EQ.4).OR.(KFORST.EQ.24))THEN
             VOLEQ(1:7)='902DVEE'

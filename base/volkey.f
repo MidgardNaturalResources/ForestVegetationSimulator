@@ -55,7 +55,7 @@ C----------
       CALL OPFIND(4,MYACTS,NTODO)
       IF(NTODO.LE.0) GO TO 9960
       DO 7 I=1,NTODO
-      CALL OPGET(I,7,KDT,IACTK,NP,PRMS)
+      CALL OPGET(I,12,KDT,IACTK,NP,PRMS)
 C----------
 C  IF THE PARAMETER COUNT IS TOO LOW, DELETE THE ACTIVITY.
 C----------
@@ -132,9 +132,9 @@ C----------
         STMP(J)=PRMS(4)
         FRMCLS(J)=PRMS(5)
         METHC(J)=IFIX(PRMS(6))
-        SCFMIND(IGSP)=PRMS(7)
-        SCFTOPD(IGSP)=PRMS(8)
-        SCFSTMP(IGSP)=PRMS(9)
+        SCFMIND(J)=PRMS(7)
+        SCFTOPD(J)=PRMS(8)
+        SCFSTMP(J)=PRMS(9)
  9917   CONTINUE
       ELSE
         DBHMIN(ISPC)=PRMS(2)
@@ -142,9 +142,9 @@ C----------
         STMP(ISPC)=PRMS(4)
         FRMCLS(ISPC)=PRMS(5)
         METHC(ISPC)=IFIX(PRMS(6))
-        SCFMIND(IGSP)=PRMS(7)
-        SCFTOPD(IGSP)=PRMS(8)
-        SCFSTMP(IGSP)=PRMS(9)
+        SCFMIND(ISPC)=PRMS(7)
+        SCFTOPD(ISPC)=PRMS(8)
+        SCFSTMP(ISPC)=PRMS(9)
       ENDIF
       GO TO 7
 C----------

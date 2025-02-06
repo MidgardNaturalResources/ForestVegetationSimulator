@@ -11,7 +11,7 @@ C
 
       INTEGER iRet, ColNumber, iInvRef, I, SPPNUM
       DOUBLE PRECISION FORMCLS,SPPSDI,STIDX,MIND,MERCHTOPD,STUMP,
-     >                 SAWD,SAWTD,SAWSTMP,BFD,BFTD,BFSTUMP,CRBFCT
+     >                 SAWD,SAWTD,SAWSTMP,BFD,BFTD,BFSTUMP
       CHARACTER*4    SPPFVS,SPPPLTS
       CHARACTER*5    SPPFIA
       CHARACTER*2000 SQLStmtStr
@@ -21,6 +21,8 @@ C
      >        fsql3_prepare,fsql3_bind_double,fsql3_finalize
 
 C      IF(.NOT.LFIANVB) RETURN
+
+      CALL DBSCASE(1)
 
       TABLENAME = 'FVS_InvReference'
 
@@ -33,21 +35,20 @@ C      IF(.NOT.LFIANVB) RETURN
      -             'SpeciesFVS text, '//
      -             'SpeciesPlants text, '//
      -             'SpeciesFIA text, '//
-     -             'FrmClass real, '//
-     -             'SDI_Def real, '//
+     -             'FormClass real, '//
+     -             'SDIMax real, '//
      -             'SiteIndex real, '//
      -             'CFVolEq text, '//
      -             'MinDBH real, '//
      -             'TopDia real, '//
      -             'Stump real, '//
-     -             'SawDBH real, '//
-     -             'SawTop real, '//
+     -             'SawMinDBH real, '//
+     -             'SawTopDia real, '//
      -             'SawStump real, '//
      -             'BFVolEq text, '//
-     -             'BFMinD real, '//
-     -             'BFTopD real, '//
-     -             'BFStump real, '//
-     -             'CarbFact real);'//CHAR(0)
+     -             'BFMinDBH real, '//
+     -             'BFTopDia real, '//
+     -             'BFStump real);'//CHAR(0)
 
         iRet=fsql3_exec(IoutDBref, SQLStmtStr)
         IF(iRet.NE.0) THEN 
@@ -69,24 +70,21 @@ C      IF(.NOT.LFIANVB) RETURN
         BFD=BFMIND(I)
         BFTD=BFTOPD(I)
         BFSTUMP=BFSTMP(I)
-        CRBFCT=0.
 
         SQLStmtStr='INSERT INTO '//TRIM(TABLENAME)//
      -             ' (CaseID,StandID,'//
      -             'SpeciesNum,SpeciesFVS,SpeciesPlants,SpeciesFIA,'//
-     -             'FrmClass,SDI_Def,SiteIndex,'//
+     -             'FormClass,SDIMax,SiteIndex,'//
      -             'CFVolEq,MinDBH,TopDia,Stump,'//
-     -             'SawDBH,SawTop,SawStump,'//
-     -             'BFVolEQ,BFMinD,BFTopD,BFStump,'//
-     -             'CarbFact)'//
+     -             'SawMinDBH,SawTopDia,SawStump,'//
+     -             'BFVolEQ,BFMinDBH,BFTopDia,BFStump)'//
      -             " VALUES('"//CASEID//"','"//TRIM(NPLT)//"',"//
      -             "?,'"//TRIM(JSP(I))//"','"//TRIM(PLNJSP(I))//"','"//
      -             TRIM(FIAJSP(I))//"',"// 
      -             '?,?,?,'//
      -             "'"//TRIM(VEQNNC(I))//"',?,?,?,"//
      -             '?,?,?,'//
-     -             "'"//TRIM(VEQNNB(I))//"',?,?,?,"//
-     -             '?);'//CHAR(0)
+     -             "'"//TRIM(VEQNNB(I))//"',?,?,?);"//CHAR(0)
 
         iRet=fsql3_prepare(IoutDBref,SQLStmtStr)
         IF(iRet.NE.0) THEN 
@@ -132,9 +130,6 @@ C      IF(.NOT.LFIANVB) RETURN
 
         ColNumber = ColNumber + 1
         iRet= fsql3_bind_double(IoutDBref,ColNumber,BFSTUMP)
-
-        ColNumber = ColNumber + 1
-        iRet= fsql3_bind_double(IoutDBref,ColNumber,CRBFCT)
 
         iRet= fsql3_step(IoutDBref)
       ENDDO
