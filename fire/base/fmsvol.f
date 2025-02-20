@@ -148,10 +148,10 @@ C     based on cone with D = 1 inch
       IF (VARACD .EQ. 'CS' .OR. VARACD .EQ. 'LS'
      >    .OR. VARACD .EQ. 'NE' .OR. VARACD .EQ. 'SN') THEN
         VOL2HT = MAX(X,MCF)
-        IF (LMERCH) VOL2HT = MAX(X,SCF)
+        IF (LMERCH) VOL2HT = SCF
       ELSE
         VOL2HT = MAX(X,TCF)
-        IF (LMERCH) VOL2HT = MAX(X,MCF)
+        IF (LMERCH) VOL2HT = MCF
       ENDIF
 
       IF (DEBUG) WRITE(IOUT,40)ISPC,D,H,LCONE,TCF,VOL2HT

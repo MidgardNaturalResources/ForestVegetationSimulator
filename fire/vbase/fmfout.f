@@ -301,7 +301,12 @@ C
 C           ACCUMULATED THE BA AND VOL KILLED.
 
             TOTBAK(KSP)=TOTBAK(KSP)+(CURKIL(I)*DBH(I)*DBH(I)*.005454154)
-            TOTVOLK(KSP)=TOTVOLK(KSP)+(CURKIL(I)*CFV(I))
+            IF (VARACD.EQ.'CS' .OR. VARACD.EQ.'LS'
+     >          .OR. VARACD.EQ.'NE' .OR. VARACD.EQ.'SN') THEN 
+              TOTVOLK(KSP)=TOTVOLK(KSP)+(CURKIL(I)*MCFV(I))
+            ELSE
+              TOTVOLK(KSP)=TOTVOLK(KSP)+(CURKIL(I)*CFV(I))
+            END IF
 
 C           Find the first lower bound that this dbh is less than
 C           This means that the dbh is in the class just before

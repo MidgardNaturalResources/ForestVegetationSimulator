@@ -68,8 +68,8 @@ COMMONS
       CHARACTER*10 CSITECODE
       CHARACTER*40 PHOTOREF(32), REF
       REAL ARRAY2,X(1)
-      REAL XXG,FOTODATA(2),RSTANDDATA(63),DUM1,XTMP
-      INTEGER(KIND=4) ISTANDDATA(63)
+      REAL XXG,FOTODATA(2),RSTANDDATA(64),DUM1,XTMP
+      INTEGER(KIND=4) ISTANDDATA(64)
       EQUIVALENCE (RSTANDDATA,ISTANDDATA)
       INTEGER J,I,KODE,FKOD,NUMPVREF,IXTMP,IXF,iRet
       INTEGER ColNumber,NameLen,ColumnCount
@@ -91,7 +91,7 @@ COMMONS
      -        Fuel025_LI,Fuel251_LI,Fuel20_LI,Fuel35_LI,Fuel50_LI,
      -        FotoRef_LI,FotoCode_LI,PvRefCode_LI,
      -        FuelS025_LI,FuelS251_LI,FuelS1_LI,FuelS3_LI,FuelS6_LI,
-     -        FuelS12_LI,FuelS20_LI,FuelS35_LI,FuelS50_LI
+     -        FuelS12_LI,FuelS20_LI,FuelS35_LI,FuelS50_LI,StdOrgCd_LI
 
       DATA PHOTOREF / 'Fischer INT-96                      ',
      >                'Fischer INT-97                      ',
@@ -189,6 +189,7 @@ COMMONS
       FuelS20_LI     = NullInt
       FuelS35_LI     = NullInt
       FuelS50_LI     = NullInt
+      StdOrgCd_LI    = NullInt
 
       IF(LKECHO)WRITE(JOSTND,'(/T12,''STAND-LEVEL DATA BASE READ:'')')
 
@@ -467,6 +468,9 @@ C     GET NUMBER OF COLUMNS RETURNED
      >                          LEN(CFotoCode),NullChar)
           if (iRet.LT.LEN(CFotoCode)) CFotoCode((iRet+1):) = ' '
           IF (CFotoCode .ne. ' ') FotoCode_LI = 1
+         CASE('STDORGCD')
+         ISTANDDATA(64) = fsql3_colint(IinDBref,ColNumber,NullInt)
+         IF (ISTANDDATA(64) .ne. NullInt) StdOrgCd_LI = 1
 
          END SELECT
 
@@ -988,6 +992,8 @@ C     FUEL LOAD PARAMETERS
       ELSE
          RSTANDDATA(63) = -1.
       ENDIF
+
+      IF(StdOrgCd_LI.NE.NullInt) ISTDORG = ISTANDDATA(64)
 
 C     FUEL MODEL
 
