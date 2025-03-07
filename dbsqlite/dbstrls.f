@@ -37,15 +37,10 @@ C
       INCLUDE 'DBSCOM.F77'
 C
 C
-      INCLUDE 'WDBKWTDATA.INC'
-C
-C
 COMMONS
 C
       CHARACTER*8 TID,CSPECIE1,CSPECIE2,CSPECIE3
       CHARACTER*17 TBLNAME
-      CHARACTER*5 NTCUFT,NMCUFT,NSCUFT,NBDFT
-      CHARACTER*8 NAMDCF,NAMDBF
       CHARACTER*2000 SQLStmtStr
       INTEGER IWHO,I,IP,ITPLAB,iRet,IDMR,ICDF,IBDF,IPTBAL,KODE
       INTEGER ISPC,I1,I2,I3,ColNumber
@@ -54,8 +49,6 @@ C
       REAL TEM
       REAL*8 CW,P,DGI,DP,ESTHT,TREAGE,DDBH,DHT,DHTG,DPCT,
      >       DCFV,DWK1,DSWK,DBFV,DHT2TD2,DHT2TD1!,
-!     >       DAG_BIO, DMERCHBIO,DSAWBIO,
-!     >       DAGCARB, DMERCHCARB, DSAWCARB
 
       integer fsql3_tableexists,fsql3_exec,fsql3_bind_int,fsql3_step,
      >        fsql3_prepare,fsql3_bind_double,fsql3_finalize,
@@ -72,26 +65,7 @@ C     IS THIS OUTPUT A REDIRECT OF THE REPORT THEN SET KODE TO 0
 
       CALL DBSCASE(1)
 
-C     For CS, LS, NE and SN, the table name is FVS_TreeList_East and the following
-C     Column names change from: TCuFt, MCuFt, BdFt to MCuFt, SCuFt, SBdFt
-
-    !   IF (VARACD.EQ.'CS' .OR. VARACD.EQ.'LS' .OR. VARACD.EQ.'SN' .OR.
-    !  >    VARACD.EQ.'NE') THEN
-    !     TBLNAME = 'FVS_TreeList_East'
-    !     NTCUFT  = 'MCuFt'   ! options: MCuFt or SCuFt
-    !     NMCUFT  = 'SCuFt'   ! options: SCuFt or MCuFt
-    !     NBDFT   = 'SBdFt'   ! options: SBdFt or BdFt
-    !     NAMDCF  = 'Ht2TDMCF'
-    !     NAMDBF  = 'Ht2TDSCF'
-    !   ELSE
         TBLNAME = 'FVS_TreeList'
-        NTCUFT  = 'TCuFt'
-        NMCUFT  = 'MCuFt'
-        NSCUFT  = 'SCuFt'
-        NBDFT   = 'BdFt'
-        NAMDCF  = 'Ht2TDCF '
-        NAMDBF  = 'Ht2TDBF '
-      ! ENDIF
 
       iRet = fsql3_exec (IoutDBref,"Begin;"//Char(0))
       iRet = fsql3_tableexists(IoutDBref,TRIM(TBLNAME)//CHAR(0))
@@ -120,23 +94,17 @@ C     Column names change from: TCuFt, MCuFt, BdFt to MCuFt, SCuFt, SBdFt
      -             'MistCD int null,'//
      -             'BAPctile real null,'//
      -             'PtBAL real null,'//
-     -             NTCUFT // ' real null,'//
-     -             NMCUFT // ' real null,'//
-     -             NSCUFT // ' real null,'//
-     -             NBDFT  // ' real null,'//
-!     -             'AbvGrd_Bio real null,'//
-!     -             'Merch_Bio real null,'//
-!     -             'Sawtimber_Bio real null,'//
-!     -             'AbvGrd_Carbon real null,'//
-!     -             'Merch_Carbon real null,'//
-!     -             'Sawtimber_Carbon real null,'//
+     -             'TCuFt real null,'//
+     -             'MCuFt real null,'//
+     -             'SCuFt real null,'//
+     -             'BdFt real null,'//
      -             'MDefect int null,'//
      -             'BDefect int null,'//
      -             'TruncHt int null,'//
      -             'EstHt real null,'//
      -             'ActPt int null,'//
-     -             NAMDCF // ' real null,'//
-     -             NAMDBF // ' real null,'//
+     -             'Ht2TDCF real null,'//
+     -             'Ht2TDBF real null,'//
      -             'TreeAge real null);'//CHAR(0)
          iRet = fsql3_exec(IoutDBref,SQLStmtStr)
          IF (iRet .NE. 0) THEN
@@ -145,20 +113,26 @@ C     Column names change from: TCuFt, MCuFt, BdFt to MCuFt, SCuFt, SBdFt
            RETURN
          ENDIF
       ENDIF
+
+C--------
+C     CHECK EXISTING TABLE FOR COLUMN(S) ADDED WITH NVB UPGRADE (2024)
+C     `SCuFt`
+C     TO ACCOUNT FOR ADDING TO DATABASE CREATED PROIR TO UPGRADE
+C--------
+      iRet= fsql3_addcolifabsent(IoutDBref,TRIM(TBLNAME)//CHAR(0),
+     >        "SCuFt"//CHAR(0),"real"//CHAR(0))
+
       WRITE(SQLStmtStr,*)'INSERT INTO ',TBLNAME,
      -  ' (CaseID,StandID,Year,PrdLen,',
      -  'TreeId,TreeIndex,SpeciesFVS,SpeciesPLANTS,SpeciesFIA,',
      -  'TreeVal,SSCD,PtIndex,TPA,',
      -  'MortPA,DBH,DG,',
-     -  'HT,HTG,PctCr,CrWidth,MistCD,BAPctile,PtBAL,',NTCUFT,',',
-     -  NMCUFT,',',NSCUFT,',',NBDFT,',',
-!     -  'AbvGrd_Bio,Merch_Bio,Sawtimber_Bio,',
-!     -  'AbvGrd_Carbon,Merch_Carbon,Sawtimber_Carbon,',
+     -  'HT,HTG,PctCr,CrWidth,MistCD,BAPctile,PtBAL,',
+     -  'TCuFt,MCuFt,SCuFt,BdFt,',
      -  'MDefect,BDefect,TruncHt,',
-     -  'EstHt,ActPt,',NAMDCF,',',NAMDBF,',','TreeAge) VALUES (''',
+     -  'EstHt,ActPt,Ht2TDCF,Ht2TDBF,TreeAge) VALUES (''',
      -  CASEID,''',''',TRIM(NPLT),''',',IY(ICYC+1),',',IFINT,',',
      - '?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,',
-!     - '?,?,?,?,?,?,',
      - '?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);'
       iRet = fsql3_prepare(IoutDBref,trim(SQLStmtStr)//CHAR(0))
       IF (iRet .NE. 0) THEN
@@ -166,15 +140,6 @@ C     Column names change from: TCuFt, MCuFt, BdFt to MCuFt, SCuFt, SBdFt
         iRet = fsql3_exec (IoutDBref,"Commit;"//Char(0))
         RETURN
       ENDIF
-
-C--------
-C     CHECK TABLE FOR COLUMN(S) ADDED WITH NVB UPGRADE (2024)
-C     `SCuFt`, 
-C     TO ACCOUNT FOR ADDING TO DATABASE CREATED PROIR TO UPGRADE
-C--------
-      iRet= fsql3_addcolifabsent(IoutDBref,TRIM(TBLNAME)//CHAR(0),
-     >        "SCuFt"//CHAR(0),"real"//CHAR(0))
-
 
 C     SET THE TREELIST TYPE FLAG (LET IP BE THE RECORD OUTPUT COUNT).
 C     AND THE OUTPUT REPORTING YEAR.
@@ -314,25 +279,6 @@ C
             ColNumber=ColNumber+1
             DBFV = BFV(I)
             iRet = fsql3_bind_double(IoutDBref,ColNumber,DBFV)
-C           Add biomass and carbon outputs
-!            ColNumber=ColNumber+1
-!            DAG_BIO = ABVGRD_BIO(I)
-!            iRet = fsql3_bind_double(IoutDBref,ColNumber,DAG_BIO)
-!            ColNumber=ColNumber+1
-!            DMERCHBIO = MERCH_BIO(I)
-!            iRet = fsql3_bind_double(IoutDBref,ColNumber,DMERCHBIO)
-!            ColNumber=ColNumber+1
-!            DSAWBIO = CUBSAW_BIO(I)
-!            iRet = fsql3_bind_double(IoutDBref,ColNumber,DSAWBIO)
-!            ColNumber=ColNumber+1
-!            DAGCARB = ABVGRD_CARB(I)
-!            iRet = fsql3_bind_double(IoutDBref,ColNumber,DAGCARB)
-!            ColNumber=ColNumber+1
-!            DMERCHCARB = MERCH_CARB(I)
-!            iRet = fsql3_bind_double(IoutDBref,ColNumber,DMERCHCARB)
-!            ColNumber=ColNumber+1
-!            DSAWCARB = CUBSAW_CARB(I)
-!            iRet = fsql3_bind_double(IoutDBref,ColNumber,DSAWCARB)
 C           Report Volume Defect
             ColNumber=ColNumber+1
             iRet = fsql3_bind_int(IoutDBref,ColNumber,ICDF)
@@ -483,19 +429,6 @@ C
         ColNumber=ColNumber+1
         DBFV = BFV(I)
         iRet = fsql3_bind_double(IoutDBref,ColNumber,DBFV)
-C       Add biomass and carbon outputs
-!        ColNumber=ColNumber+1
-!        iRet = fsql3_bind_double(IoutDBref,ColNumber,ABVGRD_BIO(I))
-!        ColNumber=ColNumber+1
-!        iRet = fsql3_bind_double(IoutDBref,ColNumber,MERCH_BIO(I))
-!        ColNumber=ColNumber+1
-!        iRet = fsql3_bind_double(IoutDBref,ColNumber,CUBSAW_BIO(I))
-!        ColNumber=ColNumber+1
-!        iRet = fsql3_bind_double(IoutDBref,ColNumber,ABVGRD_CARB(I))
-!        ColNumber=ColNumber+1
-!        iRet = fsql3_bind_double(IoutDBref,ColNumber,MERCH_CARB(I))
-!        ColNumber=ColNumber+1
-!        iRet = fsql3_bind_double(IoutDBref,ColNumber,CUBSAW_CARB(I))
 C       Report Volume Defect
         ColNumber=ColNumber+1
         iRet = fsql3_bind_int(IoutDBref,ColNumber,ICDF)

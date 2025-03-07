@@ -52,8 +52,6 @@ C
       INTEGER*4 IDCMP1,IDCMP2,IFIASPP
       DATA IDCMP1,IDCMP2/10000000,20000000/
       REAL CW,P,DGI,DP,ESTHT,TREAGE
-      ! REAL CARBFACT,ABVGRD_BIO,MERCH_BIO,SAW_BIO
-      ! REAL ABVGRD_CARB,MERCH_CARB,SAW_CARB
 
       INTEGER fsql3_tableexists,fsql3_exec,fsql3_addcolifabsent
 C---------
@@ -70,18 +68,6 @@ C     ALWAYS CALL CASE TO MAKE SURE WE HAVE AN UP TO DATE CASE NUMBER
 C---------
       CALL DBSCASE(1)
       
-C     For CS, LS, NE and SN, the table name is FVS_TreeList_East and the following
-C     Column names change from: TCuFt, MCuFt, BdFt to MCuFt, SCuFt, SBdFt
-
-!       IF (VARACD.EQ.'CS' .OR. VARACD.EQ.'LS' .OR. VARACD.EQ.'SN' .OR.
-!      >    VARACD.EQ.'NE') THEN
-!         TBLNAME = 'FVS_CutList_East'
-!         NTCUFT  = 'MCuFt'
-!         NMCUFT  = 'SCuFt'
-!         NBDFT   = 'SBdFt'
-!         NAMDCF  = 'Ht2TDMCF'   ! options: Ht2TDMCF or HT2TDCM?
-!         NAMDBF  = 'Ht2TDSCF'   ! options: Ht2TDSCF or Ht2TDBM?
-!       ELSE
         TBLNAME = 'FVS_CutList'
         NTCUFT  = 'TCuFt'
         NMCUFT  = 'MCuFt'
@@ -89,7 +75,6 @@ C     Column names change from: TCuFt, MCuFt, BdFt to MCuFt, SCuFt, SBdFt
         NBDFT   = 'BdFt'
         NAMDCF  = 'Ht2TDCF '
         NAMDBF  = 'Ht2TDBF '
-      ! ENDIF
 
 C     CHECK TO SEE IF THE TREELIST TABLE EXISTS IN DATBASE
 C     IF IT DOESNT THEN WE NEED TO CREATE IT
@@ -129,12 +114,6 @@ C     IF IT DOESNT THEN WE NEED TO CREATE IT
      -             NMCUFT // ' real null,'//
      -             NSCUFT // ' real null,'//
      -             NBDFT  // ' real null,'//
-!     -             'AbvGrd_Bio real null,'//
-!     -             'Merch_Bio real null,'//
-!     -             'Sawtimber_Bio real null,'//
-!     -             'AbvGrd_Carbon real null,'//
-!     -             'Merch_Carbon real null,'//
-!     -             'Sawtimber_Carbon real null,'//
      -             'MDefect int null,'//
      -             'BDefect int null,'//
      -             'TruncHt int null,'//
@@ -242,8 +221,6 @@ C           LOAD SPECIES CODES FROM FVS, PLANTS AND FIA ARRAYS.
      -        'MortPA,DBH,DG,HT,HTG,PctCr,',
      -        'CrWidth,MistCD,BAPctile,PtBAL,',NTCUFT,',', 
      -        NMCUFT,',',NSCUFT,',',NBDFT,',',
-!     -        'AbvGrd_Bio,Merch_Bio,Sawtimber_Bio,',
-!     -        'AbvGrd_Carbon,Merch_Carbon,Sawtimber_Carbon,',
      -        'MDefect,BDefect,TruncHt,',
      -        'EstHt,ActPt,',NAMDCF,',',NAMDBF,',','TreeAge)',
      '        ' VALUES (''',
@@ -256,8 +233,6 @@ C           LOAD SPECIES CODES FROM FVS, PLANTS AND FIA ARRAYS.
      -        ',',P,',',DP,',',DBH(I),',',DGI,',',HT(I),',',HTG(I),
      -        ',',ICR(I),',',CW,',',IDMR,',',PCT(I),',',IPTBAL,',',
      -        CFV(I),',',MCFV(I),',',SCFV(I),',',BFV(I),',',
-!      -        ABVGRD_BIO(I),',',MERCH_BIO(I),',',CUBSAW_BIO(I),',',
-!      -        ABVGRD_CARB(I),',',MERCH_CARB(I),',',CUBSAW_CARB(I),',',
      -        ICDF,',',IBDF,',',
      -        ((ITRUNC(I)+5)/100),',',ESTHT,',',IPVEC(ITRE(I)),
      -        ',',HT2TD(I,2),',',HT2TD(I,1),',',TREAGE,');'

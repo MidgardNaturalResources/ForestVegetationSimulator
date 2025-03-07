@@ -9,8 +9,8 @@ C
       INCLUDE 'PLOT.F77'
       INCLUDE 'VOLSTD.F77'
 
-      INTEGER iRet, ColNumber, iInvRef, I, SPPNUM
-      DOUBLE PRECISION FORMCLS,SPPSDI,STIDX,MIND,MERCHTOPD,STUMP,
+      INTEGER iRet, ColNumber, iInvRef, I, SPPNUM,ISPPSDI,ISTIDX
+      DOUBLE PRECISION FORMCLS,MIND,MERCHTOPD,STUMP,
      >                 SAWD,SAWTD,SAWSTMP,BFD,BFTD,BFSTUMP
       CHARACTER*4    SPPFVS,SPPPLTS
       CHARACTER*5    SPPFIA
@@ -19,8 +19,6 @@ C
 
       INTEGER fsql3_tableexists,fsql3_exec,fsql3_bind_int,fsql3_step,
      >        fsql3_prepare,fsql3_bind_double,fsql3_finalize
-
-C      IF(.NOT.LFIANVB) RETURN
 
       CALL DBSCASE(1)
 
@@ -36,15 +34,15 @@ C      IF(.NOT.LFIANVB) RETURN
      -             'SpeciesPlants text, '//
      -             'SpeciesFIA text, '//
      -             'FormClass real, '//
-     -             'SDIMax real, '//
-     -             'SiteIndex real, '//
+     -             'SDIMax int, '//
+     -             'SiteIndex int, '//
      -             'CFVolEq text, '//
-     -             'MinDBH real, '//
-     -             'TopDia real, '//
-     -             'Stump real, '//
-     -             'SawMinDBH real, '//
-     -             'SawTopDia real, '//
-     -             'SawStump real, '//
+     -             'CFMinDBH real, '//
+     -             'CFTopDia real, '//
+     -             'CFStump real, '//
+     -             'CFSawMinDBH real, '//
+     -             'CFSawTopDia real, '//
+     -             'CFSawStump real, '//
      -             'BFVolEq text, '//
      -             'BFMinDBH real, '//
      -             'BFTopDia real, '//
@@ -59,8 +57,8 @@ C      IF(.NOT.LFIANVB) RETURN
 
       DO I=1,MAXSP
         FORMCLS=FRMCLS(I)
-        SPPSDI=SDIDEF(I)
-        STIDX=SITEAR(I)
+        ISPPSDI=NINT(SDIDEF(I))
+        ISTIDX=NINT(SITEAR(I))
         MIND=DBHMIN(I)
         MERCHTOPD=TOPD(I)
         STUMP=STMP(I)
@@ -75,8 +73,8 @@ C      IF(.NOT.LFIANVB) RETURN
      -             ' (CaseID,StandID,'//
      -             'SpeciesNum,SpeciesFVS,SpeciesPlants,SpeciesFIA,'//
      -             'FormClass,SDIMax,SiteIndex,'//
-     -             'CFVolEq,MinDBH,TopDia,Stump,'//
-     -             'SawMinDBH,SawTopDia,SawStump,'//
+     -             'CFVolEq,CFMinDBH,CFTopDia,CFStump,'//
+     -             'CFSawMinDBH,CFSawTopDia,CFSawStump,'//
      -             'BFVolEQ,BFMinDBH,BFTopDia,BFStump)'//
      -             " VALUES('"//CASEID//"','"//TRIM(NPLT)//"',"//
      -             "?,'"//TRIM(JSP(I))//"','"//TRIM(PLNJSP(I))//"','"//
@@ -99,10 +97,10 @@ C      IF(.NOT.LFIANVB) RETURN
         iRet= fsql3_bind_double(IoutDBref,ColNumber,FORMCLS)
 
         ColNumber = ColNumber + 1
-        iRet= fsql3_bind_double(IoutDBref,ColNumber,SPPSDI)
+        iRet= fsql3_bind_int(IoutDBref,ColNumber,ISPPSDI)
 
         ColNumber = ColNumber + 1
-        iRet= fsql3_bind_double(IoutDBref,ColNumber,STIDX)
+        iRet= fsql3_bind_int(IoutDBref,ColNumber,ISTIDX)
 
         ColNumber = ColNumber + 1
         iRet= fsql3_bind_double(IoutDBref,ColNumber,MIND)

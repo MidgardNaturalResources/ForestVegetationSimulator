@@ -1,4 +1,4 @@
-      SUBROUTINE DBSCARBBIOSUMRY(ICBSUM)
+      SUBROUTINE DBSCARBBIOSUMRY
       IMPLICIT NONE
 
       INCLUDE 'PRGPRM.F77'
@@ -8,20 +8,24 @@
       INCLUDE 'OPCOM.F77'
       INCLUDE 'PLOT.F77'
  
-      INTEGER iRet, ColNumber, ICBSUM, IHRVC, IYEAR, I
+      INTEGER iRet, ColNumber, IHRVC, IYEAR, I
       DOUBLE PRECISION DPTCUFT,DPMCUFT,DPSCUFT,
      >                 DPRTCUFT,DPRMCUFT,DPRSCUFT,
      >                 DPAGBIO,DPMRBIO,DPCSBIO,DPFLBIO,
      >                 DPABCRB,DPMRCRB,DPCSCRB,DPFOLCRB,
-     >                 DPRAGBIO,DPRMRBIO,DPRCSBIO,
-     >                 DPRAGCRB,DPRMRCRB,DPRCSCRB 
+     >                 DPRAGBIO,DPRMRBIO,DPRCSBIO,DPRFOLBIO,
+     >                 DPRAGCRB,DPRMRCRB,DPRCSCRB,DPRFOLCRB 
       CHARACTER*2000 SQLStmtStr
       CHARACTER*20   TABLENAME
 
       INTEGER fsql3_tableexists,fsql3_exec,fsql3_bind_int,fsql3_step,
      >        fsql3_prepare,fsql3_bind_double,fsql3_finalize
 
-      IF (.NOT.LFIANVB) RETURN
+      IF(IVBCSUM.EQ.0) RETURN
+      IF(.NOT.LFIANVB) THEN
+        CALL ERRGRO(.TRUE.,52)
+        RETURN
+      END IF
 
       TABLENAME = 'FVS_FIAVBC_Summary'
 
@@ -44,14 +48,14 @@
         DPTCUFT  = TSTV1(4)
         DPMCUFT  = TSTV1(5)
         DPSCUFT  = TSTV1(20)
-        DPAGBIO  = TSTV1(51)/2000
-        DPMRBIO  = TSTV1(52)/2000
-        DPCSBIO  = TSTV1(53)/2000
-        DPFLBIO  = TSTV1(54)/2000
-        DPABCRB  = TSTV1(55)/2000
-        DPMRCRB  = TSTV1(56)/2000
-        DPCSCRB  = TSTV1(57)/2000
-        DPFOLCRB = TSTV1(58)/2000
+        DPAGBIO  = TSTV1(51)
+        DPMRBIO  = TSTV1(52)
+        DPCSBIO  = TSTV1(53)
+        DPFLBIO  = TSTV1(54)
+        DPABCRB  = TSTV1(55)
+        DPMRCRB  = TSTV1(56)
+        DPCSCRB  = TSTV1(57)
+        DPFOLCRB = TSTV1(58)
 
       ENDIF
 
@@ -64,6 +68,8 @@
       DPRAGCRB = 0.
       DPRMRCRB = 0.
       DPRCSCRB = 0.
+      DPRFOLBIO  = 0.
+      DPRFOLCRB = 0.
 
       IF (ICYC.LE.NCYC) THEN
         DPRTCUFT = OCVREM(7)/GROSPC
@@ -72,9 +78,11 @@
         DPRAGBIO = OAGBIOREM(7)/GROSPC/2000
         DPRMRBIO = OMERBIOREM(7)/GROSPC/2000
         DPRCSBIO = OCSAWBIOREM(7)/GROSPC/2000
+        DPRFOLBIO= OFOLIBIOREM(7)/GROSPC/2000
         DPRAGCRB = OAGCARBREM(7)/GROSPC/2000
         DPRMRCRB = OMERCARBREM(7)/GROSPC/2000
         DPRCSCRB = OCSAWCARBREM(7)/GROSPC/2000
+        DPRFOLCRB= OFOLICARBREM(7)/GROSPC/2000
         IF (DPRTCUFT.GT.0.) IHRVC= 1   
       ENDIF  
 
@@ -103,15 +111,14 @@
      -             'RAbvGrdBio real, '//
      -             'RMerchBio real, '//
      -             'RSawBio real, '//
+     -             'RFoliBio real,'//
      -             'RAbvGrdCarb real, '//
      -             'RMerchCarb real, '//
-     -             'RSawCarb real);'//CHAR(0)
+     -             'RSawCarb real,'//
+     -             'RFoliCarb real);'//CHAR(0)
 
         iRet = fsql3_exec(IoutDBref, SQLStmtStr)
-        IF(iRet .NE. 0) THEN
-          ICBSUM = 0
-          RETURN 
-        ENDIF
+        IF(iRet .NE. 0) RETURN
       ENDIF
       DO I=1,2
         SQLStmtStr='INSERT INTO '//TRIM(TABLENAME)//
@@ -120,21 +127,19 @@
      -   'AbvGrdBio,MerchBio,SawBio,FoliageBio,'//
      -   'AbvGrdCarb,MerchCarb,SawCarb,FoliageCarb,'//
      -   'RTCuFt,RMCuFt,RSCuFt,'// 
-     -   'RAbvGrdBio,RMerchBio,RSawBio,'//
-     -   'RAbvGrdCarb,RMerchCarb,RSawCarb)'//
+     -   'RAbvGrdBio,RMerchBio,RSawBio,RFoliBio,'//
+     -   'RAbvGrdCarb,RMerchCarb,RSawCarb,RFoliCarb)'//
      -   " VALUES('"//CASEID//"','"//TRIM(NPLT)//"',?,?,"//
      -   '?,?,?,'//
      -   '?,?,?,?,'//
      -   '?,?,?,?,'//
      -   '?,?,?,'//
-     -   '?,?,?,'//
-     -   '?,?,?);'//CHAR(0)
+     -   '?,?,?,?,'//
+     -   '?,?,?,?);'//CHAR(0)
 
         iRet = fsql3_prepare(IoutDBref,SQLStmtStr)
-        IF (iRet .NE. 0) THEN
-          ICBSUM = 0
-          RETURN
-        ENDIF
+        IF (iRet .NE. 0) RETURN
+
         ColNumber = 1
         iRet = fsql3_bind_int(IoutDBref,ColNumber,IYEAR)
 
@@ -193,6 +198,9 @@
         iRet = fsql3_bind_double(IoutDBref,ColNumber,DPRCSBIO)
 
         ColNumber = ColNumber + 1
+        iRet = fsql3_bind_double(IoutDBref,ColNumber,DPRFOLBIO)
+
+        ColNumber = ColNumber + 1
         iRet = fsql3_bind_double(IoutDBref,ColNumber,DPRAGCRB)
 
         ColNumber = ColNumber + 1
@@ -200,6 +208,9 @@
 
         ColNumber = ColNumber + 1
         iRet = fsql3_bind_double(IoutDBref,ColNumber,DPRCSCRB)
+
+        ColNumber = ColNumber + 1
+        iRet = fsql3_bind_double(IoutDBref,ColNumber,DPRFOLCRB)
 
         iRet = fsql3_step(IoutDBref)
         IF (IHRVC.EQ.0) EXIT
@@ -213,6 +224,8 @@
         DPABCRB  = MAX(0.,DPABCRB - DPRAGCRB)
         DPMRCRB  = MAX(0.,DPMRCRB - DPRMRCRB)
         DPCSCRB  = MAX(0.,DPCSCRB - DPRCSCRB)
+        DPFLBIO  = MAX(0.,DPFLBIO - DPRFOLBIO)
+        DPFOLCRB  = MAX(0.,DPFOLCRB - DPRFOLCRB)
         DPRTCUFT = 0
         DPRMCUFT = 0
         DPRSCUFT = 0
@@ -222,11 +235,10 @@
         DPRAGCRB = 0
         DPRMRCRB = 0
         DPRCSCRB = 0
+        DPRFOLBIO = 0
+        DPRFOLCRB = 0
       ENDDO
       iRet = fsql3_finalize(IoutDBref)
 
-      IF(iRet.NE.0) THEN
-        ICBSUM = 0
-      ENDIF
-      RETURN
+      IF(iRet.NE.0) RETURN
       END

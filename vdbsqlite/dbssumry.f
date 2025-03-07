@@ -62,23 +62,11 @@ C     DEFINE TABLENAME
      -                 'MCuFt int,'//
      -                 'SCuFt int,'//
      -                 'BdFt int,'//
-!     -                 'AbvGrdBio real,'//
-!     -                 'MerchBio real,'//
-!     -                 'CubicSawBio real,'//
-!     -                 'AbvGrdCarbon real,'//
-!     -                 'MerchCarbon real,'//
-!     -                 'CubicSawCarbon real,'//
      -                 'RTpa int,'//
      -                 'RTCuFt int,'//
      -                 'RMCuFt int,'//
      -                 'RSCuFt int,'//
      -                 'RBdFt int,'//
-!     -                 'RAbvGrdBio real,'//
-!     -                 'RMerchBio real,'//
-!    -                  'RCubicSawBio real,'//
-!    -                  'RAbvGrdCarbon real,'//
-!    -                  'RMerchCarbon real,'//
-!    -                  'RCubicSawCarbon real,'//
      -                 'ATBA int,'//
      -                 'ATSDI int,'//
      -                 'ATCCF int,'//
@@ -122,22 +110,14 @@ C
      -           ' (CaseID,StandID,Year,Age,Tpa,',                       !L1 C5
      -           'BA,SDI,CCF,TopHt,QMD,',                                !L2 C5
      -           'TCuFt,MCuFt,SCuFt,BdFt,',                              !L3 C4
-!     -           'AbvGrdBio,MerchBio,CubicSawBio,',                      !L4 C3
-!     -           'AbvGrdCarbon,MerchCarbon,CubicSawCarbon,',             !L5 C3
      -           'RTpa,RTCuFt,RMCuFt,RSCuFt,RBdFt,',                     !L6 C5
-!     -           'RAbvGrdBio,RMerchBio,RCubicSawBio,',                   !L7 C3
-!     -           'RAbvGrdCarbon,RMerchCarbon,RCubicSawCarbon,',          !L8 C3
      -           'ATBA,ATSDI,ATCCF,ATTopHt,ATQMD,',                      !L9 C5
      -           'PrdLen,Acc,Mort,MAI,ForTyp,',                          !L10 C5 
      -           'SizeCls,StkCls)',                                      !L11 C2 
      -           'VALUES(''',CASEID,''',''',TRIM(NPLT),''',?,?,?,',      !L1 = 5
      -           '?,?,?,?,?,',                                           !L2 = 5
      -           '?,?,?,?,',                                             !L3 = 4 
-!     -           '?,?,?,',                                               !L4 = 3
-!     -           '?,?,?,',                                               !L5 = 3
-     -           '?,?,?,?,?,',                                            !L6 = 5
-!     -           '?,?,?,',                                               !L7 = 3 
-!     -           '?,?,?,',                                               !L8 = 3
+     -           '?,?,?,?,?,',                                           !L6 = 5
      -           '?,?,?,?,?,',                                           !L9 = 5
      -           '?,?,?,?,?,',                                           !L10 = 5
      -           '?,?);'                                                 !L11 = 2 
@@ -266,9 +246,7 @@ C
       INTEGER IYEAR,ICCF,ITOPHT,IOSDI,IPRDLEN,IHRVC,IAGEOUT,IFRTP
       DOUBLE PRECISION DPTPA,DPTPTPA,DPBA,DPQMD,DPTCUFT,DPTPTCUFT,
      > DPMCUFT,DPTPMCUFT,DPBDFT,DPTPBDFT,DPACC,DPMORT,DPMAI,DPRTPA,
-     > DPRTCUFT,DPRMCUFT,DPRBDFT,DPSCUFT,DPTPSCUFT,DPRSCUFT!,
-    ! > DPABVGRDBIO,DPMERCHBIO,DPCSAWBIO,
-    ! > DPABVGRDCARB,DPMERCHCARB,DPCSAWCARB
+     > DPRTCUFT,DPRMCUFT,DPRBDFT,DPSCUFT,DPTPSCUFT,DPRSCUFT
       INTEGER ColNumber,iRet,I
       CHARACTER*2000 SQLStmtStr
       CHARACTER*20 TABLENAME
@@ -367,12 +345,6 @@ C     DEFINE TABLENAME
      -                 'TPrdSCuFt real,'//
      -                 'BdFt real,'//
      -                 'TPrdBdFt real,'//
-!     -                 'AbvGrdBio real,'//
-!     -                 'MerchBio real,'//
-!     -                 'CubicSawBio real,'//
-!     -                 'AbvGrdCarbon real,'//
-!     -                 'MerchCarbon real,'//
-!     -                 'CubicSawCarbon real,'//
      -                 'RTpa real,'//
      -                 'RTCuFt real,'//
      -                 'RMCuFt real,'//
@@ -394,7 +366,7 @@ C     DEFINE TABLENAME
       ENDIF
 
 C--------
-C     CHECK TABLE FOR COLUMN(S) ADDED WITH NVB UPGRADE (2024)
+C     CHECK EXISTING TABLE FOR COLUMN(S) ADDED WITH NVB UPGRADE (2024)
 C     `SCuFt`, 
 C     `TPrdSCuFt`,
 C     `RSCuFt`,

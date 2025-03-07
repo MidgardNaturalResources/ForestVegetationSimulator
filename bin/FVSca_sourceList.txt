@@ -309,6 +309,9 @@
 ../vdbsqlite/dbscarbbiosumry.f
 ../vdbsqlite/dbsreference.f
 
+../dbsqlite/dbs_fiavbc_atrtls.f
+../dbsqlite/dbs_fiavbc_cutlst.f
+../dbsqlite/dbs_fiavbc_trls.f
 ../dbsqlite/dbsatrtls.f
 ../dbsqlite/dbsblkd.f
 ../dbsqlite/dbscalib.f

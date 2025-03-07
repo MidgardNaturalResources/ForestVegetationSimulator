@@ -322,7 +322,7 @@ C----------
         CALL CFVOL (ISPC,D,H,D2H,VN,VM,VMAX,TKILL,LCONE,BARK,ITRUNC(I),
      1              CTKFLG)
       ENDIF
-      IF(CTKFLG .AND. TKILL .AND. VMAX .GT. 0.)
+      IF(.NOT.LFIANVB .AND.(CTKFLG .AND. TKILL .AND. VMAX .GT. 0.))
      1 CALL CFTOPK (ISPC,D,H,TCF,MCF,SCF,VMAX,LCONE,BARK,ITRUNC(I))
 C----------
 C  LOAD WK1 WITH MERCH CUBIC VOLUME PER TREE.
@@ -340,7 +340,7 @@ C----------
          ENDDO
          ABVGRD_BIO(I) = BIOMAS(1)
          FOLI_BIO(I) = BIOMAS(13)
-         ABVGRD_CARB(I) = BIOMAS(1) * CARBFACTOR
+         ABVGRD_CARB(I) = BIOMAS(15)
          FOLI_CARB(I) = BIOMAS(13)*0.5
          IF(LIVEDEAD.EQ.'L' .AND. DECAYCD(I).GT.0) DECAYCD(I) = 0
          IF(DECAYCD(I).GT.0) THEN
@@ -362,6 +362,7 @@ C----------
                IF(IFIASP.GE.300) CARBFACTOR = 0.472
            END SELECT
          ENDIF
+         CARB_FRAC(I) = CARBFACTOR
          MERCH_BIO(I) = BIOMAS(6) + BIOMAS(8)
          MERCH_CARB(I) = MERCH_BIO(I) * CARBFACTOR
          IF(D .GT. SCFMIND(ISPC)) THEN
@@ -419,7 +420,7 @@ C        CORRECT MERCHANTABLE CUBIC VOLUME FOR FORM AND DEFECT.
 C        CONSIDER 99% DEFECT AS 100% DEFECT.
 C----------
         IF(ICDF.LT.99) THEN
-          MCFV(I)= MCFV(I)*(1.-FLOAT(ICDF)/100.)
+          IF(.NOT.LFIANVB) MCFV(I)= MCFV(I)*(1.-FLOAT(ICDF)/100.)
         ELSE
           MCFV(I)=0.
         END IF
@@ -504,10 +505,10 @@ C        CONSIDER 99% DEFECT AS 100% DEFECT.
 C----------
       IF(IBDF.LT.99) THEN
         BFV(I)=BFV(I)*(1.-FLOAT(IBDF)/100.)
-        IF(.NOT.LFIANVB) SCFV(I)=SCFV(I)*(1.-FLOAT(IBDF)/100.)
+        SCFV(I)=SCFV(I)*(1.-FLOAT(IBDF)/100.)
       ELSE
         BFV(I)=0.
-        IF(.NOT.LFIANVB) SCFV(I)=0.
+        SCFV(I)=0.
       ENDIF
 
 C----------

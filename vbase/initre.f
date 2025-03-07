@@ -459,8 +459,8 @@ C----------
       IF (IPSI.GT.0 .OR. ISISP.GT.0) THEN
          WRITE(JOSTND,210) TABLE(94)
  210     FORMAT(/A8,'   SITE INDEX INFORMATION:')
-         WRITE(JOSTND,211) (NSP(I,1)(1:2),SITEAR(I),I=1,MAXSP)
- 211     FORMAT ((T12,8(A3,'=',F6.0,:,'; '),A,'=',F6.0))
+         WRITE(JOSTND,211) (NSP(I,1)(1:2),NINT(SITEAR(I)),I=1,MAXSP)
+ 211     FORMAT ((T12,8(A3,'=',I6.0,:,'; '),A,'=',I6.0))
          IF(ISISP.GT.0)THEN
            WRITE(JOSTND,212) NSP(ISISP,1)(1:2),ISISP
  212       FORMAT(T12,'SITE SPECIES=',A,' CODE=',I5)
@@ -1402,6 +1402,14 @@ C
 C  ==========  OPTION NUMBER 39: MCFDLN  ============================MCFDLN
 C
  4100 CONTINUE
+      IF(LFIANVB) THEN
+        IF(LKECHO)WRITE(JOSTND,4101) KEYWRD
+ 4101 FORMAT (/A8'   KEYWORD REQUEST HAS BEEN RECOGNIZED BUT HAS '/,
+     >        T12,'BEEN DEACTIVIATED BY A PREVIOUS CALL TO USE FIAVBC '
+     >        /,T12,'FOR COMPUTATION OF CUBIC FOOT VOLUMES')
+      CALL ERRGRO(.TRUE.,50)
+      GO TO 10
+      END IF
       LCVOLS=.TRUE.
       CALL SDEFLN(LNOTBK,ARRAY,KEYWRD,CFLA0,CFLA1,KARD,IS)
       IF(IS .EQ. -999) GO TO 10
@@ -1424,6 +1432,13 @@ C
 C  ==========  OPTION NUMBER 40: BFFDLN  ============================BFFDLN
 C
  4200 CONTINUE
+      IF(LFIANVB) THEN
+        IF(LKECHO)WRITE(JOSTND,4201) KEYWRD
+ 4201   FORMAT(/A8,'   KEYWORD REQUEST HAS BEEN RECOGNIZED. '/,T12, 
+     >  'DUE TO PREVIOUS REQUEST FOR FIAVBC, MODIFICATIONS WILL BE '
+     >  'MADE TO BOARD FOOT VOLUMES ONLY.')
+        CALL ERRGRO(.TRUE.,51)
+      END IF
       LBVOLS=.TRUE.
       CALL SDEFLN(LNOTBK,ARRAY,KEYWRD,BFLA0,BFLA1,KARD,IS)
       IF(IS .EQ. -999) GO TO 10
@@ -1446,6 +1461,14 @@ C
 C  ==========  OPTION NUMBER 41:  MCDEFECT  =========================MCDEFECT
 C
  4300 CONTINUE
+      IF(LFIANVB) THEN
+            IF(LKECHO)WRITE(JOSTND,4301) KEYWRD
+ 4301 FORMAT (/A8'   KEYWORD REQUEST HAS BEEN RECOGNIZED BUT HAS ',
+     >        'BEEN DEACTIVIATED BY A PREVIOUS CALL TO USE FIAVBC ',
+     >        'FOR COMPUTATION OF CUBIC FOOT VOLUMES')
+      CALL ERRGRO(.TRUE.,50)
+      GO TO 10
+      END IF        
       LCVOLS=.TRUE.
 C----------
 C     IF THE DATE WAS NOT SPECIFIED (LNOTBK(1)=F), OR = 0;
@@ -1718,7 +1741,7 @@ C
  4500 CONTINUE
       IF(LFIANVB) THEN
         IF(LKECHO)WRITE(JOSTND,4531) KEYWRD
- 4531    FORMAT (/A8'   KEYWORD REQUEST HAS BEEN RECONIGIZED BUT HAS ',
+ 4531    FORMAT (/A8'   KEYWORD REQUEST HAS BEEN RECOGNIZED BUT HAS ',
      >        'BEEN DEACTIVIATED BY A PREVIOUS CALL TO USE FIAVBC ',
      >        'FOR COMPUTATION OF CUBIC FOOT VOLUMES')
         CALL ERRGRO(.TRUE., 49)
@@ -2271,9 +2294,9 @@ C
 C
           IF(LKECHO)WRITE(JOSTND,5011) KEYWRD,IDT,(ARRAY(I),I=2,6)
  5011     FORMAT (/A8,'   DATE/CYCLE=',I5,'; CUTTING MUST EXCEED ',
-     >        'THE FOLLOWING:',/,29X,F8.1,' MERCH CUFT,',F8.1,
-     >        ' MERCH BDFT,',F6.1,' SQFT BASAL AREA,',
-     >        F8.1,' TOTAL CUFT, AND', F8.1, ' SAWLOG CUFT')
+     >        'THE FOLLOWING:',/,29X,F8.1,' SQFT BASAL AREA,',F8.1,
+     >        ' TOTAL CUFT,',F6.1,' MERCH CUFT,',
+     >        F8.1,' SAWLOG CUFT, AND', F8.1, ' MERCH BDFT')
 C
       GO TO 10
 C
@@ -4130,6 +4153,7 @@ C     BOTH TYPES, 1 FOR WEST CUBIC OR EAST PULPWOOD, 2 FOR WEST BOARDS
 C     OR EAST SAWTIMBER.
 C----------
       IDTYPE=0
+      I=0
       IF(LNOTBK(1) .AND. ARRAY(1).EQ.1.) THEN
         IDTYPE=1
         LCVOLS=.TRUE.
@@ -4160,14 +4184,19 @@ C----------
         DO 11901 IG=2,IULIM
         IGSP = ISPGRP(IGRP,IG)
         IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.1)THEN
-          CFDEFT(2,IGSP)=WK6(1)
-          CFDEFT(3,IGSP)=WK6(2)
-          CFDEFT(4,IGSP)=WK6(3)
-          CFDEFT(5,IGSP)=WK6(4)
-          CFDEFT(6,IGSP)=WK6(5)
-          CFDEFT(7,IGSP)=WK6(6)
-          CFDEFT(8,IGSP)=WK6(7)
-          CFDEFT(9,IGSP)=WK6(8)
+          IF(LFIANVB) THEN
+            IF(I.LT.1)CALL ERRGRO(.TRUE.,50)
+            I = I+1
+          ELSE
+            CFDEFT(2,IGSP)=WK6(1)
+            CFDEFT(3,IGSP)=WK6(2)
+            CFDEFT(4,IGSP)=WK6(3)
+            CFDEFT(5,IGSP)=WK6(4)
+            CFDEFT(6,IGSP)=WK6(5)
+            CFDEFT(7,IGSP)=WK6(6)
+            CFDEFT(8,IGSP)=WK6(7)
+            CFDEFT(9,IGSP)=WK6(8)
+          ENDIF
         ENDIF
         IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.2)THEN
           BFDEFT(2,IGSP)=WK6(1)
@@ -4185,24 +4214,40 @@ C
         SELECT CASE (VARACD)
 C
           CASE ('CS','LS','NE','SN')
-            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.1)THEN
-              IF(LKECHO)WRITE(JOSTND,11932) KEYWRD,KARD(2)(1:ILEN),
-     &                                    IS,(WK6(I),I=1,8)
-            ENDIF
-            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.2)THEN
-              IF(LKECHO)WRITE(JOSTND,11933) KEYWRD,KARD(2)(1:ILEN),
-     &                                    IS,(WK6(I),I=1,8)
-            ENDIF
+              IF(LKECHO) THEN
+                IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.1)THEN
+                  IF(LFIANVB) THEN
+                    WRITE(JOSTND,11940)KEYWRD
+                  ELSE
+                    WRITE(JOSTND,11932) KEYWRD,KARD(2)(1:ILEN),
+     &                                       IS,(WK6(I),I=1,8)
+                  ENDIF
+                ENDIF
+                IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.2)THEN
+                  IF(LFIANVB) THEN
+                    WRITE(JOSTND,11941)KEYWRD
+                  ELSE
+                    WRITE(JOSTND,11933) KEYWRD,KARD(2)(1:ILEN),
+     &                                        IS,(WK6(I),I=1,8)
+                  ENDIF
+                ENDIF
+              ENDIF
 C
-          CASE DEFAULT
-            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.1)THEN
-              IF(LKECHO)WRITE(JOSTND,11934) KEYWRD,KARD(2)(1:ILEN),
+            CASE DEFAULT
+              IF(LKECHO) THEN
+                IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.1)THEN
+                  IF(LFIANVB) THEN
+                    WRITE(JOSTND,11940)KEYWRD
+                  ELSE
+                    WRITE(JOSTND,11934) KEYWRD,KARD(2)(1:ILEN),
+     &                                       IS,(WK6(I),I=1,8)
+                  ENDIF
+                ENDIF
+                  IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.2)THEN
+                    WRITE(JOSTND,11935) KEYWRD,KARD(2)(1:ILEN),
      &                                    IS,(WK6(I),I=1,8)
-            ENDIF
-            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.2)THEN
-              IF(LKECHO)WRITE(JOSTND,11935) KEYWRD,KARD(2)(1:ILEN),
-     &                                    IS,(WK6(I),I=1,8)
-            ENDIF
+                  ENDIF
+              ENDIF
 C
         END SELECT
 C----------
@@ -4211,14 +4256,19 @@ C----------
       ELSEIF(IS .EQ. 0)THEN
         DO 11910 IS=1,MAXSP
         IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.1)THEN
-          CFDEFT(2,IS)=WK6(1)
-          CFDEFT(3,IS)=WK6(2)
-          CFDEFT(4,IS)=WK6(3)
-          CFDEFT(5,IS)=WK6(4)
-          CFDEFT(6,IS)=WK6(5)
-          CFDEFT(7,IS)=WK6(6)
-          CFDEFT(8,IS)=WK6(7)
-          CFDEFT(9,IS)=WK6(8)
+          IF(LFIANVB) THEN 
+            IF(I.LT.1) CALL ERRGRO(.TRUE.,50)
+            I= I + 1
+          ELSE
+            CFDEFT(2,IS)=WK6(1)
+            CFDEFT(3,IS)=WK6(2)
+            CFDEFT(4,IS)=WK6(3)
+            CFDEFT(5,IS)=WK6(4)
+            CFDEFT(6,IS)=WK6(5)
+            CFDEFT(7,IS)=WK6(6)
+            CFDEFT(8,IS)=WK6(7)
+            CFDEFT(9,IS)=WK6(8)
+          ENDIF
         ENDIF
         IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.2)THEN
           BFDEFT(2,IS)=WK6(1)
@@ -4235,49 +4285,35 @@ C
         SELECT CASE (VARACD)
 C
           CASE ('CS','LS','NE','SN')
-            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.1)THEN
-              IF(LKECHO)WRITE(JOSTND,11912) KEYWRD,(WK6(I),I=1,8)
-11912         FORMAT(/A8,T12,'PULPWOOD VOLUME DEFECT',
-     >        ' PROPORTIONS HAVE BEEN CHANGED FOR ALL SPECIES:',
-     >        /T12,' 5 INCH TREES=',F6.2,'; 10 INCH TREES=',F6.2,
-     >        '; 15 INCH TREES=',F6.2,/T12,'20 INCH TREES=',F6.2,
-     >        '; 25 INCH TREES=',F6.2,'; 30 INCH TREES=',F6.2,/T12,
-     >        '35 INCH TREES=',F6.2,'; 40 INCH AND LARGER TREES=',F6.2)
-              IF(LKECHO .AND. IGNDEF.GT.0)WRITE(JOSTND,11909)
-11909         FORMAT(/T12,'DEFECT PERCENTAGES READ AS PART OF THE TRE',
-     >        'E RECORD INPUT FOR ALL SPECIES WILL BE IGNORED.')
+            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.1 .AND. LKECHO)THEN
+              IF(LFIANVB) THEN
+                WRITE(JOSTND,11940)KEYWRD
+              ELSE
+                WRITE(JOSTND,11912) KEYWRD,(WK6(I),I=1,8)
+                IF(IGNDEF.GT.0)WRITE(JOSTND,11909)
+              ENDIF
             ENDIF
-            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.2)THEN
-              IF(LKECHO)WRITE(JOSTND,11913) KEYWRD,(WK6(I),I=1,8)
-11913         FORMAT(/A8,T12,'SAWLOG VOLUME DEFECT',
-     &        ' PROPORTIONS HAVE BEEN CHANGED FOR ALL SPECIES:',
-     &        /T12,' 5 INCH TREES=',F6.2,'; 10 INCH TREES=',F6.2,
-     &        '; 15 INCH TREES=',F6.2,/T12,'20 INCH TREES=',F6.2,
-     >        '; 25 INCH TREES=',F6.2,'; 30 INCH TREES=',F6.2,/T12,
-     >        '35 INCH TREES=',F6.2,'; 40 INCH AND LARGER TREES=',F6.2)
-              IF(LKECHO .AND. IGNDEF.GT.0)WRITE(JOSTND,11909)
+            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.2 .AND. LKECHO)THEN
+              IF(LFIANVB) THEN
+                  WRITE(JOSTND,11941)KEYWRD
+              ELSE
+                WRITE(JOSTND,11913) KEYWRD,(WK6(I),I=1,8)
+                IF(IGNDEF.GT.0)WRITE(JOSTND,11909)
+              ENDIF
             ENDIF
 C
           CASE DEFAULT
-            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.1)THEN
-              IF(LKECHO)WRITE(JOSTND,11920) KEYWRD,(WK6(I),I=1,8)
-11920         FORMAT(/A8,T12,'CUBIC FOOT VOLUME DEFECT',
-     >        ' PROPORTIONS HAVE BEEN CHANGED FOR ALL SPECIES:',
-     >        /T12,' 5 INCH TREES=',F6.2,'; 10 INCH TREES=',F6.2,
-     >        '; 15 INCH TREES=',F6.2,/T12,'20 INCH TREES=',F6.2,
-     >        '; 25 INCH TREES=',F6.2,'; 30 INCH TREES=',F6.2,/T12,
-     >        '35 INCH TREES=',F6.2,'; 40 INCH AND LARGER TREES=',F6.2)
-              IF(LKECHO .AND. IGNDEF.GT.0)WRITE(JOSTND,11909)
+            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.1 .AND. LKECHO)THEN
+              IF(LFIANVB) THEN
+                WRITE(JOSTND,11940)KEYWRD
+              ELSE
+                WRITE(JOSTND,11920) KEYWRD,(WK6(I),I=1,8)
+                IF(IGNDEF.GT.0)WRITE(JOSTND,11909)
+              ENDIF
             ENDIF
-            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.2)THEN
-              IF(LKECHO)WRITE(JOSTND,11921) KEYWRD,(WK6(I),I=1,8)
-11921         FORMAT(/A8,T12,'BOARD FOOT VOLUME DEFECT',
-     &        ' PROPORTIONS HAVE BEEN CHANGED FOR ALL SPECIES:',
-     &        /T12,' 5 INCH TREES=',F6.2,'; 10 INCH TREES=',F6.2,
-     &        '; 15 INCH TREES=',F6.2,/T12,'20 INCH TREES=',F6.2,
-     >        '; 25 INCH TREES=',F6.2,'; 30 INCH TREES=',F6.2,/T12,
-     >        '35 INCH TREES=',F6.2,'; 40 INCH AND LARGER TREES=',F6.2)
-              IF(LKECHO .AND. IGNDEF.GT.0)WRITE(JOSTND,11909)
+            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.2 .AND. LKECHO)THEN
+              WRITE(JOSTND,11921) KEYWRD,(WK6(I),I=1,8)
+              IF(IGNDEF.GT.0)WRITE(JOSTND,11909)
             ENDIF
 C
         END SELECT
@@ -4286,14 +4322,19 @@ C     SPECIES CODE IS SPECIFIED (IS > 0).
 C----------
       ELSE
         IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.1)THEN
-          CFDEFT(2,IS)=WK6(1)
-          CFDEFT(3,IS)=WK6(2)
-          CFDEFT(4,IS)=WK6(3)
-          CFDEFT(5,IS)=WK6(4)
-          CFDEFT(6,IS)=WK6(5)
-          CFDEFT(7,IS)=WK6(6)
-          CFDEFT(8,IS)=WK6(7)
-          CFDEFT(9,IS)=WK6(8)
+          IF(LFIANVB) THEN
+            IF(I.LT.1) CALL ERRGRO(.TRUE.,50)
+            I= I + 1
+          ELSE
+            CFDEFT(2,IS)=WK6(1)
+            CFDEFT(3,IS)=WK6(2)
+            CFDEFT(4,IS)=WK6(3)
+            CFDEFT(5,IS)=WK6(4)
+            CFDEFT(6,IS)=WK6(5)
+            CFDEFT(7,IS)=WK6(6)
+            CFDEFT(8,IS)=WK6(7)
+            CFDEFT(9,IS)=WK6(8)
+          ENDIF
         ENDIF
         IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.2)THEN
           BFDEFT(2,IS)=WK6(1)
@@ -4310,55 +4351,112 @@ C
         SELECT CASE (VARACD)
 C
           CASE ('CS','LS','NE','SN')
-            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.1)THEN
-              IF(LKECHO)WRITE(JOSTND,11932) KEYWRD,KARD(2)(1:ILEN),
+            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.1 .AND. LKECHO)THEN
+              IF(LFIANVB) THEN
+                  WRITE(JOSTND,11940)
+              ELSE
+                WRITE(JOSTND,11932) KEYWRD,KARD(2)(1:ILEN),
      &                                    IS,(WK6(I),I=1,8)
-11932         FORMAT(/A8,T12,'PULPWOOD VOLUME DEFECT PROPORTIONS ',
+                IF(IGNDEF.GT.0)WRITE(JOSTND,11909)
+              ENDIF
+            ENDIF
+            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.2 .AND. LKECHO)THEN
+              IF(LFIANVB .AND. IDTYPE.EQ.0) THEN 
+                WRITE(JOSTND,11941)
+              ELSE
+                WRITE(JOSTND,11933) KEYWRD,KARD(2)(1:ILEN),
+     &                                    IS,(WK6(I),I=1,8)
+                IF(IGNDEF.GT.0)WRITE(JOSTND,11909)
+              ENDIF
+            ENDIF
+C
+          CASE DEFAULT
+            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.1 .AND. LKECHO)THEN
+              IF(LFIANVB) THEN
+                WRITE(JOSTND,11940)
+              ELSE
+                WRITE(JOSTND,11934) KEYWRD,KARD(2)(1:ILEN),
+     &                                    IS,(WK6(I),I=1,8)
+                IF(IGNDEF.GT.0)WRITE(JOSTND,11909)
+              ENDIF
+            ENDIF
+            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.2)THEN
+              WRITE(JOSTND,11935) KEYWRD,KARD(2)(1:ILEN),
+     &                                    IS,(WK6(I),I=1,8)
+              IF(IGNDEF.GT.0)WRITE(JOSTND,11909)
+            ENDIF
+C
+        END SELECT
+      ENDIF
+
+11909 FORMAT(/T12,'DEFECT PERCENTAGES READ AS PART OF THE ',
+     >        'TREE RECORD INPUT FOR ALL SPECIES WILL BE IGNORED.')
+
+11912 FORMAT(/A8,T12,'PULPWOOD VOLUME DEFECT',
+     >        ' PROPORTIONS HAVE BEEN CHANGED FOR ALL SPECIES:',
+     >        /T12,' 5 INCH TREES=',F6.2,'; 10 INCH TREES=',F6.2,
+     >        '; 15 INCH TREES=',F6.2,/T12,'20 INCH TREES=',F6.2,
+     >        '; 25 INCH TREES=',F6.2,'; 30 INCH TREES=',F6.2,/T12,
+     >        '35 INCH TREES=',F6.2,'; 40 INCH AND LARGER TREES=',F6.2)
+
+11913 FORMAT(/A8,T12,'SAWLOG VOLUME DEFECT',
+     &        ' PROPORTIONS HAVE BEEN CHANGED FOR ALL SPECIES:',
+     &        /T12,' 5 INCH TREES=',F6.2,'; 10 INCH TREES=',F6.2,
+     &        '; 15 INCH TREES=',F6.2,/T12,'20 INCH TREES=',F6.2,
+     >        '; 25 INCH TREES=',F6.2,'; 30 INCH TREES=',F6.2,/T12,
+     >        '35 INCH TREES=',F6.2,'; 40 INCH AND LARGER TREES=',F6.2)
+
+11920 FORMAT(/A8,T12,'CUBIC FOOT VOLUME DEFECT',
+     >        ' PROPORTIONS HAVE BEEN CHANGED FOR ALL SPECIES:',
+     >        /T12,' 5 INCH TREES=',F6.2,'; 10 INCH TREES=',F6.2,
+     >        '; 15 INCH TREES=',F6.2,/T12,'20 INCH TREES=',F6.2,
+     >        '; 25 INCH TREES=',F6.2,'; 30 INCH TREES=',F6.2,/T12,
+     >        '35 INCH TREES=',F6.2,'; 40 INCH AND LARGER TREES=',F6.2)
+
+11921 FORMAT(/A8,T12,'BOARD FOOT VOLUME DEFECT',
+     &        ' PROPORTIONS HAVE BEEN CHANGED FOR ALL SPECIES:',
+     &        /T12,' 5 INCH TREES=',F6.2,'; 10 INCH TREES=',F6.2,
+     &        '; 15 INCH TREES=',F6.2,/T12,'20 INCH TREES=',F6.2,
+     >        '; 25 INCH TREES=',F6.2,'; 30 INCH TREES=',F6.2,/T12,
+     >        '35 INCH TREES=',F6.2,'; 40 INCH AND LARGER TREES=',F6.2)
+
+11932 FORMAT(/A8,T12,'PULPWOOD VOLUME DEFECT PROPORTIONS ',
      >        'HAVE BEEN CHANGED FOR SPECIES:',A,' (CODE=',I3,')',
      >        /T12,' 5 INCH TREES=',F6.2,'; 10 INCH TREES=',F6.2,
      >        '; 15 INCH TREES=',F6.2,/T12,'20 INCH TREES=',F6.2,
      >        '; 25 INCH TREES=',F6.2,'; 30 INCH TREES=',F6.2,/T12,
      >        '35 INCH TREES=',F6.2,'; 40 INCH AND LARGER TREES=',F6.2)
-              IF(LKECHO .AND. IGNDEF.GT.0)WRITE(JOSTND,11909)
-            ENDIF
-            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.2)THEN
-              IF(LKECHO)WRITE(JOSTND,11933) KEYWRD,KARD(2)(1:ILEN),
-     &                                    IS,(WK6(I),I=1,8)
-11933         FORMAT(/A8,T12,'SAWLOG VOLUME DEFECT PROPORTIONS HAVE ',
+
+11933 FORMAT(/A8,T12,'SAWLOG VOLUME DEFECT PROPORTIONS HAVE ',
      &        'BEEN CHANGED FOR SPECIES:',A,' (CODE=',I3,')',
      &        /T12,' 5 INCH TREES=',F6.2,'; 10 INCH TREES=',F6.2,
      &        '; 15 INCH TREES=',F6.2,/T12,'20 INCH TREES=',F6.2,
      >        '; 25 INCH TREES=',F6.2,'; 30 INCH TREES=',F6.2,/T12,
      >        '35 INCH TREES=',F6.2,'; 40 INCH AND LARGER TREES=',F6.2)
-              IF(LKECHO .AND. IGNDEF.GT.0)WRITE(JOSTND,11909)
-            ENDIF
-C
-          CASE DEFAULT
-            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.1)THEN
-              IF(LKECHO)WRITE(JOSTND,11934) KEYWRD,KARD(2)(1:ILEN),
-     &                                    IS,(WK6(I),I=1,8)
-11934         FORMAT(/A8,T12,'CUBIC FOOT VOLUME DEFECT PROPORTIONS ',
+
+11934  FORMAT(/A8,T12,'CUBIC FOOT VOLUME DEFECT PROPORTIONS ',
      >        'HAVE BEEN CHANGED FOR SPECIES:',A,' (CODE=',I3,')',
      >        /T12,' 5 INCH TREES=',F6.2,'; 10 INCH TREES=',F6.2,
      >        '; 15 INCH TREES=',F6.2,/T12,'20 INCH TREES=',F6.2,
      >        '; 25 INCH TREES=',F6.2,'; 30 INCH TREES=',F6.2,/T12,
      >        '35 INCH TREES=',F6.2,'; 40 INCH AND LARGER TREES=',F6.2)
-              IF(LKECHO .AND. IGNDEF.GT.0)WRITE(JOSTND,11909)
-            ENDIF
-            IF(IDTYPE.EQ.0 .OR. IDTYPE.EQ.2)THEN
-              IF(LKECHO)WRITE(JOSTND,11935) KEYWRD,KARD(2)(1:ILEN),
-     &                                    IS,(WK6(I),I=1,8)
-11935         FORMAT(/A8,T12,'BOARD FOOT VOLUME DEFECT PROPORTIONS ',
+
+11935 FORMAT(/A8,T12,'BOARD FOOT VOLUME DEFECT PROPORTIONS ',
      &        'HAVE BEEN CHANGED FOR SPECIES:',A,' (CODE=',I3,')',
      &        /T12,' 5 INCH TREES=',F6.2,'; 10 INCH TREES=',F6.2,
      &        '; 15 INCH TREES=',F6.2,/T12,'20 INCH TREES=',F6.2,
      >        '; 25 INCH TREES=',F6.2,'; 30 INCH TREES=',F6.2,/T12,
      >        '35 INCH TREES=',F6.2,'; 40 INCH AND LARGER TREES=',F6.2)
-              IF(LKECHO .AND. IGNDEF.GT.0)WRITE(JOSTND,11909)
-            ENDIF
-C
-        END SELECT
-      ENDIF
+
+11940 FORMAT(/A8,T12, 'CUBIC FOOT VOLUME DEFECT ', 
+     >      'MODIFICATION HAS BEEN DISABLED DUE TO PREVIOUS CALL TO ',
+     >      'FIAVBC.')
+
+11941 FORMAT(/A8,T12, 'CUBIC FOOT VOLUME DEFECT ', 
+     >      'MODIFICATION HAS BEEN DISABLED '
+     >      'DUE TO PREVIOUS CALL TO FIAVBC.'/,T12,
+     >      'BOARD FOOT VOLUME DEFECT MODIFICATIONS STILL PERMITTED')
+
       GO TO 10
 C
 C  ==========  OPTION NUMBER 120: available ==========================available
@@ -4953,7 +5051,7 @@ C
 13000 CONTINUE
       IF(LFIANVB) THEN
         IF(LKECHO)WRITE(JOSTND,13010) KEYWRD
-13010    FORMAT (/A8'   KEYWORD REQUEST HAS BEEN RECONIGIZED BUT HAS '
+13010    FORMAT (/A8'   KEYWORD REQUEST HAS BEEN RECOGNIZED BUT HAS '
      >        'BEEN DEACTIVIATED BY A PREVIOUS CALL TO USE FIA VBC ' 
      >        'FOR COMPUTATION OF CUBIC FOOT VOLUMES')
         GOTO 10 
@@ -6228,6 +6326,7 @@ C
         METHC(ISPC) = 10
         READ(FIAJSP(ISPC), '(I3)') IFIACODE
 
+C       SET MERCH DEFAULTS BASED ON FIA STANDARDS
         IF(IFIACODE.GT.0 .OR. 
      &    (VARACD.EQ.'AK'.AND.JSP(ISPC).EQ.'LS')) THEN ! Minimum merch for both softwood and hardwood
           DBHMIN(ISPC) = 5
@@ -6242,13 +6341,18 @@ C
             SCFTOPD(ISPC) = 9
           END IF
         END IF
-
 14710 CONTINUE
+
+C       ZERO OUT ANY USER DEFINED CUBIC FOOT DEFECT
+      CFLA0 = 0
+      CFLA1 = 1
+      CFDEFT = 0
+
       IF(LKECHO)WRITE(JOSTND,14711) KEYWRD
-14711    FORMAT (/A8, '   KEYWORD HAS BEEN REQUESTED.  '
+14711    FORMAT (/A8, '   KEYWORD HAS BEEN REQUESTED. '
      >   'ALL CUBIC FOOT VOLUME COMPUTATIONS WILL BE BASED ON FIA '
      >   'METHODOLOGIES.',/,
      >   '           NO OTHER USER REQUESTS TO ALTER CUBIC FOOT ' 
-     >   'VOLUME ESTIMATES WILL BE PERMITTED.')
+     >   'VOLUME ESTIMATES OR DEFECT WILL BE PERMITTED.')
       GOTO 10
       END

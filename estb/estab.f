@@ -1210,15 +1210,16 @@ C
       MCFV(ITRN)=0.
       SCFV(ITRN)=0.
 C
-      CULL(ITRN)=0.
-      DECAYCD(ITRN)=0
-      WDLDSTEM(ITRN)=1
-      ABVGRD_BIO(ITRN)=0.
-      ABVGRD_CARB(ITRN)=0.
-      MERCH_BIO(ITRN)=0.
-      MERCH_CARB(ITRN)=0.
-      CUBSAW_BIO(ITRN)=0.
-      CUBSAW_CARB(ITRN)=0.
+      CULL(ITRN)        = 0.
+      DECAYCD(ITRN)     = 0
+      WDLDSTEM(ITRN)    = 1
+      ABVGRD_BIO(ITRN)  = 0.
+      ABVGRD_CARB(ITRN) = 0.
+      MERCH_BIO(ITRN)   = 0.
+      MERCH_CARB(ITRN)  = 0.
+      CUBSAW_BIO(ITRN)  = 0.
+      CUBSAW_CARB(ITRN) = 0.
+      CARB_FRAC(ITRN)   = 0.
 C
       ITRUNC(ITRN)=0
       DEFECT(ITRN)=0
@@ -1295,15 +1296,16 @@ C
       MCFV(ITRN)=0.
       SCFV(ITRN)=0.
 C
-      CULL(ITRN)=0.
-      DECAYCD(ITRN)=0
-      WDLDSTEM(ITRN)=1
-      ABVGRD_BIO(ITRN)=0.
-      ABVGRD_CARB(ITRN)=0.
-      MERCH_BIO(ITRN)=0.
-      MERCH_CARB(ITRN)=0.
-      CUBSAW_BIO(ITRN)=0.
-      CUBSAW_CARB(ITRN)=0.
+      CULL(ITRN)        = 0.
+      DECAYCD(ITRN)     = 0
+      WDLDSTEM(ITRN)    = 1
+      ABVGRD_BIO(ITRN)  = 0.
+      ABVGRD_CARB(ITRN) = 0.
+      MERCH_BIO(ITRN)   = 0.
+      MERCH_CARB(ITRN)  = 0.
+      CUBSAW_BIO(ITRN)  = 0.
+      CUBSAW_CARB(ITRN) = 0.
+      CARB_FRAC(ITRN)   = 0.
 C
       ITRUNC(ITRN)=0
       DEFECT(ITRN)=0
@@ -1383,15 +1385,16 @@ C
       MCFV(ITRN)=0.
       SCFV(ITRN)=0.
 C
-      CULL(ITRN)=0.
-      DECAYCD(ITRN)=0
-      WDLDSTEM(ITRN)=1
-      ABVGRD_BIO(ITRN)=0.
-      ABVGRD_CARB(ITRN)=0.
-      MERCH_BIO(ITRN)=0.
-      MERCH_CARB(ITRN)=0.
-      CUBSAW_BIO(ITRN)=0.
-      CUBSAW_CARB(ITRN)=0.
+      CULL(ITRN)        = 0.
+      DECAYCD(ITRN)     = 0
+      WDLDSTEM(ITRN)    = 1
+      ABVGRD_BIO(ITRN)  = 0.
+      ABVGRD_CARB(ITRN) = 0.
+      MERCH_BIO(ITRN)   = 0.
+      MERCH_CARB(ITRN)  = 0.
+      CUBSAW_BIO(ITRN)  = 0.
+      CUBSAW_CARB(ITRN) = 0.
+      CARB_FRAC(ITRN)   = 0.
 C
       ITRUNC(ITRN)=0
       DEFECT(ITRN)=0

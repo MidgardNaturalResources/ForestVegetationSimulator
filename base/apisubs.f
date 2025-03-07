@@ -631,6 +631,14 @@ c
         iv=232
       case ("rsawcrb")
         iv=233
+      case ("afolbio")
+        iv=234
+      case ("rfolbio")
+        iv=235
+      case ("afolcrb")
+        iv=236
+      case ("rfolcrb")
+        iv=237
       case ("acc")
         iv=301
       case ("mort")
@@ -873,6 +881,7 @@ c
         merch_carb(itrn)=0.
         cubsaw_carb(itrn)=0.
         foli_carb(itrn)=0.
+        carb_frac(itrn)=0.
         iestat(itrn)=0
         ptbalt(itrn)=0.
         idtree(itrn)=10000000+icyc*10000+itrn
