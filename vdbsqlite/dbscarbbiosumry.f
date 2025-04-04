@@ -100,11 +100,11 @@
      -             'AbvGrdBio real, '//
      -             'MerchBio real, '//
      -             'SawBio real, '//
-     -             'FoliageBio real,'//
+     -             'FoliBio real,'//
      -             'AbvGrdCarb real, '//
      -             'MerchCarb real, '//
      -             'SawCarb real, '//
-     -             'FoliageCarb real, '//
+     -             'FoliCarb real, '//
      -             'RTCuFt real, '//
      -             'RMCuFt real, '//
      -             'RSCuFt real, '//
@@ -124,8 +124,8 @@
         SQLStmtStr='INSERT INTO '//TRIM(TABLENAME)//
      -   ' (CaseID,StandID,Year,RmvCode,'//
      -   'TCuFt,MCuFt,SCuFt,'//
-     -   'AbvGrdBio,MerchBio,SawBio,FoliageBio,'//
-     -   'AbvGrdCarb,MerchCarb,SawCarb,FoliageCarb,'//
+     -   'AbvGrdBio,MerchBio,SawBio,FoliBio,'//
+     -   'AbvGrdCarb,MerchCarb,SawCarb,FoliCarb,'//
      -   'RTCuFt,RMCuFt,RSCuFt,'// 
      -   'RAbvGrdBio,RMerchBio,RSawBio,RFoliBio,'//
      -   'RAbvGrdCarb,RMerchCarb,RSawCarb,RFoliCarb)'//

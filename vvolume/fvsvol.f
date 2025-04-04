@@ -227,7 +227,7 @@ C  BF
      >    (VEQNNB(ISPC) .EQ. VEQNNC (ISPC)) .AND.
      >    (BFMIND(ISPC) .EQ. SCFMIND(ISPC)) .AND.
      >    (BFSTMP(ISPC) .EQ. SCFSTMP(ISPC)) .AND.
-     >    (BFTOPD(ISPC) .EQ. SCfTOPD(ISPC))) BFPFLG=1
+     >    (BFTOPD(ISPC) .EQ. SCFTOPD(ISPC))) BFPFLG=1
 C  MERCH CUBIC
       CUPFLG=1
 C  CORDWOOD
@@ -313,24 +313,18 @@ C----------
 C  Old R8, pulpwood process no longer needed, need to store pulp ht here
 C    -DW August 2022
 C----------
-      IF(D.GE.SCFMIND(ISPC))THEN
-        IF(IT.GT.0)HT2TD(IT,1)=HT1PRD
+
+      IF(IT.GT.0 .AND. D.GE.DBHMIN(ISPC)) THEN
+        HT2TD(IT,2)=MAX(HT1PRD, HT2PRD)
+        IF (BFPFLG.EQ.1) HT2TD(IT,1)=HT1PRD
+
 C     Region 8 requires at least 10 feet of product from the tree 
 C     for the tree volume to be included.
-        IF((IREGN.EQ.8).AND.(HT1PRD.LT.10.))THEN
+        IF(IREGN.EQ.8 .AND. PROD.EQ.'01' .AND. HT1PRD.LT.10.)THEN
           TVOL(4)=0.
           TVOL(2)=0.
-        ENDIF  
-      ENDIF        
-      IF(D.GE.DBHMIN(ISPC))THEN
-        IF(IT.GT.0) THEN
-          IF (IREGN.EQ.9 .OR. IREGN.EQ.8) THEN
-            HT2TD(IT,2)=HT2PRD
-          ELSE
-            HT2TD(IT,2)=HT1PRD
           ENDIF
         ENDIF
-      ENDIF
 
       IF(LFIANVB) BIODRYIN = BIODRY
 

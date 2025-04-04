@@ -371,7 +371,7 @@ C
      >            'PCTCOST','PROPSTK','SALVVOL','POINTID','STRSTAT',
      >            'TREEBIO','BHTWTBA','AHTWTBA',
      >            'BABVBIO','BMERBIO','BSAWBIO','BFOLBIO',
-     >            'BABVCRB','BMERCRB','BSAWCRB','AFOLBIO',
+     >            'BABVCRB','BMERCRB','BSAWCRB','BFOLCRB',
      >            'AABVBIO','RABVBIO','AMERBIO','RMERBIO',
      >            'ASAWBIO','RSAWBIO','AABVCRB','RABVCRB',
      >            'AMERCRB','RMERCRB','ASAWCRB','RSAWCRB',

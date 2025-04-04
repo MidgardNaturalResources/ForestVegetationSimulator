@@ -267,15 +267,6 @@ C
       ELSE IF(METHC(ISPC).EQ.10 .AND. VEQNNC(ISPC).EQ.'          ') THEN
         CALL NVBEQDEF(IFIASP,VOLEQ)
         VEQNNC(ISPC)=VOLEQ
-        DBHMIN(ISPC)=5
-        TOPD(ISPC)=4
-        IF(IFIASP .LT. 300) THEN
-          SCFMIND=9
-          SCFTOPD=7
-        ELSE
-          SCFMIND=11
-          SCFTOPD=9
-        END IF
       ENDIF
       IF(((METHB(ISPC).EQ.6).OR.(METHB(ISPC).EQ.9)).AND.
      &     (VEQNNB(ISPC).EQ.'           '))THEN

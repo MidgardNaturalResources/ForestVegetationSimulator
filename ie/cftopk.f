@@ -94,9 +94,9 @@ C----------
           VOLTK=S3-PHT**3
           MCF=MCF*VOLTK/VOLM
         ENDIF
-        IF (MCF.GT.TCF) MCF=TCF
-        IF (MCF.LT.0.) MCF=0
       ENDIF
+      IF (MCF.GT.TCF) MCF=TCF
+      IF (MCF.LT.0.) MCF=0
 C----------
 C  IF SAWTIMBER CUBIC VOLUME IS GREATER THAN ZERO, ADJUST
 C  SAWTIMBER CUBIC VOLUME ESTIMATES FOR DEAD OR MISSING TOP.
@@ -127,9 +127,9 @@ C----------
           VOLTK=S3-PHT**3
           SCF=SCF*VOLTK/VOLM
         ENDIF
-        IF (SCF.GT.MCF) SCF=MCF
-        IF (SCF.LT.0.) SCF=0
       ENDIF
+      IF (SCF.GT.MCF) SCF=MCF
+      IF (SCF.LT.0.) SCF=0
 C
   100 CONTINUE
       RETURN

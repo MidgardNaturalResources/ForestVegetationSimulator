@@ -64,6 +64,7 @@ C----------
       DATA NONE/'NONE'/
 C----------
       VARACD = 'SO'
+      ECOREG = ''
       CALL LNKINT
       DO 5 I=1,MAXSP
       SDIDEF(I)=0.
@@ -154,6 +155,7 @@ C----------
       ASPECT = 0.
       LAUTON=.FALSE.
       LFIA=.FALSE.
+      LFIANVB = .FALSE.
       AUTMAX = 60.0
       AUTMIN = 45.0
       BAF = 40.

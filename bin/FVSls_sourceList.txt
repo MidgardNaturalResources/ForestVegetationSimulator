@@ -294,6 +294,7 @@
 ../base/upcase.f
 ../base/update.f
 ../base/upkey.f
+../base/validateecodivision.f
 ../base/volkey.f
 
 ../dbsqlite/DBSCOM.F77

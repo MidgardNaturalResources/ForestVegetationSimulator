@@ -56,6 +56,7 @@ C
       ENDIF
 
       DO I=1,MAXSP
+        IF(TRIM(JSP(I)).EQ.'') CYCLE
         FORMCLS=FRMCLS(I)
         ISPPSDI=NINT(SDIDEF(I))
         ISTIDX=NINT(SITEAR(I))

@@ -861,10 +861,8 @@ C
       IF ( LNOTBK(5) ) SLOPE = ARRAY(5)
       IF ( LNOTBK(6) .AND. ARRAY(6).GT.0) ELEV = ARRAY(6)
       IF ( LNOTBK(8) ) THEN
-            ECOREG = ADJUSTL(KARD(8))
-            I = SCAN(ECOREG, '0123456789', .TRUE.)
-            ECOREG(I:I) = '0'
-            ECOREG = ECOREG(:I)
+        ECOREG = ADJUSTL(KARD(8))
+        CALL VALIDATEECODIVISION(ECOREG)
       END IF
       IF ( LNOTBK(9) ) THEN
         ISTDORG=IFIX(ARRAY(9))

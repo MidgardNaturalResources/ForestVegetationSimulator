@@ -272,6 +272,8 @@ C
       MERCH_CARB(ITRN)  = 0.
       CUBSAW_BIO(ITRN)  = 0.
       CUBSAW_CARB(ITRN) = 0.
+      FOLI_BIO(ITRN)    = 0.
+      FOLI_CARB(ITRN)   = 0.
       CARB_FRAC(ITRN)   = 0.
 C
       ITRUNC(ITRN)=0

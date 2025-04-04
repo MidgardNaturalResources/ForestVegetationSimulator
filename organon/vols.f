@@ -342,6 +342,12 @@ C----------
          FOLI_BIO(I) = BIOMAS(13)
          ABVGRD_CARB(I) = BIOMAS(15)
          FOLI_CARB(I) = BIOMAS(13)*0.5
+C------- MAKE SURE TREE(I) GETS ASSIGNED A VALUE
+         MERCH_BIO(I) = 0
+         MERCH_CARB(I) = 0
+         CUBSAW_BIO(I) = 0
+         CUBSAW_CARB = 0
+
          IF(LIVEDEAD.EQ.'L' .AND. DECAYCD(I).GT.0) DECAYCD(I) = 0
          IF(DECAYCD(I).GT.0) THEN
            SELECT CASE(DECAYCD(I))
@@ -363,8 +369,10 @@ C----------
            END SELECT
          ENDIF
          CARB_FRAC(I) = CARBFACTOR
-         MERCH_BIO(I) = BIOMAS(6) + BIOMAS(8)
-         MERCH_CARB(I) = MERCH_BIO(I) * CARBFACTOR
+         IF(D .GE. DBHMIN(ISPC)) THEN
+           MERCH_BIO(I) = BIOMAS(6) + BIOMAS(8)
+           MERCH_CARB(I) = MERCH_BIO(I) * CARBFACTOR
+         ENDIF
          IF(D .GT. SCFMIND(ISPC)) THEN
            CUBSAW_BIO(I) = BIOMAS(6)
            CUBSAW_CARB(I) = CUBSAW_BIO(I)*CARBFACTOR

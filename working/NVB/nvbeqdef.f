@@ -487,7 +487,7 @@
           IF (adjustl(DIVS(i)) .EQ. DIVISION) idx = i
         END DO
 
-          ! Make this a binary search to speed up processing time
+          ! Improvement suggestion: Make this a binary search to speed up processing time
           do i= 1,size(SPPDIV, dim= 1)
             if ( SPPDIV(i,1) .EQ. SPCD) THEN 
                 SppFound = .TRUE.
@@ -540,12 +540,6 @@ C       Check for managed plantation
          VOLEQ(11:11) = 'P'
         END IF
 
-      else if (ISTATE.eq.6 .or. ISTATE.eq.41 .or. ISTATE.eq.53) THEN
-        if(SPCD.eq.62 .or. SPCD.eq.65)   VOLEQ='400DVEW065'
-        if(SPCD.eq.66)                   VOLEQ='200DVEW066'
-        if(SPCD.eq.322)                  VOLEQ='200DVEW475'
-      else if (ISTATE.eq.4 .or. ISTATE.eq.35) THEN
-        if(SPCD.eq.332 .or. SPCD.eq.814) VOLEQ='300DVEW800'
       else
         if (ISTATE.eq.0) CALL ERRGRO(.TRUE., 44)
         do i= 1, size(WoodlandSpp)
@@ -554,6 +548,13 @@ C       Check for managed plantation
             exit
           end if
         end do
+        if (ISTATE.eq.6 .or. ISTATE.eq.41 .or. ISTATE.eq.53) THEN
+          if(SPCD.eq.62 .or. SPCD.eq.65)   VOLEQ='400DVEW065'
+          if(SPCD.eq.66)                   VOLEQ='200DVEW066'
+          if(SPCD.eq.322)                  VOLEQ='200DVEW475'
+        else if (ISTATE.eq.4 .or. ISTATE.eq.35) THEN
+          if(SPCD.eq.332 .or. SPCD.eq.814) VOLEQ='300DVEW800'
+        end if
       end if
         
       return 

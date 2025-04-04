@@ -180,6 +180,7 @@ C----------
       ASPECT = 0.
       LAUTON = .FALSE.
       LFIA = .FALSE.
+      LFIANVB = .FALSE.
       AUTMAX = 35.0
       AUTMIN = 20.0
       BAF = 40.
