@@ -397,7 +397,7 @@ C
      >    '; AGE=',I5,'; ASPECT AZIMUTH IN DEGREES= ',F4.0,
      >    ';',/T12,' SLOPE= ' ,F4.0,'%',
      >    ';  ELEVATION(100''S FEET)=',F5.1,'; REFERENCE CODE= ',A4,
-     >    'ECOREGION=', A10)
+     >    '; ECOREGION=', A10)
 C
         CASE ('AK')
           WRITE (JOSTND,131) KODFOR,KODTYP,IAGE,ASPECT,
@@ -862,7 +862,6 @@ C
       IF ( LNOTBK(6) .AND. ARRAY(6).GT.0) ELEV = ARRAY(6)
       IF ( LNOTBK(8) ) THEN
         ECOREG = ADJUSTL(KARD(8))
-        CALL VALIDATEECODIVISION(ECOREG)
       END IF
       IF ( LNOTBK(9) ) THEN
         ISTDORG=IFIX(ARRAY(9))

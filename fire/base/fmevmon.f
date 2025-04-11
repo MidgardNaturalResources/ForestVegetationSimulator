@@ -32,7 +32,7 @@ C.... Variable declarations.
       REAL    RVAL, XLDBH, XHDBH, XLHT, XHHT
       REAL    XS, XH, X, X1
       INTEGER IRC,IGRP,IULIM,IG
-      REAL    TPA,H,VT,D,HS,CL
+      REAL    TPA,H,VT,D,HS
       REAL    XD, XM1, HTD
 
 
@@ -308,8 +308,7 @@ C  PASS OVER THE INITIALLY-HARD SNAGS
           HS = HTIHSALV(I)
           TPA = SALVSPA(I,1)
           IF (TPA .GT. 0.) THEN
-            CALL FMSVL2(ISPS,XD,HTD,HS,X1,
-     &                  0,0.,0,1,
+            CALL FMSVL2(ISPS,XD,HTD,HS,X1,0,
      &                  'D',.FALSE.,DEBUG,JOSTND)
             X = TPA * X1
             IF (HARDSALV(I)) THEN
@@ -324,8 +323,7 @@ C     PASS OVER THE INITIALLY-SOFT SNAGS
           HS = HTISSALV(I)
           TPA = SALVSPA(I,2)
           IF (TPA .GT. 0. ) THEN
-             CALL FMSVL2(ISPS,XD,HTD,HS,X1,
-     &                  0,0.,0,1,
+             CALL FMSVL2(ISPS,XD,HTD,HS,X1,0,
      &                  'D',.FALSE.,DEBUG,JOSTND)
             X = TPA * X1
             XS = XS + X
@@ -387,7 +385,6 @@ C
       DBHC(J) = 0.
       HTC(J) = 0.
       ISPCC(J)=0
-      FMLVCULL(J)=0.
       DO IJ=0,5
       CROWNWC(J,IJ)=0.
       ENDDO
@@ -410,7 +407,6 @@ C
       ISPCC(I) = ISP(I)
       DBHC(I) = DBH(I)
       HTC(I) = HT(I)
-      FMLVCULL(I)=CULL(I)
 C
       DO J=0,5
       CROWNWC(I,J)=CROWNW(I,J)
@@ -607,8 +603,7 @@ C
               HS = HTIHSALV(I)
               TPA = SALVSPA(I,1)
               IF (TPA .GT. 0.) THEN
-                CALL FMSVL2(ISPS,XD,HTD,HS,X1,
-     &                      0,0.,0,1,
+                CALL FMSVL2(ISPS,XD,HTD,HS,X1,0,
      &                     'D',.FALSE.,DEBUG,JOSTND)
                 XH = TPA * X1
               ENDIF
@@ -618,8 +613,7 @@ C
               HS = HTISSALV(I)
               TPA = SALVSPA(I,2)
               IF (TPA .GT. 0. ) THEN
-                CALL FMSVL2(ISPS,XD,HTD,HS,X1,
-     &                      0,0.,0,1,
+                CALL FMSVL2(ISPS,XD,HTD,HS,X1,0,
      &                      'D',.FALSE.,DEBUG,JOSTND)
                 XS = TPA * X1
               ENDIF
@@ -666,7 +660,6 @@ C
           ISPC = ISPCC(I)
           D = DBHC(I)
           H = HTC(I)
-          CL=FMLVCULL(I)
 C     
           LINCL = .FALSE.
           IF(JX.EQ.0 .OR. JX.EQ.ISPC)THEN
@@ -696,8 +689,7 @@ C  CONSTRAIN TO HEIGHT RANGE
 C
               IF((H.GE.XLHT).AND.(H.LT.XHHT))THEN
                 LMERCH = .FALSE.
-                CALL FMSVL2(ISPC,D,H,XM1,VT,
-     &                      0, CL, 0, 1,
+                CALL FMSVL2(ISPC,D,H,XM1,VT,0, 
      &                      'L',LMERCH,.FALSE.,JOSTND)
            
                 IF (DEBUG) WRITE(JOSTND,60) I,FMPROB(I),PROB(I),
@@ -739,7 +731,6 @@ C
           ISPC = ISP(I)
           D = DBH(I)
           H = HT(I)
-          CL = FMLVCULL(I)
           XM1=-1.
 C    
           LINCL = .FALSE.
@@ -769,8 +760,7 @@ C
               IF((H.GE.XLHT).AND.(H.LT.XHHT))THEN
                 LMERCH = .FALSE.
            
-                CALL FMSVL2(ISPC,D,H,XM1,VT,
-     &                      0, CL, 0, 1, 
+                CALL FMSVL2(ISPC,D,H,XM1,VT,0, 
      &                     'L',LMERCH,.FALSE.,JOSTND)
            
                 IF (DEBUG) WRITE(JOSTND,61) I,FMPROB(I),PROB(I),

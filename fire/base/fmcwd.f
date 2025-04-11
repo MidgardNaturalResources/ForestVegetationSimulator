@@ -43,13 +43,13 @@ C     LOGICAL LMERCH
       INTEGER I, J, K, L
       INTEGER SP, IDCL, IYR
       INTEGER ISNG, KSP
-      REAL    D, DIAM, HTD, AMT,CUL
+      REAL    D, DIAM, HTD, AMT
       REAL    DISIN, HTH, X, Y, ADD
       REAL    TVOLI, R1, R1SQ, R2SQ, P1, P2, SDIFF, S2
       REAL    HIHT(2), LOHT(2), DIS, DIH, OLDHTH, OLDHTS
       REAL    VHI(2), VLO(2), RHRAT, DIF, HICUT, LOCUT
       REAL    BP(0:9), BPH(0:9), SCNV(2), TOSOFT
-      INTEGER IDANUW,CRWNRTO,DECAY,WDSTMS
+      INTEGER IDANUW,CRWNRTO
 
 C     Conventional breakpoints for fuel size categories.
 
@@ -249,7 +249,7 @@ C     D       = DBH
 C     DIH     = DENSITY (#/AC) OF DOWNED (HARD) SNAGS FROM **CUTS**
 C     HT      = HEIGHT (FT) OF TREE JUST DOWNED
 
-      ENTRY CWD3(KSP, D, DIH, HTH)
+      ENTRY CWD3(KSP, D, DIH, HTH, CRWNRTO)
 
       DEBUG = .FALSE.
 
@@ -272,15 +272,11 @@ cc1      LOHT(2) = 1.
       DIAM = D
       HTD  = HTH
       SP   = KSP
-      CUL  = 0
-      DECAY = 0
-      WDSTMS = 1
       
 C     GET A TOTAL VOLUME FOR THIS TREE (created by cuts)
 
       TVOLI=-1      
-      CALL FMSVL2(SP,DIAM,HTD,TVOLI,TVOLI,
-     &            CRWNRTO,CUL,DECAY,WDSTMS,
+      CALL FMSVL2(SP,DIAM,HTD,TVOLI,TVOLI,CRWNRTO,
      &            'D',.false.,.false.,JOSTND)
 
 

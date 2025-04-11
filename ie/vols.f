@@ -187,7 +187,8 @@ C----------
         CALL CFVOL (ISPC,D,H,D2H,VN,VM,VMAX,TKILL,LCONE,BARK,ITRUNC(I),
      1              CTKFLG)
       ENDIF
-      IF(.NOT.LFIANVB .AND. (CTKFLG .AND. TKILL .AND. VMAX .GT. 0.))
+      IF(VEQNNC(ISPC)(1:3) .NE. 'NVB'.AND. 
+     1  (CTKFLG .AND. TKILL .AND. VMAX .GT. 0.))
      1 CALL CFTOPK (ISPC,D,H,TCF,MCF,SCF,VMAX,LCONE,BARK,ITRUNC(I))
 C----------
 C  LOAD WK1 WITH MERCH CUBIC VOLUME PER TREE.
@@ -237,15 +238,27 @@ C------- MAKE SURE TREE(I) GETS ASSIGNED A VALUE
            END SELECT
          ENDIF
          CARB_FRAC(I) = CARBFACTOR
-         IF(D .GE. DBHMIN(ISPC)) THEN
-           MERCH_BIO(I) = BIOMAS(6) + BIOMAS(8)
-           MERCH_CARB(I) = MERCH_BIO(I) * CARBFACTOR
-         ENDIF
-         IF(D .GE. SCFMIND(ISPC)) THEN
-           CUBSAW_BIO(I) = BIOMAS(6)
-           CUBSAW_CARB(I) = CUBSAW_BIO(I)*CARBFACTOR
-         ENDIF
-       ENDIF
+
+         SELECT CASE (IFIASP)
+           CASE (62,  63,  65,  66, 69, 106, 133, 134, 
+     &          143, 321, 322, 475, 803, 810, 814, 843)
+              MCFV(I)        = 0
+              SCFV(I)        = 0
+              MERCH_BIO(I)   = 0
+              MERCH_CARB(I)  = 0
+              CUBSAW_BIO(I)  = 0
+              CUBSAW_CARB(I) = 0
+           CASE DEFAULT
+            IF(D .GE. DBHMIN(ISPC)) THEN
+              MERCH_BIO(I) = BIOMAS(6) + BIOMAS(8)
+              MERCH_CARB(I) = MERCH_BIO(I) * CARBFACTOR
+            ENDIF
+            IF(D .GE. SCFMIND(ISPC)) THEN
+              CUBSAW_BIO(I) = BIOMAS(6)
+              CUBSAW_CARB(I) = CUBSAW_BIO(I)*CARBFACTOR
+            ENDIF
+          END SELECT
+        ENDIF
 
 C----------
 C  SUMMARIZE VOLUME BY SPECIES AND TREE CLASS.  IF LSTART IS

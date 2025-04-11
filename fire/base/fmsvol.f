@@ -66,7 +66,7 @@ C     CALCULATE THE VOLUME
       CWN = 0
       CL = 0
       DCY = 0
-      WSTM = 1
+      WSTM = 0
       IF(LFIANVB) THEN
         LVD = 'D'
       ELSE
@@ -77,8 +77,7 @@ C     CALCULATE THE VOLUME
 
 C     ENTRY POINT FOR SNAGS CREATED BY **CUTS**.
 
-      ENTRY FMSVL2(JSP,XD,XH,XHT,VOL2HT,
-     1             CRWNRTO,CUL,DECAY,WDSTMS,
+      ENTRY FMSVL2(JSP,XD,XH,XHT,VOL2HT,CRWNRTO,
      1             LIVEDEAD,LMERCHIN,DEBUG,IOUT)
 
       JS = JSP
@@ -87,9 +86,10 @@ C     ENTRY POINT FOR SNAGS CREATED BY **CUTS**.
       LMERCH = LMERCHIN
 
       CWN = CRWNRTO
-      CL = CUL
-      DCY = DECAY
-      WSTM = WDSTMS
+      CL     = 0
+      DCY    = 0
+      WSTM   = 0
+      BIODRY = 0
       IF(LFIANVB) THEN
         LVD = LIVEDEAD
       ELSE

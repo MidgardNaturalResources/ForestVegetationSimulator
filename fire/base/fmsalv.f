@@ -199,8 +199,7 @@ c
           ISOFTV2 = 0.0
           IF (DENIS(I) .GT. 0.0) THEN
             CALL FMSVOL(I, HTIS(I), ISOFTV,DEBUG,0)
-            CALL FMSVL2(SPS(I),DBHS(I),HTDEAD(I),HTIS(I),ISOFTV2,
-     >                  0, 0, 0, 1,
+            CALL FMSVL2(SPS(I),DBHS(I),HTDEAD(I),HTIS(I),ISOFTV2,0, 
      >                  'D',LMERCH,DEBUG,JOSTND)
 C            CALL FMSVL2(SPS(I),DBHS(I),HTIS(I),XNEG1,ISOFTV2,
 C     >        LMERCH,DEBUG,JOSTND)
@@ -211,8 +210,7 @@ C     >        LMERCH,DEBUG,JOSTND)
           IHARDV = 0.0
           IF (DENIH(I) .GT. 0.0) THEN
             CALL FMSVOL(I, HTIH(I), IHARDV,DEBUG,0)
-            CALL FMSVL2(SPS(I),DBHS(I),HTDEAD(I),HTIH(I),IHARDV2,
-     >                  0, 0, 0, 1,
+            CALL FMSVL2(SPS(I),DBHS(I),HTDEAD(I),HTIH(I),IHARDV2,0,
      >                  'D',LMERCH,DEBUG,JOSTND)
 c            CALL FMSVL2(SPS(I),DBHS(I),HTIH(I),XNEG1,IHARDV2,
 c     >        LMERCH,DEBUG,JOSTND)

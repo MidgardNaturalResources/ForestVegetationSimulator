@@ -1212,7 +1212,7 @@ C
 C
       CULL(ITRN)        = 0.
       DECAYCD(ITRN)     = 0
-      WDLDSTEM(ITRN)    = 1
+      WDLDSTEM(ITRN)    = 0
       ABVGRD_BIO(ITRN)  = 0.
       ABVGRD_CARB(ITRN) = 0.
       MERCH_BIO(ITRN)   = 0.
@@ -1300,7 +1300,7 @@ C
 C
       CULL(ITRN)        = 0.
       DECAYCD(ITRN)     = 0
-      WDLDSTEM(ITRN)    = 1
+      WDLDSTEM(ITRN)    = 0
       ABVGRD_BIO(ITRN)  = 0.
       ABVGRD_CARB(ITRN) = 0.
       MERCH_BIO(ITRN)   = 0.
@@ -1391,7 +1391,7 @@ C
 C
       CULL(ITRN)        = 0.
       DECAYCD(ITRN)     = 0
-      WDLDSTEM(ITRN)    = 1
+      WDLDSTEM(ITRN)    = 0
       ABVGRD_BIO(ITRN)  = 0.
       ABVGRD_CARB(ITRN) = 0.
       MERCH_BIO(ITRN)   = 0.

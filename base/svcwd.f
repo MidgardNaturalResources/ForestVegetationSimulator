@@ -300,11 +300,9 @@ C  sp,d,ht values instead of using snag index number to retrieve)
 C----------
             DIAM2 = SNGDIA(IS2F(IOBJ))
             HTD2  = SNGLEN(IS2F(IOBJ))
-            CALL FMSVL2(SP,DIAM2,HTD2,HICUT,VHI,
-     &                  0, 0, 0, 1,
+            CALL FMSVL2(SP,DIAM2,HTD2,HICUT,VHI,0, 
      &                  'D',.FALSE.,.FALSE.,JOSTND)
-            CALL FMSVL2(SP,DIAM2,HTD2,LOCUT,VLO,
-     &                  0, 0, 0, 1,
+            CALL FMSVL2(SP,DIAM2,HTD2,LOCUT,VLO,0, 
      &                  'D',.FALSE.,.FALSE.,JOSTND)
             DIF = VHI - VLO
 
