@@ -400,6 +400,7 @@ C----------
 C
       METHB8=0
       METHC8=0
+      IF (LFIANVB) CALL NVB_REGION_CHECK
       DO ISPC=1,MAXSP
       READ(FIAJSP(ISPC),'(I4)')IFIASP
       VOLEQ='           '

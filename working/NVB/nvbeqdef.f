@@ -13,7 +13,7 @@
        INTEGER, DIMENSION(152, 20) :: SPPDIV
        INTEGER, DIMENSION(278, 2) :: JenkinsSpp
        INTEGER WoodlandSpp(16)
-       LOGICAL validDivSpp, JenkinsGrp, SppFound, useSppCode, VALIDDIV
+       LOGICAL validDivSpp, JenkinsGrp, SppFound, useSppCode
 
 
        DATA (DIVS(I), I=1,19) /
@@ -467,17 +467,6 @@
      & "R03CHO0065", "R03CHO0106", "400DVEW133", "R03CHO0106",
      & "R03CHO0106", "200DVEW475", "200DVEW814", "200DVEW475",
      & "300DVEW800", "300DVEW800", "200DVEW814", "300DVEW800" /
-
-        
-        VALIDDIV = .FALSE.
-        DO I=1,19
-          IF (ECOREG .EQ. DIVS(I)) VALIDDIV = .TRUE.
-        END DO
-
-        IF(.NOT. VALIDDIV) THEN
-          ECOREG = '0000'
-          CALL ERRGRO(.TRUE., 43)
-        END IF
 
         idx = 0
         igroup = 0

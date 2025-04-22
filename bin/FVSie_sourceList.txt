@@ -1,4 +1,5 @@
 ../working/nvb/nvbeqdef.f
+../working/nvb/nvb_region_check.f
 
 ../ie/common/ESPARM.F77
 ../ie/common/PRGPRM.F77

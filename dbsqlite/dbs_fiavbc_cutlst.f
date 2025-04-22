@@ -45,7 +45,7 @@ C
       DATA IDCMP1,IDCMP2/10000000,20000000/
 
       INTEGER ColNumber
-      REAL*8 P, DDBH, DP, ESTHT,
+      REAL*8 P, DDBH, DP, DHT, ESTHT,
      >       DCFV,DMCFV,DSCFV,DCULL,DCRBFRC,
      >       DAGBIO, DMERCHBIO, DSAWBIO, DFOLIBIO,
      >       DAGCARB, DMERCHCARB, DSAWCARB, DFOLICARB
@@ -94,6 +94,7 @@ C     IF IT DOESNT THEN WE NEED TO CREATE IT
      -             'MortTPA real null,'//
      -             'DBH real null,'//
      -             'Ht real null,'//
+     -             'EstHt real null,' //
      -             'TruncHt int null,'//
      -             'PctCr int null,'//
      -             'Cull real null,' //
@@ -123,7 +124,7 @@ C     IF IT DOESNT THEN WE NEED TO CREATE IT
       WRITE(SQLStmtStr,*)'INSERT INTO ',TBLNAME,
      -         ' (CaseID,StandID,PtIndex,ActPt,Year,TreeId,TreeIndex,', !1
      -         'SpeciesFVS,SpeciesPLANTS,SpeciesFIA,',                  !2
-     -         'TPA,MortTPA,DBH,Ht,TruncHt,PctCr,',                     !3
+     -         'TPA,MortTPA,DBH,Ht,EstHt,TruncHt,PctCr,',               !3
      -         'Cull,WdldStem,DecayCd,CarbFrac,',                       !4
      -         'TCuFt,MCuFt,SCuFt,',                                    !5
      -         'AbvGrdBio,MerchBio,SawBio,FoliBio,',                    !6 
@@ -131,7 +132,7 @@ C     IF IT DOESNT THEN WE NEED TO CREATE IT
      -         ' VALUES (''',
      -           CASEID,''',''',TRIM(NPLT),''',?,?,',IY(ICYC),',?,?,',  !1
      -           '?,?,?,',                                              !2  
-     -           '?,?,?,?,?,?,',                                        !3
+     -           '?,?,?,?,?,?,?,',                                      !3
      -           '?,?,?,?,',                                            !4
      -           '?,?,?,',                                              !5
      -           '?,?,?,?,',                                            !6
@@ -178,11 +179,11 @@ C----------
 C           DETERMINE ESTIMATED HEIGHT
 C           ESTIMATED HEIGHT IS NORMAL HEIGHT, UNLESS THE LATTER HAS NOT
 C           BEEN SET, IN WHICH CASE IT IS EQUAL TO CURRENT HEIGHT
-            IF (NORMHT(I) .NE. 0) THEN
-              ESTHT = (REAL(NORMHT(I))+5)/100
-            ELSE
-              ESTHT = HT(I)
-            ENDIF
+            ! IF (NORMHT(I) .NE. 0) THEN
+            !   ESTHT = (REAL(NORMHT(I))+5)/100
+            ! ELSE
+            !   ESTHT = HT(I)
+            ! ENDIF
 
 C           SET TRUNCATED (TOPKILL) HEIGHT
 C
@@ -229,8 +230,17 @@ C           LOAD SPECIES CODES FROM FVS, PLANTS AND FIA ARRAYS.
             ColNumber=ColNumber+1
             iRet = fsql3_bind_double(IoutDBref,ColNumber,DDBH)          !DBH
 
+            DHT = HT(I)
             ColNumber=ColNumber+1
-            iRet = fsql3_bind_double(IoutDBref,ColNumber,ESTHT)           !Ht
+            iRet = fsql3_bind_double(IoutDBref,ColNumber,DHT)         !Ht
+
+            IF (NORMHT(I) .GT. 0) THEN
+              ESTHT=(REAL(NORMHT(I))+5)/100
+            ELSE
+              ESTHT=0
+            ENDIF
+            ColNumber=ColNumber+1
+            iRet = fsql3_bind_double(IoutDBref,ColNumber,ESTHT)         !NormHt
 
             ColNumber=ColNumber+1
             iRet = fsql3_bind_int(IoutDBref,ColNumber,ITRNK)            !TruncHt

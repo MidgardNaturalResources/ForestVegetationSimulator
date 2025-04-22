@@ -41,7 +41,7 @@ C
       INTEGER ISPC,I1,I2,I3,ColNumber
       INTEGER IDCMP1,IDCMP2,ITRNK,IFIASPP
       DATA IDCMP1,IDCMP2/10000000,20000000/
-      REAL*8 P,DP,DDBH,DHT,
+      REAL*8 P,DP,DDBH,DHT,ESTHT,
      >       DCFV,DMCFV,DSCFV,DCULL,DCRBFRC,
      >       DAGBIO, DMERCHBIO,DSAWBIO,DFOLIBIO,
      >       DAGCARB, DMERCHCARB, DSAWCARB,DFOLICARB
@@ -79,6 +79,7 @@ C     IF TREEOUT IS NOT TURNED ON OR LFIANVB NOT ACTIVE, RETURN
      -             'MortTPA real null,'//
      -             'DBH real null,'//
      -             'Ht real null,'//
+     -             'EstHt real null,' //
      -             'TruncHt int null,'//
      -             'PctCr int null,'//
      -             'Cull real null,' //
@@ -108,15 +109,15 @@ C     IF TREEOUT IS NOT TURNED ON OR LFIANVB NOT ACTIVE, RETURN
       WRITE(SQLStmtStr,*)'INSERT INTO ',TBLNAME,
      -  ' (CaseID,StandID,PtIndex,ActPt,Year,TreeId,TreeIndex,', !1
      -  'SpeciesFVS,SpeciesPLANTS,SpeciesFIA,',                  !2
-     -  'TPA,MortTPA,DBH,Ht,TruncHt,PctCr,',                     !3
+     -  'TPA,MortTPA,DBH,Ht,EstHt, TruncHt,PctCr,',              !3
      -  'Cull,WdldStem,DecayCd,CarbFrac,',                       !4
      -  'TCuFt,MCuFt,SCuFt,',                                    !5
      -  'AbvGrdBio,MerchBio,SawBio,FoliBio,',                    !6 
      -  'AbvGrdCarb,MerchCarb,SawCarb,FoliCarb) ',               !7
      -  'VALUES (''',
-     -  CASEID,''',''',TRIM(NPLT),''',?,?,',IY(ICYC+1),',?,?,',   !1
+     -  CASEID,''',''',TRIM(NPLT),''',?,?,',IY(ICYC+1),',?,?,',  !1
      - '?,?,?,',                                                 !2  
-     - '?,?,?,?,?,?,',                                           !3
+     - '?,?,?,?,?,?,?,',                                         !3
      - '?,?,?,?,',                                               !4
      - '?,?,?,',                                                 !5
      - '?,?,?,?,',                                               !6
@@ -209,6 +210,14 @@ C
             DHT=HT(I)
             ColNumber=ColNumber+1
             iRet = fsql3_bind_double(IoutDBref,ColNumber,DHT)           !Ht
+
+            IF (NORMHT(I) .GT. 0) THEN
+              ESTHT=(REAL(NORMHT(I))+5)/100
+            ELSE
+              ESTHT=0
+            ENDIF
+            ColNumber=ColNumber+1
+            iRet = fsql3_bind_double(IoutDBref,ColNumber,ESTHT)         !NormHt
 
             ColNumber=ColNumber+1
             iRet = fsql3_bind_int(IoutDBref,ColNumber,ITRNK)            !TruncHt
@@ -352,6 +361,14 @@ C
         DHT=HT(I)
         ColNumber=ColNumber+1
         iRet = fsql3_bind_double(IoutDBref,ColNumber,DHT)               !Ht
+
+        IF (NORMHT(I) .GT. 0) THEN
+          ESTHT=(REAL(NORMHT(I))+5)/100
+        ELSE
+          ESTHT=0
+        ENDIF
+        ColNumber=ColNumber+1
+        iRet = fsql3_bind_double(IoutDBref,ColNumber,ESTHT)             !NormHt
 
         ColNumber=ColNumber+1
         iRet = fsql3_bind_int(IoutDBref,ColNumber,ITRNK)                !TruncHt

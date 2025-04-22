@@ -223,6 +223,7 @@ C----------
       PROD='  '
       VAR='WC'
 C
+      IF (LFIANVB) CALL NVB_REGION_CHECK
       DO ISPC=1,MAXSP
       VOLEQ='           '
       READ(FIAJSP(ISPC),'(I4)')IFIASP
