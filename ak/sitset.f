@@ -235,7 +235,6 @@ C  SET BFMIND DEFAULTS
            CASE DEFAULT
             BFMIND(ISPC)= 9
           END SELECT
-          SCFMIND(ISPC)= BFMIND(ISPC)
         ENDIF
 C  SET TOPD DEFAULTS
         IF(TOPD(ISPC) .LE. 0) THEN
@@ -260,7 +259,25 @@ C  SET BFTOPD DEFAULTS
            CASE DEFAULT
             BFTOPD(ISPC) = 7
           END SELECT
-          SCFTOPD(ISPC)= BFTOPD(ISPC)
+        ENDIF
+C  SET SAWLOG CUBIC DEFAULTS
+        IF(SCFMIND(ISPC) .LE. 0) THEN
+            SELECT CASE(MERCHCAT)
+            CASE(1, 2, 3, 4)
+              SCFMIND(ISPC)= 9
+            CASE DEFAULT
+              SCFMIND(ISPC)= 9
+           END SELECT
+        ENDIF
+        IF(SCFTOPD(ISPC) .LE. 0) THEN
+          SELECT CASE(MERCHCAT)
+            CASE(1,2,4)
+              SCFTOPD(ISPC)= 6
+            CASE(3)
+              SCFTOPD(ISPC)= 7
+            CASE DEFAULT
+              SCFTOPD(ISPC) = 7
+          END SELECT
         ENDIF
       ENDDO
 C----------

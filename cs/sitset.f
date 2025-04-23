@@ -206,7 +206,7 @@ C----------
           END SELECT
         ENDIF
       ENDIF
-      IF(SCFTOPD(ISPC).LE.0.)THEN          !SET **BFTOPD** DEFAULT
+      IF(SCFTOPD(ISPC).LE.0.)THEN          !SET **SCFTOPD** DEFAULT
         IF(ISPC.LE.7)THEN                 !SOFTWOOD
           SELECT CASE(IFOR)
           CASE(1)
