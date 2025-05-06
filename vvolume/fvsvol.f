@@ -76,20 +76,21 @@ C-----------
       ENDIF
       IDIST   = 1
       VOLEQ   = VEQNNC(ISPC)
+      CALL FORMCL(ISPC,IFOR,D,FC)
+      IFC=IFIX(FC)
       READ(FIAJSP(ISPC), '(I4)')FIASPCD
-      IF(LFIANVB .OR. VOLEQ(1:3).EQ."NVB") THEN
+      IF ((LFIANVB .OR. VOLEQ(1:3) .EQ. "NVB") .AND. 
+     1     TKILL .AND. LIVEDEAD .EQ. 'L') THEN
         BRKHT = FLOAT(ITRNC)/100
       ENDIF
 
-      SELECT CASE (FIASPCD)
-        CASE (62,  63,  65,  66, 69, 106, 133, 134, 
-     &        143, 321, 322, 475, 803, 810, 814, 843)
-          IFC = WDSTMS
-
-        CASE DEFAULT
-          CALL FORMCL(ISPC,IFOR,D,FC)
-          IFC=IFIX(FC)
-      END SELECT
+      IF(LFIANVB) THEN
+        SELECT CASE (FIASPCD)
+          CASE (62,  63,  65,  66, 69, 106, 133, 134, 
+     &          143, 321, 322, 475, 803, 810, 814, 843)
+            IFC = WDSTMS
+        END SELECT
+      END IF
 
       CALL DBCHK (DEBUG,'FVSVOL',6,ICYC)
       IF(DEBUG) WRITE(JOSTND,3)ICYC,IFOR

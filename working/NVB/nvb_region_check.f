@@ -15,15 +15,19 @@
      &  "250 ", "260 ", "310 ", "330 ", "340 ",
      &  "M130", "M210", "M220", "M230", "M240",
      &  "M260", "M310", "M330", "M340"/
-           
-        VALIDDIV = .FALSE.
-        DO I=1,19
-          IF (ECOREG .EQ. DIVS(I)) VALIDDIV = .TRUE.
-        END DO
 
-        IF(.NOT. VALIDDIV) THEN
-          ECOREG = '0000'
-          CALL ERRGRO(.TRUE., 43)
-        END IF
+      I = SCAN(ECOREG, '0123456789', .TRUE.)
+      ECOREG(I:I) = '0'
+      ECOREG = ECOREG(:I)
+           
+      VALIDDIV = .FALSE.
+      DO I=1,19
+        IF (ECOREG .EQ. DIVS(I)) VALIDDIV = .TRUE.
+      END DO
+
+      IF (.NOT. VALIDDIV) THEN
+        ECOREG = '0000'
+        CALL ERRGRO(.TRUE., 43)
+      END IF
 
       END
