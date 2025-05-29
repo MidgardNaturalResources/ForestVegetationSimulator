@@ -69,6 +69,7 @@ C-----------
       CLMSTOP = 0
       PCULL   = 0
       PDECAY  = 0
+      IREGN   = 0
       RCRATIO = FLOAT(CRATIO)
       IF(LFIANVB) THEN
         PCULL  = RCULL
@@ -83,21 +84,6 @@ C-----------
      1     TKILL .AND. LIVEDEAD .EQ. 'L') THEN
         BRKHT = FLOAT(ITRNC)/100
       ENDIF
-
-      IF(LFIANVB) THEN
-        SELECT CASE (FIASPCD)
-          CASE (62,  63,  65,  66, 69, 106, 133, 134, 
-     &          143, 321, 322, 475, 803, 810, 814, 843)
-            IFC = WDSTMS
-        END SELECT
-      END IF
-
-      CALL DBCHK (DEBUG,'FVSVOL',6,ICYC)
-      IF(DEBUG) WRITE(JOSTND,3)ICYC,IFOR
-    3 FORMAT(' ENTERING SUBROUTINE FVSVOL CYCLE,IFOR =',I5,i4)
-      IF(DEBUG)WRITE(JOSTND,*)' ENTERING NATCRS ISPC,D,H,TKILL,BARK,',
-     &'ITRNC,CTKFLG,BTKFLG,IT= ',ISPC,D,H,TKILL,BARK,ITRNC,CTKFLG,
-     & BTKFLG,IT
 
       IF(KODFOR.GT.10000)THEN
         IREGN = KODFOR/10000
@@ -129,6 +115,29 @@ C-----------
           END SELECT
         ENDIF
       ENDIF
+
+      IF(LFIANVB) THEN
+        SELECT CASE (FIASPCD)
+          CASE (62,  63,  65,  66, 69, 106, 133, 134, 
+     &          143, 321, 322, 475, 803, 810, 814, 843)
+            IFC = WDSTMS
+            SELECT CASE (ISTATE)
+              CASE (4) 
+                IREGN = 3
+              CASE (16, 32)
+                IREGN = 4
+              CASE (41, 53)
+                IREGN = 6
+              END SELECT
+        END SELECT
+      END IF
+
+      CALL DBCHK (DEBUG,'FVSVOL',6,ICYC)
+      IF(DEBUG) WRITE(JOSTND,3)ICYC,IFOR
+    3 FORMAT(' ENTERING SUBROUTINE FVSVOL CYCLE,IFOR =',I5,i4)
+      IF(DEBUG)WRITE(JOSTND,*)' ENTERING NATCRS ISPC,D,H,TKILL,BARK,',
+     &'ITRNC,CTKFLG,BTKFLG,IT= ',ISPC,D,H,TKILL,BARK,ITRNC,CTKFLG,
+     & BTKFLG,IT
       
       IF(VARACD.EQ.'SN')IDIST=KODFOR-(KODFOR/100)*100
 
