@@ -126,6 +126,8 @@ C-----------
                 IREGN = 3
               CASE (16, 32)
                 IREGN = 4
+              CASE (6)
+                IREGN = 5
               CASE (41, 53)
                 IREGN = 6
               END SELECT
