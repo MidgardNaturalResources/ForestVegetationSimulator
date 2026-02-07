@@ -63,13 +63,14 @@ C----------
 C
       DATA MYACTS/81/
       DATA IMAP/1,2*2,2*3,17,4,15,2*11,16,6,2*5,6,7,11,
-     &          8,9,10,12,13,7*14,4*11,6*14/
+     &          8,9,10,12,13,7*14,4*11,12*14/
 C----------
 C  SPECIES ORDER 1=SF,  2=WF,  3=GF,  4=AF,  5=RF,  6=SS,  7=NF,  8=YC,
 C                9=IC, 10=ES, 11=LP, 12=JP, 13=SP, 14=WP, 15=PP, 16=DF,
 C               17=RW, 18=RC, 19=WH, 20=MH, 21=BM, 22=RA, 23=WA, 24=PB,
 C               25=GC, 26=AS, 27=CW, 28=WO, 29=J , 30=LL, 31=WB, 32=KP,
-C               33=PY, 34=DG, 35=HT, 36=CH, 37=WI, 38=  , 39=OT
+C               33=PY, 34=DG, 35=HT, 36=CH, 37=WI, 38=AK, 39=LE, 40=IF,
+C               41=IM, 42=IH, 43=IK, 44=  , 45=OT
 C-----------
 C  SEE IF WE NEED TO DO SOME DEBUG.
 C-----------

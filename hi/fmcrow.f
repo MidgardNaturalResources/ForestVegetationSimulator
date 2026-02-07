@@ -95,14 +95,20 @@ C    34 = PACIFIC DOGWOOD          flowering dogwood        56
 C    35 = HAWTHORN                 hawthorn sp              57
 C    36 = BITTER CHERRY            pin cherry               61
 C    37 = WILLOW                   willow sp                64
-C    38 = ---                      -                         0
-C    39 = OTHER                    quaking aspen            41
+C    38 = KOA                      quaking aspen            41
+C    39 = OHIA                     quaking aspen            41
+C    40 = FOREST SANDALWOOD        quaking aspen            41
+C    41 = MOUNTAIN SANDALWOOD      quaking aspen            41
+C    42 = HALEAKALA SANDALWOOD     quaking aspen            41
+C    43 = KAUAI SANDALWOOD         quaking aspen            41
+C    44 = ---                      -                         0
+C    45 = OTHER                    quaking aspen            41
 C --------------------------------------------------------------
 
       DATA ISPMAP / 4, 4, 4, 1, 4,18, 4, 8,20,18,
      >             11,15,15,15,13, 3,19, 7, 6,24,
      >              5,23,10,43,17,41,17,17,16, 1,
-     >             14,11, 7,56,57,61,64, 0,41/
+     >             14,11, 7,56,57,61,64, 6*41, 0,41/
 
 
 C     CHECK FOR DEBUG
@@ -157,7 +163,7 @@ C       OF THIS LOOP IF THE TREE HAS NO DIAMETER, HEIGHT, OR LIVE CROWN.
         ENDDO
 
         SELECT CASE (SPIW)
-          CASE (24,26,27,34,35,36,37,39)
+          CASE (24,26,27,34,35,36,37,38,39,40,41,42,43,45)
             CALL FMCROWE(SPIE,SPIW,D,H,IC,SG,XV)
           CASE DEFAULT
             CALL FMCROWW(SPIE,D,H,ITR,IC,HP,SG,XV)

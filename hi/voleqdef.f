@@ -937,6 +937,13 @@ C
          SPEC=8888
          RETURN
        ENDIF
+C
+C  CHECK FOR VALID HAWAIIAN EQUATION
+C
+        IF(VOLEQ(1:7).EQ.'H00SN2W')THEN
+          SPEC=8888
+          RETURN
+        ENDIF
 
         DO I=1,44
         IF(VOLEQ.EQ.EQNUM(I))THEN
@@ -1116,6 +1123,16 @@ c         Willamette
              VOLEQ = EQNUMI(DONEI)
           ELSE IF(DONEF.GT.0) THEN
              VOLEQ = EQNUMF(DONEF)
+          ELSE IF(SPEC.EQ.301) THEN
+c           Koa - use Hawaiian equation
+             VOLEQ = 'H00SN2W301'
+          ELSE IF(SPEC.EQ.671) THEN
+c           Ohia - use Hawaiian equation
+             VOLEQ = 'H00SN2W671'
+          ELSE IF(SPEC.EQ.515 .OR. SPEC.EQ.516 .OR.
+     >            SPEC.EQ.517 .OR. SPEC.EQ.518) THEN
+c           Sandalwood species - use OT equation
+             VOLEQ = '616BEHW999'
           ELSE
 c           No INGY, find Behre's hyperbola model
             LAST = 53

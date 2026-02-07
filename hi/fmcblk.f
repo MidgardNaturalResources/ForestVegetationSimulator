@@ -32,7 +32,8 @@ C      10=WOODLAND JUNIPER/OAK/MESQUITE
      & 7, 6, 6, 7, 8,
      & 6, 6, 9,10, 1, ! 30
      & 4, 4, 3, 8, 8,
-     & 8, 6, 2, 6 /
+     & 8, 6, 6, 6, 6, ! 40
+     & 6, 6, 6, 2, 6 /
 
 C DATA Statement Debug Information
 C         Variant   = PN

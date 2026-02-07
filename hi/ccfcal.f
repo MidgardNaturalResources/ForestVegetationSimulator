@@ -30,7 +30,8 @@ C                1=SF,  2=WF,  3=GF,  4=AF,  5=RF,  6=SS,  7=NF,  8=YC,
 C                9=IC, 10=ES, 11=LP, 12=JP, 13=SP, 14=WP, 15=PP, 16=DF,
 C               17=RW, 18=RC, 19=WH, 20=MH, 21=BM, 22=RA, 23=WA, 24=PB,
 C               25=GC, 26=AS, 27=CW, 28=WO, 29=J , 30=LL, 31=WB, 32=KP,
-C               33=PY, 34=DG, 35=HT, 36=CH, 37=WI, 38=  , 39=OT
+C               33=PY, 34=DG, 35=HT, 36=CH, 37=WI, 38=AK, 39=LE, 40=IF,
+C               41=IM, 42=IH, 43=IK, 44=  , 45=OT
 C
 C  CCF EQUATIONS ORDER:
 C     1 = SMITH TABLE 1:
@@ -66,7 +67,7 @@ C        MADRID, SPAIN. VOL 2:2309-2315. (TABLES 1 & 2, PG 2310)
 C----------
       LOGICAL LTHIN
       REAL RD1(19),RD2(19),RD3(19),CRWDTH,CCFT,P,H,D
-      INTEGER INDCCF(39),ISPC,IC,MODE,JCR
+      INTEGER INDCCF(45),ISPC,IC,MODE,JCR
       INTEGER IDANUW
       LOGICAL LDANUW
 C
@@ -74,7 +75,8 @@ C
      &  1,  2,  2,  3,  4,  8,  3,  5,  5,  7,
      & 10, 19, 19, 11, 19, 12, 12, 13, 14, 14,
      & 15, 16, 16, 17, 15, 17, 18, 17,  6, 19,
-     &  9,  9,  6, 15, 17, 15, 15, 10, 10    /
+     &  9,  9,  6, 15, 17, 15, 15, 10, 10, 10,
+     & 10, 10, 10, 10, 10    /
       DATA RD1/
      & 1.01420E-1, 6.90403E-2, 2.45276E-2, 1.72000E-2, 1.94415E-2,
      & 3.18054E-2, 2.88484E-2, 7.61779E-2,    0.01925, 2.20871E-2,

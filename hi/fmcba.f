@@ -148,8 +148,14 @@ C                  herbs, shrubs
      >             0.25, 0.25, !35 = hawthorn (r4 definition) - use QA Ottmar and others 2000b
      >             0.25, 0.25, !36 = bitter cherry - use QA Ottmar and others 2000b
      >             0.25, 0.25, !37 = willow - use QA Ottmar and others 2000b
-     >             0.00, 0.00, !38 = ---
-     >             0.25, 0.25/ !39 = other - use QA Ottmar and others 2000b
+     >             0.25, 0.25, !38 = Koa - use QA Ottmar and others 2000b
+     >             0.25, 0.25, !39 = Ohia - use QA Ottmar and others 2000b
+     >             0.25, 0.25, !40 = Forest sandalwood - use QA Ottmar and others 2000b
+     >             0.25, 0.25, !41 = Mountain sandalwood - use QA Ottmar and others 2000b
+     >             0.25, 0.25, !42 = Haleakala sandalwood - use QA Ottmar and others 2000b
+     >             0.25, 0.25, !43 = Kauai sandalwood - use QA Ottmar and others 2000b
+     >             0.00, 0.00, !44 = ---
+     >             0.25, 0.25/ !45 = other - use QA Ottmar and others 2000b
 
 C     INITIAL LIVE FUEL LOADING FOR 'INTIALIZING STANDS WITH 10% COVER
 
@@ -192,8 +198,14 @@ C                  herbs, shrubs
      >             0.18, 1.32, !35 = hawthorn (r4 definition) - use QA Ottmar and others 2000b
      >             0.18, 1.32, !36 = bitter cherry - use QA Ottmar and others 2000b
      >             0.18, 1.32, !37 = willow - use QA Ottmar and others 2000b
-     >             0.00, 0.00, !38 = ---
-     >             0.18, 1.32/ !39 = other - use QA Ottmar and others 2000b
+     >             0.18, 1.32, !38 = Koa - use QA Ottmar and others 2000b
+     >             0.18, 1.32, !39 = Ohia - use QA Ottmar and others 2000b
+     >             0.18, 1.32, !40 = Forest sandalwood - use QA Ottmar and others 2000b
+     >             0.18, 1.32, !41 = Mountain sandalwood - use QA Ottmar and others 2000b
+     >             0.18, 1.32, !42 = Haleakala sandalwood - use QA Ottmar and others 2000b
+     >             0.18, 1.32, !43 = Kauai sandalwood - use QA Ottmar and others 2000b
+     >             0.00, 0.00, !44 = ---
+     >             0.18, 1.32/ !45 = other - use QA Ottmar and others 2000b
 
 C     INITIAL FUEL LOADING FOR 'ESTABLISHED' STANDS WITH 60% COVER
 C     THIS CAN BE MODIFIED BY THE *FUELINIT** KEYWORD
@@ -237,8 +249,14 @@ C     <.25 to1  1-3   3-6 6-12  12-20 20-35 35-50 >50  Lit  Duf
      &0.2, 0.6, 2.4, 3.6, 5.6, 0.0, 0.0,0.0,0.0,1.4,16.8, !35 = hawthorn (r4 definition) - use AS
      &0.2, 0.6, 2.4, 3.6, 5.6, 0.0, 0.0,0.0,0.0,1.4,16.8, !36 = bitter cherry - use AS
      &0.2, 0.6, 2.4, 3.6, 5.6, 0.0, 0.0,0.0,0.0,1.4,16.8, !37 = willow - use AS
-     &0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0,0.0,0.0, 0.0, !38 = ---
-     &0.2, 0.6, 2.4, 3.6, 5.6, 0.0, 0.0,0.0,0.0,1.4,16.8/ !39 = other - use AS
+     &0.2, 0.6, 2.4, 3.6, 5.6, 0.0, 0.0,0.0,0.0,1.4,16.8, !38 = Koa - use AS
+     &0.2, 0.6, 2.4, 3.6, 5.6, 0.0, 0.0,0.0,0.0,1.4,16.8, !39 = Ohia - use AS
+     &0.2, 0.6, 2.4, 3.6, 5.6, 0.0, 0.0,0.0,0.0,1.4,16.8, !40 = Forest sandalwood - use AS
+     &0.2, 0.6, 2.4, 3.6, 5.6, 0.0, 0.0,0.0,0.0,1.4,16.8, !41 = Mountain sandalwood - use AS
+     &0.2, 0.6, 2.4, 3.6, 5.6, 0.0, 0.0,0.0,0.0,1.4,16.8, !42 = Haleakala sandalwood - use AS
+     &0.2, 0.6, 2.4, 3.6, 5.6, 0.0, 0.0,0.0,0.0,1.4,16.8, !43 = Kauai sandalwood - use AS
+     &0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0,0.0,0.0, 0.0, !44 = ---
+     &0.2, 0.6, 2.4, 3.6, 5.6, 0.0, 0.0,0.0,0.0,1.4,16.8/ !45 = other - use AS
 
 C     INITIAL FUEL LOADING FOR 'INITIALIZING' STANDS WITH 10% COVER
 C     THIS CAN BE MODIFIED BY THE *FUELINIT** KEYWORD
@@ -282,8 +300,14 @@ C     <.25 to1  1-3  3-6 6-12  12-20 20-35 35-50 >50  Lit  Duf
      &0.1, 0.4, 5.0, 2.2, 2.3, 0.0, 0.0,0.0,0.0,0.8, 5.6, !35 = hawthorn (r4 definition) - use AS
      &0.1, 0.4, 5.0, 2.2, 2.3, 0.0, 0.0,0.0,0.0,0.8, 5.6, !36 = bitter cherry - use AS
      &0.1, 0.4, 5.0, 2.2, 2.3, 0.0, 0.0,0.0,0.0,0.8, 5.6, !37 = willow - use AS
-     &0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0,0.0,0.0, 0.0, !38 = ---
-     &0.1, 0.4, 5.0, 2.2, 2.3, 0.0, 0.0,0.0,0.0,0.8, 5.6/ !39 = other - use AS
+     &0.1, 0.4, 5.0, 2.2, 2.3, 0.0, 0.0,0.0,0.0,0.8, 5.6, !38 = Koa - use AS
+     &0.1, 0.4, 5.0, 2.2, 2.3, 0.0, 0.0,0.0,0.0,0.8, 5.6, !39 = Ohia - use AS
+     &0.1, 0.4, 5.0, 2.2, 2.3, 0.0, 0.0,0.0,0.0,0.8, 5.6, !40 = Forest sandalwood - use AS
+     &0.1, 0.4, 5.0, 2.2, 2.3, 0.0, 0.0,0.0,0.0,0.8, 5.6, !41 = Mountain sandalwood - use AS
+     &0.1, 0.4, 5.0, 2.2, 2.3, 0.0, 0.0,0.0,0.0,0.8, 5.6, !42 = Haleakala sandalwood - use AS
+     &0.1, 0.4, 5.0, 2.2, 2.3, 0.0, 0.0,0.0,0.0,0.8, 5.6, !43 = Kauai sandalwood - use AS
+     &0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,0.0,0.0,0.0, 0.0, !44 = ---
+     &0.1, 0.4, 5.0, 2.2, 2.3, 0.0, 0.0,0.0,0.0,0.8, 5.6/ !45 = other - use AS
 
 C     DOMINANT SPECIES FOR EACH (OPTIONAL) VEGETATION CODE.
 C     DERIVED FROM R6 VEG CODES AND PN **HABTYP**

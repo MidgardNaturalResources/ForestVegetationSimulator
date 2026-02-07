@@ -105,17 +105,18 @@ C         SF  WF  GF  AF  RF   DUM  NF  YC   IC   ES  LP  JP  SP
      &     1,  2,  2,  3,  3,    3,  5,  4,   4,   4,  5,  5,  5,
 C         WP   PP  DF  RW  RC   WH  MH  BM   RA  WA  PB   GC   AS
      &     5,  5,  8,  8,   9,  11, 11, 12,  12, 12, 12,  12,  12,
-C         CO   WO  J   LL  WB   KP  PY   DG   HW  BC  WI  DUM  DUM
-     &    12,  12, 4,   5,  5,   5,  5,  12,  12,  12, 12,  12, 12  /
+C         CO   WO  J   LL  WB   KP  PY   DG   HW  BC  WI  AK LE IF IM IH IK DUM OT
+     &    12,  12, 4,   5,  5,   5,  5,  12,  12,  12, 12,
+     &    6*12, 12, 12  /
       DATA AB/ 1.11436, -0.011493, 0.43015E-4,
      &        -0.72221E-7, 0.5607E-10, -0.1641E-13 /
-      DATA DGMAX/ 39*5.0 /
-      DATA XMAX/ 10*4.0,3.0,5*4.0,10.0,22*4.0 /
-      DATA XMIN/ 10*2.0,1.0,28*2.0 /
+      DATA DGMAX/ 45*5.0 /
+      DATA XMAX/ 10*4.0,3.0,5*4.0,10.0,28*4.0 /
+      DATA XMIN/ 10*2.0,1.0,34*2.0 /
       DATA REGYR/10.0 /
       DATA DIAM/ 7*0.3, 2*0.2, 0.3, 4*0.4, 0.5, 0.3, 13*0.2,
-     &           0.3, 2*0.4, 7*0.2 /
-      DATA DGMIN/ 16*3.0, 7.0, 22*3.0 /
+     &           0.3, 2*0.4, 13*0.2 /
+      DATA DGMIN/ 16*3.0, 7.0, 28*3.0 /
 C-----------
 C  CHECK FOR DEBUG.
 C-----------

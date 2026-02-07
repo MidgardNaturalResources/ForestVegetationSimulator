@@ -69,7 +69,7 @@ C----------
       CHARACTER CWEQN*5, FIASP*3
       CHARACTER AKMAP(23)*5, BMMAP(18)*5, CAMAP(50)*5, CIMAP(19)*5
       CHARACTER CRMAP(38)*5, ECMAP(32)*5, EMMAP(19)*5, IEMAP(23)*5
-      CHARACTER KTMAP(11)*5, NCMAP(12)*5, NIMAP(11)*5, PNMAP(39)*5
+      CHARACTER KTMAP(11)*5, NCMAP(12)*5, NIMAP(11)*5, PNMAP(45)*5
       CHARACTER SOMAP(33)*5, TTMAP(18)*5, UTMAP(24)*5, WCMAP(39)*5
       CHARACTER WSMAP(43)*5, OCMAP(50)*5, OPMAP(39)*5, BCMAP(15)*5
       INTEGER ISPC,IICR, IWHO, JSTND2
@@ -231,8 +231,10 @@ C             BM       RA   WAtoBM       PB   GCtoTO       AS       CW
      &    '31206', '35106', '31206', '37506', '63102', '74605', '74705',
 C             WO        J       LL       WB       KP       PY   DGtoRA
      &    '81505', '06405', '07204', '10105', '10305', '23104', '35106',
-C         HTtoRA   CHtoRA   WItoBM       --       OT
-     &    '35106', '35106', '31206', '12205', '12205'/
+C         HTtoRA   CHtoRA   WItoBM   AKtoOT   LEtoOT   IFtoOT
+     &    '35106', '35106', '31206', '12205', '12205', '12205',
+C         IMtoOT   IHtoOT   IKtoOT       --       OT
+     &    '12205', '12205', '12205', '12205', '12205'/
 C----------
 C  SOUTHERN OREGON/ NORTHERN CALIF
 C----------

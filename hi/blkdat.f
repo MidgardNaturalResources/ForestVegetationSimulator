@@ -67,9 +67,9 @@ C----------
 C COMMON STATEMENT FOR ESCOMN VARIABLE
 C----------
       DATA XMIN/ 1.0, 2*1.5, 7*1.0, 1.4, 3*1.0, 1.3, 1.5,
-     &           13*1.0, 1.5, 9*1.0/
+     &           13*1.0, 1.5, 7*1.0, 6*1.0, 2*1.0/
       DATA ISPSPE/ 17,21,22,23,24,25,26,27,28,33,34,35,36,37/
-      DATA HHTMAX/ 21*20.0,50.0,17*20.0 /
+      DATA HHTMAX/ 21*20.0,50.0,23*20.0 /
       DATA DBHMID/1.0,3.0,5.0,7.0,9.0,12.0,16.0,20.0,24.0,28.0/,
      &  BNORML/3*1.0,1.046,1.093,1.139,1.186,1.232,1.278,1.325,1.371,
      &  1.418,1.464,1.510,1.557,1.603,1.649,1.696,1.742,1.789/,
@@ -80,11 +80,11 @@ C----------
 C
 C     OCURHT ZEROES OUT PROBABILITIES WHICH CANNOT OCCUR BY DEFINITION.
 C
-      DATA ((OCURHT(I,J),I=1,16),J=1,MAXSP)/624*0.0/
+      DATA ((OCURHT(I,J),I=1,16),J=1,MAXSP)/720*0.0/
 C
 C     OCURNF ZEROES OUT PROBABILITIES ON NATIONAL FORESTS BY SPECIES.
 C
-      DATA ((OCURNF(I,J),I=1,20),J=1,MAXSP)/780*0.0/
+      DATA ((OCURNF(I,J),I=1,20),J=1,MAXSP)/900*0.0/
 C----------
 C COMMON STATEMENT FOR PLOT VARIABLES.
 C----------
@@ -128,8 +128,14 @@ C    34 = PACIFIC DOGWOOD (DG)         CORNUS NUTTALLII
 C    35 = HAWTHORN (HT)                CRATAEGUS
 C    36 = BITTER CHERRY (CH)           PRUNUS EMARGINATA
 C    37 = WILLOW (WI)                  SALIX
-C    38 = ---
-C    39 = OTHER (OT)
+C    38 = KOA (AK)                     ACACIA KOA
+C    39 = OHIA (LE)                    METROSIDEROS POLYMORPHA
+C    40 = FOREST SANDALWOOD (IF)       SANTALUM FREYCINETIANUM
+C    41 = MOUNTAIN SANDALWOOD (IM)     SANTALUM PANICULATUM
+C    42 = HALEAKALA SANDALWOOD (IH)    SANTALUM HALEAKALAE
+C    43 = KAUAI SANDALWOOD (IK)        SANTALUM PYRULARIUM
+C    44 = ---
+C    45 = OTHER (OT)
 C----------
       DATA JSP /
      & 'SF ',   'WF ',   'GF ',   'AF ',   'RF ',   'SS ',   'NF ',
@@ -137,7 +143,8 @@ C----------
      & 'PP ',   'DF ',   'RW ',   'RC ',   'WH ',   'MH ',   'BM ',
      & 'RA ',   'WA ',   'PB ',   'GC ',   'AS ',   'CW ',   'WO ',
      & 'WJ ',   'LL ',   'WB ',   'KP ',   'PY ',   'DG ',   'HT ',
-     & 'CH ',   'WI ',   '   ',   'OT '/
+     & 'CH ',   'WI ',   'AK ',   'LE ',   'IF ',   'IM ',   'IH ',
+     & 'IK ',   '   ',   'OT '/
 C
       DATA FIAJSP /
      & '011',   '015',   '017',   '019',   '020',   '098',   '022',
@@ -145,7 +152,8 @@ C
      & '122',   '202',   '211',   '242',   '263',   '264',   '312',
      & '351',   '352',   '375',   '431',   '746',   '747',   '815',
      & '064',   '072',   '101',   '103',   '231',   '492',   '500',
-     & '768',   '920',   '   ',   '999'/
+     & '768',   '920',   '301',   '671',   '515',   '516',   '517',
+     & '518',   '   ',   '999'/
 C
       DATA PLNJSP /
      & 'ABAM  ','ABCO  ','ABGR  ','ABLA  ','ABMA  ','PISI  ','ABPR  ',
@@ -153,7 +161,8 @@ C
      & 'PIPO  ','PSME  ','SESE3 ','THPL  ','TSHE  ','TSME  ','ACMA3 ',
      & 'ALRU2 ','ALRH2 ','BEPA  ','CHCHC4','POTR5 ','POBAT ','QUGA4 ',
      & 'JUOC  ','LALY  ','PIAL  ','PIAT  ','TABR2 ','CONU4 ','CRATA ',
-     & 'PREM  ','SALIX ','      ','2TREE '/
+     & 'PREM  ','SALIX ','ACKO  ','MEPO5 ','SAFR4 ','SAPA7 ','SAHA3 ',
+     & 'SAFRP ','      ','2TREE '/
 C
       DATA JTYPE /130,170,250,260,280,290,310,320,330,420,
      &            470,510,520,530,540,550,570,610,620,640,
@@ -162,15 +171,18 @@ C
       DATA NSP /  'SF1','WF1','GF1','AF1','RF1','SS1','NF1','YC1',
      &'IC1','ES1','LP1','JP1','SP1','WP1','PP1','DF1','RW1','RC1',
      &'WH1','MH1','BM1','RA1','WA1','PB1','GC1','AS1','CW1','WO1','WJ1',
-     &'LL1','WB1','KP1','PY1','DG1','HT1','CH1','WI1','__1','OT1',
+     &'LL1','WB1','KP1','PY1','DG1','HT1','CH1','WI1','AK1','LE1','IF1',
+     &'IM1','IH1','IK1','__1','OT1',
      &            'SF2','WF2','GF2','AF2','RF2','SS2','NF2','YC2',
      &'IC2','ES2','LP2','JP2','SP2','WP2','PP2','DF2','RW2','RC2',
      &'WH2','MH2','BM2','RA2','WA2','PB2','GC2','AS2','CW2','WO2','WJ2',
-     &'LL2','WB2','KP2','PY2','DG2','HT2','CH2','WI2','__2','OT2',
+     &'LL2','WB2','KP2','PY2','DG2','HT2','CH2','WI2','AK2','LE2','IF2',
+     &'IM2','IH2','IK2','__2','OT2',
      &            'SF3','WF3','GF3','AF3','RF3','SS3','NF3','YC3',
      &'IC3','ES3','LP3','JP3','SP3','WP3','PP3','DF3','RW3','RC3',
      &'WH3','MH3','BM3','RA3','WA3','PB3','GC3','AS3','CW3','WO3','WJ3',
-     &'LL3','WB3','KP3','PY3','DG3','HT3','CH3','WI3','__3','OT3'/
+     &'LL3','WB3','KP3','PY3','DG3','HT3','CH3','WI3','AK3','LE3','IF3',
+     &'IM3','IH3','IK3','__3','OT3'/
 C----------
 C COMMON STATEMENT FOR COEFFS VARIABLES
 C----------
@@ -180,13 +192,13 @@ C----------
       DATA HT1/
      & 5.487, 2*5.308, 2*5.313, 5.517, 5.327, 5.143, 2*5.188, 4.865,
      & 5.333, 2*5.382, 5.333, 5.563, 5.3401, 5.233, 5.355, 5.081,
-     & 4.700, 4.875, 7*5.152, 4*5.188, 6*5.152/
+     & 4.700, 4.875, 7*5.152, 4*5.188, 12*5.152/
 C
       DATA HT2/
      & -16.701, 2*-13.624, 2*-15.321, -17.944, -15.450, -13.497,
      & 2*-13.801, -9.305, -17.762, 2*-15.866, -17.762, -16.475,
      & -15.9354, -14.737, -13.878, -13.430, -6.326, -8.639,
-     & 7*-13.576, 4*-13.801, 6*-13.576/
+     & 7*-13.576, 4*-13.801, 12*-13.576/
 C
 C  SIGMAR VALUES FOR SF,SS,DF,RC,WH,RA MULTIPLIED BY .75
 C  TO CORRECT FOR BIAS IN THE FITTING PROCEDURE.
@@ -197,7 +209,7 @@ C
      & 0.3428, 2*0.4390, 0.3960, 0.3102, 0.3769, 0.4275,
      & 0.3931, 2*0.4842, 0.3690, 0.3222, 2*0.5494, 0.3222,
      & 0.2679, 0.6178, 0.3625, 0.3402, 0.3751, 0.5107,
-     & 0.3328, 5*0.5357, 0.236, 0.5357, 4*0.4842, 6*0.5357/
+     & 0.3328, 5*0.5357, 0.236, 0.5357, 4*0.4842, 12*0.5357/
 C----------
 C DATA STATEMENTS FOR VARIABLES IN VARCOM COMMON BLOCK.
 C----------
@@ -210,32 +222,32 @@ C   HTT1(ISPC,1) IS USED TO STORE THE CONSTANT COEFFICIENT.
 C
      & 1.3134, 2*1.4769, 1.4261, 2*1.3526, 1.7100,
      & 3*1.5907, 0.9717, 1.0756, 2*0.9717, 1.0756, 7.1391, 1.5907,
-     & 2.3115, 1.3608, 1.2278, 9*0.0994, 4*1.5907, 6*0.0994,
+     & 2.3115, 1.3608, 1.2278, 9*0.0994, 4*1.5907, 12*0.0994,
 C
 C   HTT1(ISPC,2) IS USED TO STORE THE DBH COEFFICIENT.
 C
      & 0.3432, 2*0.3579, 0.3334, 2*0.3335, 0.2943, 3*0.3040,
      & 0.3934, 0.4369, 2*0.3934, 0.4369, 4.2891, 0.3040, 0.2370,
-     & 0.6151, 0.4000, 9*4.9767, 4*0.3040, 6*4.9767,
+     & 0.6151, 0.4000, 9*4.9767, 4*0.3040, 12*4.9767,
 C
 C   HTT1(ISPC,3) IS USED TO STORE THE CR COEFFICIENT.
 C
      & 0.0366, 3*0.0, 2*0.0367, 0.0, 3*0.0, 0.0339, 0.0,
-     & 2*0.0339, 0.0, -0.7150, 0.0, -0.0556, 21*0.0,
+     & 2*0.0339, 0.0, -0.7150, 0.0, -0.0556, 27*0.0,
 C
 C   HTT1(ISPC,4) IS USED TO STORE THE DBH SQUARED COEFFICIENT.
 C
-     & 15*0.0, 0.2750, 2*0.0, -0.0442, 20*0.0,
+     & 15*0.0, 0.2750, 2*0.0, -0.0442, 26*0.0,
 C
 C   HTT1(ISPC,5) IS USED TO STORE THE DUMMY VARIABLE FOR
 C   MANAGED/UNMANAGED STANDS.
 C
      & 6*0.0, 0.1054, 3*0.0, 0.3044, 0.0, 2*0.3044, 0.0,
-     & 2.0393, 0.0, 0.3218, 0.0829, 20*0.0,
+     & 2.0393, 0.0, 0.3218, 0.0829, 26*0.0,
 C
 C   HTT1(ISPC,6) THRU HTT1(ISPC,9) ARE NOT USED. SET TO 0.0
 C
-     & 156*0.0/
+     & 180*0.0/
 C
       DATA REGNBK/2.999/
 C

@@ -27,7 +27,7 @@ COMMONS
 C----------
       CHARACTER*(*)SPCIN
       INTEGER MAXASPT, ISPC1, I, J, J2, IJSPIN
-      PARAMETER (MAXASPT=442)
+      PARAMETER (MAXASPT=448)
       CHARACTER*3 SPCOUT
       CHARACTER*8 ASPT(MAXASPT,21)
       CHARACTER VAR*2
@@ -1188,6 +1188,24 @@ C
 C      IE    KT    NC    PN    SO    TT    UT    WC    WS    OC    OP       SPECIES
      &'OH ','OT ','OH ','OT ','OH ','OH ','OH ','OT ','CL ','CL ','OT ',   !Umbellularia californica var. californica
      &'OH ','OT ','OH ','OT ','OH ','OH ','OH ','OT ','CL ','CL ','OT '/   !Umbellularia californica var. fresnensis
+C
+      DATA ((ASPT(I,J),J=1,10),I=443,448) /
+C     ALFA   FIA   PLNT       AK    BM    CA    CI    CR    EC    EM        SPECIES
+     &'AK ','301','ACKO    ','OT ','OT ','OT ','OT ','OT ','OT ','OT ',    !Acacia koa
+     &'LE ','671','MELE2   ','OT ','OT ','OT ','OT ','OT ','OT ','OT ',    !Metrosideros polymorpha
+     &'IF ','515','SAFR4   ','OT ','OT ','OT ','OT ','OT ','OT ','OT ',    !Santalum freycinetianum
+     &'IM ','516','SAPA7   ','OT ','OT ','OT ','OT ','OT ','OT ','OT ',    !Santalum paniculatum
+     &'IH ','517','SAHA2   ','OT ','OT ','OT ','OT ','OT ','OT ','OT ',    !Santalum haleakalae
+     &'IK ','518','SAELC   ','OT ','OT ','OT ','OT ','OT ','OT ','OT '/    !Santalum ellipticum
+C
+      DATA ((ASPT(I,J),J=11,21),I=443,448) /
+C      IE    KT    NC    PN    SO    TT    UT    WC    WS    OC    OP       SPECIES
+     &'OT ','OT ','OT ','AK ','OT ','OT ','OT ','OT ','OT ','OT ','OT ',   !Acacia koa
+     &'OT ','OT ','OT ','LE ','OT ','OT ','OT ','OT ','OT ','OT ','OT ',   !Metrosideros polymorpha
+     &'OT ','OT ','OT ','IF ','OT ','OT ','OT ','OT ','OT ','OT ','OT ',   !Santalum freycinetianum
+     &'OT ','OT ','OT ','IM ','OT ','OT ','OT ','OT ','OT ','OT ','OT ',   !Santalum paniculatum
+     &'OT ','OT ','OT ','IH ','OT ','OT ','OT ','OT ','OT ','OT ','OT ',   !Santalum haleakalae
+     &'OT ','OT ','OT ','IK ','OT ','OT ','OT ','OT ','OT ','OT ','OT '/   !Santalum ellipticum
 C
 C----------
 C  INITIALIZATIONS

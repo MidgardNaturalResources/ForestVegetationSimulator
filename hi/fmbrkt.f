@@ -55,8 +55,14 @@ COMMONS
      >     0.038,  !35 = hawthorn (r4 definition)
      >     0.062,  !36 = bitter cherry
      >     0.041,  !37 = willow
-     >    -0.000,  !38 = ---
-     >     0.044/  !39 = other (AS)
+     >     0.044,  !38 = Koa
+     >     0.044,  !39 = Ohia
+     >     0.044,  !40 = Forest sandalwood
+     >     0.044,  !41 = Mountain sandalwood
+     >     0.044,  !42 = Haleakala sandalwood
+     >     0.044,  !43 = Kauai sandalwood
+     >    -0.000,  !44 = ---
+     >     0.044/  !45 = other (AS)
 
       FMBRKT = DBH*B1(ISP)
 

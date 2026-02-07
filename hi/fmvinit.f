@@ -427,7 +427,7 @@ C         ponderosa pine - SO
             LSW(I)     = .TRUE.
 
 C         Douglas-fir, "not used"
-          CASE (16,38)
+          CASE (16,44)
             V2T(I)     =  28.1  ! coast
             LEAFLF(I)  =   5.0
             TFALL(I,0) =   2.0
@@ -554,8 +554,8 @@ C         white alder/pacific madrone - CA
             ENDDO
             LSW(I)     = .FALSE.
 
-C         paper birch
-          CASE (24,39)
+C         paper birch, Hawaiian species, other
+          CASE (24,38,39,40,41,42,43,45)
             V2T(I)     =  29.9
             LEAFLF(I)  =   1.0
             TFALL(I,0) =   1.0
@@ -817,7 +817,7 @@ C         firs, some pines, oak
             DKRCLS(I)  =   3
 
 C         aspen, cottonwood, other hardwoods
-          CASE (21:24,26,27,34:39)
+          CASE (21:24,26,27,34:43,45)
             DKRCLS(I)  =   4
             
         END SELECT

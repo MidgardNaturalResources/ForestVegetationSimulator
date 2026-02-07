@@ -73,7 +73,7 @@ endif
 CANprgs := FVSbc FVSon
 $(info CANprgs: $(CANprgs))
 
-USprgs := FVSak FVSbm FVSca FVSci FVScr FVScs FVSec FVSem FVSie FVSkt FVSls FVSnc FVSne FVSoc FVSop FVSpn FVSsn FVSso FVStt FVSut FVSwc FVSws
+USprgs := FVSak FVSbm FVSca FVSci FVScr FVScs FVSec FVSem FVShi FVSie FVSkt FVSls FVSnc FVSne FVSoc FVSop FVSpn FVSsn FVSso FVStt FVSut FVSwc FVSws
 $(info USprgs: $(USprgs))
 
 # the following variables are not processed until sourceFileList is defined...and that happens
@@ -130,6 +130,9 @@ FVSec$(SLIBSUFX) FVSec$(PRGSUFX)  : $(addsuffix _sourceList.txt,FVSec) $(shell c
 
 FVSem$(SLIBSUFX) FVSem$(PRGSUFX)  : $(addsuffix _sourceList.txt,FVSem) $(shell cat $(addsuffix _sourceList.txt,FVSem))
 	$(MAKE) --file=makefile FVSem.setup
+
+FVShi$(SLIBSUFX) FVShi$(PRGSUFX)  : $(addsuffix _sourceList.txt,FVShi) $(shell cat $(addsuffix _sourceList.txt,FVShi))
+	$(MAKE) --file=makefile FVShi.setup
 
 FVSie$(SLIBSUFX) FVSie$(PRGSUFX) : $(addsuffix _sourceList.txt,FVSie) $(shell cat $(addsuffix _sourceList.txt,FVSie))
 	$(MAKE) --file=makefile FVSie.setup
