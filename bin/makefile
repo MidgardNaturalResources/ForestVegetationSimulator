@@ -58,7 +58,8 @@ $(info mingw64: $(mingw64); FCprf: $(FCprf); CCprf: $(CCprf))
 
 export CC = gcc
 export FC = gfortran 
-export FFLAGS = $(PIC) -g -cpp -DCMP${CC} -Wall -Wno-integer-division -ffpe-trap=invalid,zero,underflow,overflow,denormal -fbacktrace -fno-stack-protector
+export FFLAGS = $(PIC) -g -cpp -DCMP${CC} -Wall -Wno-integer-division -fno-stack-protector -mstackrealign -fno-automatic -std=legacy
+export EXEFLAGS = -ffpe-trap=invalid,zero,overflow,underflow -fbacktrace
 # Adding optimization (-O2) does not help execution speed much but slows compile time a lot
 export CFLAGS = $(PIC) -DANSI -DCMP${CC} -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION $(WIN) 
 export LD = gfortran
@@ -195,7 +196,7 @@ endif
 ifeq (${OSARCH},w64) 
 %.prg : $(object) 
 	$(FCprf)$(LD) -static -shared -Wl,--export-all-symbols -o $(basename ../$@)$(SLIBSUFX)  $(filter-out  main.o,$(object))
-	$(FCprf)$(LD) -static -o $(basename ../$@)$(PRGSUFX) $(object)
+	$(FCprf)$(LD) -static $(EXEFLAGS) -o $(basename ../$@)$(PRGSUFX) $(object)
 else
 %.prg : $(object) 
 	$(LD) -shared -o $(basename ../$@)$(SLIBSUFX) $(filter-out main.o,$(object)) $(DBLINK) 
