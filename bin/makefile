@@ -58,7 +58,7 @@ $(info mingw64: $(mingw64); FCprf: $(FCprf); CCprf: $(CCprf))
 
 export CC = gcc
 export FC = gfortran 
-export FFLAGS = $(PIC) -g -cpp -DCMP${CC} -Wall -Wno-integer-division -fno-stack-protector -mstackrealign -fno-automatic -std=legacy
+export FFLAGS = $(PIC) -g -cpp -DCMP${CC} -Wall -Wno-integer-division -fno-stack-protector -mstackrealign -std=legacy
 export EXEFLAGS = -ffpe-trap=invalid,zero,overflow,underflow -fbacktrace
 # Adding optimization (-O2) does not help execution speed much but slows compile time a lot
 export CFLAGS = $(PIC) -DANSI -DCMP${CC} -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION $(WIN) 
