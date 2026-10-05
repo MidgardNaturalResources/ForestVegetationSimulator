@@ -2382,575 +2382,365 @@ Sometime in the early 2000s, a new file handling subroutine was added called “
 
 A unit number is associated with each file. Those used by the FVS base model are specified in subroutine BLKDAT; those used in the regeneration establishment extension can be found in subroutine ESBLKD; those associated with other extensions can be found in various other places. Table 3-1 shows unit numbers and associated variable names that are used for some purpose in FVS. Programmers should avoid using these unit numbers for any other purpose in FVS when adding new features to the model. Furthermore, there is a capability in modern FORTRAN that provides a file unit number for use. An example of its use is in the Climate-FVS extension’s CLIN subroutine where the OPEN statement uses the NEWUNIT feature of the FORTRAN OPEN statement. This construct should replace the fixed unit assignments for many files listed in table 3-1. Unit 30 associated with variable KOLIST is a good example of where the OPEN(NEWUNIT =…) construct could easily replace the unit assignment, and should be changed.
 
-**Table 3-1: Unit numbers and associated variable names used in FVS.**
+```{r tbl-3-1, echo=FALSE}
+df <- data.frame(
+  c1 = c(
+    "ISTDAT",
+    "JOLIST",
+    "JOSUM",
+    "",
+    "JOSCRN",
+    "JOMPB",
+    "JOTREE",
+    "JOMPDK",
+    "JODFTM",
+    "JODFEC",
+    "JOCALB",
+    "JOSUME",
+    "IREAD",
+    "JOSTND",
+    "JOREGT",
+    "IRUNIT",
+    "JODFB",
+    "JODFBX",
+    "IOUNIT",
+    "IRGEN(2)",
+    "JCVNOH",
+    "JBMCYC",
+    "JOWSBW",
+    "IMCOUT",
+    "JBMTRE",
+    "KOLIST",
+    "IBBOUT",
+    "JBMBKP",
+    "JBMLPY",
+    "JOMPBX",
+    "KOLIST",
+    "JBMVOL",
+    "JCOUT",
+    "JSNOUT",
+    "JLOUT(1)",
+    "JLOUT(2)",
+    "JLOUT(3)",
+    "JOWE",
+    "JOBWP1",
+    "JOBWP2",
+    "JOBWP3",
+    "JOBWP4",
+    "JOBWP5",
+    "JOBWP6",
+    "JOBWP7",
+    "JOBWP8",
+    "ICIN",
+    "IDTOUT",
+    "IDCOUT",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "JSTASH",
+    "JDSTASH",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "JSVOUT",
+    "JSVPIC",
+    "JONEWF",
+    "JOSCRT",
+    "FNO"
+  ),
+  c2 = c(
+    "CONTRL",
+    "CONTRL",
+    "CONTRL",
+    "",
+    "SCREEN",
+    "MPBCOM",
+    "CONTRL",
+    "",
+    "TMCOM1",
+    "TMCOM1",
+    "CONTRL",
+    "ECON",
+    "CONTRL",
+    "CONTRL",
+    "ESHAP",
+    "RDCOM",
+    "DFBCOM",
+    "DFBCOM",
+    "RDCOM",
+    "RDCOM",
+    "CVCOM",
+    "BMPCOM",
+    "BWECOM",
+    "RDCOM",
+    "BMPCOM",
+    "FVSSTDCM",
+    "RDCOM",
+    "BMPCOM",
+    "BMPCOM",
+    "MPBCOM",
+    "local in subroutine NATCRZ",
+    "BMPCOM",
+    "FMCOM",
+    "FMFCOM",
+    "FMCOM",
+    "FMCOM",
+    "FMCOM",
+    "BWEBOX",
+    "BWECOM",
+    "BWECOM",
+    "BWECOM",
+    "BWECOM",
+    "BWECOM",
+    "BWECOM",
+    "BWECOM",
+    "BWECOM",
+    "BRCOM",
+    "BRCOM",
+    "BRCOM",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "SVDATA",
+    "SVDATA",
+    "local in subroutine GENRPT",
+    "local in subroutine GENRPT",
+    ""
+  ),
+  c3 = c(
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "13",
+    "13",
+    "15",
+    "16",
+    "17",
+    "18",
+    "19",
+    "21",
+    "22",
+    "24",
+    "24",
+    "25",
+    "26",
+    "26",
+    "27",
+    "27",
+    "27",
+    "28",
+    "29",
+    "29",
+    "30",
+    "30",
+    "30",
+    "35",
+    "36",
+    "37",
+    "38",
+    "40",
+    "41",
+    "42",
+    "43",
+    "44",
+    "45",
+    "46",
+    "47",
+    "48",
+    "55",
+    "56",
+    "57",
+    "60",
+    "61",
+    "62",
+    "63",
+    "64",
+    "65",
+    "66",
+    "67",
+    "68",
+    "69",
+    "70",
+    "71",
+    "71",
+    "72",
+    "72",
+    "73",
+    "74",
+    "75",
+    "76",
+    "77",
+    "78",
+    "90",
+    "91",
+    "92",
+    "93",
+    "101"
+  ),
+  c4 = c(
+    "Tree data file",
+    "Tree list output file (requested with the TREELIST keyword record)",
+    "Copy of the Summary Statistics output file (requested with the ECHOSUM keyword record)",
+    "Reserved in FORTRAN as the default input unit",
+    "Reserved in FORTRAN as the default output unit",
+    "Output file for the lodgepole pine mountain pine beetle extension",
+    "Scratch file for the Sample Tree output table",
+    "Scratch file storing the MPB plot data before printing (this code is obsolete and should be removed)",
+    "Output file for the Douglas-fir tussock moth extension",
+    "Used in the Douglas-fir tussock moth extension",
+    "Used for outputting the calibration statistics (requested with the CALBSTAT keyword record)",
+    "Auxiliary file used as input to the CHEAOP II economics post-processor (requested with the CHEAPO keyword record)",
+    "Keyword record file",
+    "Main FVS output file",
+    "Scratch file used for regeneration establishment reports",
+    "Used in the root disease extension",
+    "Douglas-fir beetle extension output",
+    "Holds a copy of Douglas-fir beetle extension summary output for post-processing",
+    "Used in the root disease extension",
+    "Machine readable output file for the root disease extension",
+    "Cover extension: output file of cover statistics for post-processing",
+    "Used  in the west-wide pine beetle extension",
+    "Budworm extension output file",
+    "Root disease extension: spread-rate Monte Carlo results",
+    "West-wide pine beetle extension: detailed tree report by size class",
+    "File with detailed tree data for input to the FVSSTAND post-processor",
+    "Root disease extension: bark beetle mortality table",
+    "West-wide pine beetle extension: beetle kill potential report",
+    "West-wide pine beetle extension: landscape average output file",
+    "Copy of lodgepole pine mountain pine beetle extension output for post-processing",
+    "File with detailed tree data for input to the National Cruise Program (requested with the CRUZFILE keyword record)",
+    "West-wide pine beetle extension: detailed volume report by size class",
+    "Fire and fuels extension: output file used in development and testing (activated with the MOREOUT keyword record)",
+    "Fire and fuels extension: detailed snag report",
+    "Fire and fuels extension: landscape level fuel loading output table",
+    "Fire and fuels extension: landscape level fuel model output table",
+    "Fire and fuels extension: landscape level fire information output table",
+    "Used in the western spruce budworm extension",
+    "Budworm extension output table 1",
+    "Budworm extension output table 2",
+    "Budworm extension output table 3",
+    "Budworm extension output table 4",
+    "Budworm extension output table 5",
+    "Budworm extension output table 6",
+    "Budworm extension output table 7",
+    "Budworm extension output table 8",
+    "Used in the white pine blister rust extension",
+    "Used in the white pine blister rust extension",
+    "Used in the white pine blister rust extension",
+    "BGC extension: climate.clm file",
+    "BGC extension: beta.dat file",
+    "BGC extension: site.dat file",
+    "BGC extension: struct.out file",
+    "BGC extension: daystand.out file",
+    "BGC extension: dayenty.out file",
+    "BGC extension: yrenty.out file",
+    "BGC extension: layer.out file",
+    "BGC extension: dead.out file",
+    "BGC extension: scratch file",
+    "BGC extension: yrstand.out file",
+    "BGC extension: daywatr.out file",
+    "Open-FVS: output the memory for stands in a run",
+    "Open-FVS: retrieve the memory for stands in a run",
+    "BGC extension: test.out file",
+    "BGC extension: incr.out file",
+    "BGC extension: entylist.out file",
+    "BGC extension: fractions.out file",
+    "BGC extension: vigor.out file",
+    "BGC extension: crowns.out file",
+    "BGC extension: npp_gpp.out file",
+    "Used to write the “.svs” files when using the SVS keyword record",
+    "Used to write the index file when using the SVS keyword record",
+    "Permanent copy of the GENRPT scratch file for post-processing.",
+    "Scratch file used by GENRPT to store various print files which eventually get written to the FVS output in sequence",
+    "Used to add regeneration from an external source"
+  ),
+  stringsAsFactors = FALSE
+)
+
+kable(df,
+      col.names = c("Variable name", "Labeled COMMON", "Unit number", "Use in FVS"),
+      caption = "Table 3-1: Unit numbers and associated variable names used in FVS.",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE)
+```
+
+
+```{r tbl-3-2, echo=FALSE}
+df <- data.frame(
+  c1 = c(
+    "IREAD",
+    "JOSTND",
+    "ISTDAT",
+    "JOLIST",
+    "JOSUM",
+    "JOSUME"
+  ),
+  c2 = c(
+    "Input keyword record file",
+    "Main output file",
+    "Input tree data file",
+    "Tree list output file (requested with the TREELIST keyword record)",
+    "Copy of the Summary Statistics output file (requested with the ECHOSUM keyword record)",
+    "Obsolete CHEAPOII output; but also used for the calibration statistics summary output (requested with the CALBSTAT keyword record)"
+  ),
+  c3 = c(
+    ".key",
+    ".out",
+    ".tre",
+    ".trl",
+    ".sum",
+    ".chp"
+  ),
+  stringsAsFactors = FALSE
+)
+
+kable(df,
+      col.names = c("Variable name", "File description", "Default name suffix"),
+      caption = "Table 3-2: Default file name suffices used for selected automatically created files.",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE)
+```
 
-Variable name
-
-Labeled
-
-COMMON
-
-Unit number
-
-Use in FVS
-
-ISTDAT
-
-CONTRL
-
-2
-
-Tree data file
-
-JOLIST
-
-CONTRL
-
-3
-
-Tree list output file (requested with the TREELIST keyword record)
-
-JOSUM
-
-CONTRL
-
-4
-
-Copy of the Summary Statistics output file (requested with the ECHOSUM keyword record)
-
-5
-
-Reserved in FORTRAN as the default input unit
-
-JOSCRN
-
-SCREEN
-
-6
-
-Reserved in FORTRAN as the default output unit
-
-JOMPB
-
-MPBCOM
-
-7
-
-Output file for the lodgepole pine mountain pine beetle extension
-
-JOTREE
-
-CONTRL
-
-8
-
-Scratch file for the Sample Tree output table
-
-JOMPDK
-
-9
-
-Scratch file storing the MPB plot data before printing (this code is obsolete and should be removed)
-
-JODFTM
-
-TMCOM1
-
-10
-
-Output file for the Douglas-fir tussock moth extension
-
-JODFEC
-
-TMCOM1
-
-11
-
-Used in the Douglas-fir tussock moth extension
-
-JOCALB
-
-CONTRL
-
-13
-
-Used for outputting the calibration statistics (requested with the CALBSTAT keyword record)
-
-JOSUME
-
-ECON
-
-13
-
-Auxiliary file used as input to the CHEAOP II economics post-processor (requested with the CHEAPO keyword record)
-
-IREAD
-
-CONTRL
-
-15
-
-Keyword record file
-
-JOSTND
-
-CONTRL
-
-16
-
-Main FVS output file
-
-JOREGT
-
-ESHAP
-
-17
-
-Scratch file used for regeneration establishment reports
-
-IRUNIT
-
-RDCOM
-
-18
-
-Used in the root disease extension
-
-JODFB
-
-DFBCOM
-
-19
-
-Douglas-fir beetle extension output
-
-JODFBX
-
-DFBCOM
-
-21
-
-Holds a copy of Douglas-fir beetle extension summary output for post-processing
-
-IOUNIT
-
-RDCOM
-
-22
-
-Used in the root disease extension
-
-IRGEN(2)
-
-RDCOM
-
-24
-
-Machine readable output file for the root disease extension
-
-JCVNOH
-
-CVCOM
-
-24
-
-Cover extension: output file of cover statistics for post-processing
-
-JBMCYC
-
-BMPCOM
-
-25
-
-Used  in the west-wide pine beetle extension
-
-JOWSBW
-
-BWECOM
-
-26
-
-Budworm extension output file
-
-IMCOUT
-
-RDCOM
-
-26
-
-Root disease extension: spread-rate Monte Carlo results
-
-JBMTRE
-
-BMPCOM
-
-27
-
-West-wide pine beetle extension: detailed tree report by size class
-
-KOLIST
-
-FVSSTDCM
-
-27
-
-File with detailed tree data for input to the FVSSTAND post-processor
-
-IBBOUT
-
-RDCOM
-
-27
-
-Root disease extension: bark beetle mortality table
-
-JBMBKP
-
-BMPCOM
-
-28
-
-West-wide pine beetle extension: beetle kill potential report
-
-JBMLPY
-
-BMPCOM
-
-29
-
-West-wide pine beetle extension: landscape average output file
-
-JOMPBX
-
-MPBCOM
-
-29
-
-Copy of lodgepole pine mountain pine beetle extension output for post-processing
-
-KOLIST
-
-local in subroutine
-
-NATCRZ
-
-30
-
-File with detailed tree data for input to the National Cruise Program (requested with the CRUZFILE keyword record)
-
-JBMVOL
-
-BMPCOM
-
-30
-
-West-wide pine beetle extension: detailed volume report by size class
-
-JCOUT
-
-FMCOM
-
-30
-
-Fire and fuels extension: output file used in development and testing (activated with the MOREOUT keyword record)
-
-JSNOUT
-
-FMFCOM
-
-35
-
-Fire and fuels extension: detailed snag report
-
-JLOUT(1)
-
-FMCOM
-
-36
-
-Fire and fuels extension: landscape level fuel loading output table
-
-JLOUT(2)
-
-FMCOM
-
-37
-
-Fire and fuels extension: landscape level fuel model output table
-
-JLOUT(3)
-
-FMCOM
-
-38
-
-Fire and fuels extension: landscape level fire information output table
-
-JOWE
-
-BWEBOX
-
-40
-
-Used in the western spruce budworm extension
-
-JOBWP1
-
-BWECOM
-
-41
-
-Budworm extension output table 1
-
-JOBWP2
-
-BWECOM
-
-42
-
-Budworm extension output table 2
-
-JOBWP3
-
-BWECOM
-
-43
-
-Budworm extension output table 3
-
-JOBWP4
-
-BWECOM
-
-44
-
-Budworm extension output table 4
-
-JOBWP5
-
-BWECOM
-
-45
-
-Budworm extension output table 5
-
-JOBWP6
-
-BWECOM
-
-46
-
-Budworm extension output table 6
-
-JOBWP7
-
-BWECOM
-
-47
-
-Budworm extension output table 7
-
-JOBWP8
-
-BWECOM
-
-48
-
-Budworm extension output table 8
-
-ICIN
-
-BRCOM
-
-55
-
-Used in the white pine blister rust extension
-
-IDTOUT
-
-BRCOM
-
-56
-
-Used in the white pine blister rust extension
-
-IDCOUT
-
-BRCOM
-
-57
-
-Used in the white pine blister rust extension
-
-60
-
-BGC extension: climate.clm file
-
-61
-
-BGC extension: beta.dat file
-
-62
-
-BGC extension: site.dat file
-
-63
-
-BGC extension: struct.out file
-
-64
-
-BGC extension: daystand.out file
-
-65
-
-BGC extension: dayenty.out file
-
-66
-
-BGC extension: yrenty.out file
-
-67
-
-BGC extension: layer.out file
-
-68
-
-BGC extension: dead.out file
-
-69
-
-BGC extension: scratch file
-
-70
-
-BGC extension: yrstand.out file
-
-71
-
-BGC extension: daywatr.out file
-
-JSTASH
-
-71
-
-Open-FVS: output the memory for stands in a run
-
-JDSTASH
-
-72
-
-Open-FVS: retrieve the memory for stands in a run
-
-72
-
-BGC extension: test.out file
-
-73
-
-BGC extension: incr.out file
-
-74
-
-BGC extension: entylist.out file
-
-75
-
-BGC extension: fractions.out file
-
-76
-
-BGC extension: vigor.out file
-
-77
-
-BGC extension: crowns.out file
-
-78
-
-BGC extension: npp_gpp.out file
-
-JSVOUT
-
-SVDATA
-
-90
-
-Used to write the “.svs” files when using the SVS keyword record
-
-JSVPIC
-
-SVDATA
-
-91
-
-Used to write the index file when using the SVS keyword record
-
-JONEWF
-
-local in subroutine GENRPT
-
-92
-
-Permanent copy of the GENRPT scratch file for post-processing.
-
-JOSCRT
-
-local in subroutine GENRPT
-
-93
-
-Scratch file used by GENRPT to store various print files which eventually get written to the FVS output in sequence
-
-FNO
-
-101
-
-Used to add regeneration from an external source
-
-**Table 3-2: Default file name suffices used for selected automatically created files.**
-
-Variable name
-
-File description
-
-Default name suffix
-
-IREAD
-
-Input keyword record file
-
-.key
-
-JOSTND
-
-Main output file
-
-.out
-
-ISTDAT
-
-Input tree data file
-
-.tre
-
-JOLIST
-
-Tree list output file (requested with the TREELIST keyword record)
-
-.trl
-
-JOSUM
-
-Copy of the Summary Statistics output file (requested with the ECHOSUM keyword record)
-
-.sum
-
-JOSUME
-
-Obsolete CHEAPOII output; but also used for the calibration statistics summary output (requested with the CALBSTAT keyword record)
-
-.chp
 
 If some, or all, of the stand initialization parameters or individual tree data is being read directly from a database, database connections are not established at this point. Database connections will be established during the processing of keyword records, see sections 3.3 and 3.5, when the DATABASE - END keyword record sequence is encountered in the keyword record file.
 
@@ -5672,85 +5462,79 @@ The 2 dimensional array IEVACT(i,j), in the OPCOM labeled COMMON block, stores t
 
 Operations code is a set of integer values that define a sequence of operations in post-fix notation. Post-fix notation is also called Reverse Polish notation (RPN) and is a mathematical notation in which every operator follows all of its operands, in contrast to Polish notation, which puts the operator in the prefix position. For example, the adding of 3 and 4, in prefix position is: 3+4 and in RPN it is 3 4 +. Expressions entered in prefix notation are converted to postfix by subroutine ALGCMP. Operations codes are used in this logic. For example, consider the expression: BTOPHT GT 80. Table 7-1 shows how this expression would be converted to a sequence of 4 integers stored in IEVCOD(k):
 
-**Table 7-1: Example showing how the expression BTOPHT GT 80 is converted to a sequence of 4 integers in FVS.**
+```{r tbl-7-1, echo=FALSE}
+df <- data.frame(
+  c1 = c(
+    "1",
+    "2",
+    "3",
+    "4"
+  ),
+  c2 = c(
+    "109",
+    "1001",
+    "6",
+    "0"
+  ),
+  c3 = c(
+    "load the pre-defined event monitor variable BTOPHT onto a stack (a vector of real numbers)",
+    "load constant number 1 which has the value 80, and is stored in the first location of array CONSTS(i), onto the stack structure ",
+    "GT, compare the two values on the stack, put the result on the logical stack, and pop the numeric stack ",
+    "signals that the expression is finished and the result in on the logical stack"
+  ),
+  stringsAsFactors = FALSE
+)
 
-Sequence
+kable(df,
+      col.names = c("Sequence", "Op code", "Description"),
+      caption = "Table 7-1: Example showing how the expression BTOPHT GT 80 is converted to a sequence of 4 integers in FVS.",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE)
+```
 
-Op code
-
-Description
-
-1
-
-109
-
-load the pre-defined event monitor variable BTOPHT onto a stack (a vector of real numbers)
-
-2
-
-1001
-
-load constant number 1 which has the value 80, and is stored in the first location of array CONSTS(i), onto the stack structure
-
-3
-
-6
-
-GT, compare the two values on the stack, put the result on the logical stack, and pop the numeric stack
-
-4
-
-0
-
-signals that the expression is finished and the result in on the logical stack
 
 The comments in subroutine ALGKEY provide a comprehensive list of operations codes. That information is repeated in subroutine ALGEVL. Keeping these comments up to date is essential.
 
 Functions, are powerful and are used extensively to compute new variables and in defining events. An example is the MIN function, operations code 109NN, where NN is the actual number of arguments (up to 99), each separated by a comma. For example, consider this expression: MIN (10,BBA,ABA,1), where BBA and ABA are the pre-defined event monitor variables for total stand basal area before-thinning and after-thinning, respectively. Table 7-2 shows how this expression is converted to operations code:
 
-**Table 7-2: Example showing how the expression MIN (10,BBA,ABA,1) is converted to operations code in FVS.**
+```{r tbl-7-2, echo=FALSE}
+df <- data.frame(
+  c1 = c(
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6"
+  ),
+  c2 = c(
+    "1002",
+    "107",
+    "205",
+    "1001",
+    "10904",
+    "0"
+  ),
+  c3 = c(
+    "load constant number 2, which has the value 10, and is stored in the second location of array CONSTS(i), onto the stack structure",
+    "load the pre-defined event monitor variable BBA, before-thinning total stand basal area ",
+    "load the pre-defined event monitor variable ABA, after-thinning total stand basal area ",
+    "load constant number 1 which happens to have the value 1, and is stored in the first location of array CONSTS(i), onto the stack structure",
+    "find the min of 4 values (because NN=4), place it at the top of the stack and pop 3 times)",
+    "signals that the expression is finished and the answer is on the top of the numeric stack"
+  ),
+  stringsAsFactors = FALSE
+)
 
-Sequence
+kable(df,
+      col.names = c("Sequence", "Op code", "Description"),
+      caption = "Table 7-2: Example showing how the expression MIN (10,BBA,ABA,1) is converted to operations code in FVS.",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE)
+```
 
-Op code
-
-Description
-
-1
-
-1002
-
-load constant number 2, which has the value 10, and is stored in the second location of array CONSTS(i), onto the stack structure
-
-2
-
-107
-
-load the pre-defined event monitor variable BBA, before-thinning total stand basal area
-
-3
-
-205
-
-load the pre-defined event monitor variable ABA, after-thinning total stand basal area
-
-4
-
-1001
-
-load constant number 1 which happens to have the value 1, and is stored in the first location of array CONSTS(i), onto the stack structure
-
-5
-
-10904
-
-find the min of 4 values (because NN=4), place it at the top of the stack and pop 3 times)
-
-6
-
-0
-
-signals that the expression is finished and the answer is on the top of the numeric stack
 
 Subroutine EVMON manages the process of evaluating an expression, first by loading the values of variables used in expressions by calling subroutine EVTSTV. The logical expressions that define events are evaluated twice every cycle. The first time happens at the beginning of the cycle just before subroutine CUTS, and is called phase 1. The second call happens after subroutine CUTS, and is called phase 2. A first step in evaluating expressions is to compute user-defined variables so that they can be used in the logical expressions.
 
