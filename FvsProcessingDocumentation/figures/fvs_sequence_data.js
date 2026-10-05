@@ -202,19 +202,19 @@
   };
   var relStopPoint = {
     label: "Stop points: how FVS stops", sec: "8.1",
-    desc: ["Every routine returns its status up the call stack, and no FORTRAN STOP is executed except in MAIN, so FVS can return from any stop point. The stop points are numbered 1 to 7 (see the stop point markers in the main figure), and -1 marks the end of a stand.",
-           "A stop can be requested two ways. A command line --stoppoint=code,year,file is a major stop point, which stores the stand state in a file. fvsSetStoppointCodes(code, year), used by a calling program, sets a minor stop point, which returns without storing anything."],
+    desc: ["Every routine returns its status up the call stack, and no FORTRAN STOP is executed except in MAIN, so FVS can return from any stop point. The stop points are numbered 1 to 7 (see the stop point markers in the main figure), and the restart code 100 marks the end of a stand.",
+           "A stop can be requested two ways. A command line --stoppoint=code,year,file is a major stop point, which stores the stand state in a file and ends the stand there; the next call to FVS starts the next stand, and a stored stand is continued only with --restart. fvsSetStoppointCodes(code, year), used by a calling program, sets a minor stop point, which stores nothing and lets FVS continue the stand from memory when it is called again."],
     steps: [
       { label: "FVS reaches a stop point", subs: ["fvsStopPoint"], sec: "8.2",
         desc: "The code at each stop point calls fvsStopPoint with its location code. Afterwards it checks the flag ISTOPRES and the return code and returns if either is set." },
       { label: "Check for a major stop point", subs: ["fvsStopPoint"], sec: "8.2",
-        desc: "A major stop point matches when its code equals this location (a negative code matches the first stop point reached) and its year falls within the current cycle. A code or year of 0 disables it. If it matches, the stand state is stored, the stop is marked stop-with-store, and the restart code is set to the location code.",
+        desc: "A major stop point matches when its code equals this location (-1 matches the first stop point reached) and its year falls within the current cycle (a year below 0 applies no year limit). A code or year of 0 disables it. If it matches, the stand state is stored, the stop is marked stop-with-store, and the restart code is set to the location code.",
         steps: [
           { label: "Store the stand state", subs: ["PUTSTD", "VARPUT", "CVPUT", "ECNPUT", "FMPPPUT", "DBSPPPUT", "CLPUT"], sec: "8.2.1",
             desc: "The first time, the stop file gets a header (stop point code, year, keyword file name). PUTSTD then writes every state variable as a binary stream, and the variant and each extension add their own data. No file is written if no stop point file name was given." }
         ] },
       { label: "Check for a minor stop point", subs: ["fvsStopPoint"], sec: "8.2",
-        desc: "If no major stop point matched, the minor stop point is checked the same way. If it matches, the stop is marked stop-without-store and the restart code is set. The state stays in memory (COMMON), so nothing is written." },
+        desc: "If no major stop point matched, the minor stop point is checked. A code of 0 disables it, -1 matches every stop point, and a year of 0 or below applies no year limit (a year above 0 limits it to the cycle that contains that year). If it matches, the stop is marked stop-without-store and the restart code is set. The state stays in memory (COMMON), so nothing is written." },
       { label: "Return up the call stack", subs: ["getAmStopping", "fvsGetRtnCode"], sec: "8.2",
         desc: "When a stop point matched, ISTOPDONE is set and GRADD, GRINCR, TREGRO and FVS each return in turn. After each call, the caller asks getAmStopping, and fvsGetRtnCode, whether it should return as well. Control goes back to MAIN, or to the calling program when FVS is a shared library." },
       { kind: "end", label: "No match: continue processing" }
