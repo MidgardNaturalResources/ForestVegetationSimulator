@@ -286,9 +286,9 @@
     steps: [
       { label: "Write beginning-of-cycle visualization", subs: ["SVOUT"], sec: "4.1.1.2", desc: "From cycle 2 on, SVOUT writes the beginning-of-cycle file for the stand visualization post-processor." },
       { label: "Find the thinning requests", subs: ["CUTS", "OPFIND", "OPGET"], sec: "4.1.1.2.1",
-        desc: "CUTS handles minimum harvest constraints (MINHARV), harvest priority multipliers (SPECPREF, TCONDMLT), yard loss (YARDLOSS), pruning (PRUNE) and the thinning requests (THIN___, SETPTHIN). It first checks for requests with OPFIND and zeroes the trial thinning vector WK4." },
+        desc: "CUTS handles minimum harvest constraints (MINHARV), harvest priority multipliers (SPECPREF, TCONDMLT), yard loss (YARDLOSS), pruning (PRUNE) and the thinning requests (THIN___, SETPTHIN). It first checks for requests with OPFIND and zeroes the removed-trees array WK3." },
       { label: "Trial thinning", sec: "4.1.1.2.1",
-        desc: "The DO 1400 loop retrieves each request (OPGET) and accumulates the removals in WK4 and in the harvest volume totals, according to the request type IACTK. Nothing is final yet." },
+        desc: "The DO 1400 loop retrieves each request (OPGET) and applies it to WK4, which holds the current trees per acre of each record, while the removed volumes and basal area are accumulated, according to the request type IACTK. Nothing is final yet." },
       { label: "Apply thinning if allowed", subs: ["TREDEL", "SPESRT", "RDPSRT"], sec: "4.1.1.2.1",
         desc: "If the minimum harvest is met and the run is not in PRETEND mode for an economic analysis, the DO 1700 loop applies the trial results. Records reduced to zero trees per acre are deleted with TREDEL, SPESRT realigns the species sort, and RDPSRT re-sorts by diameter." },
       { label: "Interact with extensions", subs: ["FMSALV", "FMSCUT", "FMTREM", "FMPRUN", "ECHARV"], sec: "4.1.1.2",

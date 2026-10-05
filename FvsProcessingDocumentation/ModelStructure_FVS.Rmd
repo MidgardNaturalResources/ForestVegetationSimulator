@@ -150,10 +150,10 @@ growth_mort <- data.frame(
     "Variant-specific common blocks; Stand density (BA, SDI, CCF), tree attributes"
   ),
   Output = c(
-    "DG() - diameter growth/year; HTG() - height growth; WK2() - mortality (TPA)",
+    "DG() - diameter growth (10-year basis); HTG() - height growth; WK2() - mortality (TPA)",
     "Updated DBH(), HT(), scaled DG() to cycle length",
     "Updated HT(), DBH(), PROB(); WK6() - mortality volume; OMORT() - mortality summary",
-    "WK2() - mortality (trees/acre); IMC() - mortality class"
+    "WK2() - mortality (trees/acre)"
   ),
   stringsAsFactors = FALSE
 )
@@ -209,7 +209,7 @@ thinning <- data.frame(
   Function = c("CUTS"),
   Purpose = c("Executes thinning strategies for the cycle"),
   Input_Arrays = c("ARRAYS.F77, CONTRL.F77, PLOT.F77; DBH(), HT(), PROB(), CFV(), BFV(); Target densities"),
-  Output = c("WK3() - trees removed; WK4-6() - volumes removed; Updated PROB(); ONTREM()"),
+  Output = c("WK3() - trees removed; WK4() - current trees per acre during thinning; WK5(), WK6() - merchantable cubic and board foot volume removed; Updated PROB(); ONTREM()"),
   stringsAsFactors = FALSE
 )
 
@@ -278,15 +278,15 @@ fvs_arrays <- data.frame(
     "RELDEN"
   ),
   Common_Block = c(
-    "Parameter",
+    "local (argument)",
     "CONTRL",
+    "CONTRL",
+    "CONTRL",
+    "PLTCHR",
+    "PLTCHR",
     "CONTRL",
     "CONTRL",
     "PLOT",
-    "PLOT",
-    "CONTRL",
-    "CONTRL",
-    "CONTRL",
     "PLOT",
     "PLOT",
     "PLOT"
@@ -295,7 +295,7 @@ fvs_arrays <- data.frame(
     "INTEGER",
     "INTEGER",
     "INTEGER",
-    "INTEGER(MAXCY)",
+    "INTEGER(MAXCY1)",
     "CHARACTER*26",
     "CHARACTER*4",
     "INTEGER",
@@ -320,14 +320,14 @@ fvs_arrays <- data.frame(
     "INPUT/OUTPUT"
   ),
   Description = c(
-    "Return code: 0=OK, 1=error, 2=run complete",
+    "Return code: 0 = OK, 1 = error, 2 = run ended",
     "Current cycle number (0 to NCYC)",
     "Total number of projection cycles",
     "Calendar year for each cycle",
     "Stand/plot identifier",
     "Management identifier",
     "Total number of tree records in model",
-    "Number of projectable tree records",
+    "Number of projectable tree records input (set in INTREE)",
     "Cycle length in years (floating point)",
     "Stand basal area (sq ft/acre)",
     "Total trees per acre",
@@ -366,7 +366,7 @@ initre_arrays <- data.frame(
     "ELEV",
     "IND1()",
     "ISCT(,)",
-    "WK1()-WK15()"
+    "WK1()-WK7()"
   ),
   Common_Block = c(
     "ARRAYS",
@@ -379,7 +379,7 @@ initre_arrays <- data.frame(
     "PLOT",
     "PLOT",
     "PLOT",
-    "CONTRL",
+    "ARRAYS",
     "CONTRL",
     "ARRAYS"
   ),
@@ -421,10 +421,10 @@ initre_arrays <- data.frame(
     "Crown ratio (percent of height with live crown)",
     "Site index by species (base age 50 or variant-specific)",
     "Maximum SDI by species",
-    "Stand aspect (azimuth degrees, 0-360)",
-    "Stand slope (percent)",
-    "Stand elevation (feet)",
-    "Species-ordered index to tree records",
+    "Stand aspect in radians",
+    "Stand slope as a ratio (percent/100)",
+    "Stand elevation in hundreds of feet",
+    "Pointers to the tree records in species order (one sector per species, see ISCT)",
     "First (,1) and last (,2) occurrence of each species in IND1",
     "Work arrays for temporary calculations"
   ),
@@ -461,11 +461,8 @@ grincr_arrays <- data.frame(
     "IMC()",
     "PCT()",
     "BA",
-    "SDI",
     "RELDEN",
     "AVH",
-    "SITAGE()",
-    "FIABKD()",
     "DEBUG"
   ),
   Common_Block = c(
@@ -481,10 +478,7 @@ grincr_arrays <- data.frame(
     "PLOT",
     "PLOT",
     "PLOT",
-    "PLOT",
-    "ARRAYS",
-    "ARRAYS",
-    "CONTRL"
+    "local"
   ),
   Type = c(
     "REAL(MAXTRE)",
@@ -499,9 +493,6 @@ grincr_arrays <- data.frame(
     "REAL",
     "REAL",
     "REAL",
-    "REAL",
-    "REAL(MAXTRE)",
-    "REAL(MAXTRE)",
     "LOGICAL"
   ),
   Direction = c(
@@ -517,9 +508,6 @@ grincr_arrays <- data.frame(
     "INPUT",
     "INPUT",
     "INPUT",
-    "INPUT",
-    "INPUT",
-    "INPUT",
     "INPUT"
   ),
   Description = c(
@@ -527,18 +515,15 @@ grincr_arrays <- data.frame(
     "Current total height (feet)",
     "Species code (FVS sequence number)",
     "Crown ratio (percent)",
-    "Diameter growth increment (inches per year)",
+    "Diameter increment on a 10-year basis (scaled to the cycle length in GRADD)",
     "Height growth increment (feet for cycle)",
     "Mortality (trees per acre for this cycle)",
-    "Mortality class (cause of death code)",
-    "Percentile in basal area distribution",
+    "Tree value class (1 = desirable, 2 = acceptable, 3 = live cull)",
+    "Percentile of each tree record in the basal area distribution",
     "Stand basal area (sq ft/acre)",
-    "Stand density index (Reineke)",
-    "Crown competition factor",
-    "Average height of dominants (feet)",
-    "Site index by tree (variant-specific)",
-    "Basal area in larger trees (sq ft/acre)",
-    "Debug flag for detailed output"
+    "Crown competition factor (CCF)",
+    "Top height: average height of the 40 trees per acre with the largest DBH",
+    "Debug output flag (set by DBCHK)"
   ),
   stringsAsFactors = FALSE
 )
@@ -589,7 +574,7 @@ update_arrays <- data.frame(
     "ARRAYS",
     "OUTCOM",
     "OUTCOM",
-    "CONTRL",
+    "PLOT",
     "ARRAYS"
   ),
   Type = c(
@@ -627,8 +612,8 @@ update_arrays <- data.frame(
   Description = c(
     "Tree height - updated with HTG",
     "Height growth increment to add",
-    "Tree diameter - updated with DG*FINT",
-    "Diameter growth per year",
+    "Tree diameter, increased by DG/BRATIO",
+    "Cycle-length diameter increment, added to DBH divided by the bark ratio (BRATIO)",
     "Trees per acre - reduced by WK2",
     "Mortality (TPA) to subtract from PROB",
     "Total cubic foot volume per tree",
@@ -638,7 +623,7 @@ update_arrays <- data.frame(
     "Accumulated mortality by size/species",
     "Current stand totals by size/species",
     "Cycle length (years) to scale DG",
-    "Mortality cause code"
+    "Tree value class (1 = desirable, 2 = acceptable, 3 = live cull)"
   ),
   stringsAsFactors = FALSE
 )
@@ -691,9 +676,9 @@ dense_arrays <- data.frame(
     "PLOT",
     "PLOT",
     "ARRAYS",
-    "PDEN",
     "PLOT",
-    "Parameter",
+    "PLOT",
+    "CONTRL",
     "ARRAYS"
   ),
   Type = c(
@@ -738,13 +723,13 @@ dense_arrays <- data.frame(
     "Crown ratios (percent)",
     "Total basal area per acre (sq ft)",
     "Total trees per acre",
-    "Crown competition factor (Curtis 1982)",
+    "Crown competition factor (CCF)",
     "Quadratic mean diameter (inches)",
-    "Average height of 40 largest trees per acre",
-    "Percentile in basal area distribution (0-100)",
+    "Top height: average height of the 40 trees per acre with the largest DBH",
+    "Percentile of each tree record in the basal area distribution",
     "CCF by species",
     "Maximum SDI by species (for relative density)",
-    "Backdating flag (TRUE to backdate one year)",
+    ".TRUE. if DENSE is to backdate the diameters for model calibration",
     "Diameter growth (for backdating)"
   ),
   stringsAsFactors = FALSE
@@ -785,8 +770,8 @@ setup_arrays <- data.frame(
     "ARRAYS",
     "ARRAYS",
     "ARRAYS",
-    "CONTRL",
-    "CONTRL",
+    "ARRAYS",
+    "ARRAYS",
     "CONTRL",
     "CONTRL",
     "CONTRL",
@@ -827,12 +812,12 @@ setup_arrays <- data.frame(
     "Species code for each tree",
     "Diameter (used for secondary sort within species)",
     "Trees per acre (to identify zero-prob records)",
-    "Species-ordered index to tree records",
-    "Diameter-ordered index (largest to smallest)",
+    "Pointers to the tree records in species order (one sector per species, see ISCT)",
+    "Pointer work array used in the chain sort (INTREE and SETUP)",
     "Subscript to first tree of each species in IND1",
     "Subscript to last tree of each species in IND1",
     "Total number of tree records",
-    "Number of projectable records (PROB > 0)",
+    "Number of projectable tree records input (set in INTREE)",
     "Reference index work array",
     "Count of trees by species",
     "Beginning position by species"
@@ -874,8 +859,7 @@ cuts_arrays <- data.frame(
     "IND1()",
     "PCT()",
     "BA",
-    "RELDEN",
-    "SDI"
+    "RELDEN"
   ),
   Common_Block = c(
     "ARRAYS",
@@ -889,9 +873,8 @@ cuts_arrays <- data.frame(
     "ARRAYS",
     "ARRAYS",
     "OUTCOM",
-    "CONTRL",
     "ARRAYS",
-    "PLOT",
+    "ARRAYS",
     "PLOT",
     "PLOT"
   ),
@@ -910,7 +893,6 @@ cuts_arrays <- data.frame(
     "INTEGER(MAXTRE)",
     "REAL(MAXTRE)",
     "REAL",
-    "REAL",
     "REAL"
   ),
   Direction = c(
@@ -928,7 +910,6 @@ cuts_arrays <- data.frame(
     "INPUT",
     "INPUT",
     "INPUT/OUTPUT",
-    "INPUT/OUTPUT",
     "INPUT/OUTPUT"
   ),
   Description = c(
@@ -939,15 +920,14 @@ cuts_arrays <- data.frame(
     "Total cubic foot volume",
     "Board foot volume (Scribner)",
     "Trees per acre removed by cutting",
-    "Cubic foot volume removed",
+    "Current trees per acre of each record, reduced as thinnings are applied",
     "Merchantable cubic volume removed",
-    "Board foot volume removed",
+    "Merchantable board foot volume removed (can be preloaded with the proportion to cut)",
     "Removal accumulator by size/species",
-    "Species-ordered index",
-    "Percentile for thin from above/below",
+    "Pointers to the tree records in species order (one sector per species, see ISCT)",
+    "Percentile of each tree record in the basal area distribution",
     "Basal area - updated after cuts",
-    "CCF - updated after cuts",
-    "SDI - updated after cuts"
+    "Crown competition factor (CCF)"
   ),
   stringsAsFactors = FALSE
 )
@@ -1198,10 +1178,70 @@ kable(file_arrays,
 
 ```{r section3-2-arrays, echo=FALSE}
 init_arrays <- data.frame(
-  Array_Name = c("LSTART", "LFLAG", "ICYC", "NCYC", "IY()", "SITEAR()", "SDIDEF()", "BAMAX", "IFOR", "KODFOR", "ITYPE", "KODTYP", "ASPECT", "SLOPE"),
-  Common_Block = c("CONTRL", "CONTRL", "CONTRL", "CONTRL", "CONTRL", "PLOT", "PLOT", "PLOT", "PLOT", "PLOT", "PLOT", "PLOT", "PLOT", "PLOT"),
-  Type = c("LOGICAL", "LOGICAL", "INTEGER", "INTEGER", "INTEGER(MAXCY)", "REAL(MAXSP)", "REAL(MAXSP)", "REAL", "INTEGER", "INTEGER", "INTEGER", "INTEGER", "REAL", "REAL"),
-  Direction = c("OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT"),
+  Array_Name = c(
+    "LSTART",
+    "LFLAG",
+    "ICYC",
+    "NCYC",
+    "IY()",
+    "SITEAR()",
+    "SDIDEF()",
+    "BAMAX",
+    "IFOR",
+    "KODFOR",
+    "ITYPE",
+    "KODTYP",
+    "ASPECT",
+    "SLOPE"
+  ),
+  Common_Block = c(
+    "CONTRL",
+    "CONTRL",
+    "CONTRL",
+    "CONTRL",
+    "CONTRL",
+    "PLOT",
+    "PLOT",
+    "CONTRL",
+    "PLOT",
+    "PLOT",
+    "PLOT",
+    "PLOT",
+    "PLOT",
+    "PLOT"
+  ),
+  Type = c(
+    "LOGICAL",
+    "LOGICAL",
+    "INTEGER",
+    "INTEGER",
+    "INTEGER(MAXCY1)",
+    "REAL(MAXSP)",
+    "REAL(MAXSP)",
+    "REAL",
+    "INTEGER",
+    "INTEGER",
+    "INTEGER",
+    "INTEGER",
+    "REAL",
+    "REAL"
+  ),
+  Direction = c(
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT"
+  ),
   Description = c(
     "Initialization phase flag (.TRUE. during init)",
     "Control flag for initialization",
@@ -1216,7 +1256,7 @@ init_arrays <- data.frame(
     "Habitat type index (subscript)",
     "Actual habitat type code",
     "Stand aspect in radians",
-    "Stand slope as ratio (percent/100)"
+    "Stand slope as a ratio (percent/100)"
   ),
   stringsAsFactors = FALSE
 )
@@ -1236,15 +1276,51 @@ kable(init_arrays,
 
 ```{r section3-3-arrays, echo=FALSE}
 keyword_arrays <- data.frame(
-  Array_Name = c("TABLE()", "MYACTS()", "IEVACT(,)", "IVENTS(,)", "IPHASE", "LOPEVN", "IACTK", "ICFLAG"),
-  Common_Block = c("KEYCOM", "local", "OPCOM", "OPCOM", "OPCOM", "OPCOM", "local", "local"),
-  Type = c("CHARACTER(7,300)", "INTEGER(array)", "INTEGER(i,j)", "INTEGER(i,j)", "INTEGER", "LOGICAL", "INTEGER", "INTEGER"),
-  Direction = c("INPUT", "INPUT/OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT"),
+  Array_Name = c(
+    "TABLE()",
+    "MYACTS()",
+    "IEVACT(,)",
+    "IEVNTS(,)",
+    "IPHASE",
+    "LOPEVN",
+    "IACTK",
+    "ICFLAG"
+  ),
+  Common_Block = c(
+    "KEYCOM",
+    "local",
+    "OPCOM",
+    "OPCOM",
+    "OPCOM",
+    "OPCOM",
+    "local",
+    "local"
+  ),
+  Type = c(
+    "CHARACTER*8(ISIZE)",
+    "INTEGER(array)",
+    "INTEGER(i,j)",
+    "INTEGER(MAXEVT,3)",
+    "INTEGER",
+    "LOGICAL",
+    "INTEGER",
+    "INTEGER"
+  ),
+  Direction = c(
+    "INPUT",
+    "INPUT/OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT"
+  ),
   Description = c(
-    "Keyword record name table",
+    "Keyword record name table (ISIZE = 150)",
     "Activity codes processed by subroutine",
     "Event monitor activities by event",
-    "Event monitor logical expressions",
+    "Event expression pointers: each row points into IEVCOD for one event",
     "Event monitor phase (1=before thin, 2=after thin)",
     ".TRUE. if event monitor sequence open",
     "Activity number (option code) identifier",
@@ -1268,24 +1344,84 @@ kable(keyword_arrays,
 
 ```{r section3-5-arrays, echo=FALSE}
 tree_data_arrays <- data.frame(
-  Array_Name = c("DBH()", "HT()", "PROB()", "ISP()", "ICR()", "IMC()", "NORMHT()", "IND1()", "IND2()", "ISCT(,)", "ITRN", "IREC1", "IREC2", "ABIRTH()"),
-  Common_Block = c("ARRAYS", "ARRAYS", "ARRAYS", "ARRAYS", "ARRAYS", "ARRAYS", "ARRAYS", "CONTRL", "CONTRL", "CONTRL", "CONTRL", "CONTRL", "CONTRL", "PLOT"),
-  Type = c("REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "INTEGER(MAXTRE)", "INTEGER(MAXTRE)", "INTEGER(MAXTRE)", "REAL(MAXTRE)", "INTEGER(MAXTRE)", "INTEGER(MAXTRE)", "INTEGER(MAXSP,3)", "INTEGER", "INTEGER", "INTEGER", "REAL(MAXTRE)"),
-  Direction = c("OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT"),
+  Array_Name = c(
+    "DBH()",
+    "HT()",
+    "PROB()",
+    "ISP()",
+    "ICR()",
+    "IMC()",
+    "NORMHT()",
+    "IND1()",
+    "IND2()",
+    "ISCT(,)",
+    "ITRN",
+    "IREC1",
+    "IREC2",
+    "ABIRTH()"
+  ),
+  Common_Block = c(
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "CONTRL",
+    "CONTRL",
+    "CONTRL",
+    "CONTRL",
+    "ARRAYS"
+  ),
+  Type = c(
+    "REAL(MAXTRE)",
+    "REAL(MAXTRE)",
+    "REAL(MAXTRE)",
+    "INTEGER(MAXTRE)",
+    "INTEGER(MAXTRE)",
+    "INTEGER(MAXTRE)",
+    "INTEGER(MAXTRE)",
+    "INTEGER(MAXTRE)",
+    "INTEGER(MAXTRE)",
+    "INTEGER(MAXSP,2)",
+    "INTEGER",
+    "INTEGER",
+    "INTEGER",
+    "REAL(MAXTRE)"
+  ),
+  Direction = c(
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT"
+  ),
   Description = c(
     "Diameter at breast height (inches)",
     "Total tree height (feet)",
     "Trees per acre representation",
     "Species code (variant-specific sequence)",
     "Crown ratio (percent, 0-99)",
-    "Damage/history code",
-    "Normal height (feet, excludes broken/dead tops)",
-    "Tree indices sorted by DBH (large to small)",
-    "Linked list for species-ordered sort",
+    "Tree value class (1 = desirable, 2 = acceptable, 3 = live cull)",
+    "Normal height of trees with broken or dead tops (hundredths of a foot)",
+    "Pointers to the tree records in species order (one sector per species, see ISCT)",
+    "Pointer work array used in the chain sort (INTREE and SETUP)",
     "Species sort control: start index, count, pointer",
     "Total number of live tree records",
-    "Index to first dead tree (history=7,9)",
-    "Index beyond last dead tree (MAXTRE+1 if none)",
+    "Number of projectable tree records input (set in INTREE)",
+    "Index of the first dead tree record; dead records are stored from IREC2 to MAXTRE (MAXTP1 if none)",
     "Tree age or birth year"
   ),
   stringsAsFactors = FALSE
@@ -1306,28 +1442,79 @@ kable(tree_data_arrays,
 
 ```{r section3-6-arrays, echo=FALSE}
 calibration_arrays <- data.frame(
-  Array_Name = c("WK2()", "DG()", "HTG()", "DGLD()", "HTGLD()", "RHCON()", "DGCON()", "DGSER", "HTSER", "LBKDEN", "BA", "TPROB", "RELDEN", "SDI", "RMSQD", "AVH", "PCT()", "RELDSP()"),
-  Common_Block = c("ARRAYS", "ARRAYS", "ARRAYS", "ARRAYS", "ARRAYS", "GGCOM", "GGCOM", "GGCOM", "GGCOM", "CONTRL", "PLOT", "PLOT", "PLOT", "PLOT", "PLOT", "PLOT", "PLOT", "PLOT"),
-  Type = c("REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXSP)", "REAL(MAXSP)", "REAL", "REAL", "LOGICAL", "REAL", "REAL", "REAL", "REAL", "REAL", "REAL", "REAL(MAXSP)", "REAL(MAXSP)"),
-  Direction = c("OUTPUT", "INPUT/OUTPUT", "INPUT/OUTPUT", "INPUT", "INPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "INPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT"),
+  Array_Name = c(
+    "WK2()",
+    "DG()",
+    "HTG()",
+    "RHCON()",
+    "DGCON()",
+    "LBKDEN",
+    "BA",
+    "TPROB",
+    "RELDEN",
+    "RMSQD",
+    "AVH",
+    "PCT()",
+    "RELDSP()"
+  ),
+  Common_Block = c(
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "COEFFS",
+    "COEFFS",
+    "CONTRL",
+    "PLOT",
+    "PLOT",
+    "PLOT",
+    "PLOT",
+    "PLOT",
+    "ARRAYS",
+    "PLOT"
+  ),
+  Type = c(
+    "REAL(MAXTRE)",
+    "REAL(MAXTRE)",
+    "REAL(MAXTRE)",
+    "REAL(MAXSP)",
+    "REAL(MAXSP)",
+    "LOGICAL",
+    "REAL",
+    "REAL",
+    "REAL",
+    "REAL",
+    "REAL",
+    "REAL(MAXTRE)",
+    "REAL(MAXSP)"
+  ),
+  Direction = c(
+    "OUTPUT",
+    "INPUT/OUTPUT",
+    "INPUT/OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "INPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT"
+  ),
   Description = c(
     "Work array: ln(basal area increment) during calibration",
     "Diameter growth (10-year periodic increment, inches)",
     "Height growth (cycle-length, feet)",
-    "Large-tree diameter growth from last cycle",
-    "Large-tree height growth from last cycle",
     "Small-tree height growth constants by species",
     "Large-tree diameter growth constants by species",
-    "Diameter growth serial correlation",
-    "Height growth serial correlation",
-    ".TRUE. to backdate stand for calibration",
+    ".TRUE. if DENSE is to backdate the diameters for model calibration",
     "Stand basal area (sq ft/acre)",
     "Total trees per acre",
-    "Relative density / CCF (crown competition factor)",
-    "Stand density index",
-    "Quadratic mean diameter (QMD)",
-    "Average height of 40 largest DBH trees",
-    "Percentile in basal area distribution by species",
+    "Crown competition factor (CCF)",
+    "Quadratic mean diameter (inches)",
+    "Top height: average height of the 40 trees per acre with the largest DBH",
+    "Percentile of each tree record in the basal area distribution",
     "Relative density by species"
   ),
   stringsAsFactors = FALSE
@@ -1348,17 +1535,52 @@ kable(calibration_arrays,
 
 ```{r section3-7-arrays, echo=FALSE}
 final_init_arrays <- data.frame(
-  Array_Name = c("CFV()", "BFV()", "MCFV()", "WK3()", "CW()", "CRWDTH()", "INS()", "LSTATS", "IFST"),
-  Common_Block = c("ARRAYS", "ARRAYS", "ARRAYS", "ARRAYS", "ARRAYS", "ARRAYS", "CONTRL", "CONTRL", "CONTRL"),
-  Type = c("REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "INTEGER(6)", "LOGICAL", "INTEGER"),
-  Direction = c("OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "INPUT", "OUTPUT"),
+  Array_Name = c(
+    "CFV()",
+    "BFV()",
+    "MCFV()",
+    "WK3()",
+    "CRWDTH()",
+    "INS()",
+    "LSTATS",
+    "IFST"
+  ),
+  Common_Block = c(
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "CONTRL",
+    "VOLSTD",
+    "CONTRL"
+  ),
+  Type = c(
+    "REAL(MAXTRE)",
+    "REAL(MAXTRE)",
+    "REAL(MAXTRE)",
+    "REAL(MAXTRE)",
+    "REAL(MAXTRE)",
+    "INTEGER(6)",
+    "LOGICAL",
+    "INTEGER"
+  ),
+  Direction = c(
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "INPUT",
+    "OUTPUT"
+  ),
   Description = c(
     "Cubic foot volume (total stem)",
     "Board foot volume (Scribner)",
     "Merchantable cubic foot volume",
     "Work array for volume computations",
-    "Crown width (feet)",
-    "Maximum crown width (feet)",
+    "Predicted crown width (feet), computed each cycle in CWIDTH",
     "Indices of example trees for output tables",
     ".TRUE. if STATS keyword used (plot statistics)",
     "Flag to select new sample trees (1=select)"
@@ -2168,21 +2390,77 @@ The following tables document the major arrays used in the projection cycling ph
 
 ```{r section4-1-arrays, echo=FALSE}
 evmon_harvest_arrays <- data.frame(
-  Array_Name = c("IPHASE", "IPH", "IVENTS(,)", "IEVACT(,)", "LTRIP", "FINT", "WK3()", "WK4()", "WK5()", "WK6()", "ONTREM()", "IACTK", "MYACTS()"),
-  Common_Block = c("OPCOM", "local", "OPCOM", "OPCOM", "CONTRL", "CONTRL", "ARRAYS", "ARRAYS", "ARRAYS", "ARRAYS", "ARRAYS", "local", "local"),
-  Type = c("INTEGER", "INTEGER", "INTEGER(i,j)", "INTEGER(i,j)", "LOGICAL", "REAL", "REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "INTEGER", "INTEGER(array)"),
-  Direction = c("OUTPUT", "INPUT", "INPUT", "INPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "INPUT", "INPUT"),
+  Array_Name = c(
+    "IPHASE",
+    "IPH",
+    "IEVNTS(,)",
+    "IEVACT(,)",
+    "LTRIP",
+    "FINT",
+    "WK3()",
+    "WK4()",
+    "WK5()",
+    "WK6()",
+    "ONTREM()",
+    "IACTK",
+    "MYACTS()"
+  ),
+  Common_Block = c(
+    "OPCOM",
+    "local",
+    "OPCOM",
+    "OPCOM",
+    "CONTRL",
+    "PLOT",
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "OUTCOM",
+    "local",
+    "local"
+  ),
+  Type = c(
+    "INTEGER",
+    "INTEGER",
+    "INTEGER(MAXEVT,3)",
+    "INTEGER(i,j)",
+    "LOGICAL",
+    "REAL",
+    "REAL(MAXTRE)",
+    "REAL(MAXTRE)",
+    "REAL(MAXTRE)",
+    "REAL(MAXTRE)",
+    "REAL(MAXTRE)",
+    "INTEGER",
+    "INTEGER(array)"
+  ),
+  Direction = c(
+    "OUTPUT",
+    "INPUT",
+    "INPUT",
+    "INPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "INPUT",
+    "INPUT"
+  ),
   Description = c(
     "Event monitor phase (1=before-thin, 2=after-thin)",
     "Local phase indicator passed to EVMON",
-    "Event monitor expression storage",
+    "Event expression pointers: each row points into IEVCOD for one event",
     "Activities by event number",
     ".TRUE. if record tripling active this cycle",
     "Cycle length in years (from IY array)",
-    "Work array: end-of-cycle tree heights (REGENT)",
-    "Trial thinning vector: removed TPA by tree",
-    "Work array for thinning calculations",
-    "Work array for thinning calculations",
+    "Trees per acre removed by cutting",
+    "Current trees per acre of each record, reduced as thinnings are applied",
+    "Merchantable cubic foot volume removed",
+    "Merchantable board foot volume removed (can be preloaded with the proportion to cut)",
     "Trees removed by thinning (TPA)",
     "Activity number/option code",
     "Activity codes processed by subroutine"
@@ -2205,25 +2483,72 @@ kable(evmon_harvest_arrays,
 
 ```{r section4-2-arrays, echo=FALSE}
 growth_mort_arrays <- data.frame(
-  Array_Name = c("DG()", "HTG()", "WK2()", "DGLD()", "HTGLD()", "DGSER", "HTSER", "XMIN()", "XMAX()", "BREAK()", "IMC()", "OMORT()", "BA", "SDI", "RMSQD", "BAMAX", "SDIMAX"),
-  Common_Block = c("ARRAYS", "ARRAYS", "ARRAYS", "ARRAYS", "ARRAYS", "GGCOM", "GGCOM", "local", "local", "GGCOM", "ARRAYS", "ARRAYS", "PLOT", "PLOT", "PLOT", "PLOT", "PLOT"),
-  Type = c("REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "REAL", "REAL", "REAL(MAXSP)", "REAL(MAXSP)", "REAL(MAXSP)", "INTEGER(MAXTRE)", "REAL(MAXTRE)", "REAL", "REAL", "REAL", "REAL", "REAL"),
-  Direction = c("OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "INPUT", "INPUT", "INPUT", "INPUT/OUTPUT", "OUTPUT", "INPUT/OUTPUT", "INPUT/OUTPUT", "INPUT/OUTPUT", "INPUT", "INPUT"),
+  Array_Name = c(
+    "DG()",
+    "HTG()",
+    "WK2()",
+    "XMIN()",
+    "XMAX()",
+    "BREAK()",
+    "IMC()",
+    "OMORT()",
+    "BA",
+    "RMSQD",
+    "BAMAX",
+    "SDIMAX"
+  ),
+  Common_Block = c(
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "local",
+    "local",
+    "GGCOM",
+    "ARRAYS",
+    "OUTCOM",
+    "PLOT",
+    "PLOT",
+    "CONTRL",
+    "PLOT"
+  ),
+  Type = c(
+    "REAL(MAXTRE)",
+    "REAL(MAXTRE)",
+    "REAL(MAXTRE)",
+    "REAL(MAXSP)",
+    "REAL(MAXSP)",
+    "REAL(MAXSP)",
+    "INTEGER(MAXTRE)",
+    "REAL(MAXTRE)",
+    "REAL",
+    "REAL",
+    "REAL",
+    "REAL"
+  ),
+  Direction = c(
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "INPUT",
+    "INPUT",
+    "INPUT",
+    "INPUT/OUTPUT",
+    "OUTPUT",
+    "INPUT/OUTPUT",
+    "INPUT/OUTPUT",
+    "INPUT",
+    "INPUT"
+  ),
   Description = c(
     "Diameter growth (10-year increment, inches)",
     "Height growth (cycle-length, feet)",
     "Work array: ln(BAI) for large trees",
-    "Diameter growth from last cycle (lagged)",
-    "Height growth from last cycle (lagged)",
-    "Diameter growth serial correlation factor",
-    "Height growth serial correlation factor",
     "Min DBH for small-tree HT growth weighting",
     "Max DBH for small-tree HT growth weighting",
     "Threshold DBH: small vs large tree DG",
-    "Damage/history code (mortality marker)",
+    "Tree value class (1 = desirable, 2 = acceptable, 3 = live cull)",
     "Mortality trees per acre by tree",
     "Stand basal area (sq ft/acre)",
-    "Stand density index",
     "Quadratic mean diameter (inches)",
     "Maximum basal area for stand",
     "Maximum stand density index"
@@ -2246,18 +2571,50 @@ kable(growth_mort_arrays,
 
 ```{r section4-3-arrays, echo=FALSE}
 tripling_arrays <- data.frame(
-  Array_Name = c("LTRIP", "IND()", "IND1()", "IND2()", "ISCT(,)", "ITRN", "PCT()"),
-  Common_Block = c("CONTRL", "CONTRL", "CONTRL", "CONTRL", "CONTRL", "CONTRL", "PLOT"),
-  Type = c("LOGICAL", "INTEGER(MAXTRE)", "INTEGER(MAXTRE)", "INTEGER(MAXTRE)", "INTEGER(MAXSP,3)", "INTEGER", "REAL(MAXSP)"),
-  Direction = c("INPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT"),
+  Array_Name = c(
+    "LTRIP",
+    "IND()",
+    "IND1()",
+    "IND2()",
+    "ISCT(,)",
+    "ITRN",
+    "PCT()"
+  ),
+  Common_Block = c(
+    "CONTRL",
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "CONTRL",
+    "CONTRL",
+    "ARRAYS"
+  ),
+  Type = c(
+    "LOGICAL",
+    "INTEGER(MAXTRE)",
+    "INTEGER(MAXTRE)",
+    "INTEGER(MAXTRE)",
+    "INTEGER(MAXSP,2)",
+    "INTEGER",
+    "REAL(MAXTRE)"
+  ),
+  Direction = c(
+    "INPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT"
+  ),
   Description = c(
     ".TRUE. if record tripling active",
-    "Diameter-sorted tree indices (work array)",
-    "Diameter-sorted indices (large to small)",
-    "Linked list for species-ordered sort",
+    "Pointers that sort the tree list by descending diameter",
+    "Pointers to the tree records in species order (one sector per species, see ISCT)",
+    "Pointer work array used in the chain sort (INTREE and SETUP)",
     "Species sort: (start index, count, pointer)",
     "Total number of live tree records",
-    "Percentile in BA distribution by species"
+    "Percentile of each tree record in the basal area distribution"
   ),
   stringsAsFactors = FALSE
 )
@@ -2277,15 +2634,55 @@ kable(tripling_arrays,
 
 ```{r section4-5-arrays, echo=FALSE}
 update_arrays <- data.frame(
-  Array_Name = c("DBH()", "HT()", "PROB()", "NORMHT()", "CFV()", "BFV()", "MCFV()", "SPCMO(,)", "ABIRTH()"),
-  Common_Block = c("ARRAYS", "ARRAYS", "ARRAYS", "ARRAYS", "ARRAYS", "ARRAYS", "ARRAYS", "PLOT", "PLOT"),
-  Type = c("REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXSP,3)", "REAL(MAXTRE)"),
-  Direction = c("INPUT/OUTPUT", "INPUT/OUTPUT", "INPUT/OUTPUT", "INPUT/OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "OUTPUT", "INPUT/OUTPUT"),
+  Array_Name = c(
+    "DBH()",
+    "HT()",
+    "PROB()",
+    "NORMHT()",
+    "CFV()",
+    "BFV()",
+    "MCFV()",
+    "SPCMO(,)",
+    "ABIRTH()"
+  ),
+  Common_Block = c(
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "ARRAYS",
+    "local (UPDATE)",
+    "ARRAYS"
+  ),
+  Type = c(
+    "REAL(MAXTRE)",
+    "REAL(MAXTRE)",
+    "REAL(MAXTRE)",
+    "INTEGER(MAXTRE)",
+    "REAL(MAXTRE)",
+    "REAL(MAXTRE)",
+    "REAL(MAXTRE)",
+    "REAL(MAXSP,3)",
+    "REAL(MAXTRE)"
+  ),
+  Direction = c(
+    "INPUT/OUTPUT",
+    "INPUT/OUTPUT",
+    "INPUT/OUTPUT",
+    "INPUT/OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "INPUT/OUTPUT"
+  ),
   Description = c(
     "Diameter at breast height (updated)",
     "Total tree height (updated)",
     "Trees per acre (reduced by mortality)",
-    "Normal height (updated)",
+    "Normal height (hundredths of a foot), increased by HTG",
     "Cubic foot volume (recomputed)",
     "Board foot volume (recomputed)",
     "Merchantable cubic foot volume (recomputed)",
@@ -2310,13 +2707,45 @@ kable(update_arrays,
 
 ```{r section4-6-arrays, echo=FALSE}
 regen_arrays <- data.frame(
-  Array_Name = c("IREC2", "MAXTRE", "MAXTP1", "IFST", "IBEST()", "WK3()", "LSTART"),
-  Common_Block = c("CONTRL", "PRGPRM", "PRGPRM", "CONTRL", "local", "ARRAYS", "CONTRL"),
-  Type = c("INTEGER", "INTEGER", "INTEGER", "INTEGER", "INTEGER(MAXSP)", "REAL(MAXTRE)", "LOGICAL"),
-  Direction = c("INPUT/OUTPUT", "PARAMETER", "PARAMETER", "OUTPUT", "OUTPUT", "OUTPUT", "INPUT"),
+  Array_Name = c(
+    "IREC2",
+    "MAXTRE",
+    "MAXTP1",
+    "IFST",
+    "IBEST()",
+    "WK3()",
+    "LSTART"
+  ),
+  Common_Block = c(
+    "CONTRL",
+    "PRGPRM (parameter)",
+    "PRGPRM (parameter)",
+    "CONTRL",
+    "local",
+    "ARRAYS",
+    "CONTRL"
+  ),
+  Type = c(
+    "INTEGER",
+    "INTEGER",
+    "INTEGER",
+    "INTEGER",
+    "INTEGER(MAXSP)",
+    "REAL(MAXTRE)",
+    "LOGICAL"
+  ),
+  Direction = c(
+    "INPUT/OUTPUT",
+    "PARAMETER",
+    "PARAMETER",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "INPUT"
+  ),
   Description = c(
-    "Index beyond last dead tree (compression control)",
-    "Maximum tree records allowed (3000 or 2000)",
+    "Index of the first dead tree record; dead records are stored from IREC2 to MAXTRE (MAXTP1 if none)",
+    "Maximum tree records (3000 in most variants, 2000 in the ORGANON variants, 6000 in HI)",
     "MAXTRE + 1",
     "Flag to select new sample trees after regen",
     "Best tree designation by species (1=present)",
@@ -2341,14 +2770,37 @@ kable(regen_arrays,
 
 ```{r section4-7-arrays, echo=FALSE}
 crown_arrays <- data.frame(
-  Array_Name = c("ICR()", "CW()", "CRWDTH()", "FINT", "RELDEN", "BA"),
-  Common_Block = c("ARRAYS", "ARRAYS", "ARRAYS", "CONTRL", "PLOT", "PLOT"),
-  Type = c("INTEGER(MAXTRE)", "REAL(MAXTRE)", "REAL(MAXTRE)", "REAL", "REAL", "REAL"),
-  Direction = c("INPUT/OUTPUT", "OUTPUT", "OUTPUT", "INPUT", "INPUT", "INPUT"),
+  Array_Name = c(
+    "ICR()",
+    "CRWDTH()",
+    "FINT",
+    "RELDEN",
+    "BA"
+  ),
+  Common_Block = c(
+    "ARRAYS",
+    "ARRAYS",
+    "PLOT",
+    "PLOT",
+    "PLOT"
+  ),
+  Type = c(
+    "INTEGER(MAXTRE)",
+    "REAL(MAXTRE)",
+    "REAL",
+    "REAL",
+    "REAL"
+  ),
+  Direction = c(
+    "INPUT/OUTPUT",
+    "OUTPUT",
+    "INPUT",
+    "INPUT",
+    "INPUT"
+  ),
   Description = c(
     "Crown ratio (percent, 0-99, updated)",
-    "Crown width (feet)",
-    "Maximum crown width (feet)",
+    "Predicted crown width (feet), computed each cycle in CWIDTH",
     "Cycle length (years)",
     "Crown competition factor (CCF)",
     "Stand basal area (sq ft/acre)"
@@ -2936,10 +3388,46 @@ When all projection cycles have been completed, FVS enters the projection summar
 
 ```{r section5-1-arrays, echo=FALSE}
 output_arrays <- data.frame(
-  Array_Name = c("ICL6", "JOSTND", "JOSCRT", "INS()", "LSTART", "LFLAG", "ICYC", "IPCYC()"),
-  Common_Block = c("CONTRL", "CONTRL", "local", "CONTRL", "CONTRL", "CONTRL", "CONTRL", "OPCOM"),
-  Type = c("INTEGER", "INTEGER", "INTEGER", "INTEGER(6)", "LOGICAL", "LOGICAL", "INTEGER", "INTEGER(array)"),
-  Direction = c("OUTPUT", "OUTPUT", "INPUT", "INPUT", "OUTPUT", "OUTPUT", "OUTPUT", "INPUT"),
+  Array_Name = c(
+    "ICL6",
+    "JOSTND",
+    "JOSCRT",
+    "INS()",
+    "LSTART",
+    "LFLAG",
+    "ICYC",
+    "IOPCYC()"
+  ),
+  Common_Block = c(
+    "CONTRL",
+    "CONTRL",
+    "local",
+    "CONTRL",
+    "CONTRL",
+    "CONTRL",
+    "CONTRL",
+    "OPCOM"
+  ),
+  Type = c(
+    "INTEGER",
+    "INTEGER",
+    "INTEGER",
+    "INTEGER(6)",
+    "LOGICAL",
+    "LOGICAL",
+    "INTEGER",
+    "INTEGER(MAXACT)"
+  ),
+  Direction = c(
+    "OUTPUT",
+    "OUTPUT",
+    "INPUT",
+    "INPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "INPUT"
+  ),
   Description = c(
     "Projection status flag (-99 = complete, >0 = in progress)",
     "Unit 16: Main FVS output file",
@@ -2948,7 +3436,7 @@ output_arrays <- data.frame(
     ".TRUE. to restart next stand initialization",
     ".TRUE. to restart next stand initialization",
     "Current cycle (reset to 0 for next stand)",
-    "Activity pointers sorted by cycle for Activity Summary"
+    "Pointers to the activities scheduled for the cycle, in ascending order"
   ),
   stringsAsFactors = FALSE
 )
@@ -2968,17 +3456,45 @@ kable(output_arrays,
 
 ```{r section5-2-arrays, echo=FALSE}
 multistand_arrays <- data.frame(
-  Array_Name = c("LSTART", "LFLAG", "ICYC", "NCYC", "ITRN", "IREC2"),
-  Common_Block = c("CONTRL", "CONTRL", "CONTRL", "CONTRL", "CONTRL", "CONTRL"),
-  Type = c("LOGICAL", "LOGICAL", "INTEGER", "INTEGER", "INTEGER", "INTEGER"),
-  Direction = c("OUTPUT", "OUTPUT", "OUTPUT", "INPUT", "OUTPUT", "OUTPUT"),
+  Array_Name = c(
+    "LSTART",
+    "LFLAG",
+    "ICYC",
+    "NCYC",
+    "ITRN",
+    "IREC2"
+  ),
+  Common_Block = c(
+    "CONTRL",
+    "CONTRL",
+    "CONTRL",
+    "CONTRL",
+    "CONTRL",
+    "CONTRL"
+  ),
+  Type = c(
+    "LOGICAL",
+    "LOGICAL",
+    "INTEGER",
+    "INTEGER",
+    "INTEGER",
+    "INTEGER"
+  ),
+  Direction = c(
+    "OUTPUT",
+    "OUTPUT",
+    "OUTPUT",
+    "INPUT",
+    "OUTPUT",
+    "OUTPUT"
+  ),
   Description = c(
     "Reset to .TRUE. for next stand initialization",
     "Reset to .TRUE. for next stand initialization",
     "Reset to 0 for next stand",
     "Number of cycles (may differ between stands)",
     "Reset for next stand tree list",
-    "Reset for next stand tree list"
+    "Index of the first dead tree record; dead records are stored from IREC2 to MAXTRE (MAXTP1 if none)"
   ),
   stringsAsFactors = FALSE
 )
@@ -3163,15 +3679,51 @@ As described in section 6.0, activities can be scheduled to occur after an event
 
 ```{r section7-1-arrays, echo=FALSE}
 evmon_control_arrays <- data.frame(
-  Array_Name = c("IEVACT(,)", "IEVNTS(,)", "IEVCOD()", "CONSTS()", "IPHASE", "LOPEVN", "LTRIP", "ICYC"),
-  Common_Block = c("OPCOM", "OPCOM", "OPCOM", "EVTSTV", "OPCOM", "OPCOM", "CONTRL", "CONTRL"),
-  Type = c("INTEGER(i,j)", "INTEGER(i,j)", "INTEGER(k)", "REAL(array)", "INTEGER", "LOGICAL", "LOGICAL", "INTEGER"),
-  Direction = c("INPUT/OUTPUT", "INPUT", "INPUT", "INPUT", "INPUT", "INPUT/OUTPUT", "INPUT", "INPUT"),
+  Array_Name = c(
+    "IEVACT(,)",
+    "IEVNTS(,)",
+    "IEVCOD()",
+    "PARMS()",
+    "IPHASE",
+    "LOPEVN",
+    "LTRIP",
+    "ICYC"
+  ),
+  Common_Block = c(
+    "OPCOM",
+    "OPCOM",
+    "OPCOM",
+    "OPCOM",
+    "OPCOM",
+    "OPCOM",
+    "CONTRL",
+    "CONTRL"
+  ),
+  Type = c(
+    "INTEGER(i,j)",
+    "INTEGER(i,j)",
+    "INTEGER(k)",
+    "REAL(MAXPRM)",
+    "INTEGER",
+    "LOGICAL",
+    "LOGICAL",
+    "INTEGER"
+  ),
+  Direction = c(
+    "INPUT/OUTPUT",
+    "INPUT",
+    "INPUT",
+    "INPUT",
+    "INPUT",
+    "INPUT/OUTPUT",
+    "INPUT",
+    "INPUT"
+  ),
   Description = c(
     "Activity-event relationships (rows=activities, cols=event data)",
     "Event expression pointers (rows=events, cols=IEVCOD locations)",
     "Operations code vector (RPN compiled expressions)",
-    "Constant values used in expressions",
+    "Activity parameter values and the constants of compiled expressions (CONSTS in ALGCMP)",
     "Event monitor phase (1=before-thin, 2=after-thin)",
     ".TRUE. if event monitor sequence is open",
     ".TRUE. if record tripling active",
@@ -3195,19 +3747,50 @@ kable(evmon_control_arrays,
 
 ```{r section7-2-arrays, echo=FALSE}
 expr_eval_arrays <- data.frame(
-  Array_Name = c("RSTACK()", "LSTACK()", "EVMON1()", "EVMON2()", "EVMON3()", "EVMON4()", "EVMON5()", "CURVL()"),
-  Common_Block = c("EVTSTV", "EVTSTV", "EVTSTV", "EVTSTV", "EVTSTV", "EVTSTV", "EVTSTV", "EVTSTV"),
-  Type = c("REAL(stack)", "LOGICAL(stack)", "REAL(array)", "REAL(array)", "REAL(array)", "REAL(array)", "REAL(array)", "REAL(array)"),
-  Direction = c("OUTPUT", "OUTPUT", "INPUT", "INPUT", "INPUT", "INPUT", "INPUT", "INPUT/OUTPUT"),
+  Array_Name = c(
+    "XREG()",
+    "LREG()",
+    "TSTV1()",
+    "TSTV2()",
+    "TSTV3()",
+    "TSTV4()",
+    "TSTV5()"
+  ),
+  Common_Block = c(
+    "OPCOM",
+    "OPCOM",
+    "OPCOM",
+    "OPCOM",
+    "OPCOM",
+    "OPCOM",
+    "OPCOM"
+  ),
+  Type = c(
+    "REAL(MXXREG)",
+    "LOGICAL(MXLREG)",
+    "REAL(MXTST1)",
+    "REAL(MXTST2)",
+    "REAL(MXTST3)",
+    "REAL(MXTST4)",
+    "REAL(MXTST5)"
+  ),
+  Direction = c(
+    "OUTPUT",
+    "OUTPUT",
+    "INPUT",
+    "INPUT",
+    "INPUT",
+    "INPUT",
+    "INPUT"
+  ),
   Description = c(
-    "Numeric evaluation stack (RPN calculations)",
-    "Logical evaluation stack (expression results)",
-    "Group 1 variables (always defined, before-thin)",
-    "Group 2 variables (after-thin only)",
-    "Group 3 variables (always defined)",
-    "Group 4 variables (always defined)",
-    "Group 5 variables (always defined)",
-    "User-defined COMPUTE variables"
+    "Real stack used to evaluate expressions",
+    "Logical stack used to evaluate expressions",
+    "Group 1 values, known from phase 1 (before thinning) of cycle 1 forward",
+    "Group 2 values, known from phase 2 (after thinning) of each cycle",
+    "Group 3 values, known from phase 1 of cycle 2 forward",
+    "Group 4 values, known only when the corresponding flag LTSTV4(i) is true (set by extensions)",
+    "Group 5 values, user defined (COMPUTE)"
   ),
   stringsAsFactors = FALSE
 )
@@ -3227,22 +3810,11 @@ kable(expr_eval_arrays,
 
 ```{r section7-variables-groups, echo=FALSE}
 evmon_groups <- data.frame(
-  Group = c("Group 1", "Group 1", "Group 1", "Group 2", "Group 2", "Group 3", "Group 3", "Group 4", "Group 4", "Group 5"),
-  Variable_Examples = c("BBA", "BTOPHT", "BADBH", "ABA", "ATOPHT", "YEAR", "AGE", "LINENO", "STANDID", "All phases"),
-  Op_Code_Range = c("100s", "100s", "100s", "200s", "200s", "300s", "400s", "500s", "600s", "varies"),
-  When_Defined = c("Before-thinning (phase 1)", "Before-thinning (phase 1)", "Before-thinning (phase 1)", "After-thinning (phase 2)", "After-thinning (phase 2)", "Always", "Always", "Always", "Always", "User-defined (COMPUTE)"),
-  Description = c(
-    "Before-thin basal area (sq ft/acre)",
-    "Before-thin top height (feet)",
-    "Before-thin average DBH (inches)",
-    "After-thin basal area (sq ft/acre)",
-    "After-thin top height (feet)",
-    "Projection year",
-    "Stand age (years)",
-    "Line number in keyword file",
-    "Stand ID from STDIDENT",
-    "Computed variables"
-  ),
+  Group = c("Group 1", "Group 2", "Group 3", "Group 4", "Group 5"),
+  Variable_Examples = c("YEAR, AGE, BTPA, BBA, BTOPHT", "ATPA, ABA, ATOPHT", "ACC, MORT, PAI, DTPA", "TM%STND, MPBTPAK", "User-defined"),
+  Op_Code_Range = c("100s", "200s", "300s", "400s", "varies"),
+  When_Defined = c("Phase 1 (before thinning) of every cycle, from cycle 1", "Phase 2 (after thinning) of every cycle", "Phase 1 from cycle 2 forward", "Only when the extension that sets them says so (LTSTV4 true)", "User-defined (COMPUTE)"),
+  Description = c("Values known before thinning (TSTV1)", "Values known after thinning (TSTV2)", "Values known after cycle 1 (TSTV3)", "Variables set by extensions, such as the tussock moth and mountain pine beetle models (TSTV4)", "Variables defined with the COMPUTE keyword (TSTV5)"),
   stringsAsFactors = FALSE
 )
 
@@ -3421,10 +3993,50 @@ The FVS_API is documented at https://sourceforge.net/p/open-fvs/wiki/FVS_API/
 
 ```{r section8-1-arrays, echo=FALSE}
 stoprest_control_arrays <- data.frame(
-  Array_Name = c("fvsRtnCode", "restartcode", "stopstatcd", "majorstopptcode", "majorstopptyear", "minorstopptcode", "minorstopptyear", "stopptfile", "restartfile"),
-  Common_Block = c("GLBLCNTL", "GLBLCNTL", "GLBLCNTL", "GLBLCNTL", "GLBLCNTL", "GLBLCNTL", "GLBLCNTL", "GLBLCNTL", "GLBLCNTL"),
-  Type = c("INTEGER", "INTEGER", "INTEGER", "INTEGER", "INTEGER", "INTEGER", "INTEGER", "CHARACTER*250", "CHARACTER*250"),
-  Direction = c("INPUT/OUTPUT", "INPUT/OUTPUT", "INPUT/OUTPUT", "INPUT", "INPUT", "INPUT", "INPUT", "INPUT", "INPUT"),
+  Array_Name = c(
+    "fvsRtnCode",
+    "restartcode",
+    "stopstatcd",
+    "majorstopptcode",
+    "majorstopptyear",
+    "minorstopptcode",
+    "minorstopptyear",
+    "stopptfile",
+    "restartfile"
+  ),
+  Common_Block = c(
+    "GLBLCNTL",
+    "GLBLCNTL",
+    "GLBLCNTL",
+    "GLBLCNTL",
+    "GLBLCNTL",
+    "GLBLCNTL",
+    "GLBLCNTL",
+    "GLBLCNTLC",
+    "GLBLCNTLC"
+  ),
+  Type = c(
+    "INTEGER",
+    "INTEGER",
+    "INTEGER",
+    "INTEGER",
+    "INTEGER",
+    "INTEGER",
+    "INTEGER",
+    "CHARACTER*250",
+    "CHARACTER*250"
+  ),
+  Direction = c(
+    "INPUT/OUTPUT",
+    "INPUT/OUTPUT",
+    "INPUT/OUTPUT",
+    "INPUT",
+    "INPUT",
+    "INPUT",
+    "INPUT",
+    "INPUT",
+    "INPUT"
+  ),
   Description = c(
     "Return code (-1 not started, 0 OK, 1 error, 2 STOP keyword found or end of restart file)",
     "Location code where the last stop occurred (0 none, 100 end of stand); negative right after a stand is reloaded from a stop point file",
