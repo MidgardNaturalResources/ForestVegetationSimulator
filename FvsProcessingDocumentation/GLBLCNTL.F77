@@ -32,11 +32,20 @@ C                        read.
 C               jstash = stoppoint file unit number, if -1, then no file is 
 C                        output.
 C      majorstopptcode = stoppoint request code (stopWithStore).
+C                        Set by --stoppoint= on the command line. The stand
+C                        state is written to the stoppoint file (PUTSTD)
+C                        and can be restarted with --restart=. The codes
+C                        are those of minorstopptcode, except that -1 stops
+C                        at the first stop point reached.
 C      majorstopptyear = stopptyear request code (stopWithStore).
+C                        0 = Never stop. Otherwise as minorstopptyear,
+C                        except that <0 stops in the first cycle.
 C           maxStoppts = the maximum value of majorstopptcode permitted
 C                        (the command line value is limited to it). It is
 C                        not applied to minorstopptcode.
 C      minorstopptcode = stoppoint request code (stopWithoutStore).
+C                        Set by fvsSetStoppointCodes. Nothing is stored,
+C                        the state stays in memory.
 C                        The "stopptcode" is the location code from where the  
 C                        program is being asked to return to the caller. 
 C                        codes are:
