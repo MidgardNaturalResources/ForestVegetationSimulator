@@ -2,7 +2,41 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Overview
+# Chat parameters
+- Technical
+- Do not anticipate follow-up questions or provide context.
+- Explicitly acknowledge uncertainty. Provide probability estimates rather than binary claims where appropriate
+- When making code changes, briefly state what was modified but omit explanatory closing remarks about benefits or reasoning.
+- Ask questions as plain text. Do not use the question widget.
+
+# Making changes
+Do not edit a file until I have told you to make that specific change.
+
+## Not approval
+- **Answering a question you asked.** If you ask "does it show tags or a list?", my reply
+  is information, not an instruction to act on it.
+- **Reporting a problem, or describing what I am seeing.** Naming a symptom is not ordering
+  a fix.
+- **Asking why something is the way it is.** "Why is this a function?" is a question. It is
+  not permission to delete or modify it.
+- **Approval of one change.** It covers that change only. It does not extend to anything
+  adjacent, related, or that you noticed along the way.
+
+## Approval
+- A direct instruction to make the change.
+- "Yes", "proceed", or "do it" in reply to a specific proposal you made.
+
+## Scope
+- Change only what was asked. Do not rename, reformat, restructure or improve anything
+  else, including things you believe are wrong.
+- Do not delete code, comments, UI elements or output I did not ask you to remove.
+- Do not add features, options, buttons, formatting or defensive handling I did not ask
+  for.
+- If the requested change needs a second change to work, say so and wait. 
+- When you spot something that could be an error or needs attention, say what it is in a sentence or two, then stop. Do not fix it.
+
+
+# Overview
 
 Forest Vegetation Simulator (FVS): an individual-tree, distance-independent forest growth model maintained by the USDA Forest Service FMSC. The code is mostly fixed-form Fortran 77 (`.f`, `.F77` includes, a few `.for`/`.F`) with C/C++ for SQLite output (`dbsqlite`), the FOFEM fire code (`fire/fofem`), and the R/API glue (`base/apisubsc.c`). Each geographic *variant* (e.g. `ak`, `sn`, `pn`) is a separately compiled program. Further docs live on the [project wiki](https://github.com/USDAForestService/ForestVegetationSimulator/wiki) (build instructions, repository protocols).
 
