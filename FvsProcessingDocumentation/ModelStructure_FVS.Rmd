@@ -21,8 +21,108 @@ library(kableExtra)
 ```
 
 
+Dixon, Gary E.; Crookston, Nicholas L. 2016. Model Structure of the Forest Vegetation Simulator. Internal Rep. Fort Collins, CO: U. S. Department of Agriculture, Forest Service, Forest Management Service Center. 128p. (Revised: June 29, 2016)
+This document describes basic model structure for the Forest Vegetation Simulator (FVS) computer software. This guide explains model flow, logic considerations, subcomponents, and subroutines for the base model including the regeneration establishment and event monitor extensions. It also discusses how to accomplish common programming tasks associated with code maintenance or enhancement. This document is meant to serve as an initial reference for people involved with design or modification of the FVS model computer code.
+Keywords: Forest Vegetation Simulator, forest management, simulation models, resource management.
+
+## About the Authors
+
+Gary E. Dixon (retired) is a biometrician and served as the Forest Vegetation Simulator Group leader at the Forest Service’s Washington Office Forest Management Service Center in Fort Collins, Colorado. Dr. Dixon received his B.S. (1973), M.S. (1974), and Ph.D. (1977) in forest biometrics at Colorado State University. He has worked on the development of tree growth models throughout most of his career. He joined the Forest Management Staff in 1982 and has worked with the model now known as the Forest Vegetation Simulator since that time. He retired from the Forest Service in 2008 but still actively participates in FVS development.
+Nicholas L. Crookston (retired) was an operations research analyst and worked at the Forest Service’s Rocky Mountain Research Station, Forestry Sciences Laboratory in Moscow, Idaho. He has participated in the development of FVS from about 1977 to the present time. Dr. Crookston received his B.S. (1973) in botany at Weber State University, M.S. (1977) and Honorary Doctorate of Natural Resources (2015) from the University of Idaho. He retired from the Forest Service in 2015 but still actively participates in FVS development.
+
+## Acknowledgement
+
+We would like to thank all those people that contributed to the development, testing, and support of the FVS software system. We would also like to thank the many FVS users who have provided feedback and suggested model improvements over the years.
+
+## About this Guide
+
+This document is meant to serve as a technical guide to the FVS model and document program flow and programming considerations of the model. As such it is intended for people involved with FVS model development and code modification. This document a technical supplement to the two FVS user’s guides referenced in the following section.
+
+## How to use this Guide
+
+Anyone reading this document should also have “Essential FVS: A user’s guide to the Forest Vegetation Simulator” and the “Keyword Reference Guide for the Forest Vegetation Simulator” at hand. These can be downloaded from the Forest Management Service Center’s web site. Any references in this document to the “EFVS Guide” or “Keyword Guide” are referencing these documents. When a keyword record name is mentioned in this document, it should be looked up in the keyword guide for a detailed discussion of the parameter fields and other explanatory notes.
+Developers should also obtain the FVS overview document for the variant pertaining to their geographic area from the same web site. With these three documents, plus this one, model developers should have a good start towards understanding the FVS model structure.
+Users wanting to interface with FVS using the Suppose graphical user interface should obtain that software along with the “exercise guide” pertaining to their geographic area. These products are also available from the FMSC web site. A new online tool for running FVS, called FVSOnline, is now available.  FVSOnline is intended to replace Suppose and takes advantage of some newer programming constructs documented in this document. FVSOnline can also be run on a local machine.
+
+
+
+# 1.0 Introduction
+
+The Forest Vegetation Simulator (FVS) is a model used for predicting forest stand dynamics that is used extensively in the United States. User’s guides exist for those people interested in running their data through FVS (Dixon 2002, VanDyck and Smith-Mateja 2000) and model relationships specific to geographic variants are presented in the various variant overview guides (e.g. Keyser and Dixon 2008). However, formal technical documentation of the programming flow and logic has not been previously available in a consolidated place. This document provides this type of documentation for the FVS base model including the regeneration establishment and event monitor extensions. Some mention will be made of other FVS extensions, such as the database extension, where appropriate.
+Sections 2.0 through 2.2 of this document discuss general FVS structure and programming considerations. Sections 3.0 through 5.2 are generally arranged in the order that FVS processes a stand. Sections 6.0 through 8.0, and section 10.0, are devoted entirely to describing the program flow and logic in a particular section of the FVS code, or a particular FVS feature. Section 9.0 describes structural differences in the two ORGANON-FVS variants.
+
+# 2.0 General Flow Overview
+
+The general processing sequence for FVS is shown in figure 2-1 and discussed in section 3.4 of the EFVS guide. Each of the major task groupings shown in this processing sequence will be further broken down in following sections.
+FVS can process a single stand in one model run or many stands in one model run. When running FVS there are two processing modes, serial or parallel. A serial run occurs when each stand is processed to completion before the next stand starts. A parallel run occurs when all the stands are processed up to a common stopping year, typically before the end of the projection, and then the program is stopped. Other processes can then be run that can include the creation of information FVS can use when a simulation is resumed. Once the simulation resumes, all the stands are processed up to the next common stopping point or the end of the projection.
+Prior to about 2012, running stands in the parallel mode required the use of a separate version of FVS that included the Parallel Processing Extension (PPE, Crookston and Stage, 1991).  However, given the complexity of that program and its lack of use, The PPE was removed and FVS was modified to include the ability to stop and restart itself. This will be discussed in further detail in section 8.0.
+Most of this document is devoted to explaining the processing sequence for a single stand serial model run. A multiple stand serial model run follows the same processing sequence as a single stand serial model run, repeated for each stand. A parallel model run follows virtually the same flow as its serial counterpart for each stand in the projection initialization, projection cycling, and projection summarization phases. Details on how this is accomplished are covered in section 8.0.
+The general processing flow for a single stand serial model run can be broken down into three phases. The projection initialization phase gets the stand ready to run; the projection cycling phase projects the stand through time; and the projection summarization phase produces the output reports.
+Process Keyword RecordsRead Input DataCompute Initial Stand CharacteristicsBackdate DensitiesCompute Calibration StatisticsCheck Event Monitor for Before Thinning ActionsProcess Thinning and then Pruning RequestsCheck Event Monitor for After Thinning ActionsGrow Large Trees(in order: diameter, height)Grow Small Trees(in order: height, diameter) height)Compute MortalityAdjust Growth and Mortality Estimates for Fire, Insect, and Pathogen ImpactsAdd RegenerationCompute Crown Ratio ChangeUpdate Stand CharacteristicsCompute VolumeMore Cycles Scheduled?YesNoProduce Final FVS ReportsProcess Keyword RecordsRead Input DataCompute Initial Stand CharacteristicsBackdate DensitiesCompute Calibration StatisticsCheck Event Monitor for Before Thinning ActionsProcess Thinning and then Pruning RequestsCheck Event Monitor for After Thinning ActionsGrow Large Trees(in order: diameter, height)Grow Small Trees(in order: height, diameter) height)Compute MortalityAdjust Growth and Mortality Estimates for Fire, Insect, and Pathogen ImpactsAdd RegenerationCompute Crown Ratio ChangeUpdate Stand CharacteristicsCompute VolumeMore Cycles Scheduled?YesNoProduce Final FVS Reports
+Process Keyword Records
+Read Input Data
+Compute Initial Stand Characteristics
+Backdate Densities
+Compute Calibration Statistics
+Check Event Monitor for Before Thinning Actions
+Process Thinning and then Pruning Requests
+Check Event Monitor for After Thinning Actions
+Grow Large Trees
+(in order: diameter, height)
+Grow Small Trees
+(in order: height, diameter) height)
+Compute Mortality
+Adjust Growth and Mortality Estimates for Fire, Insect, and Pathogen Impacts
+Add Regeneration
+Compute Crown Ratio Change
+Update Stand Characteristics
+Compute Volume
+More Cycles Scheduled?
+Yes
+No
+Produce Final FVS Reports
+Process Keyword Records
+Read Input Data
+Compute Initial Stand Characteristics
+Backdate Densities
+Compute Calibration Statistics
+Check Event Monitor for Before Thinning Actions
+Process Thinning and then Pruning Requests
+Check Event Monitor for After Thinning Actions
+Grow Large Trees
+(in order: diameter, height)
+Grow Small Trees
+(in order: height, diameter) height)
+Compute Mortality
+Adjust Growth and Mortality Estimates for Fire, Insect, and Pathogen Impacts
+Add Regeneration
+Compute Crown Ratio Change
+Update Stand Characteristics
+Compute Volume
+More Cycles Scheduled?
+Yes
+No
+Produce Final FVS Reports
+
+**Figure 2-1. Overview of the general FVS Processing Sequence for a single stand serial model run.Figure 2-1. Overview of the general FVS Processing Sequence for a single stand serial model run.**
+
+
+**Figure 2-1. Overview of the general FVS Processing Sequence for a single stand serial model run.**
+
+
+**Figure 2-1. Overview of the general FVS Processing Sequence for a single stand serial model run.**
+
+
+
+## 2.0.1 Detailed Input and Output Array Specifications
+
+The following tables summarize the major FVS subroutines and the arrays they use:
+
+### Subroutine Summary Tables
+
+#### Main Control Flow Functions
+
 ```{r main-control-table, echo=FALSE}
-### Main Control Flow Functions
 main_control <- data.frame(
   Function = c("FVS", "INITRE", "TREGRO"),
   Purpose = c(
@@ -52,10 +152,9 @@ kable(main_control,
   column_spec(1, bold = TRUE)
 ```
 
-
+#### Growth and Mortality Processing Functions
 
 ```{r growth-mort-table, echo=FALSE}
-### Growth and Mortality Processing Functions
 growth_mort <- data.frame(
   Function = c("GRINCR", "GRADD", "UPDATE", "MORTS"),
   Purpose = c(
@@ -88,10 +187,9 @@ kable(growth_mort,
   column_spec(1, bold = TRUE)
 ```
 
-
+#### Stand Density and Statistics Functions
 
 ```{r density-stats-table, echo=FALSE}
-### Stand Density and Statistics Functions
 density_stats <- data.frame(
   Function = c("DENSE", "NOTRE", "SETUP", "STATS"),
   Purpose = c(
@@ -124,10 +222,9 @@ kable(density_stats,
   column_spec(1, bold = TRUE)
 ```
 
-
+#### Thinning and Management Functions
 
 ```{r thinning-table, echo=FALSE}
-### Thinning and Management Functions
 thinning <- data.frame(
   Function = c("CUTS"),
   Purpose = c("Executes thinning strategies for the cycle"),
@@ -145,10 +242,9 @@ kable(thinning,
   column_spec(1, bold = TRUE)
 ```
 
-
+#### Distribution and Utility Functions
 
 ```{r utilities-table, echo=FALSE}
-### Distribution and Utility Functions
 utilities <- data.frame(
   Function = c("PCTILE", "DIST", "COMP", "COMCUP"),
   Purpose = c(
@@ -181,11 +277,11 @@ kable(utilities,
   column_spec(1, bold = TRUE)
 ```
 
+### Main Control Flow Arrays
+
+#### FVS Subroutine - Main Simulation Driver
 
 ```{r fvs-arrays, echo=FALSE}
-### 2.2.1 Main Control Flow - Detailed Arrays
-#**FVS Subroutine - Main Simulation Driver**
-
 fvs_arrays <- data.frame(
   Array_Name = c(
     "IRTNCD",
@@ -273,10 +369,9 @@ kable(fvs_arrays,
   column_spec(5, width = "20em")
 ```
 
-
+#### INITRE Subroutine - Initialization Arrays
 
 ```{r initre-arrays, echo=FALSE}
-#**INITRE Subroutine - Initialization Arrays**
 initre_arrays <- data.frame(
   Array_Name = c(
     "DBH()",
@@ -369,12 +464,11 @@ kable(initre_arrays,
   column_spec(5, width = "20em")
 ```
 
+### Growth and Mortality Arrays
 
+#### GRINCR Subroutine - Growth Increment Calculation
 
 ```{r grincr-arrays, echo=FALSE}
-### 2.2.2 Growth and Mortality - Detailed Arrays
-#**GRINCR Subroutine - Growth Increment Calculation**
-
 grincr_arrays <- data.frame(
   Array_Name = c(
     "DBH()",
@@ -482,11 +576,9 @@ kable(grincr_arrays,
   column_spec(5, width = "20em")
 ```
 
-
+#### UPDATE Subroutine - Tree List Update Arrays
 
 ```{r update-arrays, echo=FALSE}
-#**UPDATE Subroutine - Tree List Update Arrays**
-
 update_arrays <- data.frame(
   Array_Name = c(
     "HT()",
@@ -584,12 +676,11 @@ kable(update_arrays,
   column_spec(5, width = "20em")
 ```
 
+### Stand Density and Statistics Arrays
 
+#### DENSE Subroutine - Density Calculation Arrays
 
 ```{r dense-arrays, echo=FALSE}
-### 2.2.3 Stand Density and Statistics - Detailed Arrays
-#**DENSE Subroutine - Density Calculation Arrays**
-
 dense_arrays <- data.frame(
   Array_Name = c(
     "DBH()",
@@ -692,11 +783,9 @@ kable(dense_arrays,
   column_spec(5, width = "20em")
 ```
 
-
+#### SETUP Subroutine - Indexing Arrays
 
 ```{r setup-arrays, echo=FALSE}
-#**SETUP Subroutine - Indexing Arrays**
-
 setup_arrays <- data.frame(
   Array_Name = c(
     "ISP()",
@@ -784,12 +873,11 @@ kable(setup_arrays,
   column_spec(5, width = "20em")
 ```
 
+### Thinning and Management Arrays
 
+#### CUTS Subroutine - Thinning Arrays
 
 ```{r cuts-arrays, echo=FALSE}
-### 2.2.4 Thinning and Management - Detailed Arrays
-#**CUTS Subroutine - Thinning Arrays**
-
 cuts_arrays <- data.frame(
   Array_Name = c(
     "DBH()",
@@ -897,11 +985,11 @@ kable(cuts_arrays,
   column_spec(5, width = "20em")
 ```
 
-## 2.3 Processing Sequence Diagrams
+## 2.0.2 Processing Sequence Diagrams
 
 This section provides detailed flowcharts and sequence diagrams for major FVS processing workflows.
 
-### 2.3.1 Overall FVS Execution Sequence
+### Overall FVS Execution Sequence
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -988,7 +1076,7 @@ This section provides detailed flowcharts and sequence diagrams for major FVS pr
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 2.3.2 Initialization Phase Detail (Cycle 0)
+### Initialization Phase Detail (Cycle 0)
 
 ```
 INITRE - Initialization and Setup
@@ -1052,7 +1140,7 @@ Start INITRE
 Return from INITRE
 ```
 
-### 2.3.3 Growth Cycle Processing Detail
+### Growth Cycle Processing Detail
 
 ```
 TREGRO - Tree Growth for One Cycle
@@ -1185,7 +1273,7 @@ Return from GRADD
 Return from TREGRO
 ```
 
-### 2.3.4 Thinning Processing Sequence
+### Thinning Processing Sequence
 
 ```
 CUTS - Thinning and Removal Processing
@@ -1305,7 +1393,7 @@ For each thinning activity:
 Return from CUTS
 ```
 
-### 2.3.5 Stand Density Calculation Sequence
+### Stand Density Calculation Sequence
 
 ```
 DENSE - Stand Density and Structure Calculation
@@ -1413,98 +1501,6 @@ Return from DENSE with:
      ├─> PCT() (percentiles)
      └─> RELDSP() (CCF by species)
 ```
-
-Dixon, Gary E.; Crookston, Nicholas L. 2016. Model Structure of the Forest Vegetation Simulator. Internal Rep. Fort Collins, CO: U. S. Department of Agriculture, Forest Service, Forest Management Service Center. 128p. (Revised: June 29, 2016)
-This document describes basic model structure for the Forest Vegetation Simulator (FVS) computer software. This guide explains model flow, logic considerations, subcomponents, and subroutines for the base model including the regeneration establishment and event monitor extensions. It also discusses how to accomplish common programming tasks associated with code maintenance or enhancement. This document is meant to serve as an initial reference for people involved with design or modification of the FVS model computer code.
-Keywords: Forest Vegetation Simulator, forest management, simulation models, resource management.
-
-## About the Authors
-
-Gary E. Dixon (retired) is a biometrician and served as the Forest Vegetation Simulator Group leader at the Forest Service’s Washington Office Forest Management Service Center in Fort Collins, Colorado. Dr. Dixon received his B.S. (1973), M.S. (1974), and Ph.D. (1977) in forest biometrics at Colorado State University. He has worked on the development of tree growth models throughout most of his career. He joined the Forest Management Staff in 1982 and has worked with the model now known as the Forest Vegetation Simulator since that time. He retired from the Forest Service in 2008 but still actively participates in FVS development.
-Nicholas L. Crookston (retired) was an operations research analyst and worked at the Forest Service’s Rocky Mountain Research Station, Forestry Sciences Laboratory in Moscow, Idaho. He has participated in the development of FVS from about 1977 to the present time. Dr. Crookston received his B.S. (1973) in botany at Weber State University, M.S. (1977) and Honorary Doctorate of Natural Resources (2015) from the University of Idaho. He retired from the Forest Service in 2015 but still actively participates in FVS development.
-
-## Acknowledgement
-
-We would like to thank all those people that contributed to the development, testing, and support of the FVS software system. We would also like to thank the many FVS users who have provided feedback and suggested model improvements over the years.
-
-## About this Guide
-
-This document is meant to serve as a technical guide to the FVS model and document program flow and programming considerations of the model. As such it is intended for people involved with FVS model development and code modification. This document a technical supplement to the two FVS user’s guides referenced in the following section.
-
-## How to use this Guide
-
-Anyone reading this document should also have “Essential FVS: A user’s guide to the Forest Vegetation Simulator” and the “Keyword Reference Guide for the Forest Vegetation Simulator” at hand. These can be downloaded from the Forest Management Service Center’s web site. Any references in this document to the “EFVS Guide” or “Keyword Guide” are referencing these documents. When a keyword record name is mentioned in this document, it should be looked up in the keyword guide for a detailed discussion of the parameter fields and other explanatory notes.
-Developers should also obtain the FVS overview document for the variant pertaining to their geographic area from the same web site. With these three documents, plus this one, model developers should have a good start towards understanding the FVS model structure.
-Users wanting to interface with FVS using the Suppose graphical user interface should obtain that software along with the “exercise guide” pertaining to their geographic area. These products are also available from the FMSC web site. A new online tool for running FVS, called FVSOnline, is now available.  FVSOnline is intended to replace Suppose and takes advantage of some newer programming constructs documented in this document. FVSOnline can also be run on a local machine.
-
-
-
-# 1.0 Introduction
-
-The Forest Vegetation Simulator (FVS) is a model used for predicting forest stand dynamics that is used extensively in the United States. User’s guides exist for those people interested in running their data through FVS (Dixon 2002, VanDyck and Smith-Mateja 2000) and model relationships specific to geographic variants are presented in the various variant overview guides (e.g. Keyser and Dixon 2008). However, formal technical documentation of the programming flow and logic has not been previously available in a consolidated place. This document provides this type of documentation for the FVS base model including the regeneration establishment and event monitor extensions. Some mention will be made of other FVS extensions, such as the database extension, where appropriate.
-Sections 2.0 through 2.2 of this document discuss general FVS structure and programming considerations. Sections 3.0 through 5.2 are generally arranged in the order that FVS processes a stand. Sections 6.0 through 8.0, and section 10.0, are devoted entirely to describing the program flow and logic in a particular section of the FVS code, or a particular FVS feature. Section 9.0 describes structural differences in the two ORGANON-FVS variants.
-
-# 2.0 General Flow Overview
-
-The general processing sequence for FVS is shown in figure 2-1 and discussed in section 3.4 of the EFVS guide. Each of the major task groupings shown in this processing sequence will be further broken down in following sections.
-FVS can process a single stand in one model run or many stands in one model run. When running FVS there are two processing modes, serial or parallel. A serial run occurs when each stand is processed to completion before the next stand starts. A parallel run occurs when all the stands are processed up to a common stopping year, typically before the end of the projection, and then the program is stopped. Other processes can then be run that can include the creation of information FVS can use when a simulation is resumed. Once the simulation resumes, all the stands are processed up to the next common stopping point or the end of the projection.
-Prior to about 2012, running stands in the parallel mode required the use of a separate version of FVS that included the Parallel Processing Extension (PPE, Crookston and Stage, 1991).  However, given the complexity of that program and its lack of use, The PPE was removed and FVS was modified to include the ability to stop and restart itself. This will be discussed in further detail in section 8.0.
-Most of this document is devoted to explaining the processing sequence for a single stand serial model run. A multiple stand serial model run follows the same processing sequence as a single stand serial model run, repeated for each stand. A parallel model run follows virtually the same flow as its serial counterpart for each stand in the projection initialization, projection cycling, and projection summarization phases. Details on how this is accomplished are covered in section 8.0.
-The general processing flow for a single stand serial model run can be broken down into three phases. The projection initialization phase gets the stand ready to run; the projection cycling phase projects the stand through time; and the projection summarization phase produces the output reports.
-Process Keyword RecordsRead Input DataCompute Initial Stand CharacteristicsBackdate DensitiesCompute Calibration StatisticsCheck Event Monitor for Before Thinning ActionsProcess Thinning and then Pruning RequestsCheck Event Monitor for After Thinning ActionsGrow Large Trees(in order: diameter, height)Grow Small Trees(in order: height, diameter) height)Compute MortalityAdjust Growth and Mortality Estimates for Fire, Insect, and Pathogen ImpactsAdd RegenerationCompute Crown Ratio ChangeUpdate Stand CharacteristicsCompute VolumeMore Cycles Scheduled?YesNoProduce Final FVS ReportsProcess Keyword RecordsRead Input DataCompute Initial Stand CharacteristicsBackdate DensitiesCompute Calibration StatisticsCheck Event Monitor for Before Thinning ActionsProcess Thinning and then Pruning RequestsCheck Event Monitor for After Thinning ActionsGrow Large Trees(in order: diameter, height)Grow Small Trees(in order: height, diameter) height)Compute MortalityAdjust Growth and Mortality Estimates for Fire, Insect, and Pathogen ImpactsAdd RegenerationCompute Crown Ratio ChangeUpdate Stand CharacteristicsCompute VolumeMore Cycles Scheduled?YesNoProduce Final FVS Reports
-Process Keyword Records
-Read Input Data
-Compute Initial Stand Characteristics
-Backdate Densities
-Compute Calibration Statistics
-Check Event Monitor for Before Thinning Actions
-Process Thinning and then Pruning Requests
-Check Event Monitor for After Thinning Actions
-Grow Large Trees
-(in order: diameter, height)
-Grow Small Trees
-(in order: height, diameter) height)
-Compute Mortality
-Adjust Growth and Mortality Estimates for Fire, Insect, and Pathogen Impacts
-Add Regeneration
-Compute Crown Ratio Change
-Update Stand Characteristics
-Compute Volume
-More Cycles Scheduled?
-Yes
-No
-Produce Final FVS Reports
-Process Keyword Records
-Read Input Data
-Compute Initial Stand Characteristics
-Backdate Densities
-Compute Calibration Statistics
-Check Event Monitor for Before Thinning Actions
-Process Thinning and then Pruning Requests
-Check Event Monitor for After Thinning Actions
-Grow Large Trees
-(in order: diameter, height)
-Grow Small Trees
-(in order: height, diameter) height)
-Compute Mortality
-Adjust Growth and Mortality Estimates for Fire, Insect, and Pathogen Impacts
-Add Regeneration
-Compute Crown Ratio Change
-Update Stand Characteristics
-Compute Volume
-More Cycles Scheduled?
-Yes
-No
-Produce Final FVS Reports
-
-**Figure 2-1. Overview of the general FVS Processing Sequence for a single stand serial model run.Figure 2-1. Overview of the general FVS Processing Sequence for a single stand serial model run.**
-
-
-**Figure 2-1. Overview of the general FVS Processing Sequence for a single stand serial model run.**
-
-
-**Figure 2-1. Overview of the general FVS Processing Sequence for a single stand serial model run.**
-
 
 
 ## 2.1 Overall Model Design and Control
@@ -6274,13 +6270,13 @@ Step 13: Print the regeneration summary
 A regeneration summary is printed each time the regeneration model is invoked. The first tally in a tally sequence includes a heading that shows the stand identification, site preparation by year performed, and number of plots by habitat type group.
 Each tally shows the cumulative probability of stocking and three summaries of regeneration by species. The first summary is for all trees regenerating during the cycle. This summary is similar to a conventional stand exam. The second summary lists best trees regenerating during the cycle. Densities and average heights are listed by species for best trees. Focusing on best trees gives a more realistic picture of potential crop trees in the stand. The third summary shows all trees less than 3.0 inches in diameter that are in the FVS tree list. This provides a view of all regeneration currently in the stand. Trees in this summary may include those from the stand inventory, stump and root sprouts, from a previous tally of the regeneration model, or from the current tally of the regeneration model.
 
-# 12.0 Database Input and Output Extension
+# 11.0 Database Input and Output Extension
 
 The FVS Database Extension (dbsqlite) provides comprehensive capabilities for reading stand and tree data from SQLite databases and writing simulation results to database tables. This extension replaces traditional text-based input files and ASCII output reports with structured relational database tables, enabling efficient data management, automated batch processing, and integration with Geographic Information Systems (GIS) and other analytical tools.
 
-## 12.1 Overview and Architecture
+## 11.1 Overview and Architecture
 
-### 12.1.1 Purpose and Benefits
+### 11.1.1 Purpose and Benefits
 
 The Database Extension serves two primary functions:
 
@@ -6297,7 +6293,7 @@ The Database Extension serves two primary functions:
 - **Version Control**: Embedded case management tracks simulation parameters
 - **Metrics**: Both English and metric unit output supported
 
-### 12.1.2 Technology Stack
+### 11.1.2 Technology Stack
 
 The Database Extension utilizes:
 
@@ -6322,7 +6318,7 @@ sqlite3.c (SQLite engine)
 .db or .sqlite file (Database file)
 ```
 
-### 12.1.3 Database Structure
+### 11.1.3 Database Structure
 
 FVS databases use a **case-based** organization where each simulation run is assigned a unique CaseID. All output tables include CaseID as a foreign key linking results to the FVS_Cases master table.
 
@@ -6333,9 +6329,9 @@ FVS databases use a **case-based** organization where each simulation run is ass
 - **Tree Tables**: Individual tree records (e.g., FVS_TreeList, FVS_CutList)
 - **Extension Tables**: Specialized output from fire, climate, economics, etc.
 
-## 12.2 Implementation and Source Files
+## 11.2 Implementation and Source Files
 
-### 12.2.1 Directory Structure
+### 11.2.1 Directory Structure
 
 The database extension is located in the `dbsqlite/` directory and contains approximately 45 Fortran source files plus SQLite library files:
 
@@ -6377,7 +6373,7 @@ Each output table has a dedicated Fortran file:
 - **sqlite3.c**, **sqlite3.h**: SQLite library (embedded in FVS)
 - **uuidgen.f**: UUID generation for CaseID
 
-### 12.2.2 Complete Table List
+### 11.2.2 Complete Table List
 
 The database extension supports 50+ output tables across all FVS components:
 
@@ -6472,7 +6468,7 @@ kable(db_all_tables,
   column_spec(3, width = "18em")
 ```
 
-### 12.2.3 C Interface Functions
+### 11.2.3 C Interface Functions
 
 The `fvsqlite3.c` file implements 20+ C functions that Fortran calls to interact with SQLite:
 
@@ -6493,9 +6489,9 @@ The `fvsqlite3.c` file implements 20+ C functions that Fortran calls to interact
 **Utilities:**
 - `fsql3_tableexists`, `fsql3_addcolifabsent`
 
-## 12.3 Database Input Processing
+## 11.3 Database Input Processing
 
-### 12.3.1 Input Workflow
+### 11.3.1 Input Workflow
 
 Database input allows FVS to read inventory data directly from SQL tables:
 
@@ -6507,7 +6503,7 @@ Database input allows FVS to read inventory data directly from SQL tables:
 6. **DBSTREESIN** subroutine binds SQL columns to Fortran variables
 7. Normal FVS processing continues (calibration, simulation, output)
 
-### 12.3.2 Input Keywords
+### 11.3.2 Input Keywords
 
 **DSNIN** - Input Database File
 
@@ -6546,7 +6542,7 @@ SQLIN
 CREATE INDEX IF NOT EXISTS idx_trees_stand ON my_trees(Stand_ID);
 ```
 
-### 12.3.3 Column Name Mapping
+### 11.3.3 Column Name Mapping
 
 DBSTREESIN maps SQL column names to FVS tree attributes using a SELECT CASE structure:
 
@@ -6583,9 +6579,9 @@ DBSTREESIN maps SQL column names to FVS tree attributes using a SELECT CASE stru
 
 The system is flexible - column names are case-insensitive and multiple aliases are recognized.
 
-## 12.4 Database Output Processing
+## 11.4 Database Output Processing
 
-### 12.4.1 Output Workflow
+### 11.4.1 Output Workflow
 
 1. User specifies output database with **DSNOUT** keyword
 2. User activates desired tables with keywords (SUMMARY, TREELIDB, etc.)
@@ -6601,7 +6597,7 @@ The system is flexible - column names are case-insensitive and multiple aliases 
    - Executes statement
 6. At end of all stands: DBSCLOSE commits and closes
 
-### 12.4.2 Key Output Keywords
+### 11.4.2 Key Output Keywords
 
 **DSNOUT** - Output Database File
 
@@ -6659,7 +6655,7 @@ CREATE INDEX idx_year ON FVS_Summary(Year);
 CREATE VIEW v_final AS SELECT * FROM FVS_Summary WHERE Year = 2070;
 ```
 
-### 12.4.3 FVS_Summary Table Structure
+### 11.4.3 FVS_Summary Table Structure
 
 The FVS_Summary table is the most commonly used output table, containing stand-level statistics for each cycle:
 
@@ -6690,7 +6686,7 @@ The FVS_Summary table is the most commonly used output table, containing stand-l
 - **Pai** (REAL): Periodic annual increment
 - **And 20+ additional fields...**
 
-### 12.4.4 FVS_TreeList Table Structure
+### 11.4.4 FVS_TreeList Table Structure
 
 Individual tree records at end of each cycle:
 
@@ -6714,9 +6710,9 @@ Individual tree records at end of each cycle:
 - **Biomass fields** (if compiled): Merch_Biomass, Stem_Biomass, Branch_Biomass, Foliage_Biomass
 - **Carbon fields** (if FFE active): Total_Carbon, Merch_Carbon
 
-## 12.5 Practical Applications
+## 11.5 Practical Applications
 
-### 12.5.1 Landscape-Scale Analysis
+### 11.5.1 Landscape-Scale Analysis
 
 Process thousands of stands from Forest Inventory and Analysis (FIA) database:
 
@@ -6767,7 +6763,7 @@ JOIN FVS_Cases c ON s.CaseID = c.CaseID
 GROUP BY c.Groups, s.Year;
 ```
 
-### 12.5.2 Treatment Optimization
+### 11.5.2 Treatment Optimization
 
 Compare multiple management scenarios:
 
@@ -6816,7 +6812,7 @@ GROUP BY Groups
 ORDER BY Net_Present_Value DESC;
 ```
 
-### 12.5.3 GIS Integration Example
+### 11.5.3 GIS Integration Example
 
 Use Python with geopandas and sqlite3:
 
@@ -6843,7 +6839,7 @@ merged = stands_gdf.merge(results, left_on='stand_id', right_on='StandID')
 merged.plot(column='BA', legend=True, cmap='YlGn')
 ```
 
-### 12.5.4 Climate Change Scenario Analysis
+### 11.5.4 Climate Change Scenario Analysis
 
 Couple with climate projection data:
 
@@ -6877,9 +6873,9 @@ JOIN FVS_Cases c ON s.CaseID = c.CaseID
 GROUP BY c.Groups;
 ```
 
-## 12.6 Technical Details and Troubleshooting
+## 11.6 Technical Details and Troubleshooting
 
-### 12.6.1 Transaction Management
+### 11.6.1 Transaction Management
 
 FVS uses SQL transactions for efficiency:
 
@@ -6891,7 +6887,7 @@ iRet = fsql3_exec(IoutDBref,"Commit;"//Char(0)) ! Commit transaction
 
 Large batch runs benefit from explicit transaction control.
 
-### 12.6.2 UUID Generation
+### 11.6.2 UUID Generation
 
 CaseID uses UUID (Universally Unique Identifier):
 
@@ -6900,7 +6896,7 @@ CaseID uses UUID (Universally Unique Identifier):
 - Guarantees uniqueness across all FVS runs
 - Enables merging databases from multiple users
 
-### 12.6.3 Metric Units Support
+### 11.6.3 Metric Units Support
 
 Tables documented with "Metric version = Yes" produce metric outputs when FVS compiled with metric flags:
 
@@ -6909,7 +6905,7 @@ Tables documented with "Metric version = Yes" produce metric outputs when FVS co
 - Areas → hectares
 - Volumes → cubic meters
 
-### 12.6.4 Platform-Specific Considerations
+### 11.6.4 Platform-Specific Considerations
 
 **Windows:**
 - Uses `.dll` extension
@@ -6932,7 +6928,7 @@ Different handling for GCC vs. Intel compilers:
 #endif
 ```
 
-### 12.6.5 Common SQL Errors
+### 11.6.5 Common SQL Errors
 
 **Error**: "no such table: FVS_Summary"
 **Solution**: Ensure SUMMARY keyword was specified before Process
@@ -6949,7 +6945,7 @@ Different handling for GCC vs. Intel compilers:
 **Error**: "datatype mismatch"
 **Solution**: Column types in input table don't match expected types
 
-### 12.6.6 Performance Optimization
+### 11.6.6 Performance Optimization
 
 **Index Creation:**
 
@@ -6977,7 +6973,7 @@ PRAGMA optimize;  -- Optimize all indices
 - Split results by region/year if needed
 - SQLite handles multi-GB files efficiently on 64-bit systems
 
-## 12.7 References and Integration
+## 11.7 References and Integration
 
 The Database Extension integrates tightly with:
 
@@ -6992,22 +6988,6 @@ The Database Extension integrates tightly with:
 - SQLite documentation: https://www.sqlite.org/docs.html
 - FVS source code: `dbsqlite/` directory
 
-# 11.0 Literature Cited
-
-Crookston, N. L.; Stage, A. R. 1991. User’s guide to the parallel processing extension of the Prognosis Model. Gen. Tech. Rep. INT-281. Ogden, UT: U. S. Department of Agriculture, Forest Service, Intermountain Research Station. 87p.
-Crookston, N. L.; Gammel, D. L.; Rebain, S.; Robinson, D. C. E.; Keyser, C. 2003 (revised frequently). User’s guide to the Database Extension of the Forest Vegetation Simulator Version 2.0. Internal Rep. Fort Collins, CO: U. S. Department of Agriculture, Forest Service, Forest Management Service Center.
-Curtis, R. O. 1982. A simple index of stand density for Douglas-fir. For. Science, 28(1):92-94.
-Dixon, G. E. comp. 2002 (revised frequently). Essential FVS: A user’s guide to the forest vegetation simulator. Internal Rep. Fort Collins, CO: U. S. Department of Agriculture, Forest Service, Forest Management Service Center.
-Keyser, Chad E.; Dixon, Gary E., comps. 2008 (revised frequently). Tetons (TT) Variant Overview – Forest Vegetation Simulator. Internal Rep. Fort Collins, CO: U. S. Department of Agriculture, Forest Service, Forest Management Service Center.
-Ferguson, Dennis E.; Carlson, Clinton E. 1993. Predicting regeneration establishment with the Prognosis Model. Res. Paper INT-467. Ogden, UT: U. S. Department of Agriculture, Forest Service, Intermountain Research Station. 54p.
-Ferguson, Dennis E.; Crookston, Nicholas L. 1984. User’s guide to the regeneration establishment model – a Prognosis Model extension. Gen. Tech. Rep. INT-161. Ogden, UT: U. S. Department of Agriculture, Forest Service, Intermountain Research Station. 23p.
-Ferguson, Dennis E.; Crookston, Nicholas L. 1991. User’s guide to version 2 of the regeneration establishment model: part of the Prognosis Model. Gen. Tech. Rep. INT-279. Ogden, UT: U. S. Department of Agriculture, Forest Service, Intermountain Research Station. 34p.
-Marquis, D.A.; Ernst, R. L. 1992. User’s guide to SILVAH. Gen. Tech. Rep. NE_162. Warren, PA: U. S. Department of Agriculture, Forest Service, Northeastern Research Station. 130 p.
-McGaughey, Robert J. 2002. Stand visualization system version 3.30. U. S. Department of Agriculture, Forest Service, Pacific Northwest Research Station. 141 p. url: http://forsys.cfr.washington.edu/winsvs/manual.pdf.
-Rebain, Stephanie A. comp. 2010 (revised March 23, 2015). The Fire and Fuels Extension to the Forest Vegetation Simulator: Updated Model Documentation. Internal Rep. Fort Collins, CO: U. S. Department of Agriculture, Forest Service, Forest Management Service Center. 403p. url: www.fs.fed.us/fmsc/ftp/fvs/docs/gtr/FFEguide.pdf
-Reineke, L.H. 1933. Perfecting a stand density index for even aged forests. J. Agric. Res. 46:627-638.
-Van Dyck, M. G.; Smith-Mateja, E. E. comp. 2000 (revised frequently). Keyword reference guide for the forest vegetation simulator. Internal Rep. Fort Collins, CO: U. S. Department of Agriculture, Forest Service, Forest Management Service Center.
-Zeide, B. 1983. The mean diameter for stand density index. Can. J. For. Res. 13:1023-1024.
 Appendix A: Organization of the FVS Source Code
 FVS source code changes frequently. Structure of the source code directories changes less frequently, but it does change. The source code structure depicted here was current as of 10/05/2018, with the following exceptions:
 The FVS/METRIC directory is omitted. These routines are used to create metric versions of selected variants, and are not used in any production variants.
@@ -7207,5 +7187,23 @@ End cycle loop
 FVS
 SVOUT
 Outputs an SVS file representing the stand at the end of the projection
+
+# 12.0 Literature Cited
+
+Crookston, N. L.; Stage, A. R. 1991. User’s guide to the parallel processing extension of the Prognosis Model. Gen. Tech. Rep. INT-281. Ogden, UT: U. S. Department of Agriculture, Forest Service, Intermountain Research Station. 87p.
+Crookston, N. L.; Gammel, D. L.; Rebain, S.; Robinson, D. C. E.; Keyser, C. 2003 (revised frequently). User’s guide to the Database Extension of the Forest Vegetation Simulator Version 2.0. Internal Rep. Fort Collins, CO: U. S. Department of Agriculture, Forest Service, Forest Management Service Center.
+Curtis, R. O. 1982. A simple index of stand density for Douglas-fir. For. Science, 28(1):92-94.
+Dixon, G. E. comp. 2002 (revised frequently). Essential FVS: A user’s guide to the forest vegetation simulator. Internal Rep. Fort Collins, CO: U. S. Department of Agriculture, Forest Service, Forest Management Service Center.
+Keyser, Chad E.; Dixon, Gary E., comps. 2008 (revised frequently). Tetons (TT) Variant Overview – Forest Vegetation Simulator. Internal Rep. Fort Collins, CO: U. S. Department of Agriculture, Forest Service, Forest Management Service Center.
+Ferguson, Dennis E.; Carlson, Clinton E. 1993. Predicting regeneration establishment with the Prognosis Model. Res. Paper INT-467. Ogden, UT: U. S. Department of Agriculture, Forest Service, Intermountain Research Station. 54p.
+Ferguson, Dennis E.; Crookston, Nicholas L. 1984. User’s guide to the regeneration establishment model – a Prognosis Model extension. Gen. Tech. Rep. INT-161. Ogden, UT: U. S. Department of Agriculture, Forest Service, Intermountain Research Station. 23p.
+Ferguson, Dennis E.; Crookston, Nicholas L. 1991. User’s guide to version 2 of the regeneration establishment model: part of the Prognosis Model. Gen. Tech. Rep. INT-279. Ogden, UT: U. S. Department of Agriculture, Forest Service, Intermountain Research Station. 34p.
+Marquis, D.A.; Ernst, R. L. 1992. User’s guide to SILVAH. Gen. Tech. Rep. NE_162. Warren, PA: U. S. Department of Agriculture, Forest Service, Northeastern Research Station. 130 p.
+McGaughey, Robert J. 2002. Stand visualization system version 3.30. U. S. Department of Agriculture, Forest Service, Pacific Northwest Research Station. 141 p. url: http://forsys.cfr.washington.edu/winsvs/manual.pdf.
+Rebain, Stephanie A. comp. 2010 (revised March 23, 2015). The Fire and Fuels Extension to the Forest Vegetation Simulator: Updated Model Documentation. Internal Rep. Fort Collins, CO: U. S. Department of Agriculture, Forest Service, Forest Management Service Center. 403p. url: www.fs.fed.us/fmsc/ftp/fvs/docs/gtr/FFEguide.pdf
+Reineke, L.H. 1933. Perfecting a stand density index for even aged forests. J. Agric. Res. 46:627-638.
+Van Dyck, M. G.; Smith-Mateja, E. E. comp. 2000 (revised frequently). Keyword reference guide for the forest vegetation simulator. Internal Rep. Fort Collins, CO: U. S. Department of Agriculture, Forest Service, Forest Management Service Center.
+Zeide, B. 1983. The mean diameter for stand density index. Can. J. For. Res. 13:1023-1024.
+
 The U.S. Department of Agriculture (USDA) prohibits discrimination in all its programs and activities on the basis of race, color, national origin, sex, religion, age, disability, political beliefs, sexual orientation, or marital or family status. (Not all prohibited bases apply to all programs.) Persons with disabilities who require alternative means for communication of program information (Braille, large print, audiotape, etc.) should contact USDA’s TARGET Center at (202) 720-2600 (voice and TDD).
 To file a complaint of discrimination, write USDA, Director, Office of Civil Rights, Room 326-W, Whitten Building, 1400 Independence Avenue, SW, Washington, DC 20250-9410 or call (202) 720-5964 (voice or TDD). USDA is an equal opportunity provider and employer.
