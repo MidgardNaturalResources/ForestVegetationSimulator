@@ -1146,7 +1146,7 @@ As part of the projection cycling phase, subroutine FVS calls various subroutine
 
 As part of the projection summarization phase, subroutine FVS calls various subroutines to produce the final output reports.
 
-Subroutine FVS then checks to see if any more stands are being processed. If more stands are being processed then control branches back to the projection initialization phase for the next stand and the sequence is repeated. If this is not a multi-stand run, the run ends.
+Subroutine FVS then returns to its caller, PROGRAM MAIN (or the calling program when FVS is a shared library), which calls FVS again for the next stand and the sequence is repeated. The run ends when the next call finds no more stands.
 
 A logical variable, LSTART, has a value of “.TRUE.” during the projection initialization phase and “.FALSE.” when that phase is completed. This variable is used extensively during model calibration, discussed in section 3.6, to control program logic flow.
 
@@ -3049,7 +3049,7 @@ Various code segments are used to retrieve keyword record names used in an FVS e
 
 ## Running more than one stand
 
-Processing of the stand is now complete, but other stands might need to be run. Within subroutine FVS, program control branches all the way back to the initialization of the logical variables LSTART and LFLAG to “.TRUE.”, the variable ICYC to 0, and the call to subroutine INITRE discussed in section 3.3.1. The run terminates if the next keyword record read is a STOP keyword record; if the keyword record is any other FVS keyword record, then processing of the next stand begins.
+Processing of the stand is now complete, but other stands might need to be run. Subroutine FVS returns to its caller, which calls FVS again; each call begins by setting the logical variables LSTART and LFLAG to “.TRUE.” and the variable ICYC to 0, and calling subroutine INITRE discussed in section 3.3.1. The run terminates if the next keyword record read is a STOP keyword record; if the keyword record is any other FVS keyword record, then processing of the next stand begins.
 
 As discussed in section 2.0, a run consisting of a single stand is called a single stand serial run. A run consisting of multiple stands organized as discussed in the paragraph above is called a multiple stand serial run. A multiple stand serial run may contain as many individual stand projections as you want. Each stand projection might be a projection of a different stand, different projections (i.e. different management alternatives) of the same stand, or a combination of the two. The projection of each stand follows the same logic outlined in sections 3.3.1 through 5.2.
 
@@ -3421,18 +3421,20 @@ The FVS_API is documented at https://sourceforge.net/p/open-fvs/wiki/FVS_API/
 
 ```{r section8-1-arrays, echo=FALSE}
 stoprest_control_arrays <- data.frame(
-  Array_Name = c("AMSTOPPING", "RTNCODE", "RESTARTCODE", "STOPCODE", "STOPFILE", "RESTARTFILE", "RELOADSTAND"),
-  Common_Block = c("GLBLCNTL", "GLBLCNTL", "GLBLCNTL", "GLBLCNTL", "GLBLCNTL", "GLBLCNTL", "GLBLCNTL"),
-  Type = c("LOGICAL", "INTEGER", "INTEGER", "INTEGER", "CHARACTER", "CHARACTER", "LOGICAL"),
-  Direction = c("OUTPUT", "INPUT/OUTPUT", "INPUT", "INPUT", "INPUT", "INPUT", "INPUT/OUTPUT"),
+  Array_Name = c("fvsRtnCode", "restartcode", "stopstatcd", "majorstopptcode", "majorstopptyear", "minorstopptcode", "minorstopptyear", "stopptfile", "restartfile"),
+  Common_Block = c("GLBLCNTL", "GLBLCNTL", "GLBLCNTL", "GLBLCNTL", "GLBLCNTL", "GLBLCNTL", "GLBLCNTL", "GLBLCNTL", "GLBLCNTL"),
+  Type = c("INTEGER", "INTEGER", "INTEGER", "INTEGER", "INTEGER", "INTEGER", "INTEGER", "CHARACTER*250", "CHARACTER*250"),
+  Direction = c("INPUT/OUTPUT", "INPUT/OUTPUT", "INPUT/OUTPUT", "INPUT", "INPUT", "INPUT", "INPUT", "INPUT", "INPUT"),
   Description = c(
-    ".TRUE. if FVS stopped at a stop point",
-    "Return code (0=OK, 1=error, 2=run ended)",
-    "Stop point code where last restart occurred",
-    "Requested stop point code (1-13)",
-    "File path for stop point file (binary)",
-    "File path for restart file (binary)",
-    ".TRUE. to reload last stand from file"
+    "Return code (-1 not started, 0 OK, 1 error, 2 STOP keyword found or end of restart file)",
+    "Location code where the last stop occurred (0 none, 100 end of stand); negative right after a stand is reloaded from a stop point file",
+    "Kind of the last stop (0 none, 1 stop with store, 2 end of stand, 3 stop without store, 4 stand reloaded)",
+    "Requested stop point code for a stop with store (-1 to 7; set with --stoppoint=)",
+    "Requested year for a stop with store; 0 disables the stop",
+    "Requested stop point code for a stop without store (0 never, -1 every stop point, 1 to 7; set with fvsSetStoppointCodes)",
+    "Requested year for a stop without store; above 0 limits the stop to the cycle that contains the year, 0 or below applies no limit",
+    "Stop point file name; blank or [none] writes no file",
+    "Restart file name (binary stream)"
   ),
   stringsAsFactors = FALSE
 )
@@ -3452,7 +3454,7 @@ kable(stoprest_control_arrays,
 
 ```{r section8-stoppoints, echo=FALSE}
 stop_points <- data.frame(
-  Stop_Point = c(1, 2, 3, 4, 5, 6, 7, -1),
+  Stop_Point = c(1, 2, 3, 4, 5, 6, 7, 100),
   Location = c(
     "Start of each cycle, before the pre-thinning event monitor call",
     "After the pre-thinning event monitor call, before CUTS",
@@ -3461,7 +3463,7 @@ stop_points <- data.frame(
     "After the disturbance and pest adjustments, before UPDATE applies growth and mortality",
     "After UPDATE and the density statistics, before regeneration establishment",
     "Cycle 0, after the input data are read and prepared, before calibration (CRATET)",
-    "End of the stand, after the last cycle"
+    "Restart code returned at the end of every stand, after the final output (FVS signals it internally with location code -1)"
   ),
   Subroutine = c(
     "GRINCR",
@@ -3501,17 +3503,16 @@ kable(stop_points,
 
 ```{r section8-2-arrays, echo=FALSE}
 persistence_arrays <- data.frame(
-  Array_Name = c("All COMMON variables", "IUNIT_STOP", "IUNIT_RESTART", "IPOS", "NSTANDS", "ISTDNUM"),
-  Common_Block = c("All blocks", "GLBLCNTL", "GLBLCNTL", "local", "local", "local"),
-  Type = c("varies", "INTEGER", "INTEGER", "INTEGER", "INTEGER", "INTEGER"),
-  Direction = c("INPUT/OUTPUT", "OUTPUT", "INPUT", "OUTPUT", "INPUT", "OUTPUT"),
+  Array_Name = c("All COMMON variables", "jstash", "jdstash", "readFilePos", "seekReadPos"),
+  Common_Block = c("All blocks", "GLBLCNTL", "GLBLCNTL", "GLBLCNTL", "GLBLCNTL"),
+  Type = c("varies", "INTEGER", "INTEGER", "INTEGER", "INTEGER"),
+  Direction = c("INPUT/OUTPUT", "OUTPUT", "INPUT", "OUTPUT", "INPUT"),
   Description = c(
-    "All COMMON block variables written by PUTSTD",
-    "Unit number for stop point file (write)",
-    "Unit number for restart file (read)",
-    "File position for direct access (byte offset)",
-    "Number of stands in stop point file",
-    "Current stand number being processed"
+    "All COMMON block variables, written by PUTSTD and read by GETSTD",
+    "Unit number of the stop point file (71, write); -1 if no file",
+    "Unit number of the restart file (72, read); -1 if no file",
+    "File position where the current stand starts, used to reload it (stream access)",
+    "Position to read from at the next GETSTD; -1 otherwise"
   ),
   stringsAsFactors = FALSE
 )
@@ -3548,6 +3549,8 @@ The key variables that control the stop and restart functionality are stored in 
 Subroutine fvsRestart (code contained in subroutine CMDLINE) is used to restart the program from a previously created stop point file if it is specified on the command line using the –restart= parameter. This subroutine returns the restart code (see subroutine fvsGetRestartCode in subroutine CMDLINE) as well.
 
 Subroutine fvsStopPoint (code contained in subroutine CMDLINE) is called from locations within FVS, for example subroutine GRADD, to find out if the subroutine should return or continue processing.  It is called with the location code within program (for example stop point 5 which is after growth and mortality has been computed, but prior to applying them), and the subroutine compares that code with the stop point that is stored and returns with a flag that indicates if stopping at stop point 5 was requested (using the command line or by calling subroutine fvsSetStoppointCodes (code contained in subroutine CMDLINE)). If the stop point is reached, subroutine GRADD returns back up the call stack. The code in subroutine fvsStopPoint is complicated in that if a stop point is reached and a stop point file name is specified, then subroutine PUTSTD is called to write the stand state variables to mass storage. If the stop point file name is not specified, then the program simply returns up the call stack.
+
+A requested stop is either major or minor. A major stop point (command line option --stoppoint=code,year,file) writes the stand state to the stop point file, if one is named, and ends the stand at that point: the next call to FVS starts the next stand, and a stored stand is continued only by restarting with --restart=file. A minor stop point (subroutine fvsSetStoppointCodes, used by rFVS) writes nothing, and FVS continues the stand from memory when it is called again. In either case a year greater than 0 limits the stop to the cycle that contains that year. A major stop point with a year of 0 is disabled, and a minor stop point with a year of 0 or less is not limited by year.
 
 Subroutine fvsGetRestartCode (code contained in subroutine CMDLINE) is called at the beginning of a subroutine to retrieve the prior stop point code. For example, it is called at the beginning of subroutine GRINCR so that subroutine GRINCR will jump ahead to where it left off calculations (its last stopping point) as necessary. The same is true for subroutines TREGRO and GRADD.
 
@@ -3678,21 +3681,24 @@ Executes the FVS simulation up to a designated stop point.
 
 - **Parameters:**
   - `stopPointCode`: Integer controlling where execution halts:
-    - `0`: Run continuously without stopping
-    - `-1`: Pause at every stop location
-    - `1`: Stop before first Event Monitor call (before-thinning)
-    - `2`: Stop after first Event Monitor call (after-thinning)
-    - `3`: Stop before second Event Monitor call (after-thinning, again)
-    - `4`: Stop after second Event Monitor call
-    - `5`: Stop after growth calculations but before applying them
-    - `7`: Stop after reading input data, before calibration/dubbing
-  - `stopPointYear`: Year at which to pause (ignored when code is 7)
+    - `0`: Never stop
+    - `-1`: Stop at every stop location
+    - `1`: Stop before the first Event Monitor call (before thinning)
+    - `2`: Stop after the first Event Monitor call, before thinning
+    - `3`: Stop after thinning, before the second Event Monitor call
+    - `4`: Stop after the second Event Monitor call, before growth estimation
+    - `5`: Stop after growth and mortality are computed, before they are applied
+    - `6`: Stop before the regeneration establishment (ESTAB) routines
+    - `7`: Stop after input is read, before missing values are imputed and the model is calibrated
+  - `stopPointYear`: A year above 0 stops only in the cycle that contains that year. `-1` means no year limit, so FVS stops in every cycle (any value below 0 behaves the same). For code 7 a year above 0 must be in the first cycle.
 - **Return Codes:**
   - `-1`: FVS not initialized
   - `0`: Normal operation
   - `1`: Error detected; reset needed
   - `2`: Processing complete
 - **Process**: Implements a loop-based execution model, repeatedly calling the FVS engine and checking for stopping conditions
+- **End of stand**: Also returns at the end of each stand, with restart code 100 (even with code 0). The next call starts the next stand.
+- **Persistence**: A stop request stays in effect until it is changed. `fvsRun()` with no arguments does not clear it; `fvsRun(0, 0)` turns it off.
 
 **`fvsInteractRun()`**
 
@@ -3771,8 +3777,8 @@ Accesses values of Event Monitor variables.
 
 Obtains the current restart status code.
 
-- Indicates which stop point was reached
-- Returns 0 if no stop point active
+- Indicates which stop point was reached (1 to 7), or 100 at the end of a stand
+- Returns 0 if no stop point is active, and a negative value right after a stand is reloaded from a stop point file
 
 **`fvsGetSVSDims()` and `fvsGetSVSObjectSet()`**
 
@@ -3800,6 +3806,13 @@ Inserts new tree records into the simulation.
   - Modeling regeneration from external models
   - Adding underplanting prescriptions
   - Incorporating inventory data collected mid-simulation
+- **Stop point**: Call only at stop point 6 or 7. FVS does not check the stop point.
+
+**`fvsCutNow(propcut)`**
+
+Specifies a thinning for the current cycle as the proportion of each tree record to cut.
+
+- Can only be called at stop point 2; R stops with an error otherwise
 
 **`fvsSetTreeAttrs(treeIndex, attrName, value)` / `fvsSetTreeAttr()`**
 
@@ -3870,7 +3883,7 @@ if (beforeThin$BA[beforeThin$Year == 2025] > 150) {
   fvsAddActivity("THINBBA", list(targetBA = 100, year = 2025))
 }
 
-# 7. Continue simulation to completion
+# 7. Run to the end of the stand
 returnCode <- fvsRun(stopPointCode = 0, stopPointYear = 0)
 
 # 8. Retrieve final results
@@ -3909,12 +3922,12 @@ Unlike standalone FVS with restart files, rFVS keeps all state in memory:
 
 **API Function Access:**
 
-All FVS API functions documented at https://sourceforge.net/p/open-fvs/wiki/FVS_API/ are accessible through rFVS via `.C()` calls, including:
+All FVS API functions documented at https://sourceforge.net/p/open-fvs/wiki/FVS_API/ are accessible through rFVS via `.C()` and `.Fortran()` calls, including:
 
 - `fvsSetCmdLine()`
 - `fvsGetDims()`
 - `fvsGetEventMonitorVariables()`
-- `fvsSetStopPointCodes()`
+- `fvsSetStoppointCodes()`
 - And many others
 
 ### Advanced Use Cases
