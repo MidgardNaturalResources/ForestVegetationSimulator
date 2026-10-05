@@ -1635,25 +1635,18 @@ In the computer code it is more efficient to loop over all tree records for some
 
 Looping over all tree records is a simple matter. The looping just needs to take place from indices 1 to ITRN. The actual code might look something like the 10 lines shown below for computing quadratic mean diameter (QMD). Note that code is included to handle the case where there are no tree records (ITRN = 0), or where the number of trees per acre is too small to compute a reasonable QMD. For this example, the test for computing a reasonable QMD compares SUMTPA to 0.001; perhaps a different threshold should be used. However, comparing SUMTPA to exactly zero should be avoided.
 
+```fortran
 QMD = 0.
-
 IF (ITRN .GT. 0) THEN
-
 SUMD2 = 0.
-
 SUMTPA=0.
-
 DO I=1,ITRN
-
 SUMD2 = SUMD2 + DBH(I)*DBH(I)*PROB(I)
-
 SUMTPA= SUMTPA + PROB(I)
-
 ENDDO
-
 IF (SUMTPA .GT. 0.001) QMD = SUMD2 / SUMTPA
-
 ENDIF
+```
 
 There are three arrays in the ARRAYS labeled COMMON block that facilitate looping over all tree records, in individual species groups, or by size. These arrays also facilitate many FVS internal calculations that are dependent on tree size, such as a trees percentile ranking by some attribute.
 
@@ -1661,95 +1654,53 @@ The IND(i) array contains integer pointers, or indices, to locations in the tree
 
 The IND1(k) array is used to access tree data in species order. IND1(k) contains sectors such that each sector contains indices to the internal FVS sequence numbers for all records of a given species. A companion array, ISCT(i,j), is used to access the IND1(k) array. There are two elements in the ISCT(i,j) array for each species. ISCT(i,1) points to the first record in the sector of IND1(k) that is associated with species i; ISCT(i,2) points to the last record in the sector of IND1(k) that is associated with species i. If there are no records for species i, then ISCT(i,1) and ISCT(i,2) will contain zeroes. The actual code to access tree data in species order might look something like this (also notice an example of the internal debug feature near the end of this code segment):
 
+```fortran
 C----------
-
 C  BEGIN SPECIES LOOP
-
 C----------
-
 DO 20 ISPC=1,MAXSP
-
 I1=ISCT(ISPC,1)
-
 IF(I1.EQ.0) GO TO 20
-
 I2=ISCT(ISPC,2)
-
 CONSPP= DGCON(ISPC) + COR(ISPC) + 0.01*DGCCF(ISPC)*RELDEN
-
 DGLDS= DGLD(ISPC)
-
 DGBALS = DGBAL(ISPC)
-
 DGCRS= DGCR(ISPC)
-
 DGCRS2=DGCRSQ(ISPC)
-
 DGDSQS=DGDSQ(ISPC)
-
 DGDBLS=DGDBAL(ISPC)
-
 C----------
-
 C  BEGIN TREE LOOP WITHIN SPECIES LOOP
-
 C----------
-
 DO 10 I3=I1,I2
-
 I=IND1(I3)
-
 D=DIAM(I)
-
 IF (D.LE.0.0) GOTO 10
-
 ALD=ALOG(D)
-
 CR=ICR(I)*0.01
-
 BAL=(1.0 - (PCT(I)/100.)) * BA100
-
 DDS=CONSPP + DGLDS*ALD + DGBALS*BAL + CR* (DGCRS +
-
 &  CR*DGCRS2) +DGDSQS*D*D + DGDBLS*BAL/(ALOG(D+1.0))
-
 IF(DDS.LT.-9.21) DDS=-9.21
-
 WK2(I)=DDS
-
 C----------
-
 C  PRINT DEBUG INFORMATION, IF DESIRED
-
 C----------
-
 IF(DEBUG)THEN
-
 WRITE(JOSTND,9001) I,ISPC,D,BAL,CR,RELDEN,BA,DDS
-
 9001FORMAT(' IN DGF, I=',I4,',  ISPC=',I3,',  DBH=',F7.2,
-
 &',  BAL=',F7.2,',  CR=',F7.4/
-
 &5X,'CCF=',F9.3,',  BA=',F9.3,',   LN(DDS)=',F7.4)
-
 ENDIF
-
 C----------
-
 C  END OF TREE LOOP
-
 C----------
-
 10  CONTINUE
-
 C----------
-
 C  END OF SPECIES LOOP
-
 C----------
-
 20  CONTINUE
+```
 
 ## The Main FVS Routine
 
