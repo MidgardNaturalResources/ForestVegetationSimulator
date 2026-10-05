@@ -3230,7 +3230,10 @@ It is important to note that FVS is not done with the dead tree information yet,
 
 Subroutine CRATET then adjusts the height-diameter equation for all species for which there are at least 3 measured heights in the tree data and height-diameter calibration has not been turned off by the user, or by default. Height-diameter equations vary a lot by variant and the appropriate variant overview document should be consulted to increase understanding of this code section. The only height-diameter equations that can be calibrated to the input data are those of the form shown in equation {3.6.2.3.1}. Adjustment of the height-diameter function is done by adjusting the curve’s intercept, B1.
 
-{3.6.2.3.1} HT = 4.5 + exp(B1 + B2 / (DBH + 1.0))
+$$
+HT = 4.5 + \exp\left(B_1 + \frac{B_2}{DBH + 1.0}\right)
+\tag{3.6.2.3.1}
+$$
 
 Subroutine CRATET then estimates (dubs) heights for all tree records (live and dead) for which total tree height was missing in the input data. If the damage code indicates the tree has a broken or dead top and these height values are missing, then these values are also estimated.
 
@@ -4334,13 +4337,20 @@ Several threshold diameters are used in subroutine REGENT:
 
 For height growth, two threshold diameters are used. These are contained in local arrays subscripted by species, usually called XMIN(i) and XMAX(i). For species i, an estimate of height growth using small tree equations contained in subroutine REGENT is only calculated for trees with diameter (DBH(i)) less than XMAX(i). Height growth estimates from the small-tree model are weighted with the height growth estimates from the large tree model over a range of diameters, XMIN(i) to XMAX(i), in order to smooth the transition between estimates from the two models. In other words, the closer a tree’s DBH(i) value is to the minimum diameter XMIN(i), the more the growth estimate will be weighted towards the small-tree growth model. The closer a tree’s DBH(i) value is to the maximum diameter XMAX(i), the more the growth estimate will be weighted towards the large-tree growth model. If a tree’s DBH(i) value falls outside of the range given by XMIN(i) and XMAX(i), then the model will use only the estimates from the small-tree equations or large-tree equations in the growth estimate. The weight applied to the growth estimate is calculated using equation {4.2.1.2.1}, and applied as shown in equation {4.2.1.2.2}. The range of diameters for each species is shown in the appropriate variant overview document.
 
-{4.2.1.2.1}XWT = 0DBH(i) < Xmin
+$$
+XWT =
+\begin{cases}
+0 & DBH_i < X_{min} \\
+\dfrac{DBH_i - X_{min}}{X_{max} - X_{min}} & X_{min} < DBH_i < X_{max} \\
+1 & DBH_i > X_{max}
+\end{cases}
+\tag{4.2.1.2.1}
+$$
 
-XWT = (DBH(i) - Xmin) / (Xmax - Xmin)Xmin < DBH(i) < Xmax
-
-XWT = 1DBH(i) > Xmax
-
-{4.2.1.2.2}Estimated growth = [(1 - XWT) * STGE] + [XWT * LTGE]
+$$
+\text{Estimated growth} = \left[(1 - XWT) \times STGE\right] + \left[XWT \times LTGE\right]
+\tag{4.2.1.2.2}
+$$
 
 where:
 
