@@ -2808,11 +2808,11 @@ Control remains in the location outside of subroutine INITRE until an END keywor
 
 Many FVS model instructions can be issued by year (often called “date”) or projection cycle. Examples are management activities such as thinning requests and model multipliers that alter predicted model outputs. Instructions of this type must be handled by the option processing subroutines within FVS that posts the instructions to the activity schedule table and then retrieves them at the appropriate time by the appropriate portion of the FVS code for implementation. Most keyword records of this type support the PARMS format discussed in section 6.1 of the EFVS guide. For some, like the TREELIST keyword record, the PARMS format would not make sense and is not supported; there aren’t any parameter fields on the TREELIST keyword record that are dynamic. How FVS processes the PARMS format is discussed in section 3.4.3.
 
-3.3.1.3.1 Scheduling the Option
+##### Scheduling the Option
 
 Subroutine INITRE calls subroutine KEYRDR to read a keyword record. That subroutine (which is also used by the extensions) checks the parameter fields if the PARMS format is not being used. If the checks are satisfied, subroutine OPNEW is called to post the activity to the activity schedule table. If the PARMS format is in use, parameter fields are not checked and subroutine OPNEWC is called to post the activity to the activity schedule table. In either case, a unique option code (also called an activity number) is associated with each activity. Information posted to the activity schedule includes the unique option code, the year the activity is being scheduled, and the parameters associated with the activity. Option codes associated with FVS keyword records are shown in subroutine OPLIST (see section 6.0).
 
-3.3.1.3.2 Retrieving and Processing the Option
+##### Retrieving and Processing the Option
 
 It is the responsibility of individual subroutines pertaining to the activity to check the activity schedule, retrieve any activities posted there for the current cycle, and process the information contained in the associated parameters. For example, it is the responsibility of subroutine CUTS to retrieve any thinning-related activities from the activity schedule each projection cycle. The processing subroutine, in this example CUTS, contains a list of unique option codes it is responsible for processing. This list is typically stored in a local array called MYACTS(i). Subroutine OPFIND is called to see if any activities on the activity schedule for the current cycle match those in the list. If there are, then OPGET, an entry point in subroutine OPFIND, is called for each of the scheduled activities to retrieve the parameters associated with the activity. These activities are returned in the order they are scheduled (the year), or, when activities are scheduled in the same year, then in the order they were specified. The processing subroutine then stores the associated parameters in the appropriate variables for processing. OPDONE, an entry point in subroutine OPFIND, is called to post the activity and its disposition to the activity summary. Possible dispositions include “DONE”, “NOT DONE”, or “DELETED OR CANCELLED”.
 
@@ -3999,7 +3999,7 @@ Subroutine CUTS also interfaces with the Economic extension. GetIsPretendActive,
 
 There is an older economics post-processing program called CHEAPOII. Subroutine CUTS calls subroutines ECREMS and ECOUT to produce the necessary information to interface with this program. CHEAPOII has been completely replaced by the ECON extension and is no longer used; code related to the CHEAPOII program should be deleted from the FVS system.
 
-4.1.1.2.1 How subroutine CUTS works
+##### How subroutine CUTS works
 
 The harvest concept in subroutine CUTS is to loop over all thinning requests, accumulate the harvest information, and reduce the trees per acre representation for each tree record affected by a thinning. This is done on a “trial basis” first and the accumulated harvest is compared to the minimum harvest constraint. If the minimum harvest constraint is not met, or these thinnings are part of the pretend mode for an economic analysis, then the thinning requests are not finalized. Otherwise, a final pass is made over all tree records and results from the trial thinnings are fully implemented.
 
@@ -4121,7 +4121,7 @@ For variants using site index curves to estimate height growth, two other subrou
 
 Subroutine GRINCR calls subroutine REGENT to estimate height and diameter growth using equations for trees smaller than a threshold diameter. Upon completion of subroutine REGENT, all trees will have an estimate of height and diameter growth. Whether that estimate is the estimate using the large tree equations in subroutines DGF and HTGF or the small tree equations contained in subroutine REGENT, or a weighted average of the two, depends on the attribute being estimated, the diameter of the tree, and one or more threshold diameter.
 
-4.2.1.2.1 Threshold diameters
+##### Threshold diameters
 
 Several threshold diameters are used in subroutine REGENT:
 
@@ -4162,7 +4162,7 @@ For diameter growth, weighting of the estimate obtained using the large tree equ
 
 For a few species in some variants, equations contained in subroutine REGENT are used to estimate height and diameter growth for all sized trees. For example, this happens with pinyon pine in the Central Rockies (CR) variant. In these cases, the logic is the same as just discussed with the threshold diameters being set to artificially high values so only estimates using the small tree equations are used.
 
-4.2.1.2.2 Growth estimation and calibration
+##### Growth estimation and calibration
 
 Subroutine REGENT is another one of those subroutines containing two sections; the top section is used for growth estimation in projection cycling; the bottom section is used for calibration in projection initialization. The structure of each section is similar, and understanding the top section will lead to understanding the bottom section. First, the overall structure of subroutine REGENT will be described and then this structure will be broken down into more detail.
 
@@ -4170,7 +4170,7 @@ For most variants, a single pair of nested species and trees-within-species DO l
 
 Some variants use a slightly different logic because the small tree height growth equations were fit to 5-year data. To avoid bias associated with projection cycles longer than the period to which the equation was fit, the projection cycle is first divided into periods that are no longer than 5-years in length (i.e. a 10-year projection cycle would have 2 periods of 5-years; a 7-year projection cycle would have 2 periods with the first being 5-years and the second being 2-years; a 13-year projection cycle would have 3 periods with the first two being 5-years and the third being 3 years, etc.). A triple-nested DO loop structure is used to estimate end of cycle tree height for each tree record which gets stored in work array WK3(j), where j is the tree index. The outside loop is over periods, the middle loop is over species, and the inner loop is over tree records within species. Stand density statistics and tree attributes are updated each period. The height estimate for the last period is scaled to the length of the last period. Double nested species and trees-within-species DO loops are then entered. Height growth for the projection cycle is obtained by subtracting the start-of-cycle tree height from the end-of-cycle tree height. This estimate gets weighted with height growth estimates previously calculated using the large tree equations as discussed above. Diameter growth is estimated and then scaled to a 10-year basis for rescaling in subroutine UPDATE.
 
-4.2.1.2.2.1 A closer look at the logic
+###### A closer look at the logic
 
 The overall structure will now be broken down into more detail. Small tree height growth is estimated using regression equations with independent variables being individual tree attributes and current stand conditions. Once small tree height growth is obtained, small tree diameter growth is estimated using species-specific height-diameter curves. Default height-diameter curves by species for a variant are detailed in the variant overview document but the default coefficients will have been changed if they were calibrated to the input data as described in section 3.6.1.
 
@@ -4208,7 +4208,7 @@ Maximum basal area and maximum stand density index are two measures of the maxim
 
 Subroutine MORTS estimates the quadratic mean diameter (QMD) at the end of the projection cycle. It is at this point that the two types of FVS mortality models begin to diverge in terms of logic.
 
-4.2.1.3.1 Prognosis-type mortality model
+##### Prognosis-type mortality model
 
 In variants that use the Prognosis-type mortality model, the change in basal area increment is computed from diameter growth that was estimated previously in the projection cycle. This estimate of basal area increment does not account for mortality. So basal area increment is recalculated by taking the basal area at the beginning of the cycle and projecting it forward 10 years, assuming that a proportion of the predicted basal area increment will be lost to mortality. This proportion is the stand basal area divided by the basal area maximum for the stand. So when stand basal area is equal to the maximum stand basal area, all of the predicted basal area increment will be absorbed by mortality. The mortality rate calculated in this manner is converted to an annual estimate and later used to calculate the annual approach to maximum basal area mortality rate, Rb, discussed in the EFVS guide.
 
@@ -4216,7 +4216,7 @@ A mortality rate for each individual tree record is then computed based on habit
 
 The two mortality rates are then combined are then combined as discussed in the EFVS guide.
 
-4.2.1.3.2 SDI-based mortality model
+##### SDI-based mortality model
 
 For variants using the SDI-based mortality model, mortality is implemented in two steps; first the number of mortality trees is estimated based on the change in QMD during the projection cycle and SDI relationships, and then mortality gets distributed to individual tree records. Since estimated change in QMD is a function of which trees get killed, this is an iterative procedure.
 
@@ -4224,7 +4224,7 @@ Two types of mortality are estimated: (1) background mortality which accounts fo
 
 Subroutine MORTS computes the stand trajectory using equations for maximum SDI. Using the estimated change in QMD, the number of mortality trees is estimated. A determination is made whether density related mortality is in effect using the relationship between current stand SDI and the lower threshold of the maximum SDI (default 55% of maximum SDI). A density related mortality rate, RN, is computed which is a rate when applied to each tree record would meet the desired mortality level.
 
-4.2.1.3.3 Both mortality models
+##### Both mortality models
 
 A double nested species and trees-within-species DO loop structure is entered. A background mortality rate, RI, is calculated for each tree record. Mortality multipliers entered with the MORTMULT keyword record are applied to the background mortality rate. The mortality rate applied to each tree record is the background rate, RI, if density related mortality is not in effect, or the density related rate, RN, if density related mortality is in effect.
 
@@ -4392,7 +4392,7 @@ Subroutine ESNUTR calls subroutine ESTAB to add regeneration tree records to the
 
 Subroutine ESTAB establishes tree records associated with PLANT and NATURAL keyword records in all variants, and tree records resulting from natural regeneration in variants with the full establishment model. This subroutine is very complex.
 
-4.6.1.3.1 Initialization steps
+##### Initialization steps
 
 Initialization of variables and replication of the inventory plots occurs first. The regeneration establishment model creates tree records on 1/300th acre plots. Plots are replicated until at least 50 plots are available so within-stand variations in seedling density, species composition, and heights can be achieved.
 
@@ -4402,7 +4402,7 @@ Activities associated with any PLANT and NATURAL keyword records are each checke
 
 Sums are accumulated for calculation of shade adjustments. Shading affects the trees per acre representation assigned to regeneration tree records.
 
-4.6.1.3.2 Creating the new tree records
+##### Creating the new tree records
 
 Subroutine ESTAB is now ready to create the new tree records. Triple-nested DO loops are entered with the outside loop being over the number of plots on which regeneration is being simulated; the middle loop over the site preparations (note: the number of plots is replicated for each of the site preparation types); and the inside loop over the number of replications of each plot by site preparation combination.
 
@@ -6957,11 +6957,11 @@ Natural regeneration is predicted first and planted trees are in addition to nat
 
 #### Natural regeneration
 
-Step 1: Variable and array initialization, and plot replication
+##### Step 1: Variable and array initialization, and plot replication {-}
 
 Arrays needed by subroutine ESTAB are initialized and the inventory plots are replicated until there are at least MINREP plots represented. The variable MINREP is initialized to 50, can be changed by the MINPLOTS keyword record, but is constrained to be at least 20. Plot replication ensures there are an adequate number of plots to dampen the stochastic effects of any one plot on the projection. The effect is to predict regeneration closer to the mean expectation. Fifty plots are enough to average out the effects of unusual events, yet is still efficient use of computer time.
 
-Step 2: Initialization of regeneration vectors and calibration tasks
+##### Step 2: Initialization of regeneration vectors and calibration tasks {-}
 
 Variables and arrays needed by subroutine ESTAB are initialized and the regeneration vectors are loaded from the current inventory. The variable REGNBK is the breakpoint diameter for trees going into the regeneration vectors. This variable is set to 2.999 in the variant-specific BLOCK DATA subroutine BLKDAT. This coincides with the breakpoint diameter between the small tree and large tree diameter growth models in most variants (all variants using the full establishment model). Natural regeneration and planted trees will be added to the regeneration vectors later. Regeneration vectors are used in printing the regeneration summary for the cycle.
 
@@ -6973,11 +6973,11 @@ Subroutine ESTAB calls subroutine ESETPR to process any site preparation keyword
 
 Next, subroutine ESTAB does a series of tasks. A check is made to see how many PLANT or NATURAL keyword records are scheduled for the current projection cycle. This number is stored in the variable NTODO. PLANT or NATURAL keyword records that have the number of trees to establish less than or equal to 0.001 or the probability of survival less than or equal to 0.001 get deleted. After this check is made, if some PLANT or NATURAL activities remain, the variable MODE is set to 1 (otherwise MODE is 0). The variable MODE is used throughout subroutine ESTAB to control program flow and determine which regeneration output tables need to be printed. Also, basal area sums are calculated which will be used later to compute shade adjustments in creating trees from PLANT or NATURAL keyword records.
 
-Step 3: Compute years since last disturbance
+##### Step 3: Compute years since last disturbance {-}
 
 For each plot, the number of years since last disturbance is computed. Untreated plots (those that weren’t mechanically disturbed or burned) were last disturbed at the time of harvest. Mechanically disturbed plots were last disturbed at the time of mechanical site preparation. Burned plots were last disturbed at the time of burning. Variables ZHARV, ZMECH, and ZBURN hold the year of harvest, mechanical site preparation, and burning, respectively. Variable FLOKDT is the floating point representation of the last year in the current cycle and variable IDSDAT is the year the current tally is scheduled. Variable TIME is the time interval between the last disturbance and the end of the current cycle.
 
-Step 4: Calculate the increment in stocking and the species probabilities
+##### Step 4: Calculate the increment in stocking and the species probabilities {-}
 
 Once the time interval for a plot is determined, subroutine ESTAB can compute the probability of stocking at the end of the cycle, along with the increment in stocking. The increment in stocking is the increase in the probability of stocking from one time period to another. In this case, the time period is the interval from the date of last disturbance to the end of the current inventory cycle. See figure 14 in Ferguson and Carlson (1993) for a graphical depiction of this process. Subroutine ESTAB calls subroutine ESTOCK to compute the probability of stocking at the end of the current cycle. Variables associated with the probability of stocking at the time of inventory were computed as part of step 2. Variable ESB corresponds to the inventory data; variable ESB1 corresponds to the end of the current cycle. These two variables are used to adjust the probability of stocking curve to coincide with the actual inventory at the time the inventory was taken. The predicted probability of stocking can be adjusted upward or downward by the user with the STOCKADJ keyword record.
 
@@ -6985,15 +6985,15 @@ Subroutine ESTAB then calls subroutines ESPADV, ESPSUB, and ESPXCS to calculate,
 
 In subroutine ESTAB, the next section of code (inside the “IF (STOADJ .LT. 0.0001) THEN” and the corresponding “ENDIF” lines) consists of a number of calls to subroutine ESRANN. This section of code is to keep the random number sequence within the regeneration establishment model when the probability of stocking adjustment variable, STOADJ, has been set to 0.0, the same as it is when the probability of stocking adjustment variable has not been set to 0.0. Setting this variable to 0.0 allows users to turn off natural regeneration and only allow planted trees to become established. If this section of code were not here, the act of setting STOADJ to 0.0 would change the random variation assigned to planted tree heights, change model output, and make debugging the code very difficult.
 
-Step 5: Estimating the number of natural regeneration trees per plot
+##### Step 5: Estimating the number of natural regeneration trees per plot {-}
 
 Subroutine ESTAB calls subroutine ESTPP to estimate the number of natural regeneration trees to establish on a stocked plot using a Weibull function and a draw from the random number generator. If a tally 1 is scheduled for the cycle, then the entire number of trees (variable ITPP), rounded to the nearest integer, will get established. For other tallies, only the incremental number of trees (variable NEWTPP) becoming established on the plot during that time period is added to the FVS tree list. The number of trees to establish is stored in array NSTORE(p) which is indexed by plot.
 
-Step 6: Estimating the number of species per plot
+##### Step 6: Estimating the number of species per plot {-}
 
 Subroutine ESTAB calls subroutine ESNSPE to estimate the number of species becoming established on a stocked plot. Up to six species can become established but the number obviously cannot exceed the number of trees chosen in step 5. Subroutine ESNSPE contains logistic regression equations predicting the probability of 1, 2, 3, 4, 5, and 6 species on the plot. The probabilities for each number of species are totaled. The total is divided back into the probabilities so that the sum of the probabilities equals 1.0. The adjusted probabilities are accumulated within the interval [0,1]. A draw from the random number generator is used to make a choice of the number of species on the plot. The number of species is the one for which the accumulated probability first exceeds the random number. A check is made to make sure the number of species (variable NUMSPE) does not exceed the maximum allowed by habitat group (variable MAXSPP(IHAB) loaded in a data statement in subroutine ESTAB, where IHAB is the habitat group index, see page 43 of Ferguson and Carlson (1993)). And finally, the number of species is compared to the number of species where the probability of advanced and subsequent regeneration (previously computed in step 4) combined is not zero, variable NSPNZ. If the value of NSPNZ is less than NUMSPE, then NSPNZ is used. In any case, the number of species per plot will be less than or equal to 6.
 
-Step 7: Picking which species will occupy the plot
+##### Step 7: Picking which species will occupy the plot {-}
 
 There are 11 species which are candidates for establishment by natural regeneration in the full establishment model. These 11 (western white pine, western larch, Douglas-fir, grand fir, western hemlock, western redcedar, lodgepole pine, Engelmann spruce, subalpine fir, ponderosa pine, and mountain hemlock) correspond to species 1-11 in the NI, IE, KT, and CI variants, and species 1-3 and 7-11 in the EM variant (EM does not recognize 4 = grand fir, 5 = western hemlock, or 6 = western redcedar and the probability of occurrence of these three species in the EM variant is set to 0.0). Each of these 11 species can occur as natural regeneration in three ways: as advance regeneration best trees, as subsequent regeneration best trees, and as excess regeneration. The probability of naturally establishing species 11, which is OT or MH, is set to 0.0 in all these variants. So really, only the first 10 are candidates for establishment.
 
@@ -7003,7 +7003,7 @@ The probability of excess regeneration, by species, was computed in step 4. Spec
 
 Note: The full establishment model was developed when the NI variant had 11 species with species 11 being “other species”, code OT, and using mountain hemlock equations. Species 11 in the NI variant was not considered as a candidate for natural regeneration because all species in the inventory that are not recognized as one of the other 10 get included in this grouping, so the species to establish would be unknown. IE is the NI variant expanded to recognize 23 species, CI and EM were expanded to 19 species, and KT remains at 11 species. The variable NOFSPE, used throughout the regeneration establishment code, is the number of species in the variant (aka base model variable MAXSP). It is used extensively in DO loops and as an array index and dimension. Arrays referenced using NOFSPE contain zero values for species 11-NOFSPE in all variants. This was done to accommodate future expansion of the full establishment model to accommodate more species, which has not occurred.
 
-Step 8: Estimate heights of best trees
+##### Step 8: Estimate heights of best trees {-}
 
 Subroutine ESTAB calls subroutine ESTIME to set some variables needed for the western spruce budworm model. Variable ESDRAW is used to store random numbers for assignments of heights to the tallest tree by species and advanced and subsequent regeneration. Subroutine ESTAB calls subroutine ESDLAY to compute the number of years since the last plot disturbance and the germination of best trees. Subroutine ESTAB calls subroutine ESADVH to estimate the height of best trees of advanced regeneration, subroutine ESSUBH to estimate the height of best trees of subsequent regeneration, and subroutine ESXCSH to estimate the height of excess trees. Heights for excess trees are constrained between the minimum establishment height and the height of the best tree of the same species on the plot.
 
@@ -7011,25 +7011,25 @@ Subroutine ESTAB calls subroutine ESTIME to set some variables needed for the we
 
 (Note: User-simulated natural regeneration using NATURAL keyword records follows the same program flow as regeneration resulting from using PLANT keyword records.)
 
-Step 9: Add planted trees
+##### Step 9: Add planted trees {-}
 
 The full establishment model predicts natural regeneration first and planted trees are in addition to predicted natural regeneration. Users specify species, density, date of planting and survival percentage of planted trees. The default is to plant trees uniformly throughout the stand, but users can vary the density by residual overstory basal area (shading) if desired. Subroutine ESTAB calls subroutine ESSUBH to estimate heights of planted trees. Initial height of planted trees is the tree height 5 years from the time of planting or at the end of the growth cycle, whichever is earlier. Subroutine ESTAB calls subroutine ESGENT, which in turn calls subroutine REGENT, to grow planted trees from 5 years past the date of planting to the end of the growth cycle if the time interval between the time of planting and the end of the growth cycle is more than 5 years. The initial age of planted trees is the number of years from the time of planting to the end of the growth cycle plus the age of the tree when planted.
 
-Step 10: Identify best trees
+##### Step 10: Identify best trees {-}
 
 Best trees are chosen from natural regeneration and planted trees using the rules described above. Best trees are assigned a lower priority for removal in thinning operations than excess trees in the assignment of the tree value class (IMC code). Planted trees are included in the selection of best trees. Planted trees could be taller than natural regeneration of the same species. However, delays in planting could result in the natural regeneration being taller than the planted trees, so planted trees are not always chosen as best trees.
 
-Step 11: Accumulate stand statistics
+##### Step 11: Accumulate stand statistics {-}
 
 Stand statistics are needed for printing the regeneration summary. Predictions by plot are stored for averaging to produce stand statistics.
 
-Step 12: Pass the tree records to the FVS tree list
+##### Step 12: Pass the tree records to the FVS tree list {-}
 
 Actual FVS tree records are created during this step. This step uses both the probability of stocking and the results of stocked plot predictions to assign a trees per acre (variable PROB(i)) value to new tree records. Each best tree on the plot becomes a separate tree record. Excess trees are accumulated by species, then tree records are created so the trees per stocked plot value is less than or equal to 5 trees. Usually, one tree record for each species being planted is created for each plot. However, multiple records are created when high densities are planted and a tree record represents more than 10 trees per acre. Variable PS, used in determining the trees per acre value, has two meanings depending on the type of record being created. For records associated with natural regeneration, it is the plot’s probability of stocking; for records associated with planted trees, it is the density of planting specified by the user using the PLANT or NATURAL keyword records.
 
 FVS tree records are created by assigning values to all the FVS tree-level variables for each record, resetting the variable ITRN which is the number of FVS tree records in the model, and re-establishing all the internal indexing and sorting the base model needs to operate. Subroutine ESTAB calls subroutine ESGENT, which in turn calls subroutine REGENT to “grow” the trees to the end of the projection cycle and estimate crown ratios if they haven’t yet been assigned. Subroutine ESTAB calls subroutine CWCALC to calculate the crown width value.
 
-Step 13: Print the regeneration summary
+##### Step 13: Print the regeneration summary {-}
 
 A regeneration summary is printed each time the regeneration model is invoked. The first tally in a tally sequence includes a heading that shows the stand identification, site preparation by year performed, and number of plots by habitat type group.
 
