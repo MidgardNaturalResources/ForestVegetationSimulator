@@ -1090,21 +1090,25 @@ check (again) for command line options,
 
 check for return codes that may have been set at various stages,
 
-check for restart codes causing the program to restart from a previously created stop point file if specified on the command line (see section 8.0),
+check for restart codes causing the program to restart from a previously created stop point file if specified on the command line (a restart from stop point 7 resumes at the model calibration step; any other restart code resumes in the projection cycling phase; see section 8.0),
 
 open the key input and output files that will be required for the projection,
 
 initialize parameters to their default condition,
 
-process all keyword record requests,
+process all keyword record requests, including reading stand and tree data from a database or tree data file,
 
-set up the main projection cycling array,
+set up the main projection cycling array (cycle lengths and any additional cycle boundaries requested with the CYCLEAT keyword record),
 
-initialize any files needed by extensions such as insect and disease models,
+process and list the activity schedule, including the option lists of insect, disease, and economic extensions,
 
 establish the initial species sort,
 
 expand the tree data to a trees per acre basis based on the specified sample design,
+
+initialize any data needed by extensions such as the root disease and insect models,
+
+process stop point 7 (see section 8.0),
 
 calibrate internal equations to match the incoming tree data,
 
@@ -1120,7 +1124,11 @@ assign example trees to the sample tree output arrays, compute cover statistics 
 
 compute a statistical description of the input data,
 
-write any initial stand data that needs to be saved for output, visualization, or use with other programs.
+write any initial stand data that needs to be saved for output, visualization, or use with other programs (for example the database inventory reference table, the output headings, the cycle 0 stand statistics, the tree list, and the stand visualization),
+
+initialize the root disease and blister rust extensions, and
+
+mark the end of the projection initialization phase and initialize the event monitor variables that are computed at inventory time.
 
 As part of the projection cycling phase, subroutine FVS calls various subroutines to estimate tree growth and mortality, process management requests, establish regeneration, and write any stand data that needs to be saved for output, visualization, or use with other programs.
 
@@ -2215,15 +2223,17 @@ At this point in the FVS processing sequence the user’s simulation control inf
 
 ### Initialization tasks
 
-Subroutine FVS sets up the IY(i) array which specifies cycle boundaries for the entire projection. It then processes and writes option lists for any insect, disease, and economic extensions that are part of the variant and the simulation.
+Subroutine FVS sets up the IY(i) array which specifies cycle boundaries for the entire projection. The number of cycles is limited to the array dimension, a cycle length that was not specified defaults to 10 years, and an additional cycle boundary is inserted for each year requested with the CYCLEAT keyword record that falls inside the projection. The first and last years of the projection are not changed. Subroutine FVS then processes and writes option lists for any insect, disease, and economic extensions that are part of the variant and the simulation.
 
 Subroutine FVS calls subroutines OPEXPN, OPCYCL, and OPLIST to process and list the activity schedule. Subroutine OPEXPN expands the activity list so activities specified for all cycles are duplicated once for each cycle. Subroutine OPLIST writes the activity schedule to the main output file.
 
-Subroutine FVS next calls subroutine SETUP to set up the index pointers for species sorting (see discussion of array IND1(k) in section 2.1.5), and subroutine NOTRE to expand the inventory data to a per-acre basis. This is followed by calls to insect and disease code segments, Code segments will exist as subroutines in the appropriate extension if the extension is part of the variant, or as entry points in the appropriate EX__ subroutine if the extension is not part of the variant. If the model is being run with insect and disease extensions, these calls initialize parameters and compute variables needed by those extensions.
+Subroutine FVS next calls subroutine SETUP to set up the index pointers for species sorting (see discussion of array IND1(k) in section 2.1.5), and subroutine NOTRE to expand the inventory data to a per-acre basis. This is followed by calls to insect and disease code segments, Code segments will exist as subroutines in the appropriate extension if the extension is part of the variant, or as entry points in the appropriate EX__ subroutine if the extension is not part of the variant. If the model is being run with insect and disease extensions, these calls initialize parameters and compute variables needed by those extensions. The calls made here include RDMN1 (first call, root disease), MPSDLP (mountain pine beetle: dead lodgepole pine per acre) and DFBINV (Douglas-fir beetle: dead trees per acre).
 
 The variable ICYC carries the FVS cycle number and is used in various locations throughout the model. ICYC is set to 0 at the start of a stand, before subroutine INITRE is called. “Cycle 0” is another way of saying “at inventory time”. The variable ICYC is used as an index to the IY(i) array throughout the model, and in a few places (e.g. subroutines DGDRIV and MORTS) to control program logic. For the next tasks, ICYC is set to 1, and it is set back to 0 after subroutine ESFLTR is called (see section 3.7). Certain activities scheduled for cycle 1 (e.g. TREELIST for cycle 1 with field 4 not set to 1) also occur at inventory time.
 
 Subroutine FVS calls subroutine OPCSET to set the option pointers for the initialization phase to the cycle 1 options (ICYC = 1). Subroutine OPCSET sets up the IOPCYC(i) array containing the activities scheduled for that cycle sorted by ascending activity number.
+
+Subroutine FVS then processes stop point 7 by calling subroutine fvsStopPoint. If a stop at this point has been requested, FVS returns to its caller here, before model calibration. A restart from stop point 7 resumes at the next step (SDICLS and CRATET) without repeating the steps described above (see section 8.0).
 
 SDICLS, an entry point in subroutine SDICAL, is called to compute the maximum Stand Density Index for a stand. This will be needed in variants using a Weibull-based crown change model to correctly fill in missing crown ratio values.
 
@@ -2326,7 +2336,11 @@ If the cover extension is being used, subroutine FVS makes calls to cover extens
 
 Subroutine FVS calls subroutine STATS to compute and print stand statistics that describe the distribution of stand attributes among sample plots for the input data. Calculation and printing of this information is controlled by the user with the STATS keyword record. The logical variable LSTATS controls these actions in the code and has a default value of “.FALSE.” and a value of “.TRUE.” if the STATS keyword record is used.
 
+Subroutine FVS next calls subroutine DBSREFERENCE, which writes the inventory reference table (FVS_InvReference: species, maximum SDI, site index, and volume specifications) to the output database when database output is active, and subroutine GHEADS to write the heading for the stand composition table.
+
 Subroutine FVS then needs to write inventory information to various output files. Subroutine FVS calls subroutine DISPLY to write the initial stand statistics to the main output file. Subroutine FVS calls MISPRT to write the dwarf mistletoe infection and mortality information if mistletoe was specified as a damage code in the input data. MISPRT will exist as a subroutine if the dwarf mistletoe extension is part of the variant or as an entry point in subroutine EXMIST if the dwarf mistletoe extension is not part of the variant. Subroutine FVS calls subroutine PRTRLS to write the cycle 0 tree list output if it was called for with the TREELIST keyword record, subroutine FVSSTD to write the cycle 0 information needed by the FVSStand post-processing program if it was called for with the FVSSTAND keyword record, and subroutine NATCRZ to write the cycle 0 information needed by the National Cruise Program if called for with the CRUZFILE keyword record.
+
+Subroutine FVS also calls subroutine DBS_FIAVBC_TRLS to write the FIA-VBC tree list table to the output database when it has been requested, and subroutine SVSTART to create the initial stand visualization.
 
 At this point FVS is done with the dead trees that were present in the initial inventory. Dead trees are not physically purged (i.e. resetting all the storage locations in the tree data arrays that hold dead tree information back to zeroes); they are purged by resetting the variable IREC2, which is a pointer to the location in the tree data arrays where information for dead tree records starts. Dead tree information is stored at the bottom of the tree data arrays. The maximum number of tree records FVS allows is currently set at 3000 (2000 in the ORGANON-FVS variants) and stored in variable MAXTRE in the PRGPRM labeled COMMON block. So, storage locations 3000-IREC2 to 3000 (2000-IREC2 to 2000 in the ORGANON-FVS variants) contain dead tree information in the bottom of the tree data arrays. Subroutine FVS resets IREC2 to MAXTP1 (also in the PRGPRM labeled COMMON block) which has a value of 3001, or MAXTRE+1, (2001 in ORGANON-FVS variants). In FVS, looping over dead trees goes from IREC2 to MAXTRE, and is preceded by a simple test that if IREC2 is greater than MAXTRE then skip that section of code. So this reassignment of IREC2 effectively frees up those storage locations for later use in storing live tree information.
 
@@ -2334,7 +2348,7 @@ Subroutine FVS next calls RDMN1 and RDPR to initialize the western root disease 
 
 Subroutine FVS next calls BRSETP and BRPR to initialize the blister rust model. BRSETP and BRPR will exist as subroutines if the blister rust model is part of the FVS executable program, or as entry points in the EXBR subroutine if the blister rust extension is not part of the executable program.
 
-The final step in projection initialization phase is to set the logical flag, LSTART that is carried in the CONTRL labeled COMMON block, to a value of “.FALSE.” indicating the project initialization phase has been completed. Some subroutines used in projection initialization (e.g. subroutine DGDRIV) have two similar but distinct sections. One part is used in projection initialization and the other is used in projection cycling. These subroutines check the value of variable LSTART to determine which section should be used.
+The final steps in the projection initialization phase are to set the logical flag, LSTART that is carried in the CONTRL labeled COMMON block, to a value of “.FALSE.” indicating the project initialization phase has been completed, and then to call subroutine EVTSTV with an argument of -1 to define the type 1 event monitor variables for the inventory. Some subroutines used in projection initialization (e.g. subroutine DGDRIV) have two similar but distinct sections. One part is used in projection initialization and the other is used in projection cycling. These subroutines check the value of variable LSTART to determine which section should be used.
 
 ### Auxiliary subroutines
 
