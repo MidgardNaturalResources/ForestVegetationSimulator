@@ -39,13 +39,10 @@ Most users use SQLite input and output. Planned changes:
 - Interface repo `rfvsOverview.Rmd` stop-point fixes and replacement stop-points PNG are with another session.
 
 ## Cycle phase (Chapter 4) vs code
-Done (Batch 1): NATCRZ and BGCFVS removed, stop points 1-6 added, FIA-VBC and DBS summary calls added, VARMRT variant list (ACD, WS added), end-of-cycle flow corrected.
+Done (Batches 1-2): NATCRZ, BGCFVS and SYSTEM keyword statements removed; stop points 1-6, ECSTATUS, ECCALC, second FMKILL, RDMN2/RDTRP/FMSDIT added; FIA-VBC and DBS summary calls added; VARMRT variant list (ACD, WS added); end-of-cycle flow; tree list compression thresholds (40%, 70%/30%, MXRR/2); CWCALC locations (VIE, HI, LS). Verified as written: MORTS 55%/85% SDI thresholds, 0.1" QMD tolerance, 10 passes, 1 ft2 BA tolerance; 1/300-acre plots; minimum 50 plots (MINREP default; ESTAB keyword minimum 20); NC 5-year small-tree basis; BREAK in GGCOM.
 Open:
-- [H] Add to the GRINCR description in sequence: SSTAGE, RDMN2/RDTRP (sets LTRIP), FMSDIT, ECSTATUS before/after thinning.
-- [H] Add ECCALC (economics) and the second FMKILL call to the GRADD sequence.
-- [L] MORTS constants not confirmed in code: 55% density-mortality threshold, 0.1" QMD tolerance, 10 iterations, 1 ft2 basal area tolerance.
-- [L] ESNUTR/ESTAB constants: 1/300-acre plots, minimum 50 plots, 0.001 TPA threshold, compress to 1/2 MAXTRE, "30% of MAXTRE" test; ESNUTR/ESTAB internals not read line by line.
-- [L] Small-tree step: 5-year sub-cycling, NC variant 5-year basis, `BREAK(i)` in GGCOM.
-- [L] "FVS finds and runs SYSTEM keyword calls" (end-of-cycle section): no SYSTEM handling found in `fvs.f`, `tregro.f`, `gradd.f`; location not found.
-- [L] CWCALC "two versions (NI and LS directories)".
-- [M] DBSSUMRY2/DBSCARBBIOSUMRY and FIA-VBC conditions ("when requested") not confirmed beyond the early-return checks.
+- [M] SYSTEM keyword: not found in the base keyword table (`base/keywds.f`); only `metric/ppbase/ppin.f` lists it. Statements removed (about 85% confident).
+- [M] VARMRT callers per grep: acd, ca, cr, ec, oc, sn, vls (CS/LS/NE), ws. OC calls VARMRT; the text lists variants without OC.
+- [L] ESNUTR/ESTAB internals (ESETPR, ESPREP, ESTOCK, ESPADV/ESPSUB/ESPXCS, ESSUBH, ESGENT) not read line by line.
+- [L] DISPLY database summary calls and FIA-VBC "when requested" conditions are only confirmed for the FIA-VBC early-return checks.
+- [M] ECCALC is described as running when the economics extension is active; the condition in GRADD was not confirmed.
