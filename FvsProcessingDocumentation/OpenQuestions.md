@@ -36,5 +36,16 @@ Most users use SQLite input and output. Planned changes:
 - [M] `ICL6` comment conflict: `CONTRL.F77` says ADDFILE reference; `fvs.f` sets -99 at completion. The table keeps "-99 = complete".
 - [H] `common/ARRAYS.F77` comment for `IND` is inverted ("IF IND(I)=1, TREE I IS THE LARGEST TREE"); `rdpsrt.f` shows IND(1) is the largest. Code comment, not edited.
 - Section 12 `db-all-tables` (database output table list) has not been audited. Higher priority given SQLite use.
-- Cycle phase chapters (Ch. 4 onward) not yet compared with the code.
 - Interface repo `rfvsOverview.Rmd` stop-point fixes and replacement stop-points PNG are with another session.
+
+## Cycle phase (Chapter 4) vs code
+Done (Batch 1): NATCRZ and BGCFVS removed, stop points 1-6 added, FIA-VBC and DBS summary calls added, VARMRT variant list (ACD, WS added), end-of-cycle flow corrected.
+Open:
+- [H] Add to the GRINCR description in sequence: SSTAGE, RDMN2/RDTRP (sets LTRIP), FMSDIT, ECSTATUS before/after thinning.
+- [H] Add ECCALC (economics) and the second FMKILL call to the GRADD sequence.
+- [L] MORTS constants not confirmed in code: 55% density-mortality threshold, 0.1" QMD tolerance, 10 iterations, 1 ft2 basal area tolerance.
+- [L] ESNUTR/ESTAB constants: 1/300-acre plots, minimum 50 plots, 0.001 TPA threshold, compress to 1/2 MAXTRE, "30% of MAXTRE" test; ESNUTR/ESTAB internals not read line by line.
+- [L] Small-tree step: 5-year sub-cycling, NC variant 5-year basis, `BREAK(i)` in GGCOM.
+- [L] "FVS finds and runs SYSTEM keyword calls" (end-of-cycle section): no SYSTEM handling found in `fvs.f`, `tregro.f`, `gradd.f`; location not found.
+- [L] CWCALC "two versions (NI and LS directories)".
+- [M] DBSSUMRY2/DBSCARBBIOSUMRY and FIA-VBC conditions ("when requested") not confirmed beyond the early-return checks.
