@@ -2177,7 +2177,7 @@ Subroutine UPCASE is used to convert lower case characters to upper case charact
 
 ## Reading stand and tree record input data {#sec-reading-stand-and-tree-record-input-data}
 
-There are two ways to get stand and tree record input data into FVS: from SQLite database tables, which is how most FVS runs are set up, or from ASCII flat files. In both cases a keyword record file is required. For database input, the keyword record file contains a DATABASE – END keyword record sequence. Within this sequence the DSNIN keyword record names the input database (the default is FVS_Data.db), and the STANDSQL and TREESQL keyword records, each followed by an SQL SELECT statement and a closing EndSQL line, retrieve the stand and tree records. By convention the stand level data are in a table named FVS_StandInit and the tree data are in a table named FVS_TreeInit, both identified by the stand identifier, so a typical query is `SELECT * FROM FVS_StandInit WHERE Stand_ID = '%StandID%'`. Text wrapped in percent signs is replaced with a value for the current stand before the query is run (%StandID%, %MgmtID%, %Stand_CN%, %Variant%, and %FVSCase%). Each stand is projected by its own call to subroutine FVS, so the queries return the records for the current stand only. As a shortcut, the STANDIN keyword record lists the columns to retrieve, and FVS builds a query on table FVS_StandInit using the current stand identifier and the inventory year. The SQLIN keyword record executes other SQL statements against the input database.
+There are two ways to get stand and tree record input data into FVS: from SQLite database tables, which is how most FVS runs are set up, or from ASCII flat files. In both cases a keyword record file is required. For database input, the keyword record file contains a DATABASE – END keyword record sequence. Within this sequence the DSNIN keyword record names the input database (the default is FVS_Data.db), and the STANDSQL and TREESQL keyword records, each followed by an SQL SELECT statement and a closing EndSQL line, retrieve the stand and tree records. By convention the stand level data are in a table named FVS_StandInit (or FVS_PlotInit when plots are projected as stands) and the tree data are in a table named FVS_TreeInit, both identified by the stand identifier, so a typical query is `SELECT * FROM FVS_StandInit WHERE Stand_ID = '%StandID%'`. Text wrapped in percent signs is replaced with a value for the current stand before the query is run (%StandID%, %MgmtID%, %Stand_CN%, %Variant%, and %FVSCase%). Each stand is projected by its own call to subroutine FVS, so the queries return the records for the current stand only. As a shortcut, the STANDIN keyword record lists the columns to retrieve, and FVS builds a query on table FVS_StandInit using the current stand identifier and the inventory year. The SQLIN keyword record executes other SQL statements against the input database.
 
 Stand level information can also be entered on FVS keyword records such as STDINFO and DESIGN. These are processed as detailed above in [Keyword records that can be dealt with once](#sec-keyword-records-that-can-be-dealt-with-once). Values are applied in the order the keyword records are processed, so the placement of the DATABASE – END sequence in the keyword record file is critical. If the DATABASE – END sequence is after keyword records, like STDINFO, that specify stand parameters, parameter values from the database will replace those that were entered by the previous keyword records. The opposite is also true: if the keyword records follow the database sequence, parameter values from the keyword records will replace values that came from the database.
 
@@ -5309,7 +5309,7 @@ Database input allows FVS to read inventory data directly from SQL tables. Each 
 4. Each query ends with an `EndSQL` line. Before a query is run, text wrapped in percent signs is replaced with a value for the current stand: `%StandID%`, `%MgmtID%`, `%Stand_CN%`, `%Variant%`, and `%FVSCase%`.
 5. Normal FVS processing continues (calibration, simulation, output).
 
-By convention the stand level table is named `FVS_StandInit` and the tree level table is named `FVS_TreeInit`. Both contain a `Stand_ID` column (and `Stand_CN`) that links the two tables, and any table or view can be used if the queries return the expected column names.
+By convention the stand level table is named `FVS_StandInit` (or `FVS_PlotInit` when individual plots are projected as stands) and the tree level table is named `FVS_TreeInit`. Both contain a `Stand_ID` column (and `Stand_CN`) that links the two tables, and any table or view can be used if the queries return the expected column names.
 
 ### Input Keywords
 
@@ -5354,7 +5354,7 @@ DBSTREESIN maps SQL column names to FVS tree attributes using a SELECT CASE stru
 |----------------|--------------|------|-------------|
 | PLOT_ID | IPLOT | INTEGER | Plot (point) identifier |
 | TREE_ID | ITREE | INTEGER | Tree identifier |
-| TREE_COUNT | RCOUNT | REAL | Number of trees represented by the record |
+| TREE_COUNT | RCOUNT | REAL | Number of trees represented by the record (a blank value is treated as a single sample tree) |
 | HISTORY | HISTORY | INTEGER | Tree history code (6 and 7 are recent mortality, 8 and 9 are older mortality) |
 | SPECIES | SPECIES | CHARACTER | Species code (FVS alpha, FIA, or PLANTS code); a two character numeric FIA code is given a leading zero |
 | DBH | DBH | REAL | Diameter at breast height (inches) |
@@ -5362,21 +5362,21 @@ DBSTREESIN maps SQL column names to FVS tree attributes using a SELECT CASE stru
 | DG | DG | REAL | Diameter growth or previous diameter, depending on the stand growth measurement settings |
 | HT | HT | REAL | Total height (feet) |
 | HTG | HTG | REAL | Height growth or previous height, depending on the stand growth measurement settings |
-| HTTOPK | HTTOPK | REAL | Height to top kill |
-| CRRATIO | CRWNR | INTEGER | Crown ratio (percent) |
+| HTTOPK | HTTOPK | REAL | Height to top kill (feet); used only with damage code 96 or 97 |
+| CRRATIO | CRWNR | INTEGER | Values 1 to 9 are read as a crown ratio code; values 10 to 99 are percent live crown |
 | DAMAGE1, DAMAGE2, DAMAGE3 | DMG1, DMG2, DMG3 | INTEGER | Damage codes 1 to 3 |
 | SEVERITY1, SEVERITY2, SEVERITY3 | SVR1, SVR2, SVR3 | INTEGER | Severity codes 1 to 3 |
-| TREEVALUE | TREEVAL | INTEGER | Tree value class (set to 7 or 9 for records with history codes 6 to 9) |
-| PRESCRIPTION | PRESCRIPT | INTEGER | Prescription code |
+| TREEVALUE | TREEVAL | INTEGER | Tree value class: 1 desirable, 2 acceptable, 8 non-stockable, any other value a live cull (set to 7 or 9 for records with history codes 6 to 9) |
+| PRESCRIPTION | PRESCRIPT | INTEGER | Prescription code used only with the THINPRSC keyword record; values of 1 or less are leave trees |
 | SLOPE | SLOPE | INTEGER | Slope for the plot |
 | ASPECT | ASPECT | INTEGER | Aspect for the plot |
 | HABITAT, PV_CODE | HABITAT | INTEGER | Habitat type or plant association code |
-| TOPOCODE | TOPOCODE | INTEGER | Topographic position code |
-| SITEPREP | SITEPREP | INTEGER | Site preparation code |
-| AGE | ABIRTH | REAL | Tree age (used only when not null) |
-| CULL | RCULL | REAL | Cull percent |
-| DECAYCD | IDECAY | INTEGER | Decay class |
-| WDLND_STEMS | IWDLDSTMS | INTEGER | Woodland stems code |
+| TOPOCODE | TOPOCODE | INTEGER | Topography code: 1 bottom, 2 lower, 3 mid slope, 4 upper slope, 5 ridge top |
+| SITEPREP | SITEPREP | INTEGER | Site preparation code: 1 none, 2 mechanical, 3 burn, 4 road cuts, fills, or stockable road beds |
+| AGE | ABIRTH | REAL | Age of the tree record (used only when not null) |
+| CULL | RCULL | REAL | Percent of the cubic foot volume that is rotten or missing; used only when the FIAVBC keyword record is active |
+| DECAYCD | IDECAY | INTEGER | Decay code (1 to 5) of a standing dead tree; used only when the FIAVBC keyword record is active |
+| WDLND_STEMS | IWDLDSTMS | INTEGER | Stem count for woodland species; used only when the FIAVBC keyword record is active |
 
 Only two pairs of names are treated as aliases: DBH and DIAMETER, and HABITAT and PV_CODE.
 
@@ -5387,7 +5387,7 @@ Only two pairs of names are treated as aliases: DBH and DIAMETER, and HABITAT an
 1. The **DSNOUT** keyword record names the output SQLite database (the default is `FVSOut.db`). The database is opened immediately and cannot be redefined once a case has been created.
 2. Keyword records such as SUMMARY and TREELIDB activate the desired tables.
 3. The FVS_Cases record for the stand is created by the first database output call for the stand (subroutine DBSCASE, for example from DBSREFERENCE, which writes the FVS_InvReference table at the start of the stand). CaseID is a UUID.
-4. During the simulation, the output subroutines are called at the appropriate points in the processing sequence, for example the summary at the end of each cycle and the cut list when a thinning occurs. Fire, economics, and other extension tables are written at the times those extensions produce their reports.
+4. During the simulation, the output subroutines are called at the appropriate points in the processing sequence, for example the tree list at the end of each cycle and the cut list when a thinning occurs. The FVS_Summary, FVS_Summary2, and FVS_Compute tables are written at the end of the simulation of a case; most other tables, including those from extensions, are written during the simulation when the corresponding report is produced.
 5. Each output subroutine:
    - Creates the table if it does not exist
    - Prepares an INSERT statement
@@ -5451,7 +5451,9 @@ REGREPTS    ! FVS_Regen_* tables
 
 The PPBMMAIN, PPBMTREE, PPBMBKP, and PPBMVOL keyword records set the control variables for the west-wide pine beetle tables, but the `dbsqlite` directory has no routines that create those tables. The DRIVERS and DSNESTAB keyword records are recognized but print a message that they are not supported.
 
-For the fire and fuels, carbon, down wood, economics, structural class, and similar report keyword records, a value greater than 1 in field 1 sends the report to the database only; otherwise the report is also written to the main output file.
+For the ATRTLIDB, BURNREDB, CARBREDB, CUTLIDB, DWDCVDB, DWDVLDB, FUELREDB, FUELSOUT, MISRPTS, MORTREDB, POTFIRDB, SNAGOUDB, SNAGSUDB, STRCLSDB, and TREELIDB keyword records, a value of 2 in field 1 sends the report to the database only, and a value of 1 (the default) sends it to both the database and the output file. These keyword records must be used with the corresponding base FVS or extension keyword record (for example TREELIDB with TREELIST, and POTFIRDB with POTFIRE). The ECONRPTS keyword record uses field 1 differently: a value of 1 writes only FVS_EconSummary, and a value of 2 (the default) writes FVS_EconSummary and FVS_EconHarvestValue.
+
+Field 2 of the ATRTLIDB, CUTLIDB, TREELIDB, ECONRPTS, MORTREDB, and SNAGOUDB keyword records sets the species code format in the output table: 0 uses the format of the last tree record read for the species (the default), 1 uses the FVS alpha code, 2 uses the FIA code, and 3 uses the USDA PLANTS symbol. The COMPUTDB keyword record has two options: field 1 set to 1 prevents columns from being added to an existing FVS_Compute table for new Event Monitor variables, and field 2 set to 1 includes variables whose names start with an underscore.
 
 **SQL Execution:**
 
@@ -5500,7 +5502,7 @@ Individual tree records at end of each cycle. The table has 35 columns:
 - **TreeIndex** (INT): FVS internal tree index
 - **SpeciesFVS**, **SpeciesPLANTS**, **SpeciesFIA** (TEXT): Species codes
 - **TreeVal** (INT): Tree value class
-- **SSCD** (INT): Tree status code (see the database extension user's guide)
+- **SSCD** (INT): Special tree code
 - **PtIndex** (INT): Point (plot) index
 - **TPA** (REAL): Trees per acre represented by the record
 - **MortPA** (REAL): Mortality this period (trees per acre)
@@ -5517,7 +5519,7 @@ Individual tree records at end of each cycle. The table has 35 columns:
 - **MDefect**, **BDefect** (INT): Merchantable cubic and board foot defect percent
 - **TruncHt** (INT): Truncated height
 - **EstHt** (REAL): Estimated height
-- **ActPt** (INT): Actual point number (see the database extension user's guide)
+- **ActPt** (INT): Actual point (plot) number from the input data
 - **Ht2TDCF**, **Ht2TDBF** (REAL): Height to the cubic and board foot top diameters
 - **TreeAge** (REAL): Tree age
 
@@ -5701,12 +5703,7 @@ CaseID uses UUID (Universally Unique Identifier):
 
 ### Metric Units Support
 
-Tables documented with "Metric version = Yes" produce metric outputs when FVS compiled with metric flags:
-
-- Heights → meters
-- Diameters → centimeters
-- Areas → hectares
-- Volumes → cubic meters
+In metric variants, the names of tables that contain metric units end in `_Metric`, and column names that imply an imperial unit are changed to imply the metric unit (for example TPA becomes TPH and CuFt becomes CuM; a column such as Consumption_6to12 becomes Consumption_152to305). The conversion factors are listed in the appendix of the database extension user's guide (Crookston and others 2003).
 
 ### Platform-Specific Considerations
 
