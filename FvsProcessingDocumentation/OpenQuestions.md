@@ -20,11 +20,9 @@ Open items for `ModelStructure_FVS.Rmd` and related documentation. Confidence: [
 - [M] `DBSCASE(2)` (updates sampling weight and groups in the cases table) is not described yet.
 
 ### SQLite-first rewrite
-Most users use SQLite input and output. Planned changes:
-- Section 3.1: put the database path first (keyword file still required; stand and tree data from the database).
-- Section 3.5: lead with DATABASE, DBSIN, the stand and tree SQL queries, and the call chain into INTREE; describe flat files as the alternative. Make the DATABASE-before-STDINFO ordering rule prominent.
-- Section 3.2: describe what DBSINIT initializes (read `dbsqlite/` and `vdbsqlite/` first).
-- Main FVS Routine list: the "process all keyword record requests" entry needs the same emphasis.
+Done: Sections 3.1, 3.2, 3.5, the Main FVS Routine list entry, and the Chapter 11 input workflow and examples now describe DSNIN/STANDSQL/TREESQL/%StandID% and the FVS_StandInit/FVS_TreeInit convention.
+- [M] Chapter 11 (Database Input and Output Extension) beyond the input workflow, including the column mapping table and the example in Practical Applications, has not been audited against `dbsqlite/` (see Section 12 audit).
+- [M] `STDIDENT` usage in the revised landscape example was not checked against a test keyword file.
 
 ### Batch E: stale references
 - Done: internal section-number references converted to named links; introduction roadmap rewritten; SourceForge URLs replaced with the GitHub wiki / Interface repo pages (page existence verified).

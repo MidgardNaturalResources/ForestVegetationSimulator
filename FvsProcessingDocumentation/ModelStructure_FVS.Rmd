@@ -58,8 +58,6 @@ Developers should also obtain the FVS overview document for the variant pertaini
 
 Users wanting to interface with FVS using the Suppose graphical user interface should obtain that software along with the “exercise guide” pertaining to their geographic area. These products are also available from the FMSC web site. A new online tool for running FVS, called FVSOnline, is now available.  FVSOnline is intended to replace Suppose and takes advantage of some newer programming constructs documented in this document. FVSOnline can also be run on a local machine.
 
-
-
 # Introduction
 
 The Forest Vegetation Simulator (FVS) is a model used for predicting forest stand dynamics that is used extensively in the United States. User’s guides exist for those people interested in running their data through FVS (Dixon 2002, VanDyck and Smith-Mateja 2000) and model relationships specific to geographic variants are presented in the various variant overview guides (e.g. Keyser and Dixon 2008). However, formal technical documentation of the programming flow and logic has not been previously available in a consolidated place. This document provides this type of documentation for the FVS base model including the regeneration establishment and event monitor extensions. Some mention will be made of other FVS extensions, such as the database extension, where appropriate.
@@ -1096,7 +1094,7 @@ open the key input and output files that will be required for the projection,
 
 initialize parameters to their default condition,
 
-process all keyword record requests, including reading stand and tree data from a database or tree data file,
+process all keyword record requests, including reading stand and tree data from a database (the DATABASE – END sequence with STANDSQL and TREESQL) or from a tree data file,
 
 set up the main projection cycling array (cycle lengths and any additional cycle boundaries requested with the CYCLEAT keyword record),
 
@@ -1611,6 +1609,8 @@ kable(final_init_arrays,
 
 FVS needs to open various input and output files that are required in a projection and establish database connections if stand or tree data is coming from a database. When the keyword record file name is not specified as a command line option, FVS will prompt users for 6 file names. These names can be provided via keyboard input or the names can be supplied in a response file. The FVSOnline interface, provided by the fvsOL R package (code is at https://github.com/USDAForestService/ForestVegetationSimulator-Interface and more information is at https://github.com/USDAForestService/ForestVegetationSimulator/wiki/FVSOnline), runs FVS through the rFVS package and supplies the keyword record file name directly, so FVS does not prompt for file names.
 
+Most FVS runs take stand and tree data from, and write results to, SQLite databases. In these runs the keyword record file is still required. Inside a DATABASE – END keyword record sequence it names the input database with the DSNIN keyword record (the default is FVS_Data.db) and the output database with the DSNOUT keyword record (the default is FVSOut.db), and it contains the STANDSQL and TREESQL keyword records that retrieve the stand and tree records. No tree data file is needed in this case; the tree data file described below applies only to flat file input.
+
 The first file opened is the file containing FVS keyword records, referred to as the “keyword record file” (or simply “keyword file”). A keyword record file is required to make an FVS projection. A detailed description of the keyword record file can be found in section 4.1 of the EFVS guide. How FVS reads this file will be discussed in [Processing keyword record requests](#sec-processing-keyword-record-requests) and [Processing event monitor instructions](#sec-processing-event-monitor-instructions) of this document.
 
 If needed, the second file opened is a file containing individual tree data records, referred to as the “tree data file”. A detailed description of the tree data file is provided in section 4.2 of the EFVS guide.  A tree data file is not required when making a bare ground simulation or when all of the tree data will be read from a database table. In these instances, the file name “NUL” (or /dev/null on Unix-like platforms) should be specified for the tree data file name if FVS prompts for it. In a bare ground simulation the NOTREES keyword record must also be included as one of the keyword records in the keyword record file.
@@ -2025,6 +2025,8 @@ Subroutine BLKDAT is a variant-specific BLOCK DATA subroutine that contains base
 
 Subroutine ESBLKD is another BLOCK DATA subroutine that contains regeneration establishment extension settings that are loaded at compile time. These settings are not variant-specific.
 
+Subroutine DBSINIT, called from subroutine INITRE, initializes the database extension for each stand. It turns off every database output table (the summary, compute, tree list, cut list, FIA-VBC, and other tables each have a control variable that is set when the corresponding keyword record is processed in a DATABASE – END sequence) and clears the case identifier. It does not open any database connection; connections are opened when the DSNIN or DSNOUT keyword records are processed.
+
 Various other extensions have their own initialization subroutines. Some have DATA statements that load at compile time, while others like subroutine FMINIT for the fire and fuels extension load at run time. Some of these, like subroutine FMINIT, are extension specific and some are variant-specific, like subroutine MISINTCR for the mistletoe extension in the Central Rockies variant. Initialization subroutines for the various base model extensions include: ESINIT, MPBINT, DFBINT, TMINIT, BWEINT, CVINIT, RDINIT, MISIN0, MISINT, BRINIT, ISSTAG, FMINIT, SVINIT, ECINIT, DBSINIT, and CLINIT. Subroutine INITRE also calls subroutines OPINIT, to initialize the activity schedule, and RANSED, to set the random number seed, at this point.
 
 And finally, the two ORGANON-FVS variants (OC and OP), contain a section of code in subroutine GRINIT to initialize variables needed to run the ORGANON subroutines. These variables also load at run time. Structural differences of the ORGANON-FVS variants will be further discussed in [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants).
@@ -2175,23 +2177,23 @@ Subroutine UPCASE is used to convert lower case characters to upper case charact
 
 ## Reading stand and tree record input data {#sec-reading-stand-and-tree-record-input-data}
 
-There are two distinct ways to get stand and tree record input data into FVS. This can be done through ASCII flat files or through database input. A keyword record file is required to run FVS; a tree data file is optional. If stand or tree record input data are coming from a database, the DATABASE keyword record is used in the keyword record file to signal subroutine INITRE that database keyword records follow. Subroutine INITRE transfers control to subroutine DBSIN to process the database keyword records. Subroutine DBSIN calls subroutine DBSOPEN to establish database connections. Other subroutines in the database extension input tree and stand information from the database (see [Reading stand and tree record input data](#sec-reading-stand-and-tree-record-input-data-subroutines-involved-and-their-function)). Control transfers back to subroutine INITRE when an END keyword record is encountered which signals subroutine DBSIN that it is done processing database keyword records.
+There are two ways to get stand and tree record input data into FVS: from SQLite database tables, which is how most FVS runs are set up, or from ASCII flat files. In both cases a keyword record file is required. For database input, the keyword record file contains a DATABASE – END keyword record sequence. Within this sequence the DSNIN keyword record names the input database (the default is FVS_Data.db), and the STANDSQL and TREESQL keyword records, each followed by an SQL SELECT statement and a closing EndSQL line, retrieve the stand and tree records. By convention the stand level data are in a table named FVS_StandInit and the tree data are in a table named FVS_TreeInit, both identified by the stand identifier, so a typical query is `SELECT * FROM FVS_StandInit WHERE Stand_ID = '%StandID%'`. Text wrapped in percent signs is replaced with a value for the current stand before the query is run (%StandID%, %MgmtID%, %Stand_CN%, %Variant%, and %FVSCase%). Each stand is projected by its own call to subroutine FVS, so the queries return the records for the current stand only. As a shortcut, the STANDIN keyword record lists the columns to retrieve, and FVS builds a query on table FVS_StandInit using the current stand identifier and the inventory year. The SQLIN keyword record executes other SQL statements against the input database.
 
-Stand level information can be entered on FVS keyword records such as STDINFO and DESIGN.  These are processed as detailed above in [Keyword records that can be dealt with once](#sec-keyword-records-that-can-be-dealt-with-once). Placement of the DATABASE – END keyword record sequence in the data file is critical. If the DATABASE – END sequence is after keyword records, like STDINFO, that specify stand parameters, parameter values from the database will replace those that were entered by the previous keyword records. The opposite is also true, if the keyword records follow the database sequence, parameter values from the keyword records will replace values that came from the database.
+Stand level information can also be entered on FVS keyword records such as STDINFO and DESIGN. These are processed as detailed above in [Keyword records that can be dealt with once](#sec-keyword-records-that-can-be-dealt-with-once). Values are applied in the order the keyword records are processed, so the placement of the DATABASE – END sequence in the keyword record file is critical. If the DATABASE – END sequence is after keyword records, like STDINFO, that specify stand parameters, parameter values from the database will replace those that were entered by the previous keyword records. The opposite is also true: if the keyword records follow the database sequence, parameter values from the keyword records will replace values that came from the database.
 
-Tree record data, if there is any, may be read from a database or from a flat file, or both. It would be unusual for some of the tree data to be in a database and some of it in a flat file, but it can happen. In fact, several tree data files may be read, in effect, concatenating the individual files. Two additional keyword records signal FVS to input tree record data. These are the TREEDATA and PROCESS keyword records; TREEDATA directly signals FVS to input tree record data from a flat file; PROCESS indirectly signals FVS to input tree record data if none has been read and a NOTREES keyword record was not present in the keyword record file.
+Tree record data, if there is any, may be read from a database or from a flat file, or both. It would be unusual for some of the tree data to be in a database and some of it in a flat file, but it can happen. When flat files are used, several tree data files may be read, in effect, concatenating the individual files. Two keyword records signal FVS to input tree record data from a flat file. These are the TREEDATA and PROCESS keyword records; TREEDATA directly signals FVS to input tree record data from a flat file; PROCESS indirectly signals FVS to input tree record data if none has been read and a NOTREES keyword record was not present in the keyword record file.
 
 If there are there are not enough projectable tree records for a simulation, then one of two things will happen. If the variant includes the full regeneration establishment extension, subroutine INITRE calls ESEZCR, an entry point in subroutine ESINIT, to set flags that will trigger the regeneration establishment model to predict some advanced regeneration to start the simulation. If the variant includes the partial regeneration establishment extension model, entry ESEZCR in subroutine ESINIT is still called and the flags get set but the partial regeneration establishment model does not predict natural regeneration. In this case, the projection will run with no tree records (but they could be added using the PLANT or NATURAL keyword records).
 
 ### Subroutines involved and their function {#sec-reading-stand-and-tree-record-input-data-subroutines-involved-and-their-function}
+
+When subroutine INITRE encounters a DATABASE keyword record, signaling that the next set of keyword records pertains to the database extension, it calls subroutine DBSIN. Subroutine DBSIN reads and processes the database extension keyword records until an END keyword record is found, and then returns control to INITRE. The DSNIN keyword record causes subroutine DBSOPEN to open the input database immediately. For a STANDSQL keyword record, subroutine DBSPRSSQL replaces the percent sign delimited tokens in the SQL statement and subroutine DBSSTANDIN runs the query and stores the returned columns in the corresponding FVS stand level variables (the same variables that are set by keyword records such as STDINFO and DESIGN). For a TREESQL keyword record, subroutine DBSPRSSQL replaces the tokens, DBSIN prepares the query on the input database (opening the database first if necessary), and calls subroutine INTREE, which obtains each tree record from subroutine DBSTREESIN. If an SQL statement fails or a token cannot be replaced, a message is written to the main output file and the error severity is set so that FVS stops processing the stand.
 
 Subroutine INTREE processes tree input data and this may occur at different places in the keyword record processing sequence.
 
 When subroutine INITRE encounters a TREEDATA keyword record, tree data input occurs at that point in the FVS keyword record processing sequence. INITRE immediately calls subroutine INTREE to read the tree record input data.
 
 However, a TREEDATA keyword record is not required in a keyword record set. When subroutine INITRE encounters the PROCESS keyword record it checks to see if the tree record data has been read. If it hasn’t, then subroutine INITRE calls subroutine INTREE to read the tree record input data at this point in the FVS processing sequence. A PROCESS keyword record is required in a keyword record set.
-
-When subroutine INITRE encounters a DATABASE keyword record, signaling that the next set of keyword records pertains to the database extension, it immediately calls subroutine DBSIN. Subroutine DBSIN reads and processes the database extension keyword records. If it encounters a STANDSQL keyword record, subroutine DBSSTANDIN is called to input the stand information; if a TREESQL keyword record is encountered, subroutine DBSTREESIN is called to input tree record data. Both stand and tree data are retrieved with an SQL query. If a TREESQL keyword record is present, subroutine INTREE is called from subroutine DBSIN at this point in the keyword record processing sequence. Subroutine INTREE processes the tree records retrieved from the SELECT SQL statements.
 
 Subroutine INTREE calls subroutine DAMCDS that calls subroutine BASDAM to process damage and severity ratings pertaining to the base model. Subroutine DAMCDS stores insect and disease damage and severity ratings for later processing by subroutine DAMPRO.
 
@@ -5287,15 +5289,15 @@ The `fvsqlite3.c` file implements 20+ C functions that Fortran calls to interact
 
 ### Input Workflow
 
-Database input allows FVS to read inventory data directly from SQL tables:
+Database input allows FVS to read inventory data directly from SQL tables. Each stand is projected by its own call to FVS, and the keyword records for that stand contain a DATABASE – END sequence:
 
-1. User specifies input database with **DSNIN** keyword
-2. User defines stand selection query with **STANDSQL** keyword
-3. User defines tree selection query with **TREESQL** keyword
-4. FVS executes STANDSQL and iterates through result set
-5. For each stand, FVS executes TREESQL to retrieve trees
-6. **DBSTREESIN** subroutine binds SQL columns to Fortran variables
-7. Normal FVS processing continues (calibration, simulation, output)
+1. The **DSNIN** keyword record names the input SQLite database (the default is `FVS_Data.db`); the database is opened immediately.
+2. The **STANDSQL** keyword record defines the query that returns the stand level record for the current stand (the **STANDIN** keyword record is a shortcut that builds the query from a list of column names). **DBSSTANDIN** stores the returned columns in the corresponding FVS stand variables.
+3. The **TREESQL** keyword record defines the query that returns the tree records for the current stand. **DBSIN** runs the query and **INTREE** reads each returned row, with **DBSTREESIN** supplying the column values.
+4. Each query ends with an `EndSQL` line. Before a query is run, text wrapped in percent signs is replaced with a value for the current stand: `%StandID%`, `%MgmtID%`, `%Stand_CN%`, `%Variant%`, and `%FVSCase%`.
+5. Normal FVS processing continues (calibration, simulation, output).
+
+By convention the stand level table is named `FVS_StandInit` and the tree level table is named `FVS_TreeInit`. Both contain a `Stand_ID` column (and `Stand_CN`) that links the two tables, and any table or view can be used if the queries return the expected column names.
 
 ### Input Keywords
 
@@ -5307,27 +5309,23 @@ DSNIN
 /path/to/inventory.db
 ```
 
-**STANDSQL** - Stand Selection Query
-
+**STANDSQL** - Stand Query
 ```
 STANDSQL
-SELECT Stand_ID, Variant, Inv_Year, Latitude, Longitude,
-       Elevation, Slope, Aspect, Site_Index, Site_Species
-FROM my_stands
-WHERE region = 'PNW' AND elevation < 3000;
+SELECT * FROM FVS_StandInit
+WHERE Stand_ID = '%StandID%'
+EndSQL
 ```
 
-**TREESQL** - Tree Selection Query
-
+**TREESQL** - Tree Query
 ```
 TREESQL
-SELECT Plot_ID, Tree_ID, Species, DBH, Tree_Count, Height,
-       Crown_Ratio, Damage_Code_1, Severity_1
-FROM my_trees
-WHERE Stand_ID = ?;
+SELECT * FROM FVS_TreeInit
+WHERE Stand_ID = '%StandID%'
+EndSQL
 ```
 
-Note: The `?` placeholder is automatically replaced with the current Stand_ID from STANDSQL.
+Note: `%StandID%` is replaced with the identifier of the stand being projected (set with the STDIDENT keyword record) before the query is run. The query returns the records for that stand only; FVS does not loop over the stands in the database.
 
 **SQLIN** - Execute Arbitrary SQL on Input Database
 
@@ -5508,31 +5506,26 @@ Individual tree records at end of each cycle:
 
 ### Landscape-Scale Analysis
 
-Process thousands of stands from Forest Inventory and Analysis (FIA) database:
+Process stands from a Forest Inventory and Analysis (FIA) database. The keyword records below are repeated, with a different STDIDENT, for each stand to be projected:
 
 ```
+STDIDENT
+STAND0001
 DATABASE
 DSNOUT
 landscape_projections.db
 SUMMARY
 TREELIDB
-END
-
 DSNIN
 fia_inventory.db
 STANDSQL
-SELECT Stand_CN as Stand_ID, 'PN' as Variant, MEASYEAR as Inv_Year,
-       LAT as Latitude, LON as Longitude, ELEV as Elevation,
-       SLOPE, ASPECT, SICOND as Site_Index, SISP as Site_Species
-FROM fia_stand
-WHERE COUNTYCD = '033' AND MEASYEAR > 2010;
-
-TREESQL
-SELECT PLT_CN as Stand_ID, PLOT as Plot_ID, TREE as Tree_ID,
-       SPCD as Species, DIA as DBH, TPA_UNADJ as Tree_Count,
-       HT as Height, CR as Crown_Ratio
-FROM fia_tree
-WHERE PLT_CN = ?;
+SELECT * FROM FVS_StandInit
+WHERE Stand_ID = '%StandID%'
+EndSQL
+TreeSQL
+SELECT * FROM FVS_TreeInit
+WHERE Stand_ID = '%StandID%'
+EndSQL
 END
 
 ! Simulation keywords...
