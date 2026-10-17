@@ -57,3 +57,9 @@ Open:
 - [L] ESNUTR/ESTAB internals (ESETPR, ESPREP, ESTOCK, ESPADV/ESPSUB/ESPXCS, ESSUBH, ESGENT) not read line by line.
 - [L] DISPLY database summary calls and FIA-VBC "when requested" conditions are only confirmed for the FIA-VBC early-return checks.
 - [M] ECCALC is described as running when the economics extension is active; the condition in GRADD was not confirmed.
+
+## Chapter 5 (Projection Summarization Phase) vs code
+Done: ECEND moved to DISPLY; RDROUT removed (root disease output through GENPRT); SVOUT duplicate removed; stop point -1 and ICYC increment added; GENPRT described; DBSSUMRY (SUMOUT), DBSCMPU (OPLIST), DBSSUMRY2 and DBSCARBBIOSUMRY (DISPLY) call sites added.
+- [M] The Crookston guide says FVS_Summary2 is written at the end of the simulation of a case; in the code DBSSUMRY2 is called from DISPLY after each cycle and once more at the end (rows keyed by ICYC). The Rmd follows the code.
+- [M] Array tables at the start of Chapter 5 (Output Generation Arrays, Multi-Stand Processing Arrays) were audited earlier but not rechecked in this pass.
+
