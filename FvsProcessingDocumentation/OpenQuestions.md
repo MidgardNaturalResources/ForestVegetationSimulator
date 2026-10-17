@@ -63,3 +63,8 @@ Done: ECEND moved to DISPLY; RDROUT removed (root disease output through GENPRT)
 - [M] The Crookston guide says FVS_Summary2 is written at the end of the simulation of a case; in the code DBSSUMRY2 is called from DISPLY after each cycle and once more at the end (rows keyed by ICYC). The Rmd follows the code.
 - [M] Array tables at the start of Chapter 5 (Output Generation Arrays, Multi-Stand Processing Arrays) were audited earlier but not rechecked in this pass.
 
+
+## Chapter 6 (Option Processing Logic) vs code
+Done: step list in "Adding new keyword records" restored as numbered steps 1 to 7 with lettered sub-steps (the list structure was lost, which broke references such as "step 2b" and "step 3b"); subroutine name typo KEWYDS corrected to KEYWDS. Verified against code: OPNEW/OPNEWC, OPCOM arrays IACT/IDATE/IEVCOD, KEYCOM TABLE and ISIZE, THINABA (keyword 27, activity 226, ITRSL1 position 38), CRNMULT (keyword 96, activity 81, ITRSL1 position 3), CUTS MYACTS dimension 23, OPCACT/OPGETC/OPGET2, AGPLABEL and SPLABEL keywords, GETSTD/PUTSTD.
+- [L] The statement that CUTS organizes its activities into "3 groups" was not confirmed (CUTS has several OPFIND calls on overlapping parts of MYACTS).
+- [L] The text still says the numbers (TABLE index 96, ITRSL position 3) were true "at the time this document was written"; they are correct for the current code but will drift as keywords are added.

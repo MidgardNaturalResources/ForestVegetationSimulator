@@ -3621,67 +3621,68 @@ Steps in adding a new keyword record to the FVS code:
 
 ### Adding the keyword record name
 
-Make sure the TABLE(i) array in the labeled COMMON block KEYCOM is big enough to hold the new keyword record:
+1. Make sure the TABLE(i) array in the labeled COMMON block KEYCOM is big enough to hold the new keyword record:
 
-Look in subroutine KEWYDS and see if there are any vacant spots at the end of the TABLE(i) array where the new keyword record name can be inserted. If there are vacant spots, then go to step 2. If there aren’t any vacant spots, then go on to 1b.
+    a. Look in subroutine KEYWDS and see if there are any vacant spots at the end of the TABLE(i) array where the new keyword record name can be inserted. If there are vacant spots, then go to step 2. If there aren’t any vacant spots, then go on to 1b.
 
-In the labeled COMMON block KEYCOM, change the date of revision, if appropriate, and expand the dimension of the TABLE(i) array by modifying the variable ISIZE in the PARAMETER statement.
+    b. In the labeled COMMON block KEYCOM, change the date of revision, if appropriate, and expand the dimension of the TABLE(i) array by modifying the variable ISIZE in the PARAMETER statement.
 
-Add the new keyword record name to the TABLE(i) array in subroutine KEYWDS:
+2. Add the new keyword record name to the TABLE(i) array in subroutine KEYWDS:
 
-Change the date of revision, if appropriate.
+    a. Change the date of revision, if appropriate.
 
-If the variable ISIZE in step 1 was not changed, then simply insert the new keyword record name in a vacant spot. If the variable ISIZE in step 1 was changed, then expand the last DATA statement, inserting the new keyword in the next spot, and padding out the TABLE(i) array with blank entries to correspond to the length specified in step 1 (i.e. if the variable ISIZE was incremented by 5, then expand the last data statement by 5 and insert the new keyword record name in the first vacant spot followed by 4 blank spots to accommodate future additional keywords). Note the location (i.e. array index number) where the new keyword record name was inserted since it may be needed later.  For example, the keyword CRNMULT is located in array location 96 (i.e. TABLE (96)).
+    b. If the variable ISIZE in step 1 was not changed, then simply insert the new keyword record name in a vacant spot. If the variable ISIZE in step 1 was changed, then expand the last DATA statement, inserting the new keyword in the next spot, and padding out the TABLE(i) array with blank entries to correspond to the length specified in step 1 (i.e. if the variable ISIZE was incremented by 5, then expand the last data statement by 5 and insert the new keyword record name in the first vacant spot followed by 4 blank spots to accommodate future additional keywords). Note the location (i.e. array index number) where the new keyword record name was inserted since it may be needed later.  For example, the keyword CRNMULT is located in array location 96 (i.e. TABLE (96)).
 
 ### Add the activity code (if necessary)
 
-Modify the ITRSL1(i) and ITRSL2(i) arrays in subroutine OPLIST.  (do this step ONLY if the new keyword record has a year/cycle field):
+3. Modify the ITRSL1(i) and ITRSL2(i) arrays in subroutine OPLIST.  (do this step ONLY if the new keyword record has a year/cycle field):
 
-Change the date of revision, if appropriate.
+    a. Change the date of revision, if appropriate.
 
-First choose a new activity code that will be associated with the new keyword record name. If the activity code is going to be added to an existing subroutine (CUTS, for example, which already handles several activities), then the new code should fit in to the set of existing codes being performed by CUTS. Activity codes in array ITRSL1(i) are in ascending order. Look in this array and find an activity code that is not currently being used. Enter this activity number in the proper sequence (ascending order) in the array ITRSL1(i). Make sure you either omit a zero off the end of the array, or expand the array dimension, parameter NTRSLT, as appropriate. Note the position (array location) where this activity code is entered. For example, the CRNMULT keyword was assigned activity number 81 and this activity number was entered in the third location in ITRSL1 (i.e. ITRSL1(3)) (at least it was the third location at the time this document was written; it may be in a different location now if keyword records have been added with activity numbers less than 81).
+    b. First choose a new activity code that will be associated with the new keyword record name. If the activity code is going to be added to an existing subroutine (CUTS, for example, which already handles several activities), then the new code should fit in to the set of existing codes being performed by CUTS. Activity codes in array ITRSL1(i) are in ascending order. Look in this array and find an activity code that is not currently being used. Enter this activity number in the proper sequence (ascending order) in the array ITRSL1(i). Make sure you either omit a zero off the end of the array, or expand the array dimension, parameter NTRSLT, as appropriate. Note the position (array location) where this activity code is entered. For example, the CRNMULT keyword was assigned activity number 81 and this activity number was entered in the third location in ITRSL1 (i.e. ITRSL1(3)) (at least it was the third location at the time this document was written; it may be in a different location now if keyword records have been added with activity numbers less than 81).
 
-Modify the ITRSL2(i) array by inserting the index from step 2b (i.e. the index to the location in the TABLE (i) array where the keyword record name is located) into the position in array ITRSL2(i) corresponding to the location where the activity number was entered in array ITRSL1(i) in step 3b. Once again, remember to remove a zero from the end of the ITRSL2(i) array if appropriate. For example, the CRNMULT keyword occupies location 96 in the TABLE(i) array (from step 2b). So the number 96 gets loaded into the ITRSL2(i) array in the location corresponding to the location occupied by the CRNMULT activity number in array ITRSL1(i). In this case, and at the time this was written, this is the third location. So ITRSL1(3) contains the activity number (81) for the CRNMULT keyword and ITRSL2(3) contains the array index (96) which says the CRNMULT keyword record name is in location TABLE(96).
+    c. Modify the ITRSL2(i) array by inserting the index from step 2b (i.e. the index to the location in the TABLE (i) array where the keyword record name is located) into the position in array ITRSL2(i) corresponding to the location where the activity number was entered in array ITRSL1(i) in step 3b. Once again, remember to remove a zero from the end of the ITRSL2(i) array if appropriate. For example, the CRNMULT keyword occupies location 96 in the TABLE(i) array (from step 2b). So the number 96 gets loaded into the ITRSL2(i) array in the location corresponding to the location occupied by the CRNMULT activity number in array ITRSL1(i). In this case, and at the time this was written, this is the third location. So ITRSL1(3) contains the activity number (81) for the CRNMULT keyword and ITRSL2(3) contains the array index (96) which says the CRNMULT keyword record name is in location TABLE(96).
 
 ### Adding code to read and process the keyword record
 
-Add code to the appropriate subroutine to read and process the keyword record. For a base model keyword this is subroutine INITRE; if the keyword record applies to an extension, then this may be a different subroutine (e.g. ESIN for a regeneration establishment model keyword record). However, the steps are basically the same. Go into subroutine INITRE and:
+4. Add code to the appropriate subroutine to read and process the keyword record. For a base model keyword this is subroutine INITRE; if the keyword record applies to an extension, then this may be a different subroutine (e.g. ESIN for a regeneration establishment model keyword record). However, the steps are basically the same. Go into subroutine INITRE and:
 
-Change the date of revision, if appropriate.
+    a. Change the date of revision, if appropriate.
 
-Modify the computed GO TO statement which is after the 90 CONTINUE statement by inserting an unused statement label into the position corresponding to the location number noted in step 2b. For example, for the CRNMULT keyword, statement label 9800 was entered in position 96 of this GO TO statement.
+    b. Modify the computed GO TO statement which is after the 90 CONTINUE statement by inserting an unused statement label into the position corresponding to the location number noted in step 2b. For example, for the CRNMULT keyword, statement label 9800 was entered in position 96 of this GO TO statement.
 
-Go to the appropriate place in INITRE and insert a CONTINUE statement with the statement label from step 4b, followed by the appropriate code to process the new keyword. For example, see the code following the 9800 CONTINUE statement for the code which processes the CRNMULT keyword. Also, note the comment statements immediately preceding the 9800 CONTINUE statement.
+    c. Go to the appropriate place in INITRE and insert a CONTINUE statement with the statement label from step 4b, followed by the appropriate code to process the new keyword. For example, see the code following the 9800 CONTINUE statement for the code which processes the CRNMULT keyword. Also, note the comment statements immediately preceding the 9800 CONTINUE statement.
 
-When adding code to read the keyword record to the input subroutine, follow established patterns. Find call sequences utilizing subroutine OPNEW and/or subroutine OPNEWC to store the parameter values, subroutines KEYDMP and ERRGRO to process keyword record errors, subroutine SPDECD to process species codes and species groups, and so forth, and duplicate those patterns.
+    When adding code to read the keyword record to the input subroutine, follow established patterns. Find call sequences utilizing subroutine OPNEW and/or subroutine OPNEWC to store the parameter values, subroutines KEYDMP and ERRGRO to process keyword record errors, subroutine SPDECD to process species codes and species groups, and so forth, and duplicate those patterns.
 
-Add code to the subroutine that will process the activity code (do this step ONLY if the new keyword record has a year/cycle field). Go into the subroutine where this activity will be processed:
+5. Add code to the subroutine that will process the activity code (do this step ONLY if the new keyword record has a year/cycle field). Go into the subroutine where this activity will be processed:
 
-Change the date of revision, if appropriate.
+    a. Change the date of revision, if appropriate.
 
-Add code to the subroutine to process the activity. In some cases, where the subroutine is already checking for activities, this is as simple as adding the activity number from step 3b to the array containing activity codes processed by this subroutine, usually the MYACTS(i) array, and then inserting the code at the appropriate place in the subroutine to implement the activity. In other cases, if the subroutine is not currently processing any activities, it involves defining and dimensioning a MYACTS(i) array and adding calls to the option processing subroutine OPFIND, OPGET (an entry point in subroutine OPFIND), and OPDONE (another entry point in subroutine OPFIND).
+    b. Add code to the subroutine to process the activity. In some cases, where the subroutine is already checking for activities, this is as simple as adding the activity number from step 3b to the array containing activity codes processed by this subroutine, usually the MYACTS(i) array, and then inserting the code at the appropriate place in the subroutine to implement the activity. In other cases, if the subroutine is not currently processing any activities, it involves defining and dimensioning a MYACTS(i) array and adding calls to the option processing subroutine OPFIND, OPGET (an entry point in subroutine OPFIND), and OPDONE (another entry point in subroutine OPFIND).
 
-If the activity is being implemented in a base model subroutine, this step may only require that you change one subroutine. However, if the activity is being processed in a variant dependent subroutine, it will require changing every version of the subroutine for all the variants. For example, the activity associated with the CRNMULT keyword record is processed in subroutine CROWN that is a variant dependent routine. So subroutine CROWN for every variant needed to be changed.  The changes involved defining and dimensioning the MYACTS(i) array; loading the CRNMULT activity number (81) into the MYACTS array; inserting calls to the option processing routines to find, retrieve, process the activity, and mark it “DONE”; and inserting other code in the routine to use the parameter values contained on the CRNMULT keyword record.
+    If the activity is being implemented in a base model subroutine, this step may only require that you change one subroutine. However, if the activity is being processed in a variant dependent subroutine, it will require changing every version of the subroutine for all the variants. For example, the activity associated with the CRNMULT keyword record is processed in subroutine CROWN that is a variant dependent routine. So subroutine CROWN for every variant needed to be changed.  The changes involved defining and dimensioning the MYACTS(i) array; loading the CRNMULT activity number (81) into the MYACTS array; inserting calls to the option processing routines to find, retrieve, process the activity, and mark it “DONE”; and inserting other code in the routine to use the parameter values contained on the CRNMULT keyword record.
 
-When adding code to implement an activity in a subroutine, follow established patterns. Two examples come to mind; subroutines CWIDTH and FFERT both “accomplish” one activity and can be used as templates for coding the important sequences of calling subroutine OPFIND, OPGET (an entry point in subroutine OPFIND), and OPDONE (another entry point in subroutine OPFIND). On the other hand, subroutine CUTS deals with 23 different activities that are organized into 3 groups. If you want to review a more complicated example, see that code.
+    When adding code to implement an activity in a subroutine, follow established patterns. Two examples come to mind; subroutines CWIDTH and FFERT both “accomplish” one activity and can be used as templates for coding the important sequences of calling subroutine OPFIND, OPGET (an entry point in subroutine OPFIND), and OPDONE (another entry point in subroutine OPFIND). On the other hand, subroutine CUTS deals with 23 different activities that are organized into 3 groups. If you want to review a more complicated example, see that code.
 
-This step may be required; it may not. For some keyword records containing a year/cycle field their implementation is completely handled in step 5; other keyword records containing a year/cycle field get processed as in step 5 and then associated parameter values get passed to other subroutines through argument lists. Keywords not containing a year/cycle field get processed in subroutine INITRE and typically change the value of variables that are contained in COMMON blocks. For those keyword records this step may be required to actually implement the purpose of the keyword record.  Go into the appropriate subroutine, or subroutines:
+6. This step may be required; it may not. For some keyword records containing a year/cycle field their implementation is completely handled in step 5; other keyword records containing a year/cycle field get processed as in step 5 and then associated parameter values get passed to other subroutines through argument lists. Keywords not containing a year/cycle field get processed in subroutine INITRE and typically change the value of variables that are contained in COMMON blocks. For those keyword records this step may be required to actually implement the purpose of the keyword record.  Go into the appropriate subroutine, or subroutines:
 
-Change the date of revision, if appropriate.
+    a. Change the date of revision, if appropriate.
 
-Insert the code necessary for implementing the keyword record purpose.
+    b. Insert the code necessary for implementing the keyword record purpose.
 
 ### Assign parameter default values and add variables to subroutines GETSTD and PUTSTD
 
-This step is needed if new variables were created in association with the keyword record and added to a COMMON block. Be aware of possible impacts on the COMMON statements when deciding how to get keyword parameters from one place to another in the code. Make sure the variable names picked do not currently exist in any COMMON block, or in any subroutine that will implement the keyword record purpose. Go into subroutine GRINIT and:
+7. This step is needed if new variables were created in association with the keyword record and added to a COMMON block. Be aware of possible impacts on the COMMON statements when deciding how to get keyword parameters from one place to another in the code. Make sure the variable names picked do not currently exist in any COMMON block, or in any subroutine that will implement the keyword record purpose. Go into subroutine GRINIT and:
 
-Change the date of revision, if appropriate.
+    a. Change the date of revision, if appropriate.
 
-Make sure the labeled COMMON block containing the new variables is available through an INCLUDE statement.
+    b. Make sure the labeled COMMON block containing the new variables is available through an INCLUDE statement.
 
-Initialize the new variables to a default value for use when the keyword record is not present.
+    c. Initialize the new variables to a default value for use when the keyword record is not present.
 
-Add the new variables to subroutines GETSTD and PUTSTD. This step is needed so the FVS STOP / RESTART feature will work correctly.
+    d. Add the new variables to subroutines GETSTD and PUTSTD. This step is needed so the FVS STOP / RESTART feature will work correctly.
+
 
 # Event monitor logic {#sec-event-monitor-logic}
 
