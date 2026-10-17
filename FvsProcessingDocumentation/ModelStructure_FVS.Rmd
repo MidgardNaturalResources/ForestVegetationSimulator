@@ -1148,7 +1148,7 @@ The FVS model must go through various steps and checks in preparation for a sing
 
 The following tables document the major arrays used in each phase of projection initialization:
 
-### File Opening and I/O Management (Section 3.1) {-}
+### File Opening and I/O Management {-}
 
 ```{r section3-1-arrays, echo=FALSE}
 file_arrays <- data.frame(
@@ -1182,7 +1182,7 @@ kable(file_arrays,
   column_spec(5, width = "7cm")
 ```
 
-### Parameter Initialization (Section 3.2) {-}
+### Parameter Initialization {-}
 
 ```{r section3-2-arrays, echo=FALSE}
 init_arrays <- data.frame(
@@ -1280,7 +1280,7 @@ kable(init_arrays,
   column_spec(5, width = "7cm")
 ```
 
-### Keyword and Option Processing (Section 3.3) {-}
+### Keyword and Option Processing {-}
 
 ```{r section3-3-arrays, echo=FALSE}
 keyword_arrays <- data.frame(
@@ -1348,7 +1348,7 @@ kable(keyword_arrays,
   column_spec(5, width = "7cm")
 ```
 
-### Tree Data Reading (Section 3.5) {-}
+### Tree Data Reading {-}
 
 ```{r section3-5-arrays, echo=FALSE}
 tree_data_arrays <- data.frame(
@@ -1446,7 +1446,7 @@ kable(tree_data_arrays,
   column_spec(5, width = "7cm")
 ```
 
-### Model Calibration (Section 3.6) {-}
+### Model Calibration {-}
 
 ```{r section3-6-arrays, echo=FALSE}
 calibration_arrays <- data.frame(
@@ -1539,7 +1539,7 @@ kable(calibration_arrays,
   column_spec(5, width = "7cm")
 ```
 
-### Final Initialization (Section 3.7) {-}
+### Final Initialization {-}
 
 ```{r section3-7-arrays, echo=FALSE}
 final_init_arrays <- data.frame(
@@ -2400,7 +2400,7 @@ Step 1 happens in subroutine FVS. Subroutine FVS calls subroutine TREGRO which c
 
 The following tables document the major arrays used in the projection cycling phase:
 
-### Event Monitor and Harvest (Section 4.1) {-}
+### Event Monitor and Harvest {-}
 
 ```{r section4-1-arrays, echo=FALSE}
 evmon_harvest_arrays <- data.frame(
@@ -2493,7 +2493,7 @@ kable(evmon_harvest_arrays,
   column_spec(5, width = "7cm")
 ```
 
-### Growth and Mortality (Section 4.2) {-}
+### Growth and Mortality {-}
 
 ```{r section4-2-arrays, echo=FALSE}
 growth_mort_arrays <- data.frame(
@@ -2581,7 +2581,7 @@ kable(growth_mort_arrays,
   column_spec(5, width = "7cm")
 ```
 
-### Record Tripling and Adjustments (Section 4.3) {-}
+### Record Tripling and Adjustments {-}
 
 ```{r section4-3-arrays, echo=FALSE}
 tripling_arrays <- data.frame(
@@ -2644,7 +2644,7 @@ kable(tripling_arrays,
   column_spec(5, width = "7cm")
 ```
 
-### Tree Update (Section 4.5) {-}
+### Tree Update {-}
 
 ```{r section4-5-arrays, echo=FALSE}
 update_arrays <- data.frame(
@@ -2717,7 +2717,7 @@ kable(update_arrays,
   column_spec(5, width = "7cm")
 ```
 
-### Regeneration Establishment (Section 4.6) {-}
+### Regeneration Establishment {-}
 
 ```{r section4-6-arrays, echo=FALSE}
 regen_arrays <- data.frame(
@@ -2780,7 +2780,7 @@ kable(regen_arrays,
   column_spec(5, width = "7cm")
 ```
 
-### Crown Ratio and Width (Section 4.7) {-}
+### Crown Ratio and Width {-}
 
 ```{r section4-7-arrays, echo=FALSE}
 crown_arrays <- data.frame(
@@ -3398,7 +3398,7 @@ When all projection cycles have been completed, FVS enters the projection summar
 
 ## Detailed Input and Output Array Specifications {-}
 
-### Output Generation Arrays (Section 5.1) {-}
+### Output Generation Arrays {-}
 
 ```{r section5-1-arrays, echo=FALSE}
 output_arrays <- data.frame(
@@ -3466,7 +3466,7 @@ kable(output_arrays,
   column_spec(5, width = "7cm")
 ```
 
-### Multi-Stand Processing Arrays (Section 5.2) {-}
+### Multi-Stand Processing Arrays {-}
 
 ```{r section5-2-arrays, echo=FALSE}
 multistand_arrays <- data.frame(
@@ -3689,7 +3689,7 @@ As described in section 6.0, activities can be scheduled to occur after an event
 
 ## Detailed Input and Output Array Specifications {-}
 
-### Event Monitor Control Arrays (Section 7.1) {-}
+### Event Monitor Control Arrays {-}
 
 ```{r section7-1-arrays, echo=FALSE}
 evmon_control_arrays <- data.frame(
@@ -3757,7 +3757,7 @@ kable(evmon_control_arrays,
   column_spec(5, width = "7cm")
 ```
 
-### Expression Evaluation Arrays (Section 7.2) {-}
+### Expression Evaluation Arrays {-}
 
 ```{r section7-2-arrays, echo=FALSE}
 expr_eval_arrays <- data.frame(
@@ -4003,7 +4003,7 @@ The FVS_API is documented at https://sourceforge.net/p/open-fvs/wiki/FVS_API/
 
 ## Detailed Input and Output Array Specifications {-}
 
-### Stop/Restart Control Arrays (Section 8.1) {-}
+### Stop/Restart Control Arrays {-}
 
 ```{r section8-1-arrays, echo=FALSE}
 stoprest_control_arrays <- data.frame(
@@ -4125,7 +4125,7 @@ kable(stop_points,
   column_spec(4, width = "5cm")
 ```
 
-### Data Persistence Arrays (Section 8.2) {-}
+### Data Persistence Arrays {-}
 
 ```{r section8-2-arrays, echo=FALSE}
 persistence_arrays <- data.frame(
