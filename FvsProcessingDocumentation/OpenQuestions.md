@@ -86,3 +86,10 @@ Done: Fortran stop/restart routines verified (see list in session notes: PUTSTD/
 - [L] "Building FVS as a Shared Library" steps and the "Future Developments" list in 8.3 are unsourced; the Installation options (devtools::install_github, local install, load_all) were not tested.
 - [L] The `fvsLoad` step-by-step description and the claim that errors in FVS may not propagate cleanly to R were not checked against the rFVS code.
 - [M] The text of "Other similar routines exist for the root disease, west-wide pine beetle, and budworm extensions" matches RDPPPT/RDPPGT, BMPPPT/BMPPGT, and BWEPPPT (budworm has no BWPPPT/BWPPGT pair).
+
+## Chapter 10 (Regeneration establishment in FVS variants) vs code
+Done: full model variants named (IE, KT, EM, CI, plus AK with its own ESNUTR/ESTAB code in `ak/`), source directories named (`estb` full, `strp` partial), REGNBK value stated per variant (2.999 versus 1.000 in AK), NATURAL keyword implications added. Verified: LAUTAL, LINGRW, STOADJ and MINREP defaults for both models, THRES1 and THRES2, ESUCKR constants (0.001, tree value class 2, crown ratio 70), sprout entries in `vestb/essprt.f`, 2.95 inch maximum size, 20 year tally limit, species counts.
+- [L] The 13-step ESTAB description follows Ferguson and Carlson (1993); ESTAB and the AK versions were not read line by line (for example the "more than 10 trees per acre" rule for multiple planted-tree records, the "up to 5 trees of each species not chosen as best trees" rule, and PASSALL behavior).
+- [L] The statement that the model applies to "11 conifer species in northern Idaho and western Montana" and the calibration history for EM and CI were not checked.
+- [L] The 50-year AK regeneration period is confirmed only by a header comment in `ak/` code.
+- [L] NSPSPE: the text places it in the ESPARM code segment; the only ESPARM.F77 found with NSPSPE is `ne/common/ESPARM.F77` (NSPSPE = 82), so the location for the full-model variants was not confirmed.
