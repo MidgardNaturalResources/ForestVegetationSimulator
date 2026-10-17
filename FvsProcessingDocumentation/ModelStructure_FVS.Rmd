@@ -1173,7 +1173,7 @@ file_arrays <- data.frame(
 
 kable(file_arrays,
       col.names = c("Array/Variable", "Common Block", "Type", "Direction", "Description"),
-      caption = "File Opening and I/O Management Arrays (Section 3.1)",
+      caption = "File Opening and I/O Management Arrays",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE,
@@ -1271,7 +1271,7 @@ init_arrays <- data.frame(
 
 kable(init_arrays,
       col.names = c("Array/Variable", "Common Block", "Type", "Direction", "Description"),
-      caption = "Parameter Initialization Arrays (Section 3.2)",
+      caption = "Parameter Initialization Arrays",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE,
@@ -1339,7 +1339,7 @@ keyword_arrays <- data.frame(
 
 kable(keyword_arrays,
       col.names = c("Array/Variable", "Common Block", "Type", "Direction", "Description"),
-      caption = "Keyword and Option Processing Arrays (Section 3.3)",
+      caption = "Keyword and Option Processing Arrays",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE,
@@ -1437,7 +1437,7 @@ tree_data_arrays <- data.frame(
 
 kable(tree_data_arrays,
       col.names = c("Array/Variable", "Common Block", "Type", "Direction", "Description"),
-      caption = "Tree Data Input and Storage Arrays (Section 3.5)",
+      caption = "Tree Data Input and Storage Arrays",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE,
@@ -1530,7 +1530,7 @@ calibration_arrays <- data.frame(
 
 kable(calibration_arrays,
       col.names = c("Array/Variable", "Common Block", "Type", "Direction", "Description"),
-      caption = "Model Calibration Arrays (Section 3.6)",
+      caption = "Model Calibration Arrays",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE,
@@ -1598,7 +1598,7 @@ final_init_arrays <- data.frame(
 
 kable(final_init_arrays,
       col.names = c("Array/Variable", "Common Block", "Type", "Direction", "Description"),
-      caption = "Final Initialization Arrays (Section 3.7)",
+      caption = "Final Initialization Arrays",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE,
@@ -2484,7 +2484,7 @@ evmon_harvest_arrays <- data.frame(
 
 kable(evmon_harvest_arrays,
       col.names = c("Array/Variable", "Common Block", "Type", "Direction", "Description"),
-      caption = "Event Monitor and Harvest Arrays (Section 4.1)",
+      caption = "Event Monitor and Harvest Arrays",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE,
@@ -2572,7 +2572,7 @@ growth_mort_arrays <- data.frame(
 
 kable(growth_mort_arrays,
       col.names = c("Array/Variable", "Common Block", "Type", "Direction", "Description"),
-      caption = "Growth and Mortality Arrays (Section 4.2)",
+      caption = "Growth and Mortality Arrays",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE,
@@ -2635,7 +2635,7 @@ tripling_arrays <- data.frame(
 
 kable(tripling_arrays,
       col.names = c("Array/Variable", "Common Block", "Type", "Direction", "Description"),
-      caption = "Record Tripling Arrays (Section 4.3)",
+      caption = "Record Tripling Arrays",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE,
@@ -2708,7 +2708,7 @@ update_arrays <- data.frame(
 
 kable(update_arrays,
       col.names = c("Array/Variable", "Common Block", "Type", "Direction", "Description"),
-      caption = "Tree Update Arrays (Section 4.5)",
+      caption = "Tree Update Arrays",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE,
@@ -2771,7 +2771,7 @@ regen_arrays <- data.frame(
 
 kable(regen_arrays,
       col.names = c("Array/Variable", "Common Block", "Type", "Direction", "Description"),
-      caption = "Regeneration Establishment Arrays (Section 4.6)",
+      caption = "Regeneration Establishment Arrays",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE,
@@ -2824,7 +2824,7 @@ crown_arrays <- data.frame(
 
 kable(crown_arrays,
       col.names = c("Array/Variable", "Common Block", "Type", "Direction", "Description"),
-      caption = "Crown Ratio and Width Arrays (Section 4.7)",
+      caption = "Crown Ratio and Width Arrays",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE,
@@ -3457,7 +3457,7 @@ output_arrays <- data.frame(
 
 kable(output_arrays,
       col.names = c("Array/Variable", "Common Block", "Type", "Direction", "Description"),
-      caption = "Output Generation Arrays (Section 5.1)",
+      caption = "Output Generation Arrays",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE,
@@ -3515,7 +3515,7 @@ multistand_arrays <- data.frame(
 
 kable(multistand_arrays,
       col.names = c("Array/Variable", "Common Block", "Type", "Direction", "Description"),
-      caption = "Multi-Stand Processing Arrays (Section 5.2)",
+      caption = "Multi-Stand Processing Arrays",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE,
@@ -3748,7 +3748,7 @@ evmon_control_arrays <- data.frame(
 
 kable(evmon_control_arrays,
       col.names = c("Array/Variable", "Common Block", "Type", "Direction", "Description"),
-      caption = "Event Monitor Control Arrays (Section 7.1)",
+      caption = "Event Monitor Control Arrays",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE,
@@ -3811,7 +3811,7 @@ expr_eval_arrays <- data.frame(
 
 kable(expr_eval_arrays,
       col.names = c("Array/Variable", "Common Block", "Type", "Direction", "Description"),
-      caption = "Expression Evaluation Arrays (Section 7.2)",
+      caption = "Expression Evaluation Arrays",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE,
@@ -4067,7 +4067,7 @@ stoprest_control_arrays <- data.frame(
 
 kable(stoprest_control_arrays,
       col.names = c("Array/Variable", "Common Block", "Type", "Direction", "Description"),
-      caption = "Stop/Restart Control Arrays (Section 8.1)",
+      caption = "Stop/Restart Control Arrays",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE,
@@ -4145,7 +4145,7 @@ persistence_arrays <- data.frame(
 
 kable(persistence_arrays,
       col.names = c("Array/Variable", "Common Block", "Type", "Direction", "Description"),
-      caption = "Data Persistence Arrays (Section 8.2)",
+      caption = "Data Persistence Arrays",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE,

@@ -28,7 +28,8 @@ Most users use SQLite input and output. Planned changes:
 
 ### Batch E: stale references
 - Done: internal section-number references converted to named links; introduction roadmap rewritten; SourceForge URLs replaced with the GitHub wiki / Interface repo pages (page existence verified).
-- [M] Remaining: 18 `kable` table captions still carry "(Section X.Y)"; the Suppose/DOS sentence in the file-opening section is outdated; the `forsys.cfr.washington.edu/winsvs/manual.pdf` link in Literature Cited is unchecked.
+- Done: table captions no longer carry section numbers; Suppose/DOS sentence replaced with the FVSOnline (fvsOL) description.
+- [H] Remaining: the Literature Cited URL `http://forsys.cfr.washington.edu/winsvs/manual.pdf` (McGaughey 2002, SVS 3.30) is dead (host does not resolve). A candidate replacement is `https://www.fs.usda.gov/fmsc/ftp/fvs/docs/gtr/WinSVS3_3.pdf` (found by search, not verified from this environment). [M] The `rFVS` vs. `Suppose` comparison and the "About this Guide" Suppose paragraph have not been reviewed.
 - [M] The GitHub wiki Stop-Restart and FVS-Command-Line pages describe stop point 5 as "after growth and mortality are computed but before they are applied" and do not list `fvsRun`, `--stoppoint` year semantics, or minor stops as tested in code. The wiki may need its own correction; the Rmd text follows the code.
 
 ## Other open items
