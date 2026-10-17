@@ -93,3 +93,9 @@ Done: full model variants named (IE, KT, EM, CI, plus AK with its own ESNUTR/EST
 - [L] The statement that the model applies to "11 conifer species in northern Idaho and western Montana" and the calibration history for EM and CI were not checked.
 - [L] The 50-year AK regeneration period is confirmed only by a header comment in `ak/` code.
 - [L] NSPSPE: the text places it in the ESPARM code segment; the only ESPARM.F77 found with NSPSPE is `ne/common/ESPARM.F77` (NSPSPE = 82), so the location for the full-model variants was not confirmed.
+
+## Not yet reviewed against the code
+- Chapter 9, Structural differences in the ORGANON-FVS variants (OC and OP): not compared with the code.
+- Appendix A, Organization of the FVS Source Code: not checked against the current directories and `bin/FVS*_sourceList.txt` files.
+- Appendix B, Stand Visualization (SV): not reviewed.
+- Chapter 12, Literature Cited: only the dead McGaughey 2002 URL has been identified; references have not been checked for completeness against citations in the text.
