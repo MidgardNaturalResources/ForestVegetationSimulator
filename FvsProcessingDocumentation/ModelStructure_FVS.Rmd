@@ -4244,11 +4244,11 @@ rFVS is an R package that enables users to programmatically control and interact
 
 **Package Information:**
 
-- **Version**: 2021.05.11
+- **Version**: 2024.07.01
 - **Author**: Nicholas L. Crookston (ncrookston.fs@gmail.com)
 - **License**: MIT
 - **Requirements**: R version 4.0.0 or higher
-- **Repository**: https://github.com/MidgardNaturalResources/ForestVegetationSimulator-Interface/tree/main/rFVS
+- **Repository**: https://github.com/USDAForestService/ForestVegetationSimulator-Interface/tree/main/rFVS
 
 ### Architecture and Design
 
@@ -4266,7 +4266,7 @@ This architecture allows the FVS model to maintain its state in memory (via COMM
 
 ### Core Functions and Workflow
 
-The rFVS package provides 21 exported functions organized into functional categories:
+The rFVS package provides 24 exported functions organized into functional categories:
 
 #### Library Loading and Configuration
 
@@ -4286,19 +4286,27 @@ Loads the FVS shared library for a specific variant.
   6. Stores the loaded library name in `.FVSLOADEDLIBRARY`
 - **Returns**: Full file path of loaded library (invisibly)
 
-**`fvsSetCmdLine(cmdLine)`**
+**`fvsSetCmdLine(cl)`**
 
-Configures command-line parameters for FVS execution.
+Sets the command line passed to FVS.
 
-- Allows specification of keyword files, output files, and other runtime options
-- Must be called before initializing the simulation
+- **Parameters:** `cl` is a character string containing the FVS command line, for example `"--keywordfile=base.key"`. If it is missing, the command line arguments passed to R when it was started (including from Rscript) are used.
+- Must be called before running the simulation. Returns the FVS return code, or NULL if no command line is specified.
 
-**`fvsSetupSummary(summaryVars)`**
+**`fvsMakeKeyFile(keyFileName, runTitle, standIDs, inDataBase, outDataBase, ncycles, moreKeywords)`**
 
-Initializes summary output configuration.
+Writes a simple FVS keyword file suitable for use with `fvsLoad()`, `fvsSetCmdLine()`, and `fvsRun()`.
 
-- Specifies which summary variables to track during the simulation
-- Configures output frequency and format
+- Creates keywords for each of the stand identifiers supplied, using the input database (default `FVS_Data.db`) and output database (default `FVSOut.db`), and the number of cycles (default 10).
+- `moreKeywords` is either a character vector of keyword lines added to each stand, or a data frame whose first column is a keyword and whose other columns are the keyword fields.
+- Returns the name of the keyword file (a unique name is created if `keyFileName` is not given).
+
+**`fvsSetupSummary(asum)`**
+
+Prepares the summary table for plotting.
+
+- **Parameters:** `asum` is the table returned by `fvsGetSummary()`.
+- Adds a row for the post-thinning condition in cycles with removals, so that variables such as `Tpa` show the removal as a vertical drop, and adds cumulative total-production columns (`TPrdTpa`, `TPrdTCuFt`, `TPrdMCuFt`, `TPrdBdFt`).
 
 #### Simulation Execution
 
@@ -4327,78 +4335,52 @@ Executes the FVS simulation up to a designated stop point.
 - **End of stand**: Also returns at the end of each stand, with restart code 100 (even with code 0). The next call starts the next stand.
 - **Persistence**: A stop request stays in effect until it is changed. `fvsRun()` with no arguments does not clear it; `fvsRun(0, 0)` turns it off.
 
-**`fvsInteractRun()`**
+**`fvsInteractRun(trace, BeforeEM1, AfterEM1, BeforeEM2, AfterEM2, BeforeAdd, BeforeEstab, SimEnd)`**
 
-Runs FVS in interactive mode with user prompts.
+Runs FVS and R code together.
 
-- Useful for debugging and exploratory analysis
-- Allows step-by-step inspection of simulation progress
+- Each argument after `trace` is an optional R code block that is run at the corresponding stop point: just before and just after the first Event Monitor call (`BeforeEM1`, `AfterEM1`), just before and just after the second Event Monitor call (`BeforeEM2`, `AfterEM2`), after growth and mortality are computed but before they are applied (`BeforeAdd`), just before the regeneration establishment model (`BeforeEstab`), and at the end of each stand (`SimEnd`).
+- After each code block finishes, FVS runs to the next stop point. When `trace` is true, informative messages are written.
+- Returns a list of the stands and years simulated.
 
 #### Data Retrieval Functions
 
 **`fvsGetDims()`**
 
-Obtains dimension information about the current simulation state.
+Returns a named numeric vector of the current and maximum dimensions of FVS data storage: `ntrees`, `ncycles`, `nplots`, `maxtrees`, `maxspecies`, `maxplots`, and `maxcycles`.
 
-- Returns the number of tree records (`ntrees`)
-- Returns the number of cycles
-- Returns other array dimensions needed for data retrieval
+**`fvsGetTreeAttrs(vars)`**
 
-**`fvsGetTreeAttrs(attrNames)`**
+Retrieves attributes of the tree records.
 
-Retrieves individual tree attributes from FVS.
-
-- **Parameters:**
-  - `attrNames`: Character vector of attribute names to retrieve
-- **Process:**
-  1. Calls `fvsGetDims()` to determine number of tree records
-  2. Uses `.C()` to call C function "CfvsTreeAttr" for each attribute
-  3. Assembles results into a data frame
-- **Returns**: Data frame with one row per tree record and one column per requested attribute
-- **Available Attributes** (31 total, including):
-  - `DBH`: Diameter at breast height (inches)
-  - `Ht`: Total height (feet)
-  - `TPA`: Trees per acre
-  - `CrRatio`: Crown ratio (percent)
-  - `TCuFt`: Total cubic foot volume
-  - `MCuFt`: Merchantable cubic foot volume
-  - `BdFt`: Board foot volume
-  - `Age`: Tree age (years)
-  - `PctStk`: Percentile in basal area distribution
-  - And 22 additional attributes for defect codes, crown characteristics, etc.
+- **Parameters:** `vars` is a character vector of attribute names.
+- **Returns:** a data frame with one row per tree record and one column per requested attribute.
+- **Available attributes (lower case, 25 in all):** `id`, `species` (FVS numeric species index), `tpa`, `mort` (trees per acre predicted to die), `dbh`, `dg` (diameter growth scaled to cycle length), `ht`, `htg`, `crwdth` (crown width), `cratio`, `age`, `plot` (FVS plot index), `tcuft`, `mcuft`, `bdft`, `ptbal` (point basal area in larger trees), `bapctile` (percentile in the basal area distribution), `defect` (coded 11223344), `mgmtcd` (tree value class), `plotsize`, and `crownwt0` to `crownwt5` (weights of foliage and of crown material in the 0 to 0.25, 0.25 to 1, 1 to 3, 3 to 6, and 6 to 12 inch classes).
 
 **`fvsGetSummary()`**
 
-Retrieves stand-level summary statistics for all simulation cycles.
+Retrieves the stand-level summary statistics, one row per period.
 
-- **Returns**: Data frame with one row per cycle and 20 columns including:
-  - Temporal: `Year`, `Age`
-  - Volume: `TCuFt`, `MCuFt`, `BdFt`
-  - Density: `TPA`, `BA`, `CCF`, `TopHt`, `QMD`
-  - Growth and removal statistics
-  - Stand characteristics: `ForTyp`, `SizeCls`, `StkCls`
-- **Note**: Returns `NULL` until a simulation has been executed
+- **Returns:** a data frame with 20 columns: `Year`, `Age`, `Tpa`, `TCuFt`, `MCuFt`, `BdFt`, `RTpa`, `RTCuFt`, `RMCuFt`, `RBdFt`, `ATBA`, `ATCCF`, `ATTopHt`, `PrdLen`, `Acc`, `Mort`, `SampWt`, `ForTyp`, `SizeCls`, and `StkCls`.
+- **Note**: Returns `NULL` until a simulation has been executed.
 
 **`fvsGetStandIDs()`**
 
-Accesses stand identification information.
+Returns a named character vector with the stand identification (`standid`), stand control number (`standcn`), management identification (`mgmtid`), and `caseID` of the current stand. The values are blank until a run is started.
 
-- Returns stand ID, management ID, variant code, and other metadata
-- Useful for batch processing multiple stands
-
-**`fvsGetSpeciesCodes()`** and **`fvsGetSpeciesAttrs(speciesAttrs)`**
+**`fvsGetSpeciesCodes()` and `fvsGetSpeciesAttrs(vars)`**
 
 Retrieve species-level information.
 
-- Species codes, names, and FVS sequence numbers
-- Species-specific attributes like maximum SDI, coefficients, etc.
+- `fvsGetSpeciesCodes()` returns a data frame with one row for each species, with the internal FVS species index as the row name and the FVS (`fvs`), FIA (`fia`), and PLANTS (`plant`) codes as columns.
+- `fvsGetSpeciesAttrs(vars)` takes a character vector of attribute names and returns the species-level values, for example `spsdi` (SDI maximums), `spsiteindx` (site indices), `baimult` (basal area increment multiplier), `htgmult`, `mortmult`, and the volume specification attributes (`bfmind`, `bftopd`, `bfstmp`, `frmcls`, `bfmeth`, `mcmind`, `mctopd`, `mcstmp`, `mcmeth`).
 
-**`fvsGetEventMonitorVariables(varNames)`**
+**`fvsGetEventMonitorVariables(vars)`**
 
-Accesses values of Event Monitor variables.
+Retrieves the values of Event Monitor variables.
 
-- Retrieves pre-defined and user-defined Event Monitor variables
-- Allows inspection of stand conditions at stop points
+- **Parameters:** `vars` is a character vector of variable names (for example `c("year", "atpa", "aba")`).
+- Retrieves pre-defined and user-defined Event Monitor variables; a variable that is not defined is returned as NA.
 
 **`fvsGetRestartcode()`**
 
@@ -4411,117 +4393,104 @@ Obtains the current restart status code.
 
 Retrieve Stand Visualization System (SVS) data.
 
-- Dimensions of SVS object arrays
-- 3D tree positions and crown dimensions for visualization
+- `fvsGetSVSDims()` returns the maximum dimensions of the SVS data storage.
+- `fvsGetSVSObjectSet()` returns a named list of data frames of trees, snags, and coarse woody debris; the data frames are empty until a run is made using SVS.
 
-**`fvsGetUnitConversion()` / `fvsUnitConversion()`**
+**`fvsUnitConversion(name)`**
 
-Provides unit conversion factors.
-
-- Convert between English and metric units
-- Access FVS internal conversion factors
+Returns an FVS unit conversion factor by name (for example `"MtoFT"`, `"INtoCM"`, `"ACRtoHA"`, or `"M2pHAtoFT2pACR"`); see the help page for the full list.
 
 #### Data Modification Functions
 
-**`fvsAddTrees(treeData)`**
+**`fvsAddTrees(newtrees)`**
 
-Inserts new tree records into the simulation.
+Adds new tree records to the simulation.
 
-- **Parameters:**
-  - `treeData`: Data frame with tree attributes (DBH, height, TPA, species, etc.)
+- **Parameters:** `newtrees` is a data frame with the columns `dbh` (inches), `species` (FVS species index, see `fvsGetSpeciesCodes()`), `ht` (feet), `cratio` (percent), `plot` (plot index), and `tpa` (trees per acre). No missing values are allowed.
 - **Use Cases:**
   - Modeling regeneration from external models
   - Adding underplanting prescriptions
-  - Incorporating inventory data collected mid-simulation
 - **Stop point**: Call only at stop point 6 or 7. FVS does not check the stop point.
+- Returns 0 if the trees were added and 1 if there was an error.
 
 **`fvsCutNow(propcut)`**
 
-Specifies a thinning for the current cycle as the proportion of each tree record to cut.
+Specifies a thinning for the current cycle as the proportion of each tree record's trees per acre to cut. A single value is applied to every tree record; a vector gives one proportion per record.
 
 - Can only be called at stop point 2; R stops with an error otherwise
+- The thinning is carried out using the THINPRSC keyword and can be combined with other thinning keywords such as MINHARV and YARDLOSS.
 
-**`fvsSetTreeAttrs(treeIndex, attrName, value)` / `fvsSetTreeAttr()`**
+**`fvsSetTreeAttrs(vars)`**
 
-Modifies attributes of individual tree records.
+Modifies attributes of the tree records.
 
-- Allows programmatic manipulation of tree data
-- Can be used to model external disturbances, growth responses, or genetic improvements
+- **Parameters:** `vars` is a named list of numeric vectors, where each name is an attribute (see `fvsGetTreeAttrs()`) and each vector holds a value for every tree record, in order. A typical use is to get attributes with `fvsGetTreeAttrs()`, change them, and pass the result back.
+- Returns 0 if the attributes were set and 1 if there was an error.
 - **Important**: Changes should be compatible with FVS model assumptions
 
-**`fvsSetSpeciesAttrs(speciesCode, attrName, value)` / **`fvsSetSpeciesAttr()`**
+**`fvsSetSpeciesAttrs(vars)`**
 
-Modifies species-level parameters.
+Modifies species-level data.
 
-- Change growth equation coefficients
-- Adjust species-specific multipliers
+- **Parameters:** `vars` is a named list of numeric vectors, where each name is a species attribute (see `fvsGetSpeciesAttrs()`) and each vector holds a value for every species, in order.
+- Examples include basal area increment, height growth, and mortality multipliers, site indices, and SDI maximums.
 - **Caution**: Should only be used by those familiar with FVS internals
 
-**`fvsAddActivity(activityCode, parameters)`**
+**`fvsAddActivity(year, activity, parms)`**
 
-Registers management activities programmatically.
+Adds an activity to the FVS activity schedule.
 
-- Schedules thinning, planting, fertilization, etc.
-- Equivalent to keyword records but callable from R
-- Allows conditional scheduling based on R analytics
+- **Parameters:** `year` is the year the activity is scheduled, `activity` is an activity code (a number or a character string such as `"base_thindbh"`), and `parms` is a numeric vector of the activity parameters.
+- Called with no arguments, it returns a named vector of the possible activity codes.
+- Returns 0 if the activity was added and 1 if there was an error.
 
-**`fvsSetEventMonitorVariables(varName, value)`**
+**`fvsSetEventMonitorVariables(vars)`**
 
-Configures Event Monitor variable values.
+Sets the values of Event Monitor variables.
 
-- Sets user-defined variables
-- Can trigger conditional Event Monitor logic
+- **Parameters:** `vars` is a named numeric vector (for example `c("myaba" = 100, "another" = 40)`).
+- Sets user-defined variables, which can then be used in Event Monitor expressions
+- Returns a named numeric vector of the variables, with NA for a variable name that does not exist
 
 #### Utility Functions
 
-**`fvsCompositeSum(summaryData)`**
+**`fvsCompositeSum(allsum)`**
 
-Aggregates summary data across multiple simulations.
+Builds a composite summary table from a list of summary tables.
 
-- Useful for sensitivity analyses and Monte Carlo simulations
-- Computes means, standard deviations, and other statistics across runs
+- **Parameters:** `allsum` is a list of tables returned by `fvsGetSummary()`.
+- The composite is a weighted average of the values for the years that are common to all of the tables.
 
 ### Typical Workflow
 
-A typical rFVS workflow follows this sequence:
+The following sketch of an rFVS session uses the function signatures documented above. It has not been run; the file names are placeholders.
 
 ```r
 # 1. Load the FVS shared library
 library(rFVS)
-fvsLoad("FVSie", bin = "/path/to/fvs/bin")
+fvsLoad(fvsProgram = "FVSie", bin = "/path/to/fvs/bin")
 
 # 2. Set up the simulation
-fvsSetCmdLine("mystand.key")
-fvsSetupSummary(c("Year", "BA", "TPA", "TCuFt"))
+fvsSetCmdLine("--keywordfile=base.key")
 
-# 3. Run initialization (stop at point 7 to inspect input data)
-returnCode <- fvsRun(stopPointCode = 7, stopPointYear = 0)
+# 3. Run to stop point 2 (just after the first Event Monitor call)
+#    in the cycle that contains the year 2025
+fvsRun(2, 2025)
 
-# 4. Retrieve and inspect initial tree data
-initialTrees <- fvsGetTreeAttrs(c("DBH", "Ht", "TPA", "Species"))
-print(summary(initialTrees))
+# 4. Inspect the stand
+fvsGetStandIDs()
+fvsGetEventMonitorVariables(c("year", "bba"))
+trees <- fvsGetTreeAttrs(c("dbh", "ht", "tpa"))
 
-# 5. Continue simulation to first cycle
-returnCode <- fvsRun(stopPointCode = 1, stopPointYear = 2025)
+# 5. Conditionally specify a thinning for this cycle
+bba <- fvsGetEventMonitorVariables("bba")
+if (!is.na(bba) && bba > 150) fvsCutNow(0.25)
 
-# 6. Check stand conditions and conditionally schedule treatment
-beforeThin <- fvsGetSummary()
-if (beforeThin$BA[beforeThin$Year == 2025] > 150) {
-  fvsAddActivity("THINBBA", list(targetBA = 100, year = 2025))
-}
+# 6. Turn the stop point off and run to the end of the stand
+fvsRun(0, 0)
 
-# 7. Run to the end of the stand
-returnCode <- fvsRun(stopPointCode = 0, stopPointYear = 0)
-
-# 8. Retrieve final results
-finalSummary <- fvsGetSummary()
-finalTrees <- fvsGetTreeAttrs(c("DBH", "Ht", "TPA"))
-
-# 9. Analyze and visualize results
-library(ggplot2)
-ggplot(finalSummary, aes(x = Year, y = BA)) +
-  geom_line() +
-  labs(title = "Basal Area Trajectory", y = "Basal Area (sq ft/ac)")
+# 7. Retrieve and prepare the summary
+summaryTable <- fvsSetupSummary(fvsGetSummary())
 ```
 
 ### Integration with FVS API and Stop/Restart
@@ -4561,70 +4530,28 @@ All FVS API functions documented at https://github.com/USDAForestService/ForestV
 
 **Sensitivity Analysis:**
 
-rFVS enables efficient sensitivity analyses by programmatically varying input parameters:
+rFVS enables sensitivity analyses by changing model parameters at a stop point and comparing the summaries. The following sketch, which has not been run, varies the basal area increment multiplier for all species:
 
 ```r
-# Vary initial density and observe long-term volume production
-densityLevels <- seq(200, 800, by = 100)
-results <- data.frame()
-
-for (tpa in densityLevels) {
-  fvsLoad("FVSie")
-  fvsSetCmdLine("basestand.key")
-
-  # Modify initial TPA
-  trees <- read.csv("trees.csv")
-  trees$TPA <- trees$TPA * (tpa / sum(trees$TPA))
-  fvsAddTrees(trees)
-
-  fvsRun(0, 0)
-  summary <- fvsGetSummary()
-  summary$InitialTPA <- tpa
-  results <- rbind(results, summary)
+results <- list()
+for (m in c(0.8, 1.0, 1.2)) {
+  fvsSetCmdLine("--keywordfile=base.key")
+  fvsRun(7, 0)                       # stop after input is read
+  vars <- fvsGetSpeciesAttrs("baimult")
+  vars$baimult[] <- m
+  fvsSetSpeciesAttrs(vars)
+  fvsRun(0, 0)                       # run to the end of the stand
+  results[[as.character(m)]] <- fvsGetSummary()
 }
-
-# Analyze optimal initial density
-library(dplyr)
-results %>%
-  filter(Year == max(Year)) %>%
-  ggplot(aes(x = InitialTPA, y = TCuFt)) +
-  geom_line() +
-  labs(title = "Long-term Volume vs. Initial Density")
 ```
 
-**Optimization of Management Schedules:**
+**Management Schedules:**
 
-Combine rFVS with R's optimization packages to find optimal thinning schedules:
+Activities can be added from R with `fvsAddActivity()`, so a schedule can be tested, scored, and changed by an R optimization routine. The call below is adapted from the help page for `fvsAddActivity()` and schedules a diameter-limit thinning and a yard loss in 1993; call `fvsAddActivity()` with no arguments to list the possible activity codes.
 
 ```r
-library(DEoptim)  # Differential Evolution optimization
-
-# Objective function: maximize board foot yield
-objective <- function(params) {
-  thinYear1 <- params[1]
-  thinYear2 <- params[2]
-  thinBA1 <- params[3]
-  thinBA2 <- params[4]
-
-  fvsLoad("FVSpn")
-  fvsSetCmdLine("stand.key")
-  fvsRun(7, 0)  # Initialize
-
-  fvsAddActivity("THINBBA", list(year = thinYear1, targetBA = thinBA1))
-  fvsAddActivity("THINBBA", list(year = thinYear2, targetBA = thinBA2))
-
-  fvsRun(0, 0)
-  results <- fvsGetSummary()
-
-  # Return negative (for minimization) of final board foot volume
-  return(-results$BdFt[nrow(results)])
-}
-
-# Optimize
-optimal <- DEoptim(objective,
-                   lower = c(10, 20, 60, 80),  # Min values
-                   upper = c(15, 30, 100, 120), # Max values
-                   control = list(itermax = 100))
+fvsAddActivity(1993, "base_yardloss", c(0.50, 0.70, 0.50))
+fvsAddActivity(1993, "base_thindbh", c(0.00, 12.00, 1.00, 0.00, 0.00))
 ```
 
 **Coupling with External Models:**
@@ -4638,32 +4565,21 @@ rFVS can be coupled with external ecological or economic models:
 
 **Monte Carlo Simulation:**
 
-Assess uncertainty by running many stochastic realizations:
+Uncertainty can be assessed by running many realizations with randomly varied inputs. The following sketch, which has not been run, scales the species site indices:
 
 ```r
-# Propagate uncertainty in site index through projections
-nSims <- 1000
-results <- list()
-
+nSims <- 100
+results <- vector("list", nSims)
 for (i in 1:nSims) {
-  # Sample site index from distribution
-  siteIndex <- rnorm(1, mean = 90, sd = 10)
-
-  fvsLoad("FVSie")
-  fvsSetCmdLine("stand.key")
-  # Set site index via keyword or modification
+  fvsSetCmdLine("--keywordfile=base.key")
+  fvsRun(7, 0)                       # stop after input is read
+  vars <- fvsGetSpeciesAttrs("spsiteindx")
+  vars$spsiteindx <- vars$spsiteindx * rnorm(1, mean = 1, sd = 0.1)
+  fvsSetSpeciesAttrs(vars)
   fvsRun(0, 0)
-
   results[[i]] <- fvsGetSummary()
 }
-
-# Analyze distribution of outcomes
-allResults <- bind_rows(results, .id = "sim")
-allResults %>%
-  filter(Year == 50) %>%
-  ggplot(aes(x = TCuFt)) +
-  geom_histogram() +
-  labs(title = "Distribution of 50-year Volume Predictions")
+composite <- fvsCompositeSum(results)
 ```
 
 ### Installation and Configuration
@@ -4682,7 +4598,7 @@ allResults %>%
 
 ```r
 # Option 1: Install from GitHub (if available as package)
-# devtools::install_github("MidgardNaturalResources/ForestVegetationSimulator-Interface",
+# devtools::install_github("USDAForestService/ForestVegetationSimulator-Interface",
 #                          subdir = "rFVS")
 
 # Option 2: Install from local source
@@ -4709,15 +4625,13 @@ General steps:
 ```
 rFVS/
 ├── DESCRIPTION          # Package metadata
-├── NAMESPACE           # Exported functions
-├── R/                  # R source code (21 function files)
+├── R/                  # R source code (23 function files)
 │   ├── fvsLoad.R
 │   ├── fvsRun.R
 │   ├── fvsGetTreeAttrs.R
 │   ├── fvsGetSummary.R
 │   └── ...
 ├── tests/              # Test suite
-├── man/                # Documentation (auto-generated from Roxygen2)
 └── makefile            # Build automation
 ```
 
@@ -4728,12 +4642,6 @@ rFVS/
 - **FVSOnline**: Web-based interface using Shiny; good for single-run analyses and learning
 - **rFVS**: Programmatic R package; better for batch processing, optimization, and advanced analytics
 - Both use the same underlying FVS shared library
-
-**rFVS vs. Suppose:**
-
-- **Suppose**: Desktop GUI application; keyword file builder and single-run executor
-- **rFVS**: R package for programmatic control; no GUI but much more flexible
-- Suppose generates keyword files that can be used by rFVS
 
 **rFVS vs. Command-Line FVS:**
 
@@ -4764,8 +4672,7 @@ rFVS/
 **Error Handling:**
 
 - Errors in FVS may not always propagate cleanly to R
-- Check return codes from `fvsRun()` after each call
-- Use `fvsGetRtnCode()` to diagnose problems
+- Check the return code returned by `fvsRun()` after each call (0 is normal, 1 is an error, and 2 means all stands have been processed)
 
 **Documentation:**
 
@@ -4788,7 +4695,7 @@ Ongoing and potential future developments for rFVS include:
 
 ### References and Resources
 
-- **rFVS Repository**: https://github.com/MidgardNaturalResources/ForestVegetationSimulator-Interface/tree/main/rFVS
+- **rFVS Repository**: https://github.com/USDAForestService/ForestVegetationSimulator-Interface/tree/main/rFVS
 - **FVS API Documentation**: https://github.com/USDAForestService/ForestVegetationSimulator/wiki/FVS-API
 - **FVS Stop/Restart**: https://github.com/USDAForestService/ForestVegetationSimulator/wiki/Stop-Restart
 - **FVS Command Line Options**: https://github.com/USDAForestService/ForestVegetationSimulator/wiki/FVS-Command-Line

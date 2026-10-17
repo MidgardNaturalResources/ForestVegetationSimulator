@@ -78,3 +78,11 @@ Done: ALGKEY typo; TSTV1 to TSTV5 dimension rule (all sized by MXTST1 to MXTST5 
 ## Process notes
 - `FvsProcessingDocumentation/stop-hook-git-check.sh` is a copy of the session stop hook placed there for review. It is untracked; decide whether to commit it, delete it, or exclude it.
 - Standing instruction: ask for approval before any file change, commit, or push.
+
+## Chapter 8 (Stop/restart and the FVS API) vs code and rFVS
+Done: Fortran stop/restart routines verified (see list in session notes: PUTSTD/GETSTD, putgetsubs, STASH, extension put/get routines, cmdline entries; STOP only in MAIN). rFVS section updated against the rFVS source (Interface repo, DESCRIPTION version 2024.07.01, 23 R files, 24 exported functions): function names and arguments, tree and species attribute names, summary columns, `fvsGetDims` values, `fvsSetupSummary`, `fvsMakeKeyFile`, `fvsUnitConversion`, examples rewritten (untested), repository link changed to USDAForestService/ForestVegetationSimulator-Interface, Suppose comparison removed.
+- [M] The rFVS help for `fvsRun` says `stopPointYear` is ignored for stop point 7; the Rmd (from tests with a built FVSie) says a year above 0 must be in the first cycle. The two sources disagree.
+- [L] The rFVS examples in the Rmd were written from the function help pages and have not been run (R is not installed here).
+- [L] "Building FVS as a Shared Library" steps and the "Future Developments" list in 8.3 are unsourced; the Installation options (devtools::install_github, local install, load_all) were not tested.
+- [L] The `fvsLoad` step-by-step description and the claim that errors in FVS may not propagate cleanly to R were not checked against the rFVS code.
+- [M] The text of "Other similar routines exist for the root disease, west-wide pine beetle, and budworm extensions" matches RDPPPT/RDPPGT, BMPPPT/BMPPGT, and BWEPPPT (budworm has no BWPPPT/BWPPGT pair).
