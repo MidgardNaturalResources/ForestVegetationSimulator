@@ -64,17 +64,17 @@ Users wanting to interface with FVS using the Suppose graphical user interface s
 
 The Forest Vegetation Simulator (FVS) is a model used for predicting forest stand dynamics that is used extensively in the United States. User’s guides exist for those people interested in running their data through FVS (Dixon 2002, VanDyck and Smith-Mateja 2000) and model relationships specific to geographic variants are presented in the various variant overview guides (e.g. Keyser and Dixon 2008). However, formal technical documentation of the programming flow and logic has not been previously available in a consolidated place. This document provides this type of documentation for the FVS base model including the regeneration establishment and event monitor extensions. Some mention will be made of other FVS extensions, such as the database extension, where appropriate.
 
-Sections 2.0 through 2.2 of this document discuss general FVS structure and programming considerations. Sections 3.0 through 5.2 are generally arranged in the order that FVS processes a stand. Sections 6.0 through 8.0, and section 10.0, are devoted entirely to describing the program flow and logic in a particular section of the FVS code, or a particular FVS feature. Section 9.0 describes structural differences in the two ORGANON-FVS variants.
+[General Flow Overview](#sec-general-flow-overview) discusses general FVS structure and programming considerations. [Projection Initialization Phase](#sec-projection-initialization-phase), [Projection Cycling Phase](#sec-projection-cycling-phase), and [Projection Summarization Phase](#sec-projection-summarization-phase) are arranged in the order that FVS processes a stand. [Option Processing Logic](#sec-option-processing-logic), [Event monitor logic](#sec-event-monitor-logic), [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api), and [Regeneration establishment in FVS variants](#sec-regeneration-establishment-in-fvs-variants) are devoted entirely to describing the program flow and logic in a particular section of the FVS code, or a particular FVS feature. [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants) describes structural differences in the two ORGANON-FVS variants. [Database Input and Output Extension](#sec-database-input-and-output-extension) describes the database extension, including SQLite input and output.
 
-# General Flow Overview
+# General Flow Overview {#sec-general-flow-overview}
 
 The general processing sequence for FVS is shown in figure 2-1 and discussed in section 3.4 of the EFVS guide. Each of the major task groupings shown in this processing sequence will be further broken down in following sections.
 
 FVS can process a single stand in one model run or many stands in one model run. When running FVS there are two processing modes, serial or parallel. A serial run occurs when each stand is processed to completion before the next stand starts. A parallel run occurs when all the stands are processed up to a common stopping year, typically before the end of the projection, and then the program is stopped. Other processes can then be run that can include the creation of information FVS can use when a simulation is resumed. Once the simulation resumes, all the stands are processed up to the next common stopping point or the end of the projection.
 
-Prior to about 2012, running stands in the parallel mode required the use of a separate version of FVS that included the Parallel Processing Extension (PPE, Crookston and Stage, 1991).  However, given the complexity of that program and its lack of use, The PPE was removed and FVS was modified to include the ability to stop and restart itself. This will be discussed in further detail in section 8.0.
+Prior to about 2012, running stands in the parallel mode required the use of a separate version of FVS that included the Parallel Processing Extension (PPE, Crookston and Stage, 1991).  However, given the complexity of that program and its lack of use, The PPE was removed and FVS was modified to include the ability to stop and restart itself. This will be discussed in further detail in [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api).
 
-Most of this document is devoted to explaining the processing sequence for a single stand serial model run. A multiple stand serial model run follows the same processing sequence as a single stand serial model run, repeated for each stand. A parallel model run follows virtually the same flow as its serial counterpart for each stand in the projection initialization, projection cycling, and projection summarization phases. Details on how this is accomplished are covered in section 8.0.
+Most of this document is devoted to explaining the processing sequence for a single stand serial model run. A multiple stand serial model run follows the same processing sequence as a single stand serial model run, repeated for each stand. A parallel model run follows virtually the same flow as its serial counterpart for each stand in the projection initialization, projection cycling, and projection summarization phases. Details on how this is accomplished are covered in [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api).
 
 The general processing flow for a single stand serial model run can be broken down into three phases. The projection initialization phase gets the stand ready to run; the projection cycling phase projects the stand through time; and the projection summarization phase produces the output reports.
 
@@ -969,9 +969,9 @@ The NODEBUG keyword record can be used to turn the internal debug feature off. I
 
 FVS makes heavy use of labeled COMMON blocks to make data available throughout the program. The COMMON block name gives an indication of the types of variables the COMMON block contains. For example, the PLOT labeled COMMON block contains plot level variables such as slope, aspect, elevation, and basal area per acre, while the ARRAYS labeled COMMON block contains individual tree arrays such as diameter at breast height, total tree height, and trees per acre that the tree record represents. Labeled COMMON blocks are the same across all geographic variants. An effort is made to provide variable definitions via comment statements within each labeled COMMON block for all variables contained in the labeled COMMON.
 
-Many computer scientists discourage the use of COMMON blocks. However, FVS uses them for more than simple historical purposes and wholesale removal of them in favor of some other construct would break some model features. A key feature involves the ability to stop the program and restart it from the point where it left off (see section 8.0). COMMON blocks are like global structures in C; judicious use is often the only viable alternative to getting the job done.
+Many computer scientists discourage the use of COMMON blocks. However, FVS uses them for more than simple historical purposes and wholesale removal of them in favor of some other construct would break some model features. A key feature involves the ability to stop the program and restart it from the point where it left off (see [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)). COMMON blocks are like global structures in C; judicious use is often the only viable alternative to getting the job done.
 
-Some variants utilize variables that are unique to the variant. The VARCOM labeled COMMON block was created to pass variant-specific variables. However, other even more variant-specific labeled COMMON blocks have been created over the years: CICOM is used in the CI variant; EMCOM is used in the EM variant; GGCOM is used in variants that use the GENGYM model logic; TWIGCOM is used in variants that use the Twigs model logic; and ORGANON is used in the two variants that use the ORGANON model logic (see section 9.0). These variant-specific COMMON blocks tend to be very small.
+Some variants utilize variables that are unique to the variant. The VARCOM labeled COMMON block was created to pass variant-specific variables. However, other even more variant-specific labeled COMMON blocks have been created over the years: CICOM is used in the CI variant; EMCOM is used in the EM variant; GGCOM is used in variants that use the GENGYM model logic; TWIGCOM is used in variants that use the Twigs model logic; and ORGANON is used in the two variants that use the ORGANON model logic (see [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants)). These variant-specific COMMON blocks tend to be very small.
 
 Global array dimensions and other controlling scalars are set in parameter statements in the PRGPRM, ESPARM, and other similar code segments. These code segments are variant-specific and set dimensions such as the total number of tree records allowed in the simulation, the number of species contained in the variant, and the FVS sequence numbers for which species will automatically regenerate (sprout) following harvesting.
 
@@ -987,15 +987,15 @@ A unique 2-character alpha code identifies which variant is being run. For examp
 
 ### General Model Architecture
 
-Three types of input data are needed by FVS: 1) data containing information communicating FVS parameter settings and what the user wants FVS to do, 2) data communicating stand-level information, and 3) data containing information about the individual tree inventory. The second and third type of information can be read directly out of a database, or contained in two external files called the keyword record file and tree data file. These two external files will be referred to throughout this document but keep in mind the data could easily come from a database instead. However, even when a database is used, the keyword record file is required and controls the basic input, even if it is brief. There is one exception. The stop and restart capability of FVS is discussed in section 8.0. When a restart file is used to start FVS from where it left off, a keyword record file is not used.
+Three types of input data are needed by FVS: 1) data containing information communicating FVS parameter settings and what the user wants FVS to do, 2) data communicating stand-level information, and 3) data containing information about the individual tree inventory. The second and third type of information can be read directly out of a database, or contained in two external files called the keyword record file and tree data file. These two external files will be referred to throughout this document but keep in mind the data could easily come from a database instead. However, even when a database is used, the keyword record file is required and controls the basic input, even if it is brief. There is one exception. The stop and restart capability of FVS is discussed in [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api). When a restart file is used to start FVS from where it left off, a keyword record file is not used.
 
-Users set projection parameters and communicate management activities to FVS through the use of keyword records. Keyword records containing parameter and stand-level information are handled differently than those indicating management activities. How FVS processes keyword records will be discussed in section 3.3.
+Users set projection parameters and communicate management activities to FVS through the use of keyword records. Keyword records containing parameter and stand-level information are handled differently than those indicating management activities. How FVS processes keyword records will be discussed in [Processing keyword record requests](#sec-processing-keyword-record-requests).
 
-Management activities can be scheduled by year, projection cycle, or by defining a condition using an IF-THEN-ENDIF keyword record sequence. Conceptually there is an activity schedule table inside FVS where each row corresponds to a particular management activity and the columns correspond to the parameters associated with that management activity including the year it is scheduled. As keyword records get processed in the projection initialization phase, activities will be posted to the activity schedule table. During the projection cycling phase stand conditions will be monitored and any management activities scheduled by condition will be posted to the activity schedule table if the condition is satisfied. Each projection cycle the activity schedule table is consulted to see if any management activities need to be done. Some activities may not get done for various reasons. Activities get tagged as “DONE”, “NOT DONE”, or “CANCELLED” depending upon their disposition (see section 3.3.1.3 for more information on this topic).
+Management activities can be scheduled by year, projection cycle, or by defining a condition using an IF-THEN-ENDIF keyword record sequence. Conceptually there is an activity schedule table inside FVS where each row corresponds to a particular management activity and the columns correspond to the parameters associated with that management activity including the year it is scheduled. As keyword records get processed in the projection initialization phase, activities will be posted to the activity schedule table. During the projection cycling phase stand conditions will be monitored and any management activities scheduled by condition will be posted to the activity schedule table if the condition is satisfied. Each projection cycle the activity schedule table is consulted to see if any management activities need to be done. Some activities may not get done for various reasons. Activities get tagged as “DONE”, “NOT DONE”, or “CANCELLED” depending upon their disposition (see [Keyword records that need to be scheduled](#sec-keyword-records-that-need-to-be-scheduled) for more information on this topic).
 
-How FVS processes tree input data will be discussed in section 3.5. Data for individual tree records is kept in various arrays in the ARRAYS labeled COMMON block. These arrays get updated as the projection progresses through time and summarized across all tree records to calculate stand level statistics. For example, one key variable, PROB(i), where “i” is the tree record index, is the number of trees per acre that the tree record represents. This variable is used extensively throughout the model.
+How FVS processes tree input data will be discussed in [Reading stand and tree record input data](#sec-reading-stand-and-tree-record-input-data). Data for individual tree records is kept in various arrays in the ARRAYS labeled COMMON block. These arrays get updated as the projection progresses through time and summarized across all tree records to calculate stand level statistics. For example, one key variable, PROB(i), where “i” is the tree record index, is the number of trees per acre that the tree record represents. This variable is used extensively throughout the model.
 
-### Code Organization and Linking Considerations
+### Code Organization and Linking Considerations {#sec-code-organization-and-linking-considerations}
 
 There are about 25 different geographic variants of FVS either used or under development in the United States. An efficient source code system avoiding duplication cuts down on maintenance requirements and speeds up change implementation. For example, if an equation is changed in a subroutine that is used in all variants, it is more efficient to change it in one place and have that change implemented in all 25 variants rather than having to change it in all 25 variants. This is the motivation behind the FVS code storage structure shown in Appendix A.
 
@@ -1003,7 +1003,7 @@ Individual code segments are linked together to form an FVS executable program. 
 
 With the code structure of FVS it is a simple matter to change some of the model limits specified in the PRGPRM code segments. For example, the default number of tree records allowed in FVS is limited to 3000. To change this, first change it in PRGPRM and then re-compile the source code and re-link the program executable. While this limit can be increased or decreased, it should not be reduced below about 1000 to maintain statistical properties of the model and because some of the work arrays dimensioned by this variable are used for other purposes. This fact may indeed be unfortunate and should be changed, but it is a current reality. Also, it should be kept as a multiple of 3 (e.g. 999 or 1002) to be consistent with the model’s record tripling process.
 
-### Accessing Tree Records
+### Accessing Tree Records {#sec-accessing-tree-records}
 
 FVS has a tree list that holds up to 3000 tree records (the default limit). The number of tree records in a simulation during any cycle can vary depending on the number of tree data records input, record tripling, harvesting, mortality, and regeneration. Knowing how to efficiently access the tree information is important for programming efficiency.
 
@@ -1082,7 +1082,7 @@ C----------
 
 ## The Main FVS Routine
 
-The main routine for the FVS model is appropriately called PROGRAM MAIN.  MAIN calls subroutine fvsSetCmdLine (the source code for this subroutine is part of the source code of subroutine CMDLINE) to retrieve any options that may, optionally, have been specified in the command that starts FVS (those may include the name of the keyword record file, the name of the restart file, or parameters that control stopping points (see section 8.0).  PROGRAM MAIN is very short and most programmers can ignore it. It calls one major subroutine, named FVS, which orchestrates all other subroutines, and it contains the only STOP statement in the program. In short, subroutine FVS contains what was once the MAIN program. This top-level organization was introduced in about 2010 to support the use of FVS as a shared library that is called by other upper-level programs (see section 8.0).
+The main routine for the FVS model is appropriately called PROGRAM MAIN.  MAIN calls subroutine fvsSetCmdLine (the source code for this subroutine is part of the source code of subroutine CMDLINE) to retrieve any options that may, optionally, have been specified in the command that starts FVS (those may include the name of the keyword record file, the name of the restart file, or parameters that control stopping points (see [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)).  PROGRAM MAIN is very short and most programmers can ignore it. It calls one major subroutine, named FVS, which orchestrates all other subroutines, and it contains the only STOP statement in the program. In short, subroutine FVS contains what was once the MAIN program. This top-level organization was introduced in about 2010 to support the use of FVS as a shared library that is called by other upper-level programs (see [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)).
 
 As part of its projection initialization phase, subroutine FVS calls subroutines to perform the following tasks:
 
@@ -1090,7 +1090,7 @@ check (again) for command line options,
 
 check for return codes that may have been set at various stages,
 
-check for restart codes causing the program to restart from a previously created stop point file if specified on the command line (a restart from stop point 7 resumes at the model calibration step; any other restart code resumes in the projection cycling phase; see section 8.0),
+check for restart codes causing the program to restart from a previously created stop point file if specified on the command line (a restart from stop point 7 resumes at the model calibration step; any other restart code resumes in the projection cycling phase; see [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)),
 
 open the key input and output files that will be required for the projection,
 
@@ -1108,7 +1108,7 @@ expand the tree data to a trees per acre basis based on the specified sample des
 
 initialize any data needed by extensions such as the root disease and insect models,
 
-process stop point 7 (see section 8.0),
+process stop point 7 (see [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)),
 
 calibrate internal equations to match the incoming tree data,
 
@@ -1136,11 +1136,11 @@ As part of the projection summarization phase, subroutine FVS calls various subr
 
 Subroutine FVS then returns to its caller, PROGRAM MAIN (or the calling program when FVS is a shared library), which calls FVS again for the next stand and the sequence is repeated. The run ends when the next call finds no more stands.
 
-A logical variable, LSTART, has a value of “.TRUE.” during the projection initialization phase and “.FALSE.” when that phase is completed. This variable is used extensively during model calibration, discussed in section 3.6, to control program logic flow.
+A logical variable, LSTART, has a value of “.TRUE.” during the projection initialization phase and “.FALSE.” when that phase is completed. This variable is used extensively during model calibration, discussed in [Model calibration and other setup tasks](#sec-model-calibration-and-other-setup-tasks), to control program logic flow.
 
-The differences in program flow for a parallel run will be discussed in section 8.0.
+The differences in program flow for a parallel run will be discussed in [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api).
 
-# Projection Initialization Phase
+# Projection Initialization Phase {#sec-projection-initialization-phase}
 
 The FVS model must go through various steps and checks in preparation for a single stand growth projection. Model parameters and variables must be initialized to their default starting values. User model controls must be input and stored. Tree data (if any) must be input, any missing data values filled in, and the data expanded to a per-acre basis. Self-calibration of model equations to the input data needs to take place. Once this phase is completed FVS is calibrated to local stand conditions, knows what projection to make in terms of projection length, management actions, model output, and other user instructions, and has the tree data to make it. Upon completion of the projection initialization phase, tree data may not yet exist if this is a bare ground projection.
 
@@ -1611,7 +1611,7 @@ kable(final_init_arrays,
 
 FVS needs to open various input and output files that are required in a projection and establish database connections if stand or tree data is coming from a database. When the keyword record file name is not specified as a command line option, FVS will prompt users for 6 file names. These names can be provided via keyboard input or the names can be supplied in a response file. When running FVS through the Suppose interface, Suppose builds a batch file and runs FVS via DOS commands and supplies the answers to the prompts. If run from FVSOnline, a new FVS interface (code is at https://sourceforge.net/p/open-fvs/code/HEAD/tree/rFVS/shinyFVSOnline/ and more information is at https://sourceforge.net/p/open-fvs/wiki/FVSOnline/), command line options are used to specify input file names.
 
-The first file opened is the file containing FVS keyword records, referred to as the “keyword record file” (or simply “keyword file”). A keyword record file is required to make an FVS projection. A detailed description of the keyword record file can be found in section 4.1 of the EFVS guide. How FVS reads this file will be discussed in sections 3.3 and 3.4 of this document.
+The first file opened is the file containing FVS keyword records, referred to as the “keyword record file” (or simply “keyword file”). A keyword record file is required to make an FVS projection. A detailed description of the keyword record file can be found in section 4.1 of the EFVS guide. How FVS reads this file will be discussed in [Processing keyword record requests](#sec-processing-keyword-record-requests) and [Processing event monitor instructions](#sec-processing-event-monitor-instructions) of this document.
 
 If needed, the second file opened is a file containing individual tree data records, referred to as the “tree data file”. A detailed description of the tree data file is provided in section 4.2 of the EFVS guide.  A tree data file is not required when making a bare ground simulation or when all of the tree data will be read from a database table. In these instances, the file name “NUL” (or /dev/null on Unix-like platforms) should be specified for the tree data file name if FVS prompts for it. In a bare ground simulation the NOTREES keyword record must also be included as one of the keyword records in the keyword record file.
 
@@ -1625,7 +1625,7 @@ Subroutine fvsSetCmdLine (source code contained in subroutine CMDLINE) then call
 
 Programmers need to be aware that subroutine MYOPEN once contained operating-system dependent code that needed to be modified for different operating environments. However, since about 2005, FVS is being coded using modern FORTRAN standards, so the need for this operating-system dependent code has evaporated and MYOPEN should therefore be phased out. In some of the more recent code its use has been avoided.
 
-Sometime in the early 2000s, a new file handling subroutine was added called “openIfClosed” (the source code for this subroutine is part of the source code of subroutine FILOPN). An example using this code is in subroutine PRTRLS, the subroutine that writes the tree list output table. Subroutine openIfClosed is called prior to writing to the designed unit number. It checks to see if the file is opened, and opens it if it is not. It always opens a file with POSITION=’append’, so if a fresh file is desired, the old one needs to be discarded prior to the run starting. The assigned file name is the prefix name of the keyword record file and the suffix that is passed to subroutine openIfClosed (in the case of the tree list, the suffix is “.trl” as shown in table 3-2). This strategy was introduced so FVS does not create many unused empty files that need to be deleted later. It also simplified the coding of the stop/restart capability (section 8.0) because the upper-level programming code need not open files until, and unless, they are actually needed for output.
+Sometime in the early 2000s, a new file handling subroutine was added called “openIfClosed” (the source code for this subroutine is part of the source code of subroutine FILOPN). An example using this code is in subroutine PRTRLS, the subroutine that writes the tree list output table. Subroutine openIfClosed is called prior to writing to the designed unit number. It checks to see if the file is opened, and opens it if it is not. It always opens a file with POSITION=’append’, so if a fresh file is desired, the old one needs to be discarded prior to the run starting. The assigned file name is the prefix name of the keyword record file and the suffix that is passed to subroutine openIfClosed (in the case of the tree list, the suffix is “.trl” as shown in table 3-2). This strategy was introduced so FVS does not create many unused empty files that need to be deleted later. It also simplified the coding of the stop/restart capability ([Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)) because the upper-level programming code need not open files until, and unless, they are actually needed for output.
 
 A unit number is associated with each file. Those used by the FVS base model are specified in subroutine BLKDAT; those used in the regeneration establishment extension can be found in subroutine ESBLKD; those associated with other extensions can be found in various other places. Table 3-1 shows unit numbers and associated variable names that are used for some purpose in FVS. Programmers should avoid using these unit numbers for any other purpose in FVS when adding new features to the model. Furthermore, there is a capability in modern FORTRAN that provides a file unit number for use. An example of its use is in the Climate-FVS extension’s CLIN subroutine where the OPEN statement uses the NEWUNIT feature of the FORTRAN OPEN statement. This construct should replace the fixed unit assignments for many files listed in table 3-1. Unit 30 associated with variable KOLIST is a good example of where the OPEN(NEWUNIT =…) construct could easily replace the unit assignment, and should be changed.
 
@@ -1989,7 +1989,7 @@ kable(df,
 ```
 
 
-If some, or all, of the stand initialization parameters or individual tree data is being read directly from a database, database connections are not established at this point. Database connections will be established during the processing of keyword records, see sections 3.3 and 3.5, when the DATABASE - END keyword record sequence is encountered in the keyword record file.
+If some, or all, of the stand initialization parameters or individual tree data is being read directly from a database, database connections are not established at this point. Database connections will be established during the processing of keyword records, see [Processing keyword record requests](#sec-processing-keyword-record-requests) and [Reading stand and tree record input data](#sec-reading-stand-and-tree-record-input-data), when the DATABASE - END keyword record sequence is encountered in the keyword record file.
 
 ### Auxiliary subroutines
 
@@ -1999,7 +1999,7 @@ Subroutine REVISE is used to retrieve the variants last revision date. This is u
 
 Subroutine UNBLNK is used to remove blanks from a character string, leaving the nonblank contents of the string left justified in the string and the rest of the string blank. It also returns the length of the nonblank portion of the string.
 
-Subroutine RCDSET is used to set the FVS error severity value (10, 20, or 30) and is called from several places in the program. It has two arguments, the second indicates if the error warrants ending the run. This case, when the call is from subroutine FILOPN, will cause FVS to end processing when the keyword record file is not present and there is no restart file (see section 8). FVS requires a keyword record file to set the projection parameters, specifications, and management activities. If a keyword record file is not present and there is no restart file, the run will stop.
+Subroutine RCDSET is used to set the FVS error severity value (10, 20, or 30) and is called from several places in the program. It has two arguments, the second indicates if the error warrants ending the run. This case, when the call is from subroutine FILOPN, will cause FVS to end processing when the keyword record file is not present and there is no restart file (see [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)). FVS requires a keyword record file to set the projection parameters, specifications, and management activities. If a keyword record file is not present and there is no restart file, the run will stop.
 
 KEYFN, an entry point in subroutine KEYRDR, is used to save the keyword record file name from subroutine FILOPN for writing to the output file. This feature documents the name of the keyword record file that was used to create the run, in the output file. It is also used when automatic filenames are generated in the case where the keyword record file is input on the command line. Lastly, this name is added to the CASES table of the database output and is used to relate all the output tables in the database that were created from a single FVS run. A case is a single run of a single stand as defined in the database extension documentation (Crookston and others 2003).
 
@@ -2027,19 +2027,19 @@ Subroutine ESBLKD is another BLOCK DATA subroutine that contains regeneration es
 
 Various other extensions have their own initialization subroutines. Some have DATA statements that load at compile time, while others like subroutine FMINIT for the fire and fuels extension load at run time. Some of these, like subroutine FMINIT, are extension specific and some are variant-specific, like subroutine MISINTCR for the mistletoe extension in the Central Rockies variant. Initialization subroutines for the various base model extensions include: ESINIT, MPBINT, DFBINT, TMINIT, BWEINT, CVINIT, RDINIT, MISIN0, MISINT, BRINIT, ISSTAG, FMINIT, SVINIT, ECINIT, DBSINIT, and CLINIT. Subroutine INITRE also calls subroutines OPINIT, to initialize the activity schedule, and RANSED, to set the random number seed, at this point.
 
-And finally, the two ORGANON-FVS variants (OC and OP), contain a section of code in subroutine GRINIT to initialize variables needed to run the ORGANON subroutines. These variables also load at run time. Structural differences of the ORGANON-FVS variants will be further discussed in section 9.0.
+And finally, the two ORGANON-FVS variants (OC and OP), contain a section of code in subroutine GRINIT to initialize variables needed to run the ORGANON subroutines. These variables also load at run time. Structural differences of the ORGANON-FVS variants will be further discussed in [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants).
 
-## Processing keyword record requests
+## Processing keyword record requests {#sec-processing-keyword-record-requests}
 
 Users communicate run control information to FVS through the use of keyword records. Consequently, use of the keyword record system is described throughout the EFVS guide and is the basis of FVS training sessions and tutorials. Keyword record processing is echoed to the main FVS output file unless a user turns this feature off with the NOECHO keyword record.
 
-### Subroutines involved and their function
+### Subroutines involved and their function {#sec-processing-keyword-record-requests-subroutines-involved-and-their-function}
 
 Subroutine INITRE orchestrates the processing of all keyword records. If the PARMS format, discussed in section 6.1 of the EFVS guide, is not being used, subroutine INITRE also checks the keyword record parameter fields for valid values and assigns default parameter values if some of the parameter values are missing. If values for required parameter fields are missing, or if supplied values are incorrect, then the keyword record is rejected. In this case, subroutine KEYDMP is called to echo the keyword record to the FVS main output file and subroutine ERRGRO is called to write an error message to the FVS main output file giving the user some idea of what problem was encountered. Processing then continues with the next keyword record. If the PARMS format is being used, parameter field checking is not done.
 
 Keyword records convey different types of information to FVS and are dealt with in different ways. Keyword records may be used to set constants, schedule management activities, or serve as flags to indicate program control needs to be temporarily transferred to a different part of FVS, such as one of the FVS extensions, for processing to continue.
 
-#### Keyword records that can be dealt with once
+#### Keyword records that can be dealt with once {#sec-keyword-records-that-can-be-dealt-with-once}
 
 Some keyword records can be dealt with once and then FVS is done with them for the simulation of a particular stand. Keyword records that simply convey parameter settings FVS should use instead of the model default values are of this type. Examples of these are the BAMAX keyword record that sets the biological basal area maximum for the stand and the DEFECT keyword record that sets species-specific defect corrections for volume estimates. Keyword records that allow users to enter equation coefficients are also of this type. An example is the CWEQN keyword record that allows users to enter their own species-specific crown width equation coefficients.
 
@@ -2049,15 +2049,15 @@ In both of these cases subroutine INITRE directly stores the new parameter value
 
 A special case of keyword records that can be dealt with once in FVS by subroutine INITRE are those that transfer control to another keyword record processing subroutine within the FVS structure. Examples are the COMPUTE keyword record that transfers control to the event monitor subroutine EVUSRV, and the FMIN keyword record that transfers control to the fire and fuels extension keyword record processing subroutine FMIN.
 
-Control remains in the location outside of subroutine INITRE until an END keyword record is encountered at which time control returns to subroutine INITRE. Any keyword records encountered between these special signal keyword records are processed by the designated components of FVS. Some of these between keyword records will be handled directly by the receiving subroutine as discussed above, and some will be scheduled as discussed below. In either case, keyword records are handled in the same way as discussed for subroutine INITRE base model keyword record processing, with one exception. Processing of event monitor instructions is quite different and will be discussed in section 3.4. Subroutines that process extension specific keyword records include: BGCIN, BMPPIN, BRIN, BWEIN, CVIN, CLIN, DBSIN, DFBIN, DFTMIN, ESIN, FMIN, MISIN, MPBIN, ORIN, and RDIN.
+Control remains in the location outside of subroutine INITRE until an END keyword record is encountered at which time control returns to subroutine INITRE. Any keyword records encountered between these special signal keyword records are processed by the designated components of FVS. Some of these between keyword records will be handled directly by the receiving subroutine as discussed above, and some will be scheduled as discussed below. In either case, keyword records are handled in the same way as discussed for subroutine INITRE base model keyword record processing, with one exception. Processing of event monitor instructions is quite different and will be discussed in [Processing event monitor instructions](#sec-processing-event-monitor-instructions). Subroutines that process extension specific keyword records include: BGCIN, BMPPIN, BRIN, BWEIN, CVIN, CLIN, DBSIN, DFBIN, DFTMIN, ESIN, FMIN, MISIN, MPBIN, ORIN, and RDIN.
 
-#### Keyword records that need to be scheduled
+#### Keyword records that need to be scheduled {#sec-keyword-records-that-need-to-be-scheduled}
 
-Many FVS model instructions can be issued by year (often called “date”) or projection cycle. Examples are management activities such as thinning requests and model multipliers that alter predicted model outputs. Instructions of this type must be handled by the option processing subroutines within FVS that posts the instructions to the activity schedule table and then retrieves them at the appropriate time by the appropriate portion of the FVS code for implementation. Most keyword records of this type support the PARMS format discussed in section 6.1 of the EFVS guide. For some, like the TREELIST keyword record, the PARMS format would not make sense and is not supported; there aren’t any parameter fields on the TREELIST keyword record that are dynamic. How FVS processes the PARMS format is discussed in section 3.4.3.
+Many FVS model instructions can be issued by year (often called “date”) or projection cycle. Examples are management activities such as thinning requests and model multipliers that alter predicted model outputs. Instructions of this type must be handled by the option processing subroutines within FVS that posts the instructions to the activity schedule table and then retrieves them at the appropriate time by the appropriate portion of the FVS code for implementation. Most keyword records of this type support the PARMS format discussed in section 6.1 of the EFVS guide. For some, like the TREELIST keyword record, the PARMS format would not make sense and is not supported; there aren’t any parameter fields on the TREELIST keyword record that are dynamic. How FVS processes the PARMS format is discussed in [Compiling the PARMS notation](#sec-compiling-the-parms-notation).
 
-##### Scheduling the Option
+##### Scheduling the Option {#sec-scheduling-the-option}
 
-Subroutine INITRE calls subroutine KEYRDR to read a keyword record. That subroutine (which is also used by the extensions) checks the parameter fields if the PARMS format is not being used. If the checks are satisfied, subroutine OPNEW is called to post the activity to the activity schedule table. If the PARMS format is in use, parameter fields are not checked and subroutine OPNEWC is called to post the activity to the activity schedule table. In either case, a unique option code (also called an activity number) is associated with each activity. Information posted to the activity schedule includes the unique option code, the year the activity is being scheduled, and the parameters associated with the activity. Option codes associated with FVS keyword records are shown in subroutine OPLIST (see section 6.0).
+Subroutine INITRE calls subroutine KEYRDR to read a keyword record. That subroutine (which is also used by the extensions) checks the parameter fields if the PARMS format is not being used. If the checks are satisfied, subroutine OPNEW is called to post the activity to the activity schedule table. If the PARMS format is in use, parameter fields are not checked and subroutine OPNEWC is called to post the activity to the activity schedule table. In either case, a unique option code (also called an activity number) is associated with each activity. Information posted to the activity schedule includes the unique option code, the year the activity is being scheduled, and the parameters associated with the activity. Option codes associated with FVS keyword records are shown in subroutine OPLIST (see [Option Processing Logic](#sec-option-processing-logic)).
 
 ##### Retrieving and Processing the Option
 
@@ -2071,7 +2071,7 @@ It is the responsibility of individual subroutines pertaining to the activity to
 
 ### Auxiliary subroutines
 
-Subroutines used in reading event monitor instructions will be discussed in section 3.4.
+Subroutines used in reading event monitor instructions will be discussed in [Processing event monitor instructions](#sec-processing-event-monitor-instructions).
 
 Subroutine DUNN is a variant-specific subroutine that translates Dunning site codes to regular site index values. Dunning site codes are valid for FVS variants used in Forest Service Region 5 and may be entered using the SITECODE keyword record.
 
@@ -2113,7 +2113,7 @@ Subroutine TRNASP translates the aspect in degrees entered on the STDINFO keywor
 
 Subroutine TRNSLO translates the slope percent entered on the STDINFO keyword record to a ratio value by dividing the slope percent by 100. The translated value of stand slope is stored in variable SLOPE in the PLOT labeled COMMON block.
 
-## Processing event monitor instructions
+## Processing event monitor instructions {#sec-processing-event-monitor-instructions}
 
 The event monitor within FVS can be used to conditionally schedule activities, create user-defined output variables, and make the value of keyword record parameter fields the result of a mathematical expression rather than constant values. Certain limits exist that govern the number of events, the amount of memory available to hold expressions, and so on. A PARAMETER statement at the beginning of the OPCOM labeled COMMON block sets these limits. To increase these limits, programmers should modify the OPCOM labeled COMMON block, recompile all the FVS code segments that use the OPCOM labeled COMMON block, and re-link the program executable. Some of these limits can be increased; other limits cannot, without a major rewriting of event monitor computer code. Programmers should pay attention to comment statements giving variable definitions in the OPCOM labeled COMMON block to see which of these limits can be adjusted.
 
@@ -2127,7 +2127,7 @@ When subroutine INITRE encounters an IF keyword record, it immediately calls sub
 
 Subroutine EVIF next checks to make sure adding this new event monitor sequence will not exceed the maximum number allowed in FVS. If the maximum has already been reached, subroutine ERRGRO is called to write an error message to the output file. If room exists in the activity storage arrays, subroutine EVIF calls subroutine EVCOMP to process the logical expression.
 
-Section 7.0 describes how FVS compiles the expressions; section 4.0 discusses the processing sequence FVS uses for evaluating logical expressions during a projection cycle.
+[Event monitor logic](#sec-event-monitor-logic) describes how FVS compiles the expressions; [Projection Cycling Phase](#sec-projection-cycling-phase) discusses the processing sequence FVS uses for evaluating logical expressions during a projection cycle.
 
 When subroutine INITRE encounters a THEN keyword record, it calls EVTHEN, an entry point in subroutine EVTACT. EVTHEN links the internal event number, assigned when the logical expression was compiled, with the specified management activities and stores them for future scheduling. These get stored in array IEVACT(i,j) contained in the OPCOM labeled COMMON block.
 
@@ -2159,7 +2159,7 @@ When subroutine INITRE encounters a COMPUTE keyword record it calls subroutine E
 
 Subroutine ERRGRO contains the various FVS warning and error messages and sets return status codes.
 
-### Compiling the PARMS notation
+### Compiling the PARMS notation {#sec-compiling-the-parms-notation}
 
 With most keyword records that can be scheduled by year or cycle, users have the option of using the PARMS format to specify parameter values. The PARMS format allows users to specify expressions that will be used to calculate parameter values at the time the logical expression becomes true and the management activity is being done. This is a very powerful feature of the event monitor.
 
@@ -2173,17 +2173,17 @@ Subroutine ERRGRO contains the various FVS warning and error messages.
 
 Subroutine UPCASE is used to convert lower case characters to upper case characters.
 
-## Reading stand and tree record input data
+## Reading stand and tree record input data {#sec-reading-stand-and-tree-record-input-data}
 
-There are two distinct ways to get stand and tree record input data into FVS. This can be done through ASCII flat files or through database input. A keyword record file is required to run FVS; a tree data file is optional. If stand or tree record input data are coming from a database, the DATABASE keyword record is used in the keyword record file to signal subroutine INITRE that database keyword records follow. Subroutine INITRE transfers control to subroutine DBSIN to process the database keyword records. Subroutine DBSIN calls subroutine DBSOPEN to establish database connections. Other subroutines in the database extension input tree and stand information from the database (see section 3.5.1). Control transfers back to subroutine INITRE when an END keyword record is encountered which signals subroutine DBSIN that it is done processing database keyword records.
+There are two distinct ways to get stand and tree record input data into FVS. This can be done through ASCII flat files or through database input. A keyword record file is required to run FVS; a tree data file is optional. If stand or tree record input data are coming from a database, the DATABASE keyword record is used in the keyword record file to signal subroutine INITRE that database keyword records follow. Subroutine INITRE transfers control to subroutine DBSIN to process the database keyword records. Subroutine DBSIN calls subroutine DBSOPEN to establish database connections. Other subroutines in the database extension input tree and stand information from the database (see [Reading stand and tree record input data](#sec-reading-stand-and-tree-record-input-data-subroutines-involved-and-their-function)). Control transfers back to subroutine INITRE when an END keyword record is encountered which signals subroutine DBSIN that it is done processing database keyword records.
 
-Stand level information can be entered on FVS keyword records such as STDINFO and DESIGN.  These are processed as detailed above in section 3.3.1.1. Placement of the DATABASE – END keyword record sequence in the data file is critical. If the DATABASE – END sequence is after keyword records, like STDINFO, that specify stand parameters, parameter values from the database will replace those that were entered by the previous keyword records. The opposite is also true, if the keyword records follow the database sequence, parameter values from the keyword records will replace values that came from the database.
+Stand level information can be entered on FVS keyword records such as STDINFO and DESIGN.  These are processed as detailed above in [Keyword records that can be dealt with once](#sec-keyword-records-that-can-be-dealt-with-once). Placement of the DATABASE – END keyword record sequence in the data file is critical. If the DATABASE – END sequence is after keyword records, like STDINFO, that specify stand parameters, parameter values from the database will replace those that were entered by the previous keyword records. The opposite is also true, if the keyword records follow the database sequence, parameter values from the keyword records will replace values that came from the database.
 
 Tree record data, if there is any, may be read from a database or from a flat file, or both. It would be unusual for some of the tree data to be in a database and some of it in a flat file, but it can happen. In fact, several tree data files may be read, in effect, concatenating the individual files. Two additional keyword records signal FVS to input tree record data. These are the TREEDATA and PROCESS keyword records; TREEDATA directly signals FVS to input tree record data from a flat file; PROCESS indirectly signals FVS to input tree record data if none has been read and a NOTREES keyword record was not present in the keyword record file.
 
 If there are there are not enough projectable tree records for a simulation, then one of two things will happen. If the variant includes the full regeneration establishment extension, subroutine INITRE calls ESEZCR, an entry point in subroutine ESINIT, to set flags that will trigger the regeneration establishment model to predict some advanced regeneration to start the simulation. If the variant includes the partial regeneration establishment extension model, entry ESEZCR in subroutine ESINIT is still called and the flags get set but the partial regeneration establishment model does not predict natural regeneration. In this case, the projection will run with no tree records (but they could be added using the PLANT or NATURAL keyword records).
 
-### Subroutines involved and their function
+### Subroutines involved and their function {#sec-reading-stand-and-tree-record-input-data-subroutines-involved-and-their-function}
 
 Subroutine INTREE processes tree input data and this may occur at different places in the keyword record processing sequence.
 
@@ -2217,23 +2217,23 @@ Subroutine SPDECD is used to check field 5 of the TREEDATA keyword record for va
 
 Subroutine UPCASE is used to change lower case species codes to upper case.
 
-## Model calibration and other setup tasks
+## Model calibration and other setup tasks {#sec-model-calibration-and-other-setup-tasks}
 
 At this point in the FVS processing sequence the user’s simulation control information and tree data information have been input into FVS. However, subroutine FVS still has many tasks to complete as part of the projection initialization phase. It must initialize any simulation control variables not yet initialized or set by keyword record input, expand the tree data input to a per-acre basis, fill in any missing data values, and calibrate certain model relationships to match the input data.
 
-### Initialization tasks
+### Initialization tasks {#sec-initialization-tasks}
 
 Subroutine FVS sets up the IY(i) array which specifies cycle boundaries for the entire projection. The number of cycles is limited to the array dimension, a cycle length that was not specified defaults to 10 years, and an additional cycle boundary is inserted for each year requested with the CYCLEAT keyword record that falls inside the projection. The first and last years of the projection are not changed. Subroutine FVS then processes and writes option lists for any insect, disease, and economic extensions that are part of the variant and the simulation.
 
 Subroutine FVS calls subroutines OPEXPN, OPCYCL, and OPLIST to process and list the activity schedule. Subroutine OPEXPN expands the activity list so activities specified for all cycles are duplicated once for each cycle. Subroutine OPLIST writes the activity schedule to the main output file.
 
-Subroutine FVS next calls subroutine SETUP to set up the index pointers for species sorting (see discussion of array IND1(k) in section 2.1.5), and subroutine NOTRE to expand the inventory data to a per-acre basis. This is followed by calls to insect and disease code segments, Code segments will exist as subroutines in the appropriate extension if the extension is part of the variant, or as entry points in the appropriate EX__ subroutine if the extension is not part of the variant. If the model is being run with insect and disease extensions, these calls initialize parameters and compute variables needed by those extensions. The calls made here include RDMN1 (first call, root disease), MPSDLP (mountain pine beetle: dead lodgepole pine per acre) and DFBINV (Douglas-fir beetle: dead trees per acre).
+Subroutine FVS next calls subroutine SETUP to set up the index pointers for species sorting (see discussion of array IND1(k) in [Accessing Tree Records](#sec-accessing-tree-records)), and subroutine NOTRE to expand the inventory data to a per-acre basis. This is followed by calls to insect and disease code segments, Code segments will exist as subroutines in the appropriate extension if the extension is part of the variant, or as entry points in the appropriate EX__ subroutine if the extension is not part of the variant. If the model is being run with insect and disease extensions, these calls initialize parameters and compute variables needed by those extensions. The calls made here include RDMN1 (first call, root disease), MPSDLP (mountain pine beetle: dead lodgepole pine per acre) and DFBINV (Douglas-fir beetle: dead trees per acre).
 
-The variable ICYC carries the FVS cycle number and is used in various locations throughout the model. ICYC is set to 0 at the start of a stand, before subroutine INITRE is called. “Cycle 0” is another way of saying “at inventory time”. The variable ICYC is used as an index to the IY(i) array throughout the model, and in a few places (e.g. subroutines DGDRIV and MORTS) to control program logic. For the next tasks, ICYC is set to 1, and it is set back to 0 after subroutine ESFLTR is called (see section 3.7). Certain activities scheduled for cycle 1 (e.g. TREELIST for cycle 1 with field 4 not set to 1) also occur at inventory time.
+The variable ICYC carries the FVS cycle number and is used in various locations throughout the model. ICYC is set to 0 at the start of a stand, before subroutine INITRE is called. “Cycle 0” is another way of saying “at inventory time”. The variable ICYC is used as an index to the IY(i) array throughout the model, and in a few places (e.g. subroutines DGDRIV and MORTS) to control program logic. For the next tasks, ICYC is set to 1, and it is set back to 0 after subroutine ESFLTR is called (see [Final projection initialization tasks](#sec-final-projection-initialization-tasks)). Certain activities scheduled for cycle 1 (e.g. TREELIST for cycle 1 with field 4 not set to 1) also occur at inventory time.
 
 Subroutine FVS calls subroutine OPCSET to set the option pointers for the initialization phase to the cycle 1 options (ICYC = 1). Subroutine OPCSET sets up the IOPCYC(i) array containing the activities scheduled for that cycle sorted by ascending activity number.
 
-Subroutine FVS then processes stop point 7 by calling subroutine fvsStopPoint. If a stop at this point has been requested, FVS returns to its caller here, before model calibration. A restart from stop point 7 resumes at the next step (SDICLS and CRATET) without repeating the steps described above (see section 8.0).
+Subroutine FVS then processes stop point 7 by calling subroutine fvsStopPoint. If a stop at this point has been requested, FVS returns to its caller here, before model calibration. A restart from stop point 7 resumes at the next step (SDICLS and CRATET) without repeating the steps described above (see [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)).
 
 SDICLS, an entry point in subroutine SDICAL, is called to compute the maximum Stand Density Index for a stand. This will be needed in variants using a Weibull-based crown change model to correctly fill in missing crown ratio values.
 
@@ -2243,13 +2243,13 @@ Next is a major task that distinguishes FVS from many other growth models. The p
 
 Subroutine FVS calls subroutine CRATET, a variant-dependent subroutine, to perform calibration related tasks. Subroutine CRATET also directs writing of the Calibration Statistics section of the main output file and directs the filling in (or “dubbing”) of any data values missing in the input data (e.g. total tree height or crown ratio).
 
-Subroutine CRATET has an extra task in the two ORGANON-FVS variants (OC and OP). That is to direct: 1) calibration of the ORGANON growth model equations; and 2) dubbing data values missing in the input data using ORGANON equations for valid ORGANON trees. This step is done by calling the ORGANON subroutine PREPARE and does not occur in any of the other FVS variants. Processing then continues as described below. Structural differences of the ORGANON-FVS variants will be further discussed in section 9.0.
+Subroutine CRATET has an extra task in the two ORGANON-FVS variants (OC and OP). That is to direct: 1) calibration of the ORGANON growth model equations; and 2) dubbing data values missing in the input data using ORGANON equations for valid ORGANON trees. This step is done by calling the ORGANON subroutine PREPARE and does not occur in any of the other FVS variants. Processing then continues as described below. Structural differences of the ORGANON-FVS variants will be further discussed in [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants).
 
 #### Calculate site and stand level variables
 
 Some variants use the stands’ mean annual increment as a growth predictor variable; some variants use the species representing the most basal area, also called the “site species” as a growth predictor variable. Subroutine CRATET calls subroutine MBACAL to identify the site species based on plurality of basal area, and subroutine MAICAL to compute mean annual increment. In a bare ground simulation, the call to MBACAL is skipped.
 
-Most growth equations in FVS contain terms for site level variables that have constant values for a stand projection unless climate change modeling is taking place. Examples of these variables include habitat type, site index, slope, aspect, and elevation. In the absence of climate change, these terms only need to be aggregated once with the results stored in vectors that are subscripted by species; these aggregations get used when processing each tree record. Subroutine CRATET calls subroutine RCON to direct the calculation of these terms. In climate change modeling, if any site level variables change, subroutine RCON gets called again from subroutine GRINCR and these aggregations get recomputed. Subroutine GRINCR will be discussed in section 4.0.
+Most growth equations in FVS contain terms for site level variables that have constant values for a stand projection unless climate change modeling is taking place. Examples of these variables include habitat type, site index, slope, aspect, and elevation. In the absence of climate change, these terms only need to be aggregated once with the results stored in vectors that are subscripted by species; these aggregations get used when processing each tree record. Subroutine CRATET calls subroutine RCON to direct the calculation of these terms. In climate change modeling, if any site level variables change, subroutine RCON gets called again from subroutine GRINCR and these aggregations get recomputed. Subroutine GRINCR will be discussed in [Projection Cycling Phase](#sec-projection-cycling-phase).
 
 Subroutine RCON calls special entry points that are contained in growth modeling subroutines to load site dependent terms. These are: entry DGCONS in subroutine DGF; entry HTCONS in subroutine HTGF; entry REGCON in subroutine REGENT; entry MORCON in subroutine MORTS; and entry CRCONS in subroutine CROWN. All of these subroutines are variant-specific.
 
@@ -2261,9 +2261,9 @@ Subroutine DENSE is called from various places in FVS. A logical variable, LBKDE
 
 Subroutine CRATET next deals with the non-projectable tree records (aka mortality). When tree level data is read, subroutine INTREE stores parameters associated with dead tree records in the bottom of the tree data arrays. Trees coded as recent mortality (within the last 5 years) get stored with a tree value class (IMC) of 7; trees that have been dead for a longer period of time (tree history codes 8 and 9) get stored with a tree value class of 9.
 
-Subroutine CRATET identifies the non-projectable tree records. The numbers of records coded as recent mortality, by species, get written to the FVS main output file. Subroutine CRATET then realigns the pointers to the species-ordered sort, eliminating the dead tree indices. (See the discussion of the IND1(i) and ISCT(i,j) arrays in section 2.1.5.)
+Subroutine CRATET identifies the non-projectable tree records. The numbers of records coded as recent mortality, by species, get written to the FVS main output file. Subroutine CRATET then realigns the pointers to the species-ordered sort, eliminating the dead tree indices. (See the discussion of the IND1(i) and ISCT(i,j) arrays in [Accessing Tree Records](#sec-accessing-tree-records).)
 
-It is important to note that FVS is not done with the dead tree information yet, and this information is still stored in the bottom of the tree data arrays. Missing information about dead trees still needs to be filled in, dead tree information needs to be passed to the fire and fuels extension, and dead trees in the inventory data get printed in the tree list output file. Dead tree information will get purged from FVS later in the processing sequence by subroutine FVS (see section 3.7).
+It is important to note that FVS is not done with the dead tree information yet, and this information is still stored in the bottom of the tree data arrays. Missing information about dead trees still needs to be filled in, dead tree information needs to be passed to the fire and fuels extension, and dead trees in the inventory data get printed in the tree list output file. Dead tree information will get purged from FVS later in the processing sequence by subroutine FVS (see [Final projection initialization tasks](#sec-final-projection-initialization-tasks)).
 
 #### Calibrate height-diameter equation and dub missing heights
 
@@ -2316,7 +2316,7 @@ Subroutine RDPSRT is called from subroutine CRATET to sort tree records by diame
 
 Subroutine SPESRT is called by subroutine CRATET to realign pointers in the species-ordered sort of the tree records.
 
-## Final projection initialization tasks
+## Final projection initialization tasks {#sec-final-projection-initialization-tasks}
 
 The remaining projection initialization tasks involve computing stand and tree level variables that have not yet been set, initializing variables used in FVS extensions, and writing initial tree and stand conditions to the various output tables.
 
@@ -2324,7 +2324,7 @@ The remaining projection initialization tasks involve computing stand and tree l
 
 Subroutine FVS calls subroutine ESFLTR in the regeneration establishment extension to collect inventory information for understory and overstory densities and to flag trees in the inventory as “best trees” for the purposes of regeneration establishment.
 
-The control variable, ICYC, is now set back to a value of 0. It will be used to control the projection cycling phase explained in section 4.
+The control variable, ICYC, is now set back to a value of 0. It will be used to control the projection cycling phase explained in [Projection Cycling Phase](#sec-projection-cycling-phase).
 
 Subroutine FVS calls subroutine CWIDTH which calls subroutine CWCALC to estimate crown widths for all tree records.
 
@@ -2376,11 +2376,11 @@ Subroutine VARVOL contains entry points NATCRS, OCFVOL, OBFVOL, and GETEQN. Subr
 
 Subroutine VOLKEY is called by VOLS to process any keyword records used to change volume standards or volume equations. These keyword records include MCDEFECT, BFDEFECT, VOLUME, and BFVOLUME.
 
-# Projection Cycling Phase
+# Projection Cycling Phase {#sec-projection-cycling-phase}
 
 The projection cycling phase simulates tree growth, mortality, regeneration establishment, and stand management actions as specified by a user in the keyword record file. This phase is the core of the FVS model. Once this phase is completed FVS will be ready to write the specified output tables.
 
-The projection cycling phase is controlled by the variables ICYC and NCYC. ICYC is the current FVS cycle number and NCYC is the number of FVS cycles in a simulation. The default value of NCYC is 1 but it can be set to a value ranging from 2 to 40 using the NUMCYCLE keyword record. The current maximum, 40, can be changed in the PRGPRM code segment (see section 2.1.4).
+The projection cycling phase is controlled by the variables ICYC and NCYC. ICYC is the current FVS cycle number and NCYC is the number of FVS cycles in a simulation. The default value of NCYC is 1 but it can be set to a value ranging from 2 to 40 using the NUMCYCLE keyword record. The current maximum, 40, can be changed in the PRGPRM code segment (see [Code Organization and Linking Considerations](#sec-code-organization-and-linking-considerations)).
 
 The FVS control loop and logic can be summed up very simply:
 
@@ -2833,7 +2833,7 @@ kable(crown_arrays,
   column_spec(5, width = "7cm")
 ```
 
-## Event monitor and harvest
+## Event monitor and harvest {#sec-event-monitor-and-harvest}
 
 Checking the event monitor and simulating harvest both occur at the beginning of a projection cycle in FVS. Subroutine FVS calls subroutine TREGRO which calls subroutine GRINCR to control these tasks.
 
@@ -2843,11 +2843,11 @@ There are some model control tasks that subroutine GRINCR needs to accomplish at
 
 Thinning to a relative density target, as done in the SILVAH (Marquis and Ernst 1992) growth model, is a management option in the Northeast (NE) variant. Subroutine GRINCR calls SILFTY, an entry point in subroutine SDICAL, to compute the SILVAH forest type before thinning. For the NE variant, possible values for the SILVAH forest type range from 0 to 5; in all other variants, the SILVAH forest type will be 0.
 
-The event monitor is an integral part of all FVS variants and its’ capabilities are discussed in section 5.5 of the EFVS Guide. A detailed discussion of event monitor structure is presented in section 7.0 of this document. Subroutine GRINCR next directs the computation of some predefined before-thinning event monitor variables. Subroutine SDICAL is called to compute the before-thinning stand SDI maximum; SDICLS, an entry point in subroutine SDICAL, is called to compute the current stand SDI by two methods (Reineke 1933 and Zeide 1983); and subroutine SSTAGE is called to compute the before-thinning stand structural stage.
+The event monitor is an integral part of all FVS variants and its’ capabilities are discussed in section 5.5 of the EFVS Guide. A detailed discussion of event monitor structure is presented in [Event monitor logic](#sec-event-monitor-logic) of this document. Subroutine GRINCR next directs the computation of some predefined before-thinning event monitor variables. Subroutine SDICAL is called to compute the before-thinning stand SDI maximum; SDICLS, an entry point in subroutine SDICAL, is called to compute the current stand SDI by two methods (Reineke 1933 and Zeide 1983); and subroutine SSTAGE is called to compute the before-thinning stand structural stage.
 
 Subroutine GRINCR then calls subroutine EVMON to see if any before-thinning actions need to be scheduled. The variable IPH is a local variable in both subroutines GRINCR and EVMON that indicates the event monitor phase number. The value for this variable is passed from subroutine GRINCR to subroutine EVMON through the EVMON argument list. This variable is used in subroutine EVMON to set the event monitor phase number, variable IPHASE that is carried in the OPCOM labeled COMMON block. The phase number is an important variable in controlling event monitor logic. The variable IPH, and consequently variable IPHASE, have a value of 1 if the event monitor is being called before thinning and 2 if the event monitor is being called after thinning.
 
-#### Checking the event monitor for before-thinning actions
+#### Checking the event monitor for before-thinning actions {#sec-checking-the-event-monitor-for-before-thinning-actions}
 
 Before-thinning actions include computing predefined and custom output variables based on stand conditions before harvesting occurs, or evaluating expressions that conditionally schedule management activities, such as a thinning, based on before-thinning stand conditions.
 
@@ -2893,7 +2893,7 @@ Processing control returns to subroutine GRINCR to do some post-thinning updatin
 
 Subroutine GRINCR calls subroutine EVMON, with the event monitor phase number set to 2, to see if any after-thinning actions need to be scheduled. After-thinning actions include computing predefined and custom output variables based on stand conditions after harvesting occurs or evaluating expressions that conditionally schedule management activities based on post-thinning conditions.
 
-The logic is basically the same as discussed in section 4.1.1.1. Subroutine EVMON calls subroutine EVTSTV to load values of predefined event monitor variables in Groups 2 and 5 (see EFVS Table 5-2 for variables in 2; Group 5 variables are user-defined). Subroutine EVMON calls subroutine ALGEVL to evaluate expressions. Subroutine ALGEVL calls subroutine EVLDX to load values of saved variables or results of functions like SPMCDBH into storage registers for further computing. Subroutine EVMON calls subroutine EVPOST to post the year the event occurred and control returns to subroutine GRINCR.
+The logic is basically the same as discussed in [Checking the event monitor for before-thinning actions](#sec-checking-the-event-monitor-for-before-thinning-actions). Subroutine EVMON calls subroutine EVTSTV to load values of predefined event monitor variables in Groups 2 and 5 (see EFVS Table 5-2 for variables in 2; Group 5 variables are user-defined). Subroutine EVMON calls subroutine ALGEVL to evaluate expressions. Subroutine ALGEVL calls subroutine EVLDX to load values of saved variables or results of functions like SPMCDBH into storage registers for further computing. Subroutine EVMON calls subroutine EVPOST to post the year the event occurred and control returns to subroutine GRINCR.
 
 Subroutine GRINCR calls subroutine COMCUP which interfaces with subroutine COMPRS to compress the tree list. This may be necessary when entire tree records are removed as part of the thinning process.
 
@@ -2945,13 +2945,13 @@ SILFTY, an entry point in subroutine SDICAL, is used to compute the forest type 
 
 Subroutine SVOUT is used to produce a file for post-treatment stand visualization when a salvage removal is called for by the fire and fuels extension and no live trees were removed.
 
-Subroutines fvsGetRestartCode, getAmStopping, fvsGetRtnCode, and fvsStopPoint (the source code for these subroutines is part of the source code of subroutine CMDLINE) are covered in section 8.0. They are used to control program flow when a stop point is specified.
+Subroutines fvsGetRestartCode, getAmStopping, fvsGetRtnCode, and fvsStopPoint (the source code for these subroutines is part of the source code of subroutine CMDLINE) are covered in [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api). They are used to control program flow when a stop point is specified.
 
-## Growth and Mortality
+## Growth and Mortality {#sec-growth-and-mortality}
 
 Trees are considered “large” trees for FVS modeling purposes when they are larger than some species and variant dependent threshold diameter. These threshold diameters and detailed descriptions of equations used to grow large trees and small trees can be found in the variant overview documents. A general description of the FVS large and small tree models as they are used in model calibration can be found in section 7.2 of the EFVS Guide.
 
-FVS mortality models are one of three types: 1) the Prognosis mortality model; 2) the SDI based mortality model; or 3) the ORGANON mortality model. A fourth type, the TWIGS based mortality model, has now been replaced with SDI based mortality models in the Lake States (LS), Central States (CS), and Northeast (NE) variants. A general description of the Prognosis, SDI, and TWIGS mortality models can be found in section 7.3 of the EFVS Guide. A description of the ORGANON mortality model can be found in the overview documents for the two ORGANON-FVS variants (OC and OP). Structural differences of the ORGANON-FVS variants will be further discussed in section 9.0.
+FVS mortality models are one of three types: 1) the Prognosis mortality model; 2) the SDI based mortality model; or 3) the ORGANON mortality model. A fourth type, the TWIGS based mortality model, has now been replaced with SDI based mortality models in the Lake States (LS), Central States (CS), and Northeast (NE) variants. A general description of the Prognosis, SDI, and TWIGS mortality models can be found in section 7.3 of the EFVS Guide. A description of the ORGANON mortality model can be found in the overview documents for the two ORGANON-FVS variants (OC and OP). Structural differences of the ORGANON-FVS variants will be further discussed in [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants).
 
 ### Subroutines involved and their function
 
@@ -2973,9 +2973,9 @@ mortality
 
 This is subtly different than the language used in Figure 2-1. Figure 2-1 presents the general processing sequence in conceptual terms; the language here reflects the actual programming sequence. For example, in Figure 2-1 we say “grow large trees (in order: diameter, height)” but here we say “obtain an estimate of: 1) large tree diameter growth, 2) large tree height growth”. Diameter and height growth is estimated for all trees (large and small) using equations in the large-tree portion of FVS; height and diameter growth is estimated for only a portion of the trees using equations in the small-tree portion of FVS; and estimates are combined or discarded as appropriate for the variant and species.
 
-Notice that a trees’ crown ratio change, due to tree growth and changes in stand density, is yet to be predicted. This occurs at the very end of a growth projection cycle and will be discussed in section 4.5.
+Notice that a trees’ crown ratio change, due to tree growth and changes in stand density, is yet to be predicted. This occurs at the very end of a growth projection cycle and will be discussed in [Updating the tree descriptions](#sec-updating-the-tree-descriptions).
 
-#### Growing the large trees
+#### Growing the large trees {#sec-growing-the-large-trees}
 
 Subroutine GRINCR calls subroutine DGDRIV to calculate a large-tree diameter growth estimate for all tree records. DGDRIV is one of those subroutines containing two sections; the top section is used for growth estimation in projection cycling; the bottom section is used for calibration in projection initialization.
 
@@ -2985,7 +2985,7 @@ Large tree diameter growth (or the logarithm of basal area increment in most var
 
 Subroutine DGDRIV calls subroutine DGF to obtain large tree diameter growth estimates for all the tree records. Subroutine DGF contains regression equations for each species. It is structured as nested DO loops with the outside loop controlling species and the inside loop controlling tree records within species. The argument list for subroutine DGF consists of the array of tree diameters to be used. So in the calibration phase of projection initialization subroutine DGF is called with the array of backdated diameters, and in the growth estimation phase of projection cycling it is called with the tree diameters at the beginning of the projection cycle. Subroutine DGF stores estimated diameter growth for each tree record in terms of natural logarithm of basal area increment in work array WK2(i).
 
-Subroutine DGDRIV has an extra task in the two ORGANON-FVS variants (OC and OP). That is to direct estimation of large tree diameter and height growth, crown ratio change, and mortality using ORGANON equations for valid ORGANON trees. This step is done by calling the ORGANON subroutine EXECUTE and does not occur in any of the other FVS variants. Processing then continues somewhat as described below, with structural differences as discussed in section 9.0.
+Subroutine DGDRIV has an extra task in the two ORGANON-FVS variants (OC and OP). That is to direct estimation of large tree diameter and height growth, crown ratio change, and mortality using ORGANON equations for valid ORGANON trees. This step is done by calling the ORGANON subroutine EXECUTE and does not occur in any of the other FVS variants. Processing then continues somewhat as described below, with structural differences as discussed in [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants).
 
 Subroutine DGDRIV then enters its own nested species and trees-within-species DO loops. For each species, the serial correlation of diameter growth estimates from one cycle to the next is adjusted for the cycle length and diameter growth errors are calculated. The scale factors are attenuated and then the tree loop within species is entered. For each tree record, diameter growth is converted from ln(DDS) terms to inches. DGDRIV calls subroutine DGSCOR to calculate the diameter growth error term and then adds the error to the diameter growth estimate. The diameter growth estimate is multiplied by a factor to account for the negative impacts of dwarf-mistletoe, if any, on diameter growth. Diameter growth is then bounded to a maximum value (diameter growth is only constrained in some variants). Diameter growth is similarly assigned to tree record triples if record tripling is in effect and control returns to subroutine GRINCR. Diameter growth estimates after subroutine DGDRIV are on a 10-year basis. These will be scaled to the cycle length at the end of the growth projection cycle in subroutine GRADD.
 
@@ -2993,7 +2993,7 @@ Subroutine HTGF has a similar construction as subroutine DGF does. It has nested
 
 For variants using site index curves to estimate height growth, two other subroutines play a major role in large tree height growth estimation. Subroutine HTCALC contains equations for the site index curves being used for each species. Subroutine HTGF calls subroutine FINDAG to estimate a trees’ age based on a trees’ height and species using the equations in subroutine HTCALC. Subroutine HTGF then adds 10 years to this age and calls HTCALC to obtain an estimate of tree height at the end of the projection cycle based on tree age and species. Potential height growth is then the difference between the estimated beginning- and end-of cycle heights.
 
-#### Growing the small trees
+#### Growing the small trees {#sec-growing-the-small-trees}
 
 Subroutine GRINCR calls subroutine REGENT to estimate height and diameter growth using equations for trees smaller than a threshold diameter. Upon completion of subroutine REGENT, all trees will have an estimate of height and diameter growth. Whether that estimate is the estimate using the large tree equations in subroutines DGF and HTGF or the small tree equations contained in subroutine REGENT, or a weighted average of the two, depends on the attribute being estimated, the diameter of the tree, and one or more threshold diameter.
 
@@ -3042,13 +3042,13 @@ For a few species in some variants, equations contained in subroutine REGENT are
 
 Subroutine REGENT is another one of those subroutines containing two sections; the top section is used for growth estimation in projection cycling; the bottom section is used for calibration in projection initialization. The structure of each section is similar, and understanding the top section will lead to understanding the bottom section. First, the overall structure of subroutine REGENT will be described and then this structure will be broken down into more detail.
 
-For most variants, a single pair of nested species and trees-within-species DO loops control subroutine execution. In these variants, height growth is estimated for the period length for which the small tree equations were fit (10-years, except for the Klamath Mountain variant (NC) which is 5-years), scaled to the cycle length, and then weighted with height growth estimates previously calculated using the large tree equations. Diameter growth is then estimated for the cycle length and scaled to a 10-year basis. Diameter growth gets scaled back to a cycle length basis in subroutine UPDATE when stand statistics are updated at the end of the projection cycle (see section 4.6).
+For most variants, a single pair of nested species and trees-within-species DO loops control subroutine execution. In these variants, height growth is estimated for the period length for which the small tree equations were fit (10-years, except for the Klamath Mountain variant (NC) which is 5-years), scaled to the cycle length, and then weighted with height growth estimates previously calculated using the large tree equations. Diameter growth is then estimated for the cycle length and scaled to a 10-year basis. Diameter growth gets scaled back to a cycle length basis in subroutine UPDATE when stand statistics are updated at the end of the projection cycle (see [Regeneration establishment](#sec-regeneration-establishment)).
 
 Some variants use a slightly different logic because the small tree height growth equations were fit to 5-year data. To avoid bias associated with projection cycles longer than the period to which the equation was fit, the projection cycle is first divided into periods that are no longer than 5-years in length (i.e. a 10-year projection cycle would have 2 periods of 5-years; a 7-year projection cycle would have 2 periods with the first being 5-years and the second being 2-years; a 13-year projection cycle would have 3 periods with the first two being 5-years and the third being 3 years, etc.). A triple-nested DO loop structure is used to estimate end of cycle tree height for each tree record which gets stored in work array WK3(j), where j is the tree index. The outside loop is over periods, the middle loop is over species, and the inner loop is over tree records within species. Stand density statistics and tree attributes are updated each period. The height estimate for the last period is scaled to the length of the last period. Double nested species and trees-within-species DO loops are then entered. Height growth for the projection cycle is obtained by subtracting the start-of-cycle tree height from the end-of-cycle tree height. This estimate gets weighted with height growth estimates previously calculated using the large tree equations as discussed above. Diameter growth is estimated and then scaled to a 10-year basis for rescaling in subroutine UPDATE.
 
 ###### A closer look at the logic
 
-The overall structure will now be broken down into more detail. Small tree height growth is estimated using regression equations with independent variables being individual tree attributes and current stand conditions. Once small tree height growth is obtained, small tree diameter growth is estimated using species-specific height-diameter curves. Default height-diameter curves by species for a variant are detailed in the variant overview document but the default coefficients will have been changed if they were calibrated to the input data as described in section 3.6.1.
+The overall structure will now be broken down into more detail. Small tree height growth is estimated using regression equations with independent variables being individual tree attributes and current stand conditions. Once small tree height growth is obtained, small tree diameter growth is estimated using species-specific height-diameter curves. Default height-diameter curves by species for a variant are detailed in the variant overview document but the default coefficients will have been changed if they were calibrated to the input data as described in [Initialization tasks](#sec-initialization-tasks).
 
 Subroutine REGENT first calls subroutine DBCHK to see if debug output is to be written.
 
@@ -3056,7 +3056,7 @@ For variants using sub-cycling over periods, the number of periods and length of
 
 Subroutine REGENT then retrieves any multipliers or management flags scheduled for the current projection cycle with calls to subroutine MULTS.
 
-Mid-cycle measures of stand density are needed by subroutine REGENT in all variants. Trees coming out of the regeneration establishment model (see section 4.4) use equations in subroutine REGENT to grow trees in height from the time they are age 5 to the end of the projection cycle in which they become established. So estimates of stand density are needed 5 years into a projection cycle. Also, in variants using period sub-cycling, estimates of stand density are needed at the beginning of each period. The methods by which estimates of stand density are computed are completely different depending on whether period sub-cycling is being used.
+Mid-cycle measures of stand density are needed by subroutine REGENT in all variants. Trees coming out of the regeneration establishment model (see [Disturbance effects and dynamics](#sec-disturbance-effects-and-dynamics)) use equations in subroutine REGENT to grow trees in height from the time they are age 5 to the end of the projection cycle in which they become established. So estimates of stand density are needed 5 years into a projection cycle. Also, in variants using period sub-cycling, estimates of stand density are needed at the beginning of each period. The methods by which estimates of stand density are computed are completely different depending on whether period sub-cycling is being used.
 
 For variants that do not use period sub-cycling, mid-period crown competition factor and average height of the 40 largest diameter trees is calculated by interpolation of these values at the start and end of the projection cycle. Remember that values of these variables are needed to estimate growth on trees in the regeneration establishment model which is being called near the end of the projection cycle, after growth has been estimated on all trees previously in the inventory. So values of these variables for the end of the projection cycle, prior to regeneration establishment, can be calculated.
 
@@ -3074,7 +3074,7 @@ FVS is now done with basic growth estimates. However, growth estimates may be mo
 
 Mortality is estimated using either the Prognosis-type mortality model or SDI-based mortality model in all variants except the ORGANON-FVS variants (OC and OP). Both of these mortality model types are described in the EFVS guide and a detailed discussion of the equations used for a particular variant can be found in the variant overview document.
 
-In the two ORGANON-FVS variants, mortality for all tree records will be estimated using the ORGANON mortality equations or the SDI-based mortality model depending on whether there are valid ORGANON trees in the input data or not. The ORGANON mortality model is described in the OC and OP variant overview documents. Structural differences in the two ORGANON-FVS variants are discussed in more detail in section 9.0.
+In the two ORGANON-FVS variants, mortality for all tree records will be estimated using the ORGANON mortality equations or the SDI-based mortality model depending on whether there are valid ORGANON trees in the input data or not. The ORGANON mortality model is described in the OC and OP variant overview documents. Structural differences in the two ORGANON-FVS variants are discussed in more detail in [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants).
 
 Subroutine GRINCR calls subroutine MORTS to estimate mortality. Subroutine MORTS may call another subroutine which distributes mortality using variant-specific methods (subroutine VARMRT for the CA, CR, CS, EC, LS, NE, and SN variants; subroutine SEAMRT for the AK variant; subroutine BMTMRT for the BM variant; subroutine NWCMRT for the NC variant; subroutine SCOMRT for the SO variant; subroutine TTMRT for the TT variant; subroutine UTMRT for the UT variant). Mortality subroutines estimate the number of trees to kill and distribute that mortality across tree records by reducing the trees per acre representation, PROB(j), for each tree record j.
 
@@ -3144,7 +3144,7 @@ OPGET, an entry point in subroutine OPFIND, is used to retrieve parameters assoc
 
 CLGMULT is called by DGDRIV to get a diameter growth multiplier due to climate change. CLGMULT will exist as a subroutine if the climate extension is part of the program executable, or as an entry point in subroutine EXCLIM, which returns a multiplier of 1.0, if the climate extension is not part of the program executable.
 
-Subroutines fvsGetRestartCode, getAmStopping, fvsGetRtnCode, and fvsStopPoint (the source code for these subroutines is part of the source code of subroutine CMDLINE) are covered in section 8.0. They are used to control program flow when a stop point is specified.
+Subroutines fvsGetRestartCode, getAmStopping, fvsGetRtnCode, and fvsStopPoint (the source code for these subroutines is part of the source code of subroutine CMDLINE) are covered in [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api). They are used to control program flow when a stop point is specified.
 
 ## Record tripling and final adjustments
 
@@ -3178,9 +3178,9 @@ Subroutine RCDSET is used by subroutine FFERT to set return codes used by FVS. R
 
 Subroutine SVTRIP is used to adjust the stand visualization file for record tripling.
 
-## Disturbance effects and dynamics
+## Disturbance effects and dynamics {#sec-disturbance-effects-and-dynamics}
 
-Forest disturbance agents can include insects, diseases, and fire. Dynamics associated with each of these disturbance agents and their effects on tree growth and mortality need to be simulated if those disturbance agents are part of the variant. In addition, some disturbances can be simulated using FVS base model keyword records whether the extension associated with the disturbance agent is part of the variant or not. Lastly, using the stop and restart capabilities, and FVS as a shared library that is called from some other program, disturbances can be modeled outside of FVS and the effects applied using the FVS API calls (see section 8.0).
+Forest disturbance agents can include insects, diseases, and fire. Dynamics associated with each of these disturbance agents and their effects on tree growth and mortality need to be simulated if those disturbance agents are part of the variant. In addition, some disturbances can be simulated using FVS base model keyword records whether the extension associated with the disturbance agent is part of the variant or not. Lastly, using the stop and restart capabilities, and FVS as a shared library that is called from some other program, disturbances can be modeled outside of FVS and the effects applied using the FVS API calls (see [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)).
 
 ### Subroutines involved and their function
 
@@ -3198,9 +3198,9 @@ OPGET, an entry point in subroutine OPFIND, is called by subroutine HTGSTP to re
 
 Subroutine OPSTUS is called by subroutine GRADD to check whether conditions under which a fire will be simulated have been set. Fire conditions, such as wind speed, temperature, and fuel moistures, are set using the SIMFIRE keyword record which is specific to the fire and fuels extension. This subroutine checks to see if the activity has been accomplished, deleted, or awaits accomplishment without taking any action to change its status.
 
-Subroutines fvsGetRestartCode, getAmStopping, fvsGetRtnCode, and fvsStopPoint (the source code for these subroutines is part of the source code of subroutine CMDLINE) are covered in section 8.0. They are used to control program flow when a stop point is specified.
+Subroutines fvsGetRestartCode, getAmStopping, fvsGetRtnCode, and fvsStopPoint (the source code for these subroutines is part of the source code of subroutine CMDLINE) are covered in [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api). They are used to control program flow when a stop point is specified.
 
-## Updating the tree descriptions
+## Updating the tree descriptions {#sec-updating-the-tree-descriptions}
 
 FVS is now finished with estimation of growth and mortality for the projection cycle. The next tasks are to update the tree descriptions using these estimates, resort the tree records, calculate new stand density statistics, and make any computations needed for the cover extension.
 
@@ -3232,11 +3232,11 @@ Subroutine VARVOL contains entry points NATCRS, OCFVOL, OBFVOL, and GETEQN. Subr
 
 Subroutine VOLKEY is called by subroutine VOLS to process any keyword records used to change volume standards or volume equations. These keyword records include MCDEFECT, BFDEFECT, VOLUME, and BFVOLUME.
 
-Subroutines fvsGetRestartCode, getAmStopping, fvsGetRtnCode, and fvsStopPoint (the source code for these subroutines is part of the source code of subroutine CMDLINE) are covered in section 8.0. They are used to control program flow when a stop point is specified.
+Subroutines fvsGetRestartCode, getAmStopping, fvsGetRtnCode, and fvsStopPoint (the source code for these subroutines is part of the source code of subroutine CMDLINE) are covered in [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api). They are used to control program flow when a stop point is specified.
 
-## Regeneration establishment
+## Regeneration establishment {#sec-regeneration-establishment}
 
-The regeneration establishment extension is part of all variants. Regeneration is added near the end of the growth projection cycle. Climate may have an influence on regeneration if the climate extension is also part of the variant. The regeneration establishment extension is described in section 5.4 of the EFVS guide and any variant-specific parameter settings are given in the variant overview documents. Also, section 10.0 of this document presents a more detailed discussion of the regeneration establishment model structure.
+The regeneration establishment extension is part of all variants. Regeneration is added near the end of the growth projection cycle. Climate may have an influence on regeneration if the climate extension is also part of the variant. The regeneration establishment extension is described in section 5.4 of the EFVS guide and any variant-specific parameter settings are given in the variant overview documents. Also, [Regeneration establishment in FVS variants](#sec-regeneration-establishment-in-fvs-variants) of this document presents a more detailed discussion of the regeneration establishment model structure.
 
 ### Subroutines involved and their function
 
@@ -3326,13 +3326,13 @@ Subroutine OPRDAT is used to read a file containing activities that need to be s
 
 Subroutine SPESRT is used to reset the species order sort of tree records.
 
-## Computing crown ratio change and crown width
+## Computing crown ratio change and crown width {#sec-computing-crown-ratio-change-and-crown-width}
 
 Change in a trees’ crown ratio and a trees’ crown width are the last tree attributes to be estimated during a growth projection cycle. A tree’s crown ratio may decrease, stay the same, or increase. In all variants except IE, and for species in the IE variant that are not one of the original 11 NI variant species, the increase in crown ratio is explicitly bounded to either 1% per year of the growth projection cycle (i.e. 10% for a 10-year cycle), or the amount of change possible if all height growth contributes to crown ratio, whichever is less. For the original 11 NI species in the IE variant the increase is bounded only to 1% per year of the growth projection cycle but the height growth bound is implicit in the logic.
 
 ### Subroutines involved and their function
 
-Subroutine GRADD calls subroutine CROWN to estimate the change in a trees’ crown ratio. In some variants, crown ratio is held constant for trees smaller than a threshold diameter; this is not the case in other variants. Also, this threshold diameter may be species dependent in some of the variants that use it. The three general types of crown ratio models used in FVS are discussed in section 7.4 of the EFVS guide. The logic used in a specific variant is given in each of the variant overview documents. A fourth type, the ORGANON crown ratio model is used in the two ORGANON-FVS variants and discussed in the OC and OP variant overviews. Structural differences in the two ORGANON-FVS variants are further discussed in section 9.0.
+Subroutine GRADD calls subroutine CROWN to estimate the change in a trees’ crown ratio. In some variants, crown ratio is held constant for trees smaller than a threshold diameter; this is not the case in other variants. Also, this threshold diameter may be species dependent in some of the variants that use it. The three general types of crown ratio models used in FVS are discussed in section 7.4 of the EFVS guide. The logic used in a specific variant is given in each of the variant overview documents. A fourth type, the ORGANON crown ratio model is used in the two ORGANON-FVS variants and discussed in the OC and OP variant overviews. Structural differences in the two ORGANON-FVS variants are further discussed in [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants).
 
 Subroutine CROWN uses a nested DO loop structure with the outer loop being over species and the inner loop over tree records of a given species. The coding of subroutine CROWN is straight forward and easy to understand.
 
@@ -3366,7 +3366,7 @@ FVS has several tasks to accomplish at the end of a projection cycle. Output tab
 
 Subroutine FVS calls subroutine EXTREE to assign values to the output arrays for example trees. Subscripts to trees used for printing in the output tables are carried in array INS(i), i=1,6, and passed in the CONTRL labeled COMMON block. The INS(i) array is loaded in subroutine DIST.
 
-Subroutine FVS then calls subroutine DISPLY to write the end-of-cycle stand and tree statistics to the stand composition, sample tree, and summary statistics tables. The scalar variable ICL6 is used for various purposes in FVS and is carried in the CONTRL labeled COMMON block. Subroutine DISPLY checks the value of ICL6 to know if the projection is complete (ICL6 < 0) or not (ICL6 > 0). Processing once the projection is complete is discussed in section 5.0.
+Subroutine FVS then calls subroutine DISPLY to write the end-of-cycle stand and tree statistics to the stand composition, sample tree, and summary statistics tables. The scalar variable ICL6 is used for various purposes in FVS and is carried in the CONTRL labeled COMMON block. Subroutine DISPLY checks the value of ICL6 to know if the projection is complete (ICL6 < 0) or not (ICL6 > 0). Processing once the projection is complete is discussed in [Projection Summarization Phase](#sec-projection-summarization-phase).
 
 Subroutine FVS calls subroutine RESAGE to reset the stand age if any RESETAGE keyword records were specified by the user. Users may want to reset the stand age when regeneration or other management activities occur that significantly change the composition of the stand.
 
@@ -3378,7 +3378,7 @@ Calls to subroutines that write end-of-cycle tree list information for the proje
 
 Subroutine FVS then finds and runs any system calls scheduled for the projection cycle. System calls are commands entered using the SYSTEM keyword record.
 
-Processing of the projection cycle is now complete. Subroutine FVS checks to see if this was the last cycle of the projection. If it was, Subroutine FVS enters the projection summarization phase; if it wasn’t then the cycle number gets incremented and the process starts over with the call to subroutine TREGRO as outlined in section 4.1.
+Processing of the projection cycle is now complete. Subroutine FVS checks to see if this was the last cycle of the projection. If it was, Subroutine FVS enters the projection summarization phase; if it wasn’t then the cycle number gets incremented and the process starts over with the call to subroutine TREGRO as outlined in [Event monitor and harvest](#sec-event-monitor-and-harvest).
 
 ### Auxiliary subroutines
 
@@ -3392,7 +3392,7 @@ OPGET, an entry point in subroutine OPFIND, is used to retrieve any RESETAGE, FV
 
 Subroutine SDICAL is called to compute the end-of-cycle SDI maximum.
 
-# Projection Summarization Phase
+# Projection Summarization Phase {#sec-projection-summarization-phase}
 
 When all projection cycles have been completed, FVS enters the projection summarization phase. The final output reports must be produced, another projection of the same stand, or a different stand, may be called for, or the program might be directed to stop.
 
@@ -3577,17 +3577,17 @@ Subroutine SDICAL is called to compute the end-of-cycle SDI maximum.
 
 Various code segments are used to retrieve keyword record names used in an FVS extension for printing in the activity summary table. These include: ESKEY for the regeneration establishment extension; TMKEY for the tussock moth extension; MPKEY for the mountain pine beetle extension; CVKEY for the cover extension; DBSKEY for the database extension; BRKEY for the blister rust extension; MISKEY for the dwarf-mistletoe extension; BWKEY for the budworm extension; DFB key for the Douglas-fir beetle extension; BMKEY for the west-wide beetle model extension; RDKEY for the root disease extension; FMKEY for the fire and fuels effects extension; and ECKEY for the economics extension. These subroutines will exist as subroutines in the extension’s source directory if the extension is part of the program executable; they will exist as entry points in the corresponding externals file in the FVS base source directory if the extension is not part of the program executable (e.g. EXCOV for the cover extension).
 
-## Running more than one stand
+## Running more than one stand {#sec-running-more-than-one-stand}
 
-Processing of the stand is now complete, but other stands might need to be run. Subroutine FVS returns to its caller, which calls FVS again; each call begins by setting the logical variables LSTART and LFLAG to “.TRUE.” and the variable ICYC to 0, and calling subroutine INITRE discussed in section 3.3.1. The run terminates if the next keyword record read is a STOP keyword record; if the keyword record is any other FVS keyword record, then processing of the next stand begins.
+Processing of the stand is now complete, but other stands might need to be run. Subroutine FVS returns to its caller, which calls FVS again; each call begins by setting the logical variables LSTART and LFLAG to “.TRUE.” and the variable ICYC to 0, and calling subroutine INITRE discussed in [Processing keyword record requests](#sec-processing-keyword-record-requests-subroutines-involved-and-their-function). The run terminates if the next keyword record read is a STOP keyword record; if the keyword record is any other FVS keyword record, then processing of the next stand begins.
 
-As discussed in section 2.0, a run consisting of a single stand is called a single stand serial run. A run consisting of multiple stands organized as discussed in the paragraph above is called a multiple stand serial run. A multiple stand serial run may contain as many individual stand projections as you want. Each stand projection might be a projection of a different stand, different projections (i.e. different management alternatives) of the same stand, or a combination of the two. The projection of each stand follows the same logic outlined in sections 3.3.1 through 5.2.
+As discussed in [General Flow Overview](#sec-general-flow-overview), a run consisting of a single stand is called a single stand serial run. A run consisting of multiple stands organized as discussed in the paragraph above is called a multiple stand serial run. A multiple stand serial run may contain as many individual stand projections as you want. Each stand projection might be a projection of a different stand, different projections (i.e. different management alternatives) of the same stand, or a combination of the two. The projection of each stand follows the same logic outlined in [Processing keyword record requests](#sec-processing-keyword-record-requests) through [Running more than one stand](#sec-running-more-than-one-stand).
 
-A parallel model run follows virtually the same flow as its serial counterpart for each stand in the project initialization, projection cycling, and output reporting phases. Details of a parallel model run are covered in section 8.0.
+A parallel model run follows virtually the same flow as its serial counterpart for each stand in the project initialization, projection cycling, and output reporting phases. Details of a parallel model run are covered in [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api).
 
-# Option Processing Logic
+# Option Processing Logic {#sec-option-processing-logic}
 
-This section provides an overview of the option processing logic. To some degree, the topic has been covered in the descriptions of how keyword records are processed, options scheduled, retrieved, and accomplished (or not). Consider two cases that could be called setting an option: (1) setting the stand elevation is something that is done immediately when FVS reads the STDINFO keyword record, where (2) specifying that a thinning should be accomplished 40 years into a simulation is scheduling the option to occur during the simulation. Here we are discussing options that are scheduled to be done sometime during the simulation (see section 3.3.1.3.1).
+This section provides an overview of the option processing logic. To some degree, the topic has been covered in the descriptions of how keyword records are processed, options scheduled, retrieved, and accomplished (or not). Consider two cases that could be called setting an option: (1) setting the stand elevation is something that is done immediately when FVS reads the STDINFO keyword record, where (2) specifying that a thinning should be accomplished 40 years into a simulation is scheduling the option to occur during the simulation. Here we are discussing options that are scheduled to be done sometime during the simulation (see [Scheduling the Option](#sec-scheduling-the-option)).
 
 ## General logic and table structure
 
@@ -3597,7 +3597,7 @@ Activities might be specified as part of an IF-THEN-ENDIF keyword record sequenc
 
 The labeled COMMON block OPCOM stores all the data associated with these processes. The comment statements in OPCOM further explain these variables and their use.
 
-Naming conventions for subroutines that support the option processing logic are useful to know. Those subroutines named ALG___ are for the expression compiling and evaluation logic (section 7.0). One of these, subroutine ALGSLP, computes a linear interpolation and is used in several extensions, including the fire and fuels extension and climate extension. Subroutines named EV___ are directly related to the event monitor; that code supports the IF-THEN-ENDIF constructs in the keyword record file (see section 7.0). Those subroutines named OP___ support options and are generally used to schedule and retrieve activities.
+Naming conventions for subroutines that support the option processing logic are useful to know. Those subroutines named ALG___ are for the expression compiling and evaluation logic ([Event monitor logic](#sec-event-monitor-logic)). One of these, subroutine ALGSLP, computes a linear interpolation and is used in several extensions, including the fire and fuels extension and climate extension. Subroutines named EV___ are directly related to the event monitor; that code supports the IF-THEN-ENDIF constructs in the keyword record file (see [Event monitor logic](#sec-event-monitor-logic)). Those subroutines named OP___ support options and are generally used to schedule and retrieve activities.
 
 Label processing is supported by those subroutines named LB___. If the AGPLABEL and SPLABEL keyword records were ever removed from the FVS system, the label processing subroutines and the data structures they use can be deleted from FVS.
 
@@ -3609,9 +3609,9 @@ Every option that is scheduled has an associated activity number (or code) that 
 
 This translation scheme is used to output the activity schedule and the activity summary tables in the FVS main output file. Note that when an activity is part of an extension, there is an extension coding system that relates the activity code to the keyword record. Take care to insure these two tables stay in sync and “look” good when adding a keyword record. This table would be a mess to interpret if every programmer just modified it and stuck the new codes in without keeping the table nicely formatted.
 
-Subroutines that accomplish activities access them via the activity codes. This is explained in more detail in section 6.3.
+Subroutines that accomplish activities access them via the activity codes. This is explained in more detail in [Adding new keyword records](#sec-adding-new-keyword-records).
 
-## Adding new keyword records
+## Adding new keyword records {#sec-adding-new-keyword-records}
 
 The inner workings of the option processing logic are complicated. However, the ability to quickly add new activity keyword records to the system, including the ability to have their parameter values be computed during a simulation (on-the-fly), is supported by this logic.
 
@@ -3683,9 +3683,9 @@ Initialize the new variables to a default value for use when the keyword record 
 
 Add the new variables to subroutines GETSTD and PUTSTD. This step is needed so the FVS STOP / RESTART feature will work correctly.
 
-# Event monitor logic
+# Event monitor logic {#sec-event-monitor-logic}
 
-As described in section 6.0, activities can be scheduled to occur after an event happens. Events happen when a logical expression that defines the event is determined to be true. For example, an event can be defined as the culmination of mean annual increment, detected by comparing mean annual increment to current annual increment. Another example may be the time during a simulation when the stand density index exceeds a percentage of maximum. This section describes the code that supports event processing.
+As described in [Option Processing Logic](#sec-option-processing-logic), activities can be scheduled to occur after an event happens. Events happen when a logical expression that defines the event is determined to be true. For example, an event can be defined as the culmination of mean annual increment, detected by comparing mean annual increment to current annual increment. Another example may be the time during a simulation when the stand density index exceeds a percentage of maximum. This section describes the code that supports event processing.
 
 ## Detailed Input and Output Array Specifications {-}
 
@@ -3845,7 +3845,7 @@ kable(evmon_groups,
 
 ## General logic and structure
 
-An event is a logical expression that is entered with the IF keyword record. Subroutine EVIF is called to store information about the event. One of the first steps is to read and compile the logical expression by calling subroutine EVCOMP, which in turn calls subroutine ALGCMP. The logic of the expression is stored in memory areas in the OPCOM labeled COMMON block. Some of these memory arrays are described in section 6.
+An event is a logical expression that is entered with the IF keyword record. Subroutine EVIF is called to store information about the event. One of the first steps is to read and compile the logical expression by calling subroutine EVCOMP, which in turn calls subroutine ALGCMP. The logic of the expression is stored in memory areas in the OPCOM labeled COMMON block. Some of these memory arrays are described in [Option Processing Logic](#sec-option-processing-logic).
 
 The 2 dimensional array IEVACT(i,j), in the OPCOM labeled COMMON block, stores the relationships between activities and events. The idea of an “activity group” is important to this logic. An activity group is the set of activities that are all scheduled when an event occurs. IEVNTS(i,j) is another 2 dimensional array, in the OPCOM labeled COMMON block, where each row stores pointers to the operation code associated with the event. That is, when an IF keyword record is read, the logical expression is compiled into operations code (by subroutine ALGCMP) and stored in vector IEVCOD(k). The location of that operation code inside IEVCOD(k) is stored in IEVNTS(i,j).
 
@@ -3931,7 +3931,7 @@ Subroutine EVTSTV loads state variables into vectors used for evaluation and dea
 
 Key rules in the evaluation process include the concept of a variable being defined or not defined. If an expression includes a variable that is not defined, the expression is also not defined. A logical expression that is not defined is not true. In the example, MIN (10,BBA,ABA,1), the variable ABA is not defined during phase 1, so the result is not defined in phase 1. It is tried again in phase 2 where ABA is defined and so the expression is defined.
 
-A frequent programming task is to add new functions to FVS (see section 7.2.2). The name and operations code is added to subroutine ALGKEY (see the comments in that code and follow the establish patterns). They are evaluated in subroutine ALGEVL; read that code to see how the evaluation logic is programmed.
+A frequent programming task is to add new functions to FVS (see [Steps in adding a new event monitor function to FVS](#sec-steps-in-adding-a-new-event-monitor-function-to-fvs)). The name and operations code is added to subroutine ALGKEY (see the comments in that code and follow the establish patterns). They are evaluated in subroutine ALGEVL; read that code to see how the evaluation logic is programmed.
 
 Variables are divided into groups depending on when they are defined. Those defined during phase 1, for example the variable BADBH that is the before thin average diameter at breast height, are in group 1. Those that are always known are also in group 1. They have corresponding operations codes that are in the hundreds.
 
@@ -3967,7 +3967,7 @@ Change the date of revision.
 
 Insert the code necessary for calculating a value for the variable.
 
-### Steps in adding a new event monitor function to FVS
+### Steps in adding a new event monitor function to FVS {#sec-steps-in-adding-a-new-event-monitor-function-to-fvs}
 
 Event monitor functions are useful for many purposes. The steps necessary to add a new event monitor function are:
 
@@ -3995,7 +3995,7 @@ Insert the code necessary for processing the new function.
 
 Follow the established patterns when modifying subroutines ALGEVL and EVLDX.
 
-# Stop/restart and the FVS API
+# Stop/restart and the FVS API {#sec-stop-restart-and-the-fvs-api}
 
 A key source of information regarding stop and restart is in the open-fvs wiki, currently stored at https://sourceforge.net/p/open-fvs/wiki/StopRestart/. It is essential to understand that document prior to reading more here.
 
@@ -4154,7 +4154,7 @@ kable(persistence_arrays,
   column_spec(5, width = "7cm")
 ```
 
-## General logic and structure
+## General logic and structure {#sec-stop-restart-and-the-fvs-api-general-logic-and-structure}
 
 First, there are two major components to the stop and restart facility. The first component is the logic built into the program that supports the use of return codes for subroutine calls. It is essential that no FORTRAN STOP be executed except in MAIN. This means that if a fatal error state is created, FVS needs to issue an error message, set a non-zero return code, and return back to the calling routine. Changes were made to FVS in ~2011 to insure that this is always the case. Regardless of how deep into the calling sequence the program might be, if a fatal error condition is detected, control must be passed back up the call stack.
 
@@ -4166,7 +4166,7 @@ When used as a program (as opposed to being used as a shared library), FVS must 
 
 There is a wiki page that also covers the stop and restart logic in FVS stored at url:https://sourceforge.net/p/open-fvs/wiki/StopRestart/; it covers this topic in additional detail.
 
-## Subroutines involved and their function
+## Subroutines involved and their function {#sec-stop-restart-and-the-fvs-api-subroutines-involved-and-their-function}
 
 Most of the code for supporting stop and restart can be found in subroutine CMDLINE, which contains several short subroutines.
 
@@ -4224,7 +4224,7 @@ Subroutine fvsGetRtnCode (code contained in subroutine CMDLINE) returns the curr
 
 Subroutine fvsSetRtnCode (code contained in subroutine CMDLINE) is used to set the return code to 0, 1, or 2.
 
-## The rFVS R Package Interface
+## The rFVS R Package Interface {#sec-the-rfvs-r-package-interface}
 
 The rFVS package provides a comprehensive R interface to the Forest Vegetation Simulator when it is run as a shared library. This section describes the structure, functionality, and use of rFVS for integrating FVS simulations within R-based analytical workflows.
 
@@ -4525,13 +4525,13 @@ ggplot(finalSummary, aes(x = Year, y = BA)) +
 
 ### Integration with FVS API and Stop/Restart
 
-The rFVS package directly utilizes the FVS API functionality described in sections 8.1 and 8.2. Key integration points include:
+The rFVS package directly utilizes the FVS API functionality described in [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api). Key integration points include:
 
 **Stop Point Mechanism:**
 
 rFVS's `fvsRun()` function uses the same stop point codes as the FVS API. When execution reaches a stop point:
 
-1. The FVS Fortran code calls `fvsStopPoint()` (section 8.2)
+1. The FVS Fortran code calls `fvsStopPoint()` ([Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api-subroutines-involved-and-their-function))
 2. Control returns up the call stack to the R environment
 3. All FVS state variables remain in memory (in COMMON blocks)
 4. R code can call API functions to inspect or modify the simulation state
@@ -4794,7 +4794,7 @@ Ongoing and potential future developments for rFVS include:
 - **Building FVS**: https://sourceforge.net/p/open-fvs/wiki/browse_pages/
 - **FVS Online**: https://sourceforge.net/p/open-fvs/wiki/FVSOnline/
 
-# Structural differences in the ORGANON-FVS variants
+# Structural differences in the ORGANON-FVS variants {#sec-structural-differences-in-the-organon-fvs-variants}
 
 Several variants use growth equations from another model. The Central Rockies (CR) variant uses equations from the GENGYM model, the Northeastern (NE), Central States (CS), and Lake States (LS) variants use equations from the TWIGS models, and the ORGANON Southwest (OC) and ORGANON Pacific Northwest (OP) variants use equations from the ORGANON model. However, the way in which ORGANON equations are embedded in the FVS code structure is different enough to warrant further discussion.
 
@@ -4804,7 +4804,7 @@ The traditional way of embedding equations from another model is simply to repla
 
 A good example of this method is the CR variant large tree diameter growth model. Subroutine DGDRIV is the main subroutine used in calibrating the large tree diameter growth model to the input data, and estimating large tree diameter growth each cycle. Subroutine DGDRIV calls subroutine DGF to estimate large tree diameter growth on a natural logarithm of change in diameter growth squared scale (ln(DDS) in the prognosis model world). Subroutine DGF contains the large tree diameter growth equations in most variants; however, in the CR variant, DGF calls subroutine GEMDG which contains the large tree diameter growth equations.
 
-The structure of subroutine DGDRIV and how it is used to call subroutine DGF was discussed in section 4.2.1.1. As pointed out in that section, the purpose of subroutine DGF is to load an array (the name of which is passed as a subroutine argument) with a large tree diameter growth estimate for each tree record. Subroutine DGF is structured as nested DO loops with the outside loop controlling species and the inside loop controlling tree records within species. In the case of the CR variant, after some variables needed by the GENGYM equations are computed, the nested DO loop structure is entered and subroutine GEMDG gets called for each individual tree record.
+The structure of subroutine DGDRIV and how it is used to call subroutine DGF was discussed in [Growing the large trees](#sec-growing-the-large-trees). As pointed out in that section, the purpose of subroutine DGF is to load an array (the name of which is passed as a subroutine argument) with a large tree diameter growth estimate for each tree record. Subroutine DGF is structured as nested DO loops with the outside loop controlling species and the inside loop controlling tree records within species. In the case of the CR variant, after some variables needed by the GENGYM equations are computed, the nested DO loop structure is entered and subroutine GEMDG gets called for each individual tree record.
 
 The things to note in subroutine GEMDG that pertain to this discussion are:
 
@@ -4836,11 +4836,11 @@ ORGANON is limited to 2000 individual tree records. This number cannot be easily
 
 ORGANON recognizes less species codes than FVS, and has minimum size restrictions on input tree diameters and heights. FVS can accommodate trees of any size in the input data, including seedlings. So an FVS tree data input file for a stand may contain tree records that cannot be directly handled within the ORGANON code. This also has implications for regeneration establishment since tree records for newly established trees may have diameters or heights less than the ORGANON minimums.
 
-Trees with a valid ORGANON species code and meeting the minimum size restrictions will be referred to as valid ORGANON tree records in the remainder of section 9.0; all other tree records will be referred to as non-valid ORGANON tree records.
+Trees with a valid ORGANON species code and meeting the minimum size restrictions will be referred to as valid ORGANON tree records in the remainder of [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants); all other tree records will be referred to as non-valid ORGANON tree records.
 
 #### Species codes
 
-The NWO and SMC versions of ORGANON both recognize 11 species found in western Oregon or Washington, or southwestern British Columbia. The corresponding PN FVS variant recognizes 38 individual species or species groups. The SWO version of ORGANON recognizes 19 species found in southwestern Oregon. The corresponding CA FVS variant recognizes 49 individual species or species groups. For each of the two ORGANON-FVS variants, OC and OP, the variant-specific subroutine ORGSPC contains a mapping function to temporarily give each tree record a valid ORGANON FIA species code (one of the 11 or 19, depending on the variant). The reason for doing this will be discussed further in section 9.2.3.
+The NWO and SMC versions of ORGANON both recognize 11 species found in western Oregon or Washington, or southwestern British Columbia. The corresponding PN FVS variant recognizes 38 individual species or species groups. The SWO version of ORGANON recognizes 19 species found in southwestern Oregon. The corresponding CA FVS variant recognizes 49 individual species or species groups. For each of the two ORGANON-FVS variants, OC and OP, the variant-specific subroutine ORGSPC contains a mapping function to temporarily give each tree record a valid ORGANON FIA species code (one of the 11 or 19, depending on the variant). The reason for doing this will be discussed further in [Dubbing of missing input data and calibration of ORGANON equations](#sec-dubbing-of-missing-input-data-and-calibration-of-organon-equations).
 
 Of the 19 species in the SWO version of ORGANON, six species are designated as “the big 6”. These are white fir, grand fir, incense-cedar, sugar pine, ponderosa pine, and Douglas-fir. Of the 11 species in the NWO and SMC versions, only grand fir and Douglas-fir contribute to “the big 6”. At least 1 of these species must be present in the stand for the ORGANON growth routines to run. In ORGANON-FVS, if one of these species is not present, then all tree records are designated as non-valid ORGANON tree records. The importance of this will be evident in the rest of this section.
 
@@ -4848,13 +4848,13 @@ Of the 19 species in the SWO version of ORGANON, six species are designated as �
 
 In all three ORGANON versions, trees must be greater than 4.5 feet tall and 0.09 inches in diameter at breast-height. These limits are dealt with in two ways in ORGANON-FVS.
 
-First, when calling the ORGANON source code routines, all trees not meeting these minimums are temporarily assigned a diameter of 0.1 inch and a height of 4.6 feet. The reason for doing this will be discussed further in section 9.2.3.
+First, when calling the ORGANON source code routines, all trees not meeting these minimums are temporarily assigned a diameter of 0.1 inch and a height of 4.6 feet. The reason for doing this will be discussed further in [Dubbing of missing input data and calibration of ORGANON equations](#sec-dubbing-of-missing-input-data-and-calibration-of-organon-equations).
 
-Second, FVS has a large-tree model and a small-tree model as discussed in section 4.2. All valid ORGANON tree records are considered large trees for modelling purposes and get growth estimates from the ORGANON routine equations. All non-valid ORGANON tree records get growth estimates from the FVS equations, with the breakpoint diameter between the large and small tree designation being 3.0 inches.
+Second, FVS has a large-tree model and a small-tree model as discussed in [Growth and Mortality](#sec-growth-and-mortality). All valid ORGANON tree records are considered large trees for modelling purposes and get growth estimates from the ORGANON routine equations. All non-valid ORGANON tree records get growth estimates from the FVS equations, with the breakpoint diameter between the large and small tree designation being 3.0 inches.
 
-### Dubbing of missing input data and calibration of ORGANON equations
+### Dubbing of missing input data and calibration of ORGANON equations {#sec-dubbing-of-missing-input-data-and-calibration-of-organon-equations}
 
-In FVS, dubbing of missing input data and calibration of model equations to the input data is orchestrated by subroutine CRATET as discussed in section 3.6.1. Obviously, these steps are skipped in the case of a bare ground plant, in which case there would be no input tree records.
+In FVS, dubbing of missing input data and calibration of model equations to the input data is orchestrated by subroutine CRATET as discussed in [Initialization tasks](#sec-initialization-tasks). Obviously, these steps are skipped in the case of a bare ground plant, in which case there would be no input tree records.
 
 ORGANON-FVS can be run using an input file that has already been through the ORGANON edit process and stored in a file with the suffix “.INP”. In this case, the stand has already been through the processes of dubbing in any missing values in the input data and calibration of ORGANON growth equations to the input data. All calibration values and stand settings, along with all the tree record data, is contained in the .INP file. In this case, the call to the ORGANON subroutine PREPARE is skipped and subroutine CRATET proceeds on to the task of calibrating the FVS equations to the input data.
 
@@ -4866,23 +4866,23 @@ Upon completion of subroutine PREPARE, the ORGANON-FVS tree-level arrays for dia
 
 ### ORGANON growth and mortality estimates
 
-In FVS, subroutine GRINCR calls subroutine DGDRIV to calculate a large-tree diameter growth estimate for all tree records, as discussed in section 4.2.1.1. It is from subroutine DGDRIV that ORGANON-FVS interfaces with the ORGANON growth and mortality routines. If valid ORGANON tree records are present, and at least one of the “big 6” species is present, in the tree data, then the ORGANON source code routines can be run. DGDRIV calls the ORGANON subroutine EXECUTE which directs execution of the ORGANON growth model equations. Once again, all tree records are passed to subroutine EXECUTE, as described in section 9.2.3. Upon completion of subroutine EXECUTE, ORGANON-FVS will have ORGANON model estimates of large tree diameter and height growth, and an estimate of crown ratio, for all valid ORGANON tree records for the projection cycle. FVS will also have ORGANON mortality estimates for all tree records, for the projection cycle.
+In FVS, subroutine GRINCR calls subroutine DGDRIV to calculate a large-tree diameter growth estimate for all tree records, as discussed in [Growing the large trees](#sec-growing-the-large-trees). It is from subroutine DGDRIV that ORGANON-FVS interfaces with the ORGANON growth and mortality routines. If valid ORGANON tree records are present, and at least one of the “big 6” species is present, in the tree data, then the ORGANON source code routines can be run. DGDRIV calls the ORGANON subroutine EXECUTE which directs execution of the ORGANON growth model equations. Once again, all tree records are passed to subroutine EXECUTE, as described in [Dubbing of missing input data and calibration of ORGANON equations](#sec-dubbing-of-missing-input-data-and-calibration-of-organon-equations). Upon completion of subroutine EXECUTE, ORGANON-FVS will have ORGANON model estimates of large tree diameter and height growth, and an estimate of crown ratio, for all valid ORGANON tree records for the projection cycle. FVS will also have ORGANON mortality estimates for all tree records, for the projection cycle.
 
 #### Large tree diameter growth
 
 The call to subroutine EXECUTE comes after subroutine DGDRIV calls subroutine DGF to get large tree diameter growth estimates for all tree records using FVS equations. Subroutine DGF returns diameter growth estimates as inside-bark natural logarithm of diameter growth squared (ln(DDS) in prognosis jargon). After calling subroutine EXECUTE, subroutine DGDRIV converts the diameter growth estimates for all valid ORGANON tree records to the ln(DDS) scale to maintain compatibility with FVS estimates for further processing.
 
-Diameter growth estimates for all trees are then adjusted using user supplied multipliers, climate effects, serial correlation, insect and disease effects, and so forth, as described in section 4.2.1.1.
+Diameter growth estimates for all trees are then adjusted using user supplied multipliers, climate effects, serial correlation, insect and disease effects, and so forth, as described in [Growing the large trees](#sec-growing-the-large-trees).
 
 #### Large tree height growth
 
-As discussed in section 4.2.1.1, the FVS subroutine GRINCR calls subroutine HTGF to obtain a height growth estimate for each tree record using the large tree equations. In ORGANON-FVS, subroutine HTGF simply loads the height growth estimate obtained from the call to subroutine EXECUTE from subroutine DGDRIV for all valid ORGANON tree records. Subroutine HTGF calculates an estimate of large tree height growth for all non-valid ORGANON tree records using FVS large tree height growth equations.
+As discussed in [Growing the large trees](#sec-growing-the-large-trees), the FVS subroutine GRINCR calls subroutine HTGF to obtain a height growth estimate for each tree record using the large tree equations. In ORGANON-FVS, subroutine HTGF simply loads the height growth estimate obtained from the call to subroutine EXECUTE from subroutine DGDRIV for all valid ORGANON tree records. Subroutine HTGF calculates an estimate of large tree height growth for all non-valid ORGANON tree records using FVS large tree height growth equations.
 
-Large tree height growth estimates for all trees are adjusted using user supplied multipliers, insect and disease effects, and so forth, as described in section 4.2.1.1.
+Large tree height growth estimates for all trees are adjusted using user supplied multipliers, insect and disease effects, and so forth, as described in [Growing the large trees](#sec-growing-the-large-trees).
 
 #### Small tree diameter and height growth
 
-As discussed in section 4.2.1.2, subroutine GRINCR calls subroutine REGENT to estimate small tree height and diameter growth. In the two ORGANON-FVS variants, non-valid ORGANON tree records are considered small trees when they are less than 3.0” in diameter at breast-height. All valid ORGANON tree records are considered large trees and get height and diameter growth estimates as described above. Small tree height and diameter growth is discussed in detail in the OC and OP variant overviews.
+As discussed in [Growing the small trees](#sec-growing-the-small-trees), subroutine GRINCR calls subroutine REGENT to estimate small tree height and diameter growth. In the two ORGANON-FVS variants, non-valid ORGANON tree records are considered small trees when they are less than 3.0” in diameter at breast-height. All valid ORGANON tree records are considered large trees and get height and diameter growth estimates as described above. Small tree height and diameter growth is discussed in detail in the OC and OP variant overviews.
 
 #### Mortality
 
@@ -4890,11 +4890,11 @@ Subroutine GRINCR calls subroutine MORTS to estimate mortality. In the two ORGAN
 
 #### Crown ratio change
 
-As discussed in section 4.7, subroutine GRADD calls subroutine CROWN to estimate the change in a trees’ crown ratio. For all valid ORGANON tree records, subroutine CROWN uses crown ratio estimates calculated using ORGANON equations. These estimates were calculated during the call to subroutine EXECUTE from subroutine DGDRIV. For all non-valid ORGANON tree records, subroutine CROWN calculates the end-of-cycle crown ratio using the FVS crown ratio logic. Both of these procedures are detailed in the OC and OP variant overview documents.
+As discussed in [Computing crown ratio change and crown width](#sec-computing-crown-ratio-change-and-crown-width), subroutine GRADD calls subroutine CROWN to estimate the change in a trees’ crown ratio. For all valid ORGANON tree records, subroutine CROWN uses crown ratio estimates calculated using ORGANON equations. These estimates were calculated during the call to subroutine EXECUTE from subroutine DGDRIV. For all non-valid ORGANON tree records, subroutine CROWN calculates the end-of-cycle crown ratio using the FVS crown ratio logic. Both of these procedures are detailed in the OC and OP variant overview documents.
 
-# Regeneration establishment in FVS variants
+# Regeneration establishment in FVS variants {#sec-regeneration-establishment-in-fvs-variants}
 
-FVS program flow in calling the regeneration establishment model was discussed in section 4.6. This section delves into subroutines ESNUTR and ESTAB in greater detail. The regeneration establishment model code is complex and readers may want to have copies subroutine ESNUTR and subroutine ESTAB for reference while reading this section.
+FVS program flow in calling the regeneration establishment model was discussed in [Regeneration establishment](#sec-regeneration-establishment). This section delves into subroutines ESNUTR and ESTAB in greater detail. The regeneration establishment model code is complex and readers may want to have copies subroutine ESNUTR and subroutine ESTAB for reference while reading this section.
 
 Simulating the establishment of regeneration is an important component in mid- to long-term FVS projections and those investigating non-timber values such as wildlife, fuel loading, or fire effects. The regeneration establishment extension (aka regeneration establishment model) was created for this purpose. Two versions of the regeneration establishment model are used in FVS variants. The partial establishment model simulates regeneration from planting and stump and root sprouting; the full establishment model simulates regeneration from natural regeneration, planting, and stump and root sprouting. The partial establishment model is used in variants for which the natural regeneration component of the full establishment model has not been developed or calibrated. When using the partial establishment model, users can simulate their own natural regeneration component with creative keyword use.
 
@@ -5060,7 +5060,7 @@ A regeneration summary is printed each time the regeneration model is invoked. T
 
 Each tally shows the cumulative probability of stocking and three summaries of regeneration by species. The first summary is for all trees regenerating during the cycle. This summary is similar to a conventional stand exam. The second summary lists best trees regenerating during the cycle. Densities and average heights are listed by species for best trees. Focusing on best trees gives a more realistic picture of potential crop trees in the stand. The third summary shows all trees less than 3.0 inches in diameter that are in the FVS tree list. This provides a view of all regeneration currently in the stand. Trees in this summary may include those from the stand inventory, stump and root sprouts, from a previous tally of the regeneration model, or from the current tally of the regeneration model.
 
-# Database Input and Output Extension
+# Database Input and Output Extension {#sec-database-input-and-output-extension}
 
 The FVS Database Extension (dbsqlite) provides comprehensive capabilities for reading stand and tree data from SQLite databases and writing simulation results to database tables. This extension replaces traditional text-based input files and ASCII output reports with structured relational database tables, enabling efficient data management, automated batch processing, and integration with Geographic Information Systems (GIS) and other analytical tools.
 
@@ -5781,9 +5781,9 @@ PRAGMA optimize;  -- Optimize all indices
 
 The Database Extension integrates tightly with:
 
-- **rFVS** (Section 8.3): R package can query database results for analysis
-- **FVS API** (Section 8.2): Shared library mode uses same CaseID structure
-- **Event Monitor** (Section 7.0): COMPUTDB table stores Event Monitor variables
+- **rFVS** ([The rFVS R Package Interface](#sec-the-rfvs-r-package-interface)): R package can query database results for analysis
+- **FVS API** ([Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api-subroutines-involved-and-their-function)): Shared library mode uses same CaseID structure
+- **Event Monitor** ([Event monitor logic](#sec-event-monitor-logic)): COMPUTDB table stores Event Monitor variables
 - **All Extensions**: Fire, climate, economics, etc. have dedicated tables
 
 **Related Documentation:**
@@ -6139,7 +6139,7 @@ There is a special case where the FFE adds data to the SV output for displaying 
 
 The data memory associated with SV is in three labeled common blocks, SVDEAD contains variables that store snag and related dead matter information, and SVDATA contains variables that store information about live tree objects. SVDATA also contains SV option parameters and control values. Lastly, SVRCOM contains variables that store the status of the random number generator used by the SV system.
 
-**Table B-1 provides a summary of where SV routines are called from within FVS. Readers are encouraged to study the comments in all 32 SV routines to fully understand how this code works. A final point is that the FVS API (section 8.0) includes two subroutines (fvsSVSDimSizes and fvsSVSObjData) the ability to interact (get and set) with the SV objects.**
+**Table B-1 provides a summary of where SV routines are called from within FVS. Readers are encouraged to study the comments in all 32 SV routines to fully understand how this code works. A final point is that the FVS API ([Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)) includes two subroutines (fvsSVSDimSizes and fvsSVSObjData) the ability to interact (get and set) with the SV objects.**
 
 ```{r appx-b-table, echo=FALSE}
 df <- data.frame(
