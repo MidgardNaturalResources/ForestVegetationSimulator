@@ -3868,7 +3868,7 @@ df <- data.frame(
   ),
   c3 = c(
     "load the pre-defined event monitor variable BTOPHT onto a stack (a vector of real numbers)",
-    "load constant number 1 which has the value 80, and is stored in the first location of array CONSTS(i), onto the stack structure ",
+    "load constant number 1 which has the value 80, and is stored in the first location of array PARMS(i) (called CONSTS in ALGCMP), onto the stack structure ",
     "GT, compare the two values on the stack, put the result on the logical stack, and pop the numeric stack ",
     "signals that the expression is finished and the result in on the logical stack"
   ),
@@ -3907,10 +3907,10 @@ df <- data.frame(
     "0"
   ),
   c3 = c(
-    "load constant number 2, which has the value 10, and is stored in the second location of array CONSTS(i), onto the stack structure",
+    "load constant number 2, which has the value 10, and is stored in the second location of array PARMS(i) (called CONSTS in ALGCMP), onto the stack structure",
     "load the pre-defined event monitor variable BBA, before-thinning total stand basal area ",
     "load the pre-defined event monitor variable ABA, after-thinning total stand basal area ",
-    "load constant number 1 which happens to have the value 1, and is stored in the first location of array CONSTS(i), onto the stack structure",
+    "load constant number 1 which happens to have the value 1, and is stored in the first location of array PARMS(i) (called CONSTS in ALGCMP), onto the stack structure",
     "find the min of 4 values (because NN=4), place it at the top of the stack and pop 3 times)",
     "signals that the expression is finished and the answer is on the top of the numeric stack"
   ),
@@ -3936,7 +3936,7 @@ A frequent programming task is to add new functions to FVS (see [Steps in adding
 
 Variables are divided into groups depending on when they are defined. Those defined during phase 1, for example the variable BADBH that is the before thin average diameter at breast height, are in group 1. Those that are always known are also in group 1. They have corresponding operations codes that are in the hundreds.
 
-There is an ability to modify the stand sampling weight using a multiplier or an expression coded on the THEN (or ALSOTRY) keyword records. This capability was included to support decision-tree analytics. It is likely never used; if it is deleted, column 6 of IEVACT can be removed.
+A multiplier or an expression can be coded on the THEN (or ALSOTRY) keyword records to modify the branch weighting factor of the former Parallel Processing Extension when the event occurs. This capability was included to support decision-tree analytics. The Parallel Processing Extension has been removed, so the feature has no effect; however, column 6 of IEVACT still stores the setting (it is set in subroutine EVTACT and tested in subroutine OPSAME), so deleting column 6 would require changing both subroutines.
 
 ## Adding new pre-defined variables and functions
 
@@ -3946,53 +3946,53 @@ FVS maintenance often involves adding a new event monitor variable or function. 
 
 Pre-defined event monitor variables are useful for many purposes. Values for pre-defined variables are stored in 5 single dimension arrays, TSTV1(i), TSTV2(i), TSTV3(i), TSTV4(i), and TSTV5(i), located in the labeled COMMON block OPCOM. Array TSTV1(i) is used for variables that are defined before thinning (aka phase 1) from cycle 1 forward; TSTV2(i) is used for variables that are only defined after thinning (aka phase 2) from cycle 1 forward; TSTV3(i) is used for variables that are defined before thinning from cycle 2 forward; TSTV4(i) is used for variables that are only defined when the corresponding logical flag, LTSTV4(i) (also located in the labeled COMMON block OPCOM)  is “.TRUE.” indicating TSTV4(i) is defined; TSTV5(i) is used for variables that are user defined. The steps necessary to add a new event monitor variable are:
 
-Expand the dimension of the array to which the variable will be added. In the labeled COMMON block OPCOM:
+1. Expand the dimension of the array to which the variable will be added. In the labeled COMMON block OPCOM:
 
-Change the date of revision, if appropriate.
+    a. Change the date of revision, if appropriate.
 
-Expand the dimension of the appropriate TSTV_(i) array. This is done by modifying the dimension in the REAL declaration statement for TSTV1(i), TSTV2(i), or TSTV3(i); it is done by modifying the MXTST4 or MXTST5 variable in a PARAMETER statement for arrays TSTV4(i), LTSTV4(i), and TSTV5(i).
+    b. Expand the dimension of the appropriate TSTV_(i) array by increasing the corresponding PARAMETER value in the OPCOM labeled COMMON block: MXTST1, MXTST2, MXTST3, MXTST4, or MXTST5 for TSTV1(i), TSTV2(i), TSTV3(i), TSTV4(i), or TSTV5(i), respectively. The arrays LTSTV4(i) and LTSTV5(i) are dimensioned by MXTST4 and MXTST5.
 
-In subroutine AGLKEY, add the variable name and option code to the appropriate arrays:
+2. In subroutine ALGKEY, add the variable name and option code to the appropriate arrays:
 
-Change the date of revision.
+    a. Change the date of revision.
 
-Expand the appropriate array dimension (N1, N2, …,N8) depending on how many letters (up to 8) make up the variable name.
+    b. Expand the appropriate array dimension (N1, N2, …,N8) depending on how many letters (up to 8) make up the variable name.
 
-Look in the comments at the top of the routine and pick an appropriate instruction code to go with the new event monitor variable name. Add the instruction code and name to the comments.
+    c. Look in the comments at the top of the routine and pick an appropriate instruction code to go with the new event monitor variable name. Add the instruction code and name to the comments.
 
-Add the instruction code and variable name to the appropriate CTAB_(i) and IOPT_(i) arrays.
+    d. Add the instruction code and variable name to the appropriate CTAB_(i) and IOPT_(i) arrays.
 
-In subroutine EVTSTV, add the code necessary for calculating a value for the new variable.
+3. In subroutine EVTSTV, add the code necessary for calculating a value for the new variable.
 
-Change the date of revision.
+    a. Change the date of revision.
 
-Insert the code necessary for calculating a value for the variable.
+    b. Insert the code necessary for calculating a value for the variable.
 
 ### Steps in adding a new event monitor function to FVS {#sec-steps-in-adding-a-new-event-monitor-function-to-fvs}
 
 Event monitor functions are useful for many purposes. The steps necessary to add a new event monitor function are:
 
-Add the instruction code and function name to subroutine ALGKEY:
+1. Add the instruction code and function name to subroutine ALGKEY:
 
-Change the date of revision, if appropriate.
+    a. Change the date of revision, if appropriate.
 
-Expand the appropriate array dimension (N1, N2, …,N8) depending on how many letters (up to 8) make up the function name.
+    b. Expand the appropriate array dimension (N1, N2, …,N8) depending on how many letters (up to 8) make up the function name.
 
-Look in the comments at the top of the routine and pick an appropriate instruction code to go with the new event monitor function name. Add the instruction code and name to the comments.
+    c. Look in the comments at the top of the routine and pick an appropriate instruction code to go with the new event monitor function name. Add the instruction code and name to the comments.
 
-Add the instruction code and function name to the appropriate CTAB_(i) and IOPT_(i) arrays.
+    d. Add the instruction code and function name to the appropriate CTAB_(i) and IOPT_(i) arrays.
 
-Add code to subroutine ALGEVL to process the new function:
+2. Add code to subroutine ALGEVL to process the new function:
 
-Change the date of revision, if appropriate.
+    a. Change the date of revision, if appropriate.
 
-Expand the GO TO statement just before the 301 CONTINUE statement, by inserting the appropriate CONTINUE statement label which will execute the code necessary to process the new function.
+    b. Expand the GO TO statement just before the 301 CONTINUE statement, by inserting the appropriate CONTINUE statement label which will execute the code necessary to process the new function.
 
-Add code to subroutine EVLDX to process the new function
+3. Add code to subroutine EVLDX to process the new function
 
-Change the date of revision, if appropriate.
+    a. Change the date of revision, if appropriate.
 
-Insert the code necessary for processing the new function.
+    b. Insert the code necessary for processing the new function.
 
 Follow the established patterns when modifying subroutines ALGEVL and EVLDX.
 
