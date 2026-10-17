@@ -951,7 +951,7 @@ This section describes some underlying concepts behind FVS structure and discuss
 
 ### Programming Language, Comments, and Debugging
 
-FVS code has evolved through time as computer systems and languages have changed. FVS was developed in FORTRAN IV, upgraded in places to FORTRAN V, ultimately converted to FORTRAN 77, and currently contains FORTRAN 90, 95, and 2003 constructs. The code is continually upgraded and older code constructs eliminated as time permits. FVS is fully compatible with a FORTRAN compiler that supports the 2003 standard. The code was originally designed to run on a mainframe computer system and was changed to also run on personal computer (PC) systems around 1985. Mainframe usage has dwindled and many applications of FVS are now run on a PC. However, there are many uses of FVS and some of them are accomplished on large servers where hundreds of thousands of runs are done. The FVS code is supported on a range of computer systems, including Windows, Linux-based systems, and Unix-based systems like MAC OSX. Building FVS from source code can be done using various approaches. These are documented in wiki pages at url:https://sourceforge.net/p/open-fvs/wiki/browse_pages/.
+FVS code has evolved through time as computer systems and languages have changed. FVS was developed in FORTRAN IV, upgraded in places to FORTRAN V, ultimately converted to FORTRAN 77, and currently contains FORTRAN 90, 95, and 2003 constructs. The code is continually upgraded and older code constructs eliminated as time permits. FVS is fully compatible with a FORTRAN compiler that supports the 2003 standard. The code was originally designed to run on a mainframe computer system and was changed to also run on personal computer (PC) systems around 1985. Mainframe usage has dwindled and many applications of FVS are now run on a PC. However, there are many uses of FVS and some of them are accomplished on large servers where hundreds of thousands of runs are done. The FVS code is supported on a range of computer systems, including Windows, Linux-based systems, and Unix-based systems like MAC OSX. Building FVS from source code can be done using various approaches. These are documented in wiki pages at url:https://github.com/USDAForestService/ForestVegetationSimulator/wiki.
 
 FVS code contains many comment statements to describe the function of each subroutine, document the date it was last changed, and explain what is going on within code segments. These comments are extensive enough to serve fairly well as a programmer’s guide and are likely the reason a document like this one has not seemed critical to develop.
 
@@ -1609,7 +1609,7 @@ kable(final_init_arrays,
 
 ## Opening the necessary input and output files
 
-FVS needs to open various input and output files that are required in a projection and establish database connections if stand or tree data is coming from a database. When the keyword record file name is not specified as a command line option, FVS will prompt users for 6 file names. These names can be provided via keyboard input or the names can be supplied in a response file. When running FVS through the Suppose interface, Suppose builds a batch file and runs FVS via DOS commands and supplies the answers to the prompts. If run from FVSOnline, a new FVS interface (code is at https://sourceforge.net/p/open-fvs/code/HEAD/tree/rFVS/shinyFVSOnline/ and more information is at https://sourceforge.net/p/open-fvs/wiki/FVSOnline/), command line options are used to specify input file names.
+FVS needs to open various input and output files that are required in a projection and establish database connections if stand or tree data is coming from a database. When the keyword record file name is not specified as a command line option, FVS will prompt users for 6 file names. These names can be provided via keyboard input or the names can be supplied in a response file. When running FVS through the Suppose interface, Suppose builds a batch file and runs FVS via DOS commands and supplies the answers to the prompts. If run from FVSOnline, a new FVS interface (code is at https://github.com/USDAForestService/ForestVegetationSimulator-Interface and more information is at https://github.com/USDAForestService/ForestVegetationSimulator/wiki/FVSOnline), command line options are used to specify input file names.
 
 The first file opened is the file containing FVS keyword records, referred to as the “keyword record file” (or simply “keyword file”). A keyword record file is required to make an FVS projection. A detailed description of the keyword record file can be found in section 4.1 of the EFVS guide. How FVS reads this file will be discussed in [Processing keyword record requests](#sec-processing-keyword-record-requests) and [Processing event monitor instructions](#sec-processing-event-monitor-instructions) of this document.
 
@@ -3997,9 +3997,9 @@ Follow the established patterns when modifying subroutines ALGEVL and EVLDX.
 
 # Stop/restart and the FVS API {#sec-stop-restart-and-the-fvs-api}
 
-A key source of information regarding stop and restart is in the open-fvs wiki, currently stored at https://sourceforge.net/p/open-fvs/wiki/StopRestart/. It is essential to understand that document prior to reading more here.
+A key source of information regarding stop and restart is in the FVS wiki, currently stored at https://github.com/USDAForestService/ForestVegetationSimulator/wiki/Stop-Restart. It is essential to understand that document prior to reading more here.
 
-The FVS_API is documented at https://sourceforge.net/p/open-fvs/wiki/FVS_API/
+The FVS_API is documented at https://github.com/USDAForestService/ForestVegetationSimulator/wiki/FVS-API
 
 ## Detailed Input and Output Array Specifications {-}
 
@@ -4162,9 +4162,9 @@ Being able to return back up the call stack from anywhere in FVS provides for th
 
 When FVS is used in a shared library, the stop/restart is made possible by the fact that all essential information about the projection is stored in the global (COMMON blocks) memory of the FVS library. Programmers must, therefore, insure that any variables whose values might be needed upon a restart, must be stored in a COMMON block; otherwise their value may be forgotten (or sometimes not forgotten) leading to difficult-to-find runtime errors.
 
-When used as a program (as opposed to being used as a shared library), FVS must store all the data that defines the state of a simulation onto permanent storage (typically, a disk file) prior to stopping. This is done by writing the value of every variable to the file in a way that allows for those data to be recovered when the program is restarted. This file is called a stop point file and it is created if a stop point is defined along with a stop point file name. The program can be restarted using by specifying the name of a previously created stop point file as a restart file (specified using the –restart command line option, see url:https://sourceforge.net/p/open-fvs/wiki/FVSCommandLine/ for more information) rather than specifying a keyword record file.
+When used as a program (as opposed to being used as a shared library), FVS must store all the data that defines the state of a simulation onto permanent storage (typically, a disk file) prior to stopping. This is done by writing the value of every variable to the file in a way that allows for those data to be recovered when the program is restarted. This file is called a stop point file and it is created if a stop point is defined along with a stop point file name. The program can be restarted using by specifying the name of a previously created stop point file as a restart file (specified using the –restart command line option, see url:https://github.com/USDAForestService/ForestVegetationSimulator/wiki/FVS-Command-Line for more information) rather than specifying a keyword record file.
 
-There is a wiki page that also covers the stop and restart logic in FVS stored at url:https://sourceforge.net/p/open-fvs/wiki/StopRestart/; it covers this topic in additional detail.
+There is a wiki page that also covers the stop and restart logic in FVS stored at url:https://github.com/USDAForestService/ForestVegetationSimulator/wiki/Stop-Restart; it covers this topic in additional detail.
 
 ## Subroutines involved and their function {#sec-stop-restart-and-the-fvs-api-subroutines-involved-and-their-function}
 
@@ -4190,7 +4190,7 @@ The writing and subsequent reading of the stand information is done using subrou
 
 ### Subroutines
 
-See url:https://sourceforge.net/p/open-fvs/wiki/FVS_API/ for information about the API subroutines. Those listed below are called within the FVS program.
+See url:https://github.com/USDAForestService/ForestVegetationSimulator/wiki/FVS-API for information about the API subroutines. Those listed below are called within the FVS program.
 
 Subroutine PUTSTD is used to write all the state variables for a stand to a stream type, binary output file.
 
@@ -4548,7 +4548,7 @@ Unlike standalone FVS with restart files, rFVS keeps all state in memory:
 
 **API Function Access:**
 
-All FVS API functions documented at https://sourceforge.net/p/open-fvs/wiki/FVS_API/ are accessible through rFVS via `.C()` and `.Fortran()` calls, including:
+All FVS API functions documented at https://github.com/USDAForestService/ForestVegetationSimulator/wiki/FVS-API are accessible through rFVS via `.C()` and `.Fortran()` calls, including:
 
 - `fvsSetCmdLine()`
 - `fvsGetDims()`
@@ -4693,7 +4693,7 @@ allResults %>%
 
 **Building FVS as a Shared Library:**
 
-Detailed instructions are available in the FVS wiki: https://sourceforge.net/p/open-fvs/wiki/
+Detailed instructions are available in the FVS wiki: https://github.com/USDAForestService/ForestVegetationSimulator/wiki
 
 General steps:
 
@@ -4788,11 +4788,11 @@ Ongoing and potential future developments for rFVS include:
 ### References and Resources
 
 - **rFVS Repository**: https://github.com/MidgardNaturalResources/ForestVegetationSimulator-Interface/tree/main/rFVS
-- **FVS API Documentation**: https://sourceforge.net/p/open-fvs/wiki/FVS_API/
-- **FVS Stop/Restart**: https://sourceforge.net/p/open-fvs/wiki/StopRestart/
-- **FVS Command Line Options**: https://sourceforge.net/p/open-fvs/wiki/FVSCommandLine/
-- **Building FVS**: https://sourceforge.net/p/open-fvs/wiki/browse_pages/
-- **FVS Online**: https://sourceforge.net/p/open-fvs/wiki/FVSOnline/
+- **FVS API Documentation**: https://github.com/USDAForestService/ForestVegetationSimulator/wiki/FVS-API
+- **FVS Stop/Restart**: https://github.com/USDAForestService/ForestVegetationSimulator/wiki/Stop-Restart
+- **FVS Command Line Options**: https://github.com/USDAForestService/ForestVegetationSimulator/wiki/FVS-Command-Line
+- **Building FVS**: https://github.com/USDAForestService/ForestVegetationSimulator/wiki/Build-Process-in-Windows-Using-make
+- **FVS Online**: https://github.com/USDAForestService/ForestVegetationSimulator/wiki/FVSOnline
 
 # Structural differences in the ORGANON-FVS variants {#sec-structural-differences-in-the-organon-fvs-variants}
 
@@ -5806,7 +5806,7 @@ The listing here might not be a mirror image of what you would get when download
 
 COMMON indicates a file directory containing labeled COMMON blocks. This file directory occurs at two levels in the FVS directory structure: 1) if it is immediately under the FVS file directory, it contains base model labeled COMMON blocks used in all variants and some labeled COMMON blocks for some of the extensions; 2) if it is under a variant-specific directory (e.g. FVS/AK/COMMON), it contains labeled COMMON blocks which are specific to that variant.
 
-The FVS/BIN file directory contains program executables, compiled object code, and build lists for each variant. Instructions for building program executables are documented in wiki pages at url:https://sourceforge.net/p/open-fvs/wiki/browse_pages/. The build list is a listing of every routine that goes into building a variant executable; these have the file name FVSvar_sourceList.txt, where var is the variant designator (e.g. FVSiec_sourceList.txt for the Inland Empire (IE) variant with the climate extension included).
+The FVS/BIN file directory contains program executables, compiled object code, and build lists for each variant. Instructions for building program executables are documented in wiki pages at url:https://github.com/USDAForestService/ForestVegetationSimulator/wiki. The build list is a listing of every routine that goes into building a variant executable; these have the file name FVSvar_sourceList.txt, where var is the variant designator (e.g. FVSiec_sourceList.txt for the Inland Empire (IE) variant with the climate extension included).
 
 When source code is first downloaded from the repository, the BIN directory will not contain any subdirectories. However, when variant executables are built, subdirectories named FVSvar_buildDir are created in the BIN directory for each variant built (e.g. FVSiec_buildDir). These subdirectories contain a copy of the source code and compiled object code for each file that has gone into building the executable.
 

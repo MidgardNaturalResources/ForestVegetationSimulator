@@ -26,10 +26,10 @@ Most users use SQLite input and output. Planned changes:
 - Section 3.2: describe what DBSINIT initializes (read `dbsqlite/` and `vdbsqlite/` first).
 - Main FVS Routine list: the "process all keyword record requests" entry needs the same emphasis.
 
-### Batch E: stale references [H]
-- Section cross-references use legacy numbering ("section 8.0", "2.1.5", etc.) and do not match `number_sections` output.
-- SourceForge URLs (open-fvs wiki, FVSOnline code) should point to current GitHub locations.
-- The intro section roadmap (Rmd ~l.67) refers to the old chapter plan.
+### Batch E: stale references
+- Done: internal section-number references converted to named links; introduction roadmap rewritten; SourceForge URLs replaced with the GitHub wiki / Interface repo pages (page existence verified).
+- [M] Remaining: 18 `kable` table captions still carry "(Section X.Y)"; the Suppose/DOS sentence in the file-opening section is outdated; the `forsys.cfr.washington.edu/winsvs/manual.pdf` link in Literature Cited is unchecked.
+- [M] The GitHub wiki Stop-Restart and FVS-Command-Line pages describe stop point 5 as "after growth and mortality are computed but before they are applied" and do not list `fvsRun`, `--stoppoint` year semantics, or minor stops as tested in code. The wiki may need its own correction; the Rmd text follows the code.
 
 ## Other open items
 - [M] `ICL6` comment conflict: `CONTRL.F77` says ADDFILE reference; `fvs.f` sets -99 at completion. The table keeps "-99 = complete".
