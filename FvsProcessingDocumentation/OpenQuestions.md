@@ -21,8 +21,14 @@ Open items for `ModelStructure_FVS.Rmd` and related documentation. Confidence: [
 
 ### SQLite-first rewrite
 Done: Sections 3.1, 3.2, 3.5, the Main FVS Routine list entry, and the Chapter 11 input workflow and examples now describe DSNIN/STANDSQL/TREESQL/%StandID% and the FVS_StandInit/FVS_TreeInit convention.
-- [M] Chapter 11 (Database Input and Output Extension) beyond the input workflow, including the column mapping table and the example in Practical Applications, has not been audited against `dbsqlite/` (see Section 12 audit).
 - [M] `STDIDENT` usage in the revised landscape example was not checked against a test keyword file.
+
+### Chapter 11 (Database Input and Output Extension)
+Done: column mapping table, FVS_Summary/FVS_Summary2/FVS_TreeList column lists, table list additions (FVS_InvReference, FVS_FIAVBC_*, FVS_Error, FVS_PotFire_Cond), directory structure, output keywords, workflow, FVS_Cases columns, practical examples (MGMTID instead of GROUPS, EndSQL, Variant).
+- [L] Column meanings for SSCD, ActPt, PRESCRIPTION, TOPOCODE, WDLND_STEMS are not documented in the code; the text points to the database user's guide or gives a generic label.
+- [M] The dbsinit header lists FVS_Summary_East and FVS_Summary2_East, but no routine in `dbsqlite`/`vdbsqlite` creates them (only FVS_PotFire_East exists); they appear to belong to the ODBC `dbs` extension and were left out.
+- [L] Metric-unit conversions, the Common SQL Errors and Performance sections, and the GIS and climate examples are generic or illustrative and were not verified.
+- [L] THINBTA field values in the Treatment Optimization example were not checked.
 
 ### Batch E: stale references
 - Done: internal section-number references converted to named links; introduction roadmap rewritten; SourceForge URLs replaced with the GitHub wiki / Interface repo pages (page existence verified).
