@@ -68,3 +68,13 @@ Done: ECEND moved to DISPLY; RDROUT removed (root disease output through GENPRT)
 Done: step list in "Adding new keyword records" restored as numbered steps 1 to 7 with lettered sub-steps (the list structure was lost, which broke references such as "step 2b" and "step 3b"); subroutine name typo KEWYDS corrected to KEYWDS. Verified against code: OPNEW/OPNEWC, OPCOM arrays IACT/IDATE/IEVCOD, KEYCOM TABLE and ISIZE, THINABA (keyword 27, activity 226, ITRSL1 position 38), CRNMULT (keyword 96, activity 81, ITRSL1 position 3), CUTS MYACTS dimension 23, OPCACT/OPGETC/OPGET2, AGPLABEL and SPLABEL keywords, GETSTD/PUTSTD.
 - [L] The statement that CUTS organizes its activities into "3 groups" was not confirmed (CUTS has several OPFIND calls on overlapping parts of MYACTS).
 - [L] The text still says the numbers (TABLE index 96, ITRSL position 3) were true "at the time this document was written"; they are correct for the current code but will drift as keywords are added.
+
+## Chapter 7 (Event monitor logic) vs code
+Done: ALGKEY typo; TSTV1 to TSTV5 dimension rule (all sized by MXTST1 to MXTST5 PARAMETER values in OPCOM); constants array named PARMS (CONSTS in ALGCMP) in Tables 7-1 and 7-2; numbered steps restored for adding an event monitor variable and function; IEVACT column 6 described as the former Parallel Processing Extension branch weighting factor. Verified: operation codes in Tables 7-1 and 7-2 (BTOPHT 109, BBA 107, ABA 205, MIN 10900 plus argument count, GT 6), phase 1 and phase 2 evaluation around CUTS, "group 1 always known" (EVTSTV comment), N1 to N8 name tables in ALGKEY.
+- [M] IEVACT column 6 and the THEN/ALSOTRY multiplier have no effect now that the Parallel Processing Extension is gone, but EVTACT still sets the column and OPSAME still tests it. Removing the feature is a code change (both routines), not a documentation change.
+- [L] The array tables at the start of Chapter 7 (Event Monitor Control Arrays, Expression Evaluation Arrays, Event Variables Groups) were audited earlier and not rechecked in this pass.
+- [L] Other numbered or lettered step lists may have been flattened in the same way as those restored in Chapters 6 and 7 (compare against the docx list numbering). Chapters 8, 9, and 10 have not yet been checked for this.
+
+## Process notes
+- `FvsProcessingDocumentation/stop-hook-git-check.sh` is a copy of the session stop hook placed there for review. It is untracked; decide whether to commit it, delete it, or exclude it.
+- Standing instruction: ask for approval before any file change, commit, or push.
