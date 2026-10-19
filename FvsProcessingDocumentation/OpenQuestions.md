@@ -103,7 +103,12 @@ Open:
 - Not added to the text: `CYCLG = ICYC - 1` passed to EXECUTE; `base/exorganon.f` stub in 23 other source lists.
 - Not confirmed: PN/CA foundation history, the 3.0 inch breakpoint wording (REGENT blends over 2.0 to 4.0 inches), ln(DDS) conversion after EXECUTE, default `VERSION` in `op/grinit.f`.
 
+## Chapter 12 (Literature Cited) findings
+Text changed: `NE-162` typo fixed; Keyser and Dixon entry moved into alphabetical order; "Van Dyck" in the text; Rebain 2010 now cited where the FFE is first described; Rebain and Essential FVS URLs updated to the usda.gov addresses you supplied (not fetched from this environment; proxy returned 403).
+Open:
+- McGaughey 2002 URL (`forsys.cfr.washington.edu`) is dead and was left in place. Unverified candidate: `https://www.fs.usda.gov/fmsc/ftp/fvs/docs/gtr/WinSVS3_3.pdf`.
+- Titles, dates and page counts of the Essential FVS, Keyword guide, Database Extension and FFE entries were not checked against the current documents.
+
 ## Not yet reviewed against the code
 - Appendix A, Organization of the FVS Source Code: not checked against the current directories and `bin/FVS*_sourceList.txt` files.
 - Appendix B, Stand Visualization (SV): not reviewed.
-- Chapter 12, Literature Cited: only the dead McGaughey 2002 URL has been identified; references have not been checked for completeness against citations in the text.
