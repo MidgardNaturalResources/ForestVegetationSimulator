@@ -112,7 +112,6 @@ Open:
 ## Appendix A (source organization) findings
 Text corrected: added `hi/`, `fiavbc/`, `vorganon/`, `canada/fire/on/`; `baseDocument` path; SVN replaced by git; FVSiec example; SQL/SQLite database rows (no source list uses `dbs/` or `vdbs/`); review date.
 Open:
-- Not changed (awaiting your decision): directory names are lower case in the repository but upper case in the tables; the `bin/` paragraph says it holds executables, which only appear after a build.
 - Variant and extension descriptions were not individually verified; `acd/` "under development" status unconfirmed (no source list or test directory); whether `dbs/` and `vdbs/` should stay in the repository; `pg/` description not checked against its contents.
 
 ## Not yet reviewed against the code
