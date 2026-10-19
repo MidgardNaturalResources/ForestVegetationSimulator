@@ -4754,7 +4754,7 @@ Of the 19 species in the SWO version of ORGANON, six species are designated as â
 
 #### Tree size limits
 
-In all three ORGANON versions, trees must be greater than 4.5 feet tall and 0.09 inches in diameter at breast-height. These limits are dealt with in two ways in ORGANON-FVS.
+In all three ORGANON versions, trees must be greater than 4.5 feet tall and at least 0.1 inch in diameter at breast-height. These limits are dealt with in two ways in ORGANON-FVS.
 
 First, when calling the ORGANON source code routines, all trees not meeting these minimums are temporarily assigned a diameter of 0.1 inch and a height of 4.6 feet. The reason for doing this will be discussed further in [Dubbing of missing input data and calibration of ORGANON equations](#sec-dubbing-of-missing-input-data-and-calibration-of-organon-equations).
 
@@ -4794,7 +4794,7 @@ As discussed in [Growing the small trees](#sec-growing-the-small-trees), subrout
 
 #### Mortality
 
-Subroutine GRINCR calls subroutine MORTS to estimate mortality. In the two ORGANON-FVS variants, mortality for all tree records will be estimated using either the ORGANON mortality equations or the SDI-based mortality model depending on whether there are valid ORGANON trees in the data, or not. If there are valid ORGANON trees in the data, then subroutine MORTS uses the ORGANON mortality estimates for all tree records. ORGANON mortality estimates were calculated during the call to subroutine EXECUTE from subroutine DGDRIV. If there are not any valid ORGANON trees in the data, then subroutine MORTS calculates mortality estimates using the FVS SDI-based mortality logic. Both the ORGANON mortality model and the FVS mortality model are detailed in the OC and OP variant overview documents.
+Subroutine GRINCR calls subroutine MORTS to estimate mortality. In the two ORGANON-FVS variants, mortality for all tree records will be estimated using either the ORGANON mortality equations or the SDI-based mortality model depending on whether ORGANON produced mortality estimates, or not. Subroutine MORTS sums the ORGANON mortality estimates (MORTEXP) over all tree records. If the sum is greater than zero, then subroutine MORTS uses the ORGANON mortality estimates for all tree records. ORGANON mortality estimates were calculated during the call to subroutine EXECUTE from subroutine DGDRIV. If the sum is zero, which includes the case where no "big 6" species is present and EXECUTE was skipped, then subroutine MORTS calculates mortality estimates using the FVS SDI-based mortality logic. Both the ORGANON mortality model and the FVS mortality model are detailed in the OC and OP variant overview documents.
 
 #### Crown ratio change
 

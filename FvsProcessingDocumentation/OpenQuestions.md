@@ -94,8 +94,16 @@ Done: full model variants named (IE, KT, EM, CI, plus AK with its own ESNUTR/EST
 - [L] The 50-year AK regeneration period is confirmed only by a header comment in `ak/` code.
 - [L] NSPSPE: the text places it in the ESPARM code segment; the only ESPARM.F77 found with NSPSPE is `ne/common/ESPARM.F77` (NSPSPE = 82), so the location for the full-model variants was not confirmed.
 
+## Chapter 9 (ORGANON-FVS variants) findings
+Text corrected: size minimum (DBH at least 0.1 inch) and the mortality condition (sum of MORTEXP greater than zero in `oc/morts.f`).
+Open:
+- Species counts: text says PN 38 and CA 49; MAXSP is 39 in `pn/` and `op/`, 50 in `ca/` and `oc/`. Not changed; check against the variant overviews (about 60 percent likely stale).
+- `op/orgspc.f` header says "SOUTHWEST OREGON MODEL TYPE" (copied from OC); the mapping is the 11-species one.
+- BHAGE is `STAGE - 6` in CRATET but `STAGE - 5` in DGDRIV.
+- Not added to the text: `CYCLG = ICYC - 1` passed to EXECUTE; `base/exorganon.f` stub in 23 other source lists.
+- Not confirmed: PN/CA foundation history, the 3.0 inch breakpoint wording (REGENT blends over 2.0 to 4.0 inches), ln(DDS) conversion after EXECUTE, default `VERSION` in `op/grinit.f`.
+
 ## Not yet reviewed against the code
-- Chapter 9, Structural differences in the ORGANON-FVS variants (OC and OP): not compared with the code.
 - Appendix A, Organization of the FVS Source Code: not checked against the current directories and `bin/FVS*_sourceList.txt` files.
 - Appendix B, Stand Visualization (SV): not reviewed.
 - Chapter 12, Literature Cited: only the dead McGaughey 2002 URL has been identified; references have not been checked for completeness against citations in the text.
