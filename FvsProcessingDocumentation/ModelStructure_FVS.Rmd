@@ -5706,21 +5706,21 @@ The Database Extension integrates tightly with:
 
 # Appendix A: Organization of the FVS Source Code {-}
 
-FVS source code changes frequently. Structure of the source code directories changes less frequently, but it does change. The source code structure depicted here was current as of 10/05/2018, with the following exceptions:
+FVS source code changes frequently. Structure of the source code directories changes less frequently, but it does change. The source code structure depicted here was compared with the repository on 2026-10-19, with the following exceptions:
 
 The FVS/METRIC directory is omitted. These routines are used to create metric versions of selected variants, and are not used in any production variants.
 
 The FVS/FIRE/CFIM directory is omitted. These routines are for the Crown Fire Initiation Model, which isn’t used in any production variants.
 
-The FVS/.SVN directory is omitted. This directory belongs to the source code management system. Any directory in the FVS source code repository that starts with a dot, such as “.SVN” should be ignored and left in place.
+The .git and .github directories are omitted. These directories belong to the source code management system and GitHub. Any directory in the FVS source code repository that starts with a dot, such as “.git”, should be ignored and left in place.
 
 The listing here might not be a mirror image of what you would get when downloading it from the FVS source code repository, but it is included to provide a representation of how files in the source code directory are generally organized.
 
 COMMON indicates a file directory containing labeled COMMON blocks. This file directory occurs at two levels in the FVS directory structure: 1) if it is immediately under the FVS file directory, it contains base model labeled COMMON blocks used in all variants and some labeled COMMON blocks for some of the extensions; 2) if it is under a variant-specific directory (e.g. FVS/AK/COMMON), it contains labeled COMMON blocks which are specific to that variant.
 
-The FVS/BIN file directory contains program executables, compiled object code, and build lists for each variant. Instructions for building program executables are documented in wiki pages at url:https://github.com/USDAForestService/ForestVegetationSimulator/wiki. The build list is a listing of every routine that goes into building a variant executable; these have the file name FVSvar_sourceList.txt, where var is the variant designator (e.g. FVSiec_sourceList.txt for the Inland Empire (IE) variant with the climate extension included).
+The FVS/BIN file directory contains program executables, compiled object code, and build lists for each variant. Instructions for building program executables are documented in wiki pages at url:https://github.com/USDAForestService/ForestVegetationSimulator/wiki. The build list is a listing of every routine that goes into building a variant executable; these have the file name FVSvar_sourceList.txt, where var is the variant designator (e.g. FVSie_sourceList.txt for the Inland Empire (IE) variant).
 
-When source code is first downloaded from the repository, the BIN directory will not contain any subdirectories. However, when variant executables are built, subdirectories named FVSvar_buildDir are created in the BIN directory for each variant built (e.g. FVSiec_buildDir). These subdirectories contain a copy of the source code and compiled object code for each file that has gone into building the executable.
+When source code is first downloaded from the repository, the BIN directory will not contain any subdirectories. However, when variant executables are built, subdirectories named FVSvar_buildDir are created in the BIN directory for each variant built (e.g. FVSie_buildDir). These subdirectories contain a copy of the source code and compiled object code for each file that has gone into building the executable.
 
 ## Directories containing files that are used in all executables {-}
 
@@ -5733,9 +5733,10 @@ df <- data.frame(
     "FVS/BIN",
     "FVS/COMMON",
     "FVS/BASE",
-    "FVS/baseDocument",
+    "FVS/BASE/baseDocument",
     "FVS/PG",
-    "FVS/VOLUME"
+    "FVS/VOLUME",
+    "FVS/FIAVBC"
   ),
   c2 = c(
     "FVS update bulletins",
@@ -5746,7 +5747,8 @@ df <- data.frame(
     "Source code that does not contain any variant-specific coding and gets used in all variants (also see VBASE)",
     "Miscellaneous documents",
     "Source code for “put” and “get” subroutines used for the STOP and RESTART features of FVS",
-    "Source code for the National Cruise System volume equations that does not contain any variant-specific coding and gets used in all variants (also see VVOLUME)"
+    "Source code for the National Cruise System volume equations that does not contain any variant-specific coding and gets used in all variants (also see VVOLUME)",
+    "Source code for the FIA volume and biomass region checks; used in all variants"
   ),
   stringsAsFactors = FALSE
 )
@@ -5776,6 +5778,7 @@ df <- data.frame(
     "FVS/CANADA/BC",
     "FVS/CANADA/BIN",
     "FVS/CANADA/FIRE/BC",
+    "FVS/CANADA/FIRE/ON",
     "FVS/CANADA/NEWMIST",
     "FVS/CANADA/ON",
     "FVS/CI",
@@ -5788,6 +5791,8 @@ df <- data.frame(
     "FVS/EC/COMMON",
     "FVS/EM",
     "FVS/EM/COMMON",
+    "FVS/HI",
+    "FVS/HI/COMMON",
     "FVS/IE",
     "FVS/IE/COMMON",
     "FVS/KT",
@@ -5803,6 +5808,7 @@ df <- data.frame(
     "FVS/OP",
     "FVS/OP/COMMON",
     "FVS/ORGANON",
+    "FVS/VORGANON",
     "FVS/PN",
     "FVS/PN/COMMON",
     "FVS/SN",
@@ -5838,6 +5844,7 @@ df <- data.frame(
     "Variant-specific source code for the British Columbia, Canada, variant; this is a metric variant built and maintained by a Canadian contracting company. A copy of the code is in the repository for informational and development purposes.",
     "Executable and build directory for the Canadian variants.",
     "Fire and Fuels Extension (FFE) source code for the Canadian British Columbia variant (under development).",
+    "Fire and Fuels Extension (FFE) source code for the Canadian Ontario variant.",
     "Source code for a new dwarf mistletoe model that is being tested and used in the Canadian variants.",
     "Source code for the Ontario, Canada, variant; this is a metric variant built and maintained by a Canadian contracting company. A copy of the code is in the repository for informational and development purposes.",
     "Central Idaho variant-specific source code",
@@ -5850,6 +5857,8 @@ df <- data.frame(
     "EC variant-specific labeled COMMON blocks",
     "Eastern Montana variant-specific source code",
     "EM variant-specific labeled COMMON blocks",
+    "Hawaii variant-specific source code",
+    "HI variant-specific labeled COMMON blocks",
     "Inland Empire variant-specific source code that does not contain any code related to other variants (also see VIE)",
     "IE variant-specific labeled COMMON blocks",
     "Kootenai/Kaniksu/Tally Lake variant-specific source code",
@@ -5865,6 +5874,7 @@ df <- data.frame(
     "ORGANON Pacific Northwest variant-specific source code",
     "OP variant-specific labeled COMMON blocks",
     "ORGANON model source code used in both OC and OP variants",
+    "Variant-specific source code linking the ORGANON model to FVS, used in both OC and OP variants",
     "Pacific Northwest Coast variant-specific source code",
     "PN variant-specific labeled COMMON blocks",
     "Southern variant-specific source code",
@@ -5959,8 +5969,8 @@ df <- data.frame(
     "FVS/WWPB"
   ),
   c2 = c(
-    "Source code based on SQL, and not containing any variant-specific code, for the Database Extension; used in all variants with executable names not starting with the letter “q” (e.g. FVSie.exe) (also see VDBS)",
-    "Source code based on SQLite, and not containing any variant-specific code, for the Database Extension; used in all variants with executable names starting with the letter “q” (e.g. qFVSie.exe) (also see VDBSQLITE)",
+    "Source code based on SQL, and not containing any variant-specific code, for the Database Extension; not included in any current source list (also see VDBS)",
+    "Source code based on SQLite, and not containing any variant-specific code, for the Database Extension; used in all variants (also see VDBSQLITE)",
     "Source code that does not contain any variant-specific code, for the full Regeneration Establishment Model Extension (also see VESTB)",
     "Source code that does not contain any variant-specific code, for the partial Regeneration Establishment Model Extension (also see VSTRP)",
     "Source code that does not contain any variant-specific code for the Cover (Canopy and Shrubs) Extension (also see VCOVR)",
@@ -6006,8 +6016,8 @@ df <- data.frame(
     "Source code for the Lodgepole Pine Mountain Pine Beetle Impact Extension",
     "Source code for the Western Root Disease Extension",
     "Source code for the Cover (Canopy and Shrubs) Extension that contains variant-specific coding and gets used in all variants (also see COVR)",
-    "Source code based on SQL, containing variant-specific code, for the SQL Database Extension; used in all variants with executable names not starting with the letter “q” (e.g. FVSie.exe) (also see DBS)",
-    "Source code based on SQLite, containing variant-specific code, for the SQLite Database Extension; used in all variants with executable names starting with the letter “q” (e.g. qFVSie.exe) (also see DBSQLITE)",
+    "Source code based on SQL, containing variant-specific code, for the SQL Database Extension; not included in any current source list (also see DBS)",
+    "Source code based on SQLite, containing variant-specific code, for the SQLite Database Extension; used in all variants (also see DBSQLITE)",
     "Source code that contains variant-specific code, for the full Regeneration Establishment Model Extension (also see ESTB)",
     "Source code that contains variant-specific code, for the partial Regeneration Establishment Model Extension (also see STRP)",
     "Source code for the White Pine Blister Rust Extension",

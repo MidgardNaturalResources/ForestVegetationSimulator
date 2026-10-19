@@ -109,6 +109,11 @@ Open:
 - McGaughey 2002 URL (`forsys.cfr.washington.edu`) is dead and was left in place. Unverified candidate: `https://www.fs.usda.gov/fmsc/ftp/fvs/docs/gtr/WinSVS3_3.pdf`.
 - Titles, dates and page counts of the Essential FVS, Keyword guide, Database Extension and FFE entries were not checked against the current documents.
 
+## Appendix A (source organization) findings
+Text corrected: added `hi/`, `fiavbc/`, `vorganon/`, `canada/fire/on/`; `baseDocument` path; SVN replaced by git; FVSiec example; SQL/SQLite database rows (no source list uses `dbs/` or `vdbs/`); review date.
+Open:
+- Not changed (awaiting your decision): directory names are lower case in the repository but upper case in the tables; the `bin/` paragraph says it holds executables, which only appear after a build.
+- Variant and extension descriptions were not individually verified; `acd/` "under development" status unconfirmed (no source list or test directory); whether `dbs/` and `vdbs/` should stay in the repository; `pg/` description not checked against its contents.
+
 ## Not yet reviewed against the code
-- Appendix A, Organization of the FVS Source Code: not checked against the current directories and `bin/FVS*_sourceList.txt` files.
 - Appendix B, Stand Visualization (SV): not reviewed.
