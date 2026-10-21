@@ -114,5 +114,11 @@ Text corrected: added `hi/`, `fiavbc/`, `vorganon/`, `canada/fire/on/`; `baseDoc
 Open:
 - Variant and extension descriptions were not individually verified; `acd/` "under development" status unconfirmed (no source list or test directory); whether `dbs/` and `vdbs/` should stay in the repository; `pg/` description not checked against its contents.
 
-## Not yet reviewed against the code
-- Appendix B, Stand Visualization (SV): not reviewed.
+## Appendix B (Stand Visualization) findings
+Text corrected: SVFMOUT renamed FMSVOUT and its behavior described; SVNTR rule added; CWD description (litter and duff omitted, four size classes); snag size sentence; "32 SV source files"; SVOUT first-cycle note; note on additional SV call sites; Rebain citation form.
+Open:
+- McGaughey 2002 URL (see Chapter 12).
+- Author commentary on object trees disappearing or reappearing and the algorithms being "not perfect" cannot be checked against code.
+- Code comment conflict: `svsnage.f` says snags under 1 inch are removed in SVOUT; SVOUT keeps them and drops a snag only when its height reaches 0.
+- In `fmsvout.f` the blocks that subtract fallen-snag volume from the CWD pools are disabled (`if (i.lt.0)`); the SVCWD header still describes a subtraction of fallen snag volumes.
+- Not added to the text: `YHFHTH`, `YHFHTS`, `HRATE` defaults in `svinit.f` are used only to back-date heights of snags in the initial treelist and the code comment says they are not valid for most other variants.

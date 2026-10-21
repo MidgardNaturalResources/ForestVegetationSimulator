@@ -6062,23 +6062,27 @@ The first key idea is that FVS represents the trees in a stand as a list of samp
 
 Consider some examples. First, say that an FVS tree record has a value of PROB(i) that is exactly 10. The SV code would then simply create 10 object tree records that correspond to this FVS tree record. What if PROB(i) is 10.5, would it create 10 or 11 object trees? What if PROB(i) is 0.15 for a few tree records, which is a small number but it might be the sampling probability for large trees. Leaving these trees out of the image (owing to the small value of PROB(i)) as would be the case if no object trees were created would have the object side effect of depicting a seed-tree stand without any seed-trees!
 
+Subroutine SVNTR answers these questions for a single tree record. The number of object trees is the integer part of PROB(i). One more object tree is added when a uniform random number, drawn with subroutine SVRANN, is less than the fractional part of PROB(i). A PROB(i) of 10.5 therefore gives 10 object trees, plus an eleventh with a probability of 0.5, and a PROB(i) of 0.15 gives one object tree with a probability of 0.15.
+
 The SV code contains rules that map continuous values of PROB(i) that represent a stand into a discrete data structure where there is one object tree for each tree per acre in the stand. This data structure additionally contains associated tree locations in a rectangular coordinate system.  Keeping the linkage between these two representations of the stand over time, as trees die and are harvested, is tricky and the algorithms are not perfect. Note that a great deal of effort went into building the code we have. A goal of the code is to have the image honestly depict the stand without object trees disappearing, and perhaps, reappearing, in the image.
 
 ## SV Object Types {-}
 
 In summary, an object tree is used by the SV to represent a single tree that should be written out to an SVS file for future display in a visualization tool. These object trees keep a reference pointer back to the FVS tree record they are related to until they become snags. The object tree species and dimensions are taken from the reference FVS tree record.
 
-When an object tree dies, the object pointer is to a snag record, which is a data structure that defines the attributes of the snag. Snags can be either standing or fallen and they decay both while standing and after they fall. Snags only represent dead trees of greater than one-inch of base diameter. Anything smaller is not represented by a snag, but merely as fuel loading. The attributes of each snag object are defined in the snag records.
+When an object tree dies, the object pointer is to a snag record, which is a data structure that defines the attributes of the snag. Snags can be either standing or fallen and they decay both while standing and after they fall. The SV code applies no minimum diameter when it creates snag records from dead object trees. A snag record is dropped when its height reaches zero; subroutine SVOUT keeps snags with diameters less than 1 inch for better agreement with the FFE. The attributes of each snag object are defined in the snag records.
 
-Coarse woody debris (CWD) objects represent all sorts of small debris on the ground that can be burned in a fire. It represents fallen leaves and needles, as well as branches and even small dead trees. It is designed to represent the fuel load information stored in the Fire and Fuels Extension (FFE, (Rebain and others 2010 (revised 2015)).
+Subroutine SVSNAGE ages the snag records each time SVOUT writes an SVS file, using routines from the fire and fuels extension. Each year since the last update, a standing snag falls with a probability based on the fall rate computed by FMSFALL, which depends on species and diameter; a random number drawn with SVRANN decides whether the snag falls, and a second draw sets the direction of the fall (0 to 360 degrees). For the years following a fire, the larger of the normal and the post-burn fall rate is used for trees that died on or before the fire year; the post-burn rate is stored for each snag record (PBFALL) and depends on whether the snag is soft or smaller than the post-burn size limit. Standing snags lose height each year (FMSNGHT), and diameter does not change while a snag is standing. A snag becomes soft when the years since death reach the decay time computed by FMSNGDK. A hard snag is red (status 2) in the first year after death and grey (status 3) afterward; a soft snag has status 4. Fire-killed snags change from status 5 (recently burned, with crown) to status 6 (no crown) after two years, and snags killed by the western pine beetle (status 90 through 92) pass through red, dark, and grey stages before becoming grey hard and then grey soft snags. A fallen snag is displayed as grey; its diameter decreases by 0.1 inch per year since death (0.11 inch for a soft snag), and its length is scaled by the ratio of the current diameter to the original diameter and cannot increase. The crown diameter of every snag is multiplied by 0.9 for each year since death.
 
-There is a special case where the FFE adds data to the SV output for displaying fire-caused mortality and a fire line that can appear to move through the stand. There is a call in the subroutine FMEFF of the fire model to subroutine SVFMOUT that generates the multiple outputs needed for this purpose.
+Coarse woody debris (CWD) objects represent debris on the ground that can be burned in a fire. They are built by subroutine SVCWD from the coarse woody debris pools predicted by the Fire and Fuels Extension (FFE, Rebain 2010), by piled and unpiled status, in four size classes: less than 3 inches, 3 to 6 inches, 6 to 12 inches, and greater than 12 inches in diameter. Litter and duff are not represented.
+
+There is a special case where the FFE adds data to the SV output for displaying fire-caused mortality and a fire line that can appear to move through the stand. There is a call in the subroutine FMEFF of the fire model to subroutine FMSVOUT that generates the multiple outputs needed for this purpose. FMSVOUT does nothing when SV output has not been requested or the number of fire pictures is zero. Otherwise it calls subroutine SVOUT once for each picture while a randomly jittered fire line advances across the stand; objects behind the line are shown in their post-fire condition. FMEFF also calls subroutine SVMORT to record the fire-caused mortality.
 
 ## Programming and Data {-}
 
 The data memory associated with SV is in three labeled common blocks, SVDEAD contains variables that store snag and related dead matter information, and SVDATA contains variables that store information about live tree objects. SVDATA also contains SV option parameters and control values. Lastly, SVRCOM contains variables that store the status of the random number generator used by the SV system.
 
-**Table B-1 provides a summary of where SV routines are called from within FVS. Readers are encouraged to study the comments in all 32 SV routines to fully understand how this code works. A final point is that the FVS API ([Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)) includes two subroutines (fvsSVSDimSizes and fvsSVSObjData) the ability to interact (get and set) with the SV objects.**
+**Table B-1 provides a summary of where SV routines are called from within FVS. Readers are encouraged to study the comments in all 32 SV source files in the base and vbase directories to fully understand how this code works. A final point is that the FVS API ([Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)) includes two subroutines (fvsSVSDimSizes and fvsSVSObjData) the ability to interact (get and set) with the SV objects.**
 
 ```{r appx-b-table, echo=FALSE}
 df <- data.frame(
@@ -6121,7 +6125,7 @@ df <- data.frame(
     "Processes the SVS keyword record",
     "Builds the display for the initial trees in the stand",
     "",
-    "Outputs an SVS file representing the stand at the beginning of the current cycle",
+    "Outputs an SVS file representing the stand at the beginning of the current cycle (called after the first cycle)",
     "Processes harvesting information",
     "Deletes object trees based on FVS tree records that are being deleted",
     "Initializes tree status codes",
@@ -6143,6 +6147,8 @@ kable(df,
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 full_width = FALSE)
 ```
+
+Table B-1 lists the principal calls. Subroutine TREDEL also calls SVCMP1, SVCMP2, and SVCMP3; SVSTART also calls SVESTB and SVOUT; SVCUTS calls SVRMOV and SVOUT; FMEFF calls SVMORT; and FMSALV calls SVSALV.
 
 # Literature Cited
 
