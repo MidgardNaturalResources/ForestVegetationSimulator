@@ -60,7 +60,15 @@
 .fvs-seq .stop .dot { position: absolute; left: -6px; width: 12px; height: 12px; border: 2px solid var(--fs-dark); border-radius: 50%; background: #fff; }
 .fvs-seq .stop .dash { flex: 1; border-top: 2px dashed var(--fs-dash); margin-left: 6px; }
 .fvs-seq .stop .pill { flex: none; width: var(--fs-pill-w); text-align: center; font: .8em ui-monospace, SFMono-Regular, Menlo, monospace; color: #222; background: var(--fs-stop-bg);
-  border: 1.5px dashed var(--fs-stop-line); border-radius: 999px; padding: .15em .4em; margin-left: 4px; cursor: help; }
+  border: 1.5px dashed var(--fs-stop-line); border-radius: 999px; padding: .15em .4em; margin-left: 4px; cursor: pointer; }
+.fvs-seq .stop button.pill:hover { background: #f8e9b0; }
+.fvs-seq .stop button.pill[aria-expanded="true"] { background: #f3dd8a; border-style: solid; }
+.fvs-seq .stop button.pill:focus-visible { outline: 2px solid var(--fs-link); outline-offset: 2px; }
+.fvs-seq .stop-panel { margin-left: calc(var(--fs-gap) * -1); }
+
+/* stand-alone sequence figures (sections 6, 7 and 8) */
+.fvs-seq.fvs-seq-solo { padding-right: calc(var(--fs-gap) + 8px); }
+.fvs-seq .fs-intro { margin: 0 0 .8em 0; font-size: .95em; }
 
 /* expanded panel */
 .fvs-seq .panel { margin: 4px 0 0 0; padding: .7em .9em; background: var(--fs-panel); border: 1px solid var(--fs-box-line); border-radius: 6px; font-size: .92em; text-align: left; }

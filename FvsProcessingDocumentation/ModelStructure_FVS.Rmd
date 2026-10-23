@@ -3606,6 +3606,16 @@ A parallel model run follows virtually the same flow as its serial counterpart f
 
 This section provides an overview of the option processing logic. To some degree, the topic has been covered in the descriptions of how keyword records are processed, options scheduled, retrieved, and accomplished (or not). Consider two cases that could be called setting an option: (1) setting the stand elevation is something that is done immediately when FVS reads the STDINFO keyword record, where (2) specifying that a thinning should be accomplished 40 years into a simulation is scheduling the option to occur during the simulation. Here we are discussing options that are scheduled to be done sometime during the simulation (see [Scheduling the Option](#sec-scheduling-the-option)).
 
+```{r fvs-seq-options, echo=FALSE, results='asis'}
+if (knitr::is_html_output()) {
+  htmltools::tags$div(`data-fvs-seq` = "options")
+} else {
+  cat("The interactive figure is available in the HTML version of this document.")
+}
+```
+
+**Figure 6-1. Option (activity) processing: how an activity is posted, found, retrieved, and marked. Select a box to show the steps involved.**
+
 ## General logic and table structure
 
 When a keyword record indicates an option that needs to be scheduled, for example THINDBH, the program needs to store the option, the year it is scheduled, and its parameter values. This is done by calling subroutine OPNEW with an activity code corresponding to the option, the year (internally called a date and stored in vector IDATE in the labeled COMMON block OPCOM), and the parameter values associated with the option, which are typically stored in the PARMS vector. The array IACT(i,j) is an important 2 dimensional array in the labeled COMMON block OPCOM that stores this information, or pointers to that information. When the PARMS feature of an activity is used, the parameter values are entered as expressions. When this is the case, the compiled operations code (created by subroutine ALGCMP) associated with the option is stored in the array IEVCOD(k) in the labeled COMMON block OPCOM.
@@ -3704,6 +3714,26 @@ Steps in adding a new keyword record to the FVS code:
 # Event monitor logic {#sec-event-monitor-logic}
 
 As described in [Option Processing Logic](#sec-option-processing-logic), activities can be scheduled to occur after an event happens. Events happen when a logical expression that defines the event is determined to be true. For example, an event can be defined as the culmination of mean annual increment, detected by comparing mean annual increment to current annual increment. Another example may be the time during a simulation when the stand density index exceeds a percentage of maximum. This section describes the code that supports event processing.
+
+```{r fvs-seq-events, echo=FALSE, results='asis'}
+if (knitr::is_html_output()) {
+  htmltools::tags$div(`data-fvs-seq` = "events")
+} else {
+  cat("The interactive figure is available in the HTML version of this document.")
+}
+```
+
+**Figure 7-1. Event monitor: defining and evaluating an event over the projection cycle. Select a box to show the steps involved.**
+
+```{r fvs-seq-rpn, echo=FALSE, results='asis'}
+if (knitr::is_html_output()) {
+  htmltools::tags$div(`data-fvs-seq` = "rpn")
+} else {
+  cat("The interactive figure is available in the HTML version of this document.")
+}
+```
+
+**Figure 7-2. Event monitor: compiling and evaluating an expression. Select a box to show the steps involved.**
 
 ## Detailed Input and Output Array Specifications {-}
 
@@ -4018,6 +4048,26 @@ Follow the established patterns when modifying subroutines ALGEVL and EVLDX.
 A key source of information regarding stop and restart is in the FVS wiki, currently stored at https://github.com/USDAForestService/ForestVegetationSimulator/wiki/Stop-Restart. It is essential to understand that document prior to reading more here.
 
 The FVS_API is documented at https://github.com/USDAForestService/ForestVegetationSimulator/wiki/FVS-API
+
+```{r fvs-seq-stops, echo=FALSE, results='asis'}
+if (knitr::is_html_output()) {
+  htmltools::tags$div(`data-fvs-seq` = "stops")
+} else {
+  cat("The interactive figure is available in the HTML version of this document.")
+}
+```
+
+**Figure 8-1. Stop points: how FVS stops. Select a box to show the steps involved.**
+
+```{r fvs-seq-restart, echo=FALSE, results='asis'}
+if (knitr::is_html_output()) {
+  htmltools::tags$div(`data-fvs-seq` = "restart")
+} else {
+  cat("The interactive figure is available in the HTML version of this document.")
+}
+```
+
+**Figure 8-2. Restarting after a stop. Select a box to show the steps involved.**
 
 ## Detailed Input and Output Array Specifications {-}
 

@@ -139,20 +139,6 @@
   };
 
   /* ---------- Supporting sequences ---------- */
-  var relMultiStand = {
-    label: "Multi-stand runs and the MAIN program", sec: "5.2",
-    desc: ["PROGRAM MAIN contains the only STOP statement. It calls fvsSetCmdLine once to read the command line, then calls FVS in a loop. Each call to FVS projects one stand and returns, and the loop ends when FVS sets a non-zero return code (for example 2 at a STOP keyword or end of file).",
-           "A run with several stands is called a multiple stand serial run. Each stand may be a different stand or a different alternative for the same stand. The Parallel Processing Extension that once ran stands in parallel was removed; stop points and restart (below) replace it, with a calling program stopping every stand at a common year."],
-    steps: [
-      { label: "Read the command line", subs: ["fvsSetCmdLine"], sec: "8.2",
-        desc: "fvsSetCmdLine resets the stop/restart variables and reads --keywordfile=, --stoppoint=code,year,file and --restart=file. It opens the stop point file for writing (--stoppoint) or the restart file for reading (--restart). A restart file replaces the keyword file." },
-      { label: "Call FVS for one stand", subs: ["FVS"], sec: "2.2",
-        desc: "FVS calls fvsRestart to decide whether this is a new stand or a restart. A new stand starts with ICYC = 0, LSTART and LFLAG true, and goes through initialization, the projection cycles and the final reports, as shown in the main figure." },
-      { label: "Check the return code", subs: ["fvsGetRtnCode", "fvsSetRtnCode"], sec: "8.2.1",
-        desc: "A return code of 0 means the stand finished normally, so MAIN calls FVS again for the next stand. INITRE sets the code to 2 when it reads a STOP keyword or reaches the end of the keyword file, and a fatal error sets it to 1. Any non-zero code ends the loop." },
-      { kind: "end", label: "End of run" }
-    ]
-  };
   var relOptions = {
     label: "Option (activity) processing", sec: "6.1",
     desc: "Options such as a thinning scheduled 40 years into a run are posted to an activity schedule and retrieved by the routine that carries them out. Immediate settings such as the stand elevation are not scheduled.",
@@ -231,27 +217,9 @@
       { label: "Reload the stand", subs: ["GETSTD", "VARGET", "CVGET", "ECNGET", "FMPPGET"], sec: "8.2.1",
         desc: "For a stored stop, fvsRestart saves the read position and calls GETSTD, which reads the state variables back in the order they were written. It returns a negative code so the calling program can inspect or change the stand through the API. The next call to FVS (status 4) sets the restart code to the original code." },
       { label: "Jump ahead", subs: ["fvsGetRestartCode", "ClearRestartCode"], sec: "8.2",
-        desc: "FVS branches on the restart code: 7 resumes just after the input is read, and 1 to 6 go straight into the cycle loop. TREGRO, GRINCR and GRADD call fvsGetRestartCode at their start and branch to the point after the stop they previously returned from. The code is cleared once processing resumes." },
+        desc: "FVS branches on the restart code: 7 resumes at calibration (SDICLS, CRATET), just after stop point 7; codes 1 to 6 skip initialization and call TREGRO inside the cycle loop. TREGRO skips GRINCR for codes 5 and 6 and calls GRADD; otherwise it calls GRINCR. GRINCR resumes after stop point 1 (pre-thinning event monitor), 2 (ECSTATUS, then thinning), 3 (post-thinning event monitor) or 4 (ECSTATUS and the rest of GRINCR). GRADD resumes after stop point 5 (UPDATE) or 6 (climate-driven establishment and ESNUTR). ClearRestartCode is called at the end of the cycle." },
       { label: "Back up to the last stand", subs: ["fvsRestartLastStand"], sec: "8.2",
         desc: "fvsRestartLastStand reloads the stand most recently stored (the file position saved at the last restart), so a projection can be repeated from the stop point. This was first used for fuel management analyses in which actions that did not meet decision criteria were discarded." }
-    ]
-  };
-  var relApi = {
-    label: "Using FVS as a shared library (API)", sec: "8.0",
-    desc: "When FVS is a shared library (or the rFVS R package, described in section 8.3) the caller drives it with stop points, which return control to the caller with the stand state still in memory.",
-    steps: [
-      { label: "Set up the run", subs: ["fvsSetCmdLine", "fvsSetStoppointCodes"], sec: "8.2",
-        desc: "The caller passes the command line (for example --keywordfile=) and sets a minor stop point with the location code and year it wants." },
-      { label: "Run to the stop point", subs: ["FVS"], sec: "8.1",
-        desc: "The caller calls FVS. FVS runs until the stop point and returns. The return code is 0 (OK), 1 (error) or 2 (run has ended), and the restart code says where it stopped." },
-      { label: "Read the stand", subs: ["fvsDimSizes", "fvsSummary", "fvsTreeAttr", "fvsSpeciesAttr", "fvsEvmonAttr", "fvsStandID"], sec: "8.2.1",
-        desc: "Dimensions, summary data, tree and species attributes, event monitor variables and the stand identifiers can be read, and the tree, species and event monitor attributes can also be changed. Other routines give access to the SVS objects and fire and fuels attributes." },
-      { label: "Change the stand", subs: ["fvsAddTrees", "fvsCutTrees", "fvsAddActivity", "fvsTreeAttr"], sec: "8.2.1",
-        desc: "Trees can be added or cut, activities (keyword equivalents) can be scheduled, and tree attributes can be set. This is how disturbances modeled outside FVS are applied, and how conditional treatments are made." },
-      { label: "Change the stop point and call FVS again", subs: ["FVS", "fvsSetStoppointCodes"], sec: "8.1",
-        desc: "FVS jumps ahead to where it stopped and continues to the next stop point, or to the end of the projection. This repeats until the return code is 2." },
-      { label: "Finish", subs: ["fvsGetRtnCode"], sec: "8.2",
-        desc: "At the end of each stand fvsStopPoint(-1) signals that the stand cannot continue. fvsCloseFile can be used to close an open output file." }
     ]
   };
 
@@ -423,13 +391,69 @@
     { kind: "decision", label: "More cycles?", loopBack: true, yes: "Yes", sec: "4.8.1", desc: "FVS checks whether this was the last cycle (ICYC = NCYC). If not, ICYC is incremented and the cycle starts over. NCYC defaults to 1 and can be set from 2 to 40 with NUMCYCLE." }
   ] };
 
+  /* Nest the stand-alone sequences into the main chart boxes (the same steps are also drawn as
+     figures at the head of sections 6, 7 and 8). */
+  function findNode(list, label) {
+    for (var i = 0; i < list.length; i++) {
+      var n = list[i];
+      if (n.label === label) return n;
+      if (n.steps) { var f = findNode(n.steps, label); if (f) return f; }
+    }
+    return null;
+  }
+  var nSched = findNode([processKeywords], "Schedule an activity");
+  nSched.desc = relOptions.desc;
+  nSched.subs = ["OPNEW", "OPNEWC", "OPFIND", "OPGET", "OPDONE"];
+  nSched.steps = relOptions.steps;
+  var nIf = findNode([processKeywords], "Event monitor: IF / THEN / ENDIF");
+  nIf.desc = [relEvents.desc, nIf.desc];
+  nIf.steps = relEvents.steps;
+  var nComp = findNode([processKeywords], "Define variables: COMPUTE");
+  nComp.desc = [nComp.desc, relRpn.desc];
+  nComp.steps = relRpn.steps;
+
+  var stopCall = {
+    1: "FVS calls fvsStopPoint(1, ...) from GRINCR, after the before-thinning stand variables are computed.",
+    2: "FVS calls fvsStopPoint(2, ...) from GRINCR, right after EVMON phase 1.",
+    3: "FVS calls fvsStopPoint(3, ...) from GRINCR, after CUTS and the after-thinning stand statistics.",
+    4: "FVS calls fvsStopPoint(4, ...) from GRINCR, right after EVMON phase 2.",
+    5: "FVS calls fvsStopPoint(5, ...) from GRADD, after the disturbance and pest adjustments and SVMORT.",
+    6: "FVS calls fvsStopPoint(6, ...) from GRADD, after UPDATE, RDPSRT, DENSE, CVBROW and the age increment.",
+    7: "FVS calls fvsStopPoint(7, ...) from FVS (cycle 0), after the input data are read and prepared, with ICYC set to 1 and OPCSET called for cycle 1."
+  };
+  var stopResume = {
+    1: "A restart with code 1 skips initialization. FVS calls TREGRO, which calls GRINCR; GRINCR jumps to the pre-thinning event monitor call (EVMON phase 1), the first statement after stop point 1.",
+    2: "A restart with code 2 skips initialization. FVS calls TREGRO, which calls GRINCR; GRINCR jumps to the ECSTATUS call that comes before thinning, the first statement after stop point 2, and then processes thinning (CUTS).",
+    3: "A restart with code 3 skips initialization. FVS calls TREGRO, which calls GRINCR; GRINCR jumps to the post-thinning event monitor call (EVMON phase 2), the first statement after stop point 3.",
+    4: "A restart with code 4 skips initialization. FVS calls TREGRO, which calls GRINCR; GRINCR jumps to the ECSTATUS call after the post-thinning event monitor, the first statement after stop point 4, and finishes the first half of the cycle.",
+    5: "A restart with code 5 skips initialization. FVS calls TREGRO, which sees a code of 5 or more and skips GRINCR to call GRADD; GRADD jumps to UPDATE, the first statement after stop point 5.",
+    6: "A restart with code 6 skips initialization. FVS calls TREGRO, which skips GRINCR to call GRADD; GRADD jumps to the climate-driven establishment call (CLAUESTB) and then ESNUTR, the first statements after stop point 6.",
+    7: "A restart with code 7 reloads the stand and jumps in FVS to the calibration step (SDICLS and CRATET), the first statement after stop point 7, then continues through initialization and the projection cycles."
+  };
+  var stopDetail = {};
+  for (var sn = 1; sn <= 7; sn++) stopDetail[sn] = { call: stopCall[sn], resume: stopResume[sn] };
+
+  window.FVS_FIGURES = {
+    options: relOptions,
+    events: relEvents,
+    rpn: relRpn,
+    stops: relStopPoint,
+    restart: relRestart
+  };
+
   window.FVS_SEQUENCE = {
     stops: stops,
+    stopCtx: {
+      detail: stopDetail,
+      stopDesc: relStopPoint.desc,
+      stopSteps: relStopPoint.steps,
+      restartSteps: relRestart.steps,
+      clearDesc: "ClearRestartCode is called at the end of the cycle, before the next cycle starts."
+    },
     main: [
       processKeywords, readInput, initialChars, backdate, calibrate, finishInit,
       cycle,
       finalReports
-    ],
-    related: [relMultiStand, relOptions, relEvents, relRpn, relStopPoint, relRestart, relApi]
+    ]
   };
 })();

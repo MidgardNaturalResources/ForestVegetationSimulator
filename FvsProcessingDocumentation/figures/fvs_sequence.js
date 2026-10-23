@@ -1,8 +1,10 @@
-/* Interactive FVS processing sequence figure.
-   Data: window.FVS_SEQUENCE (see fvs_sequence_data.js). Container: <div id="fvs-sequence">. */
+/* Interactive FVS processing sequence figures.
+   Data: window.FVS_SEQUENCE (main chart) and window.FVS_FIGURES (stand-alone sequences), both in fvs_sequence_data.js.
+   Containers: <div id="fvs-sequence"> for the main chart, <div data-fvs-seq="key"> for a stand-alone sequence. */
 (function () {
   'use strict';
   var uid = 0;
+  var stopCtx = null;   // stop point details for the main chart, set in render()
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);
@@ -34,11 +36,50 @@
       if (k > 0) wrap.style.top = (50 + 40 * k) + '%';
       wrap.appendChild(el('span', 'dot'));
       wrap.appendChild(el('span', 'dash'));
-      var pill = el('span', 'pill', 'Stop point ' + s);
+      var pill = el('button', 'pill', 'Stop point ' + s);
+      pill.type = 'button';
       if (defs && defs[s]) pill.title = defs[s];
       wrap.appendChild(pill);
       conn.appendChild(wrap);
+      var node = stopNode(s, defs);
+      if (node) {
+        var id = 'fs' + (++uid);
+        pill.classList.add('can-open');
+        pill.id = id;
+        pill.setAttribute('aria-expanded', 'false');
+        pill.setAttribute('aria-controls', id + '-panel');
+        var panel = renderPanel(node, defs, id);
+        panel.classList.add('stop-panel');
+        (conn._panels = conn._panels || []).push(panel);
+        pill.addEventListener('click', function () {
+          var open = pill.getAttribute('aria-expanded') !== 'true';
+          pill.setAttribute('aria-expanded', open ? 'true' : 'false');
+          panel.hidden = !open;
+        });
+      }
     });
+  }
+
+  /* Put the stop point panels after their connector, once the connector is in the document tree. */
+  function placePanels(conn) {
+    var ref = conn;
+    (conn._panels || []).forEach(function (p) {
+      ref.parentNode.insertBefore(p, ref.nextSibling);
+      ref = p;
+    });
+  }
+
+  /* Panel content for a stop point: where it is, how FVS stops there, and how a restart resumes. */
+  function stopNode(n, defs) {
+    if (!stopCtx || !stopCtx.detail || !stopCtx.detail[n]) return null;
+    var d = stopCtx.detail[n];
+    return {
+      desc: [(defs && defs[n] ? 'Stop point ' + n + ': ' + defs[n] + '.' : 'Stop point ' + n + '.'), d.call],
+      steps: [
+        { label: 'Stopping here', subs: ['fvsStopPoint'], desc: stopCtx.stopDesc, steps: stopCtx.stopSteps },
+        { label: 'Restarting from this stop point', subs: ['fvsRestart'], desc: [d.resume, stopCtx.clearDesc], steps: stopCtx.restartSteps }
+      ]
+    };
   }
 
   function renderPanel(n, defs, boxId) {
@@ -79,6 +120,7 @@
         if (n.label) entry.appendChild(el('span', 'loop-label', n.label));
         if (n.entryStop) addStops(entry, n.entryStop, defs);
         loop.appendChild(entry);
+        placePanels(entry);
         loop.appendChild(renderFlow(n.steps, defs));
         li.appendChild(loop);
       } else {
@@ -116,6 +158,7 @@
         if (n.exit) conn.appendChild(el('span', 'exit', n.exit));
         if (last) conn.style.display = 'none';
         li.appendChild(conn);
+        placePanels(conn);
       }
       ol.appendChild(li);
     });
@@ -123,51 +166,51 @@
   }
 
   function setAll(root, open) {
-    root.querySelectorAll('.box.can-open').forEach(function (b) {
+    root.querySelectorAll('.box.can-open, .pill.can-open').forEach(function (b) {
       b.setAttribute('aria-expanded', open ? 'true' : 'false');
       var p = document.getElementById(b.getAttribute('aria-controls'));
       if (p) p.hidden = !open;
     });
   }
 
-  function render() {
-    var root = document.getElementById('fvs-sequence');
-    var data = window.FVS_SEQUENCE;
-    if (!root || !data || root.dataset.rendered) return;
-    root.dataset.rendered = '1';
-    root.classList.add('fvs-seq');
+  function toolbar(root, withLegend) {
     var bar = el('div', 'fs-toolbar');
     var ex = el('button', null, 'Expand all'); ex.type = 'button';
     var co = el('button', null, 'Collapse all'); co.type = 'button';
     ex.addEventListener('click', function () { setAll(root, true); });
     co.addEventListener('click', function () { setAll(root, false); });
     bar.appendChild(ex); bar.appendChild(co);
-    var legend = el('span', 'fs-legend');
-    var lg = el('span', 'pill', 'Stop point n');
-    lg.style.cssText = 'font:.9em ui-monospace,monospace;background:#fdf3d0;border:1.5px dashed #d9b84a;border-radius:999px;padding:.05em .6em';
-    legend.appendChild(lg);
-    legend.appendChild(document.createTextNode(' where FVS can stop and restart (hover for location)'));
-    bar.appendChild(legend);
-    root.appendChild(bar);
-    root.appendChild(renderFlow(data.main, data.stops));
-    if (data.related && data.related.length) {
-      root.appendChild(el('h4', 'fs-h', 'Supporting sequences'));
-      var list = el('ul', 'flow fs-related');
-      list.style.cssText = 'list-style:none;padding:0;margin:0';
-      data.related.forEach(function (r) {
-        var li = el('li');
-        var id = 'fs' + (++uid);
-        var b = el('button', 'box can-open', r.label); b.type = 'button'; b.id = id;
-        b.setAttribute('aria-expanded', 'false'); b.setAttribute('aria-controls', id + '-panel');
-        var pnl = renderPanel(r, data.stops, id);
-        b.addEventListener('click', function () {
-          var open = b.getAttribute('aria-expanded') !== 'true';
-          b.setAttribute('aria-expanded', open ? 'true' : 'false'); pnl.hidden = !open;
-        });
-        li.appendChild(b); li.appendChild(pnl); list.appendChild(li);
-      });
-      root.appendChild(list);
+    if (withLegend) {
+      var legend = el('span', 'fs-legend');
+      var lg = el('span', 'pill', 'Stop point n');
+      lg.style.cssText = 'font:.9em ui-monospace,monospace;background:#fdf3d0;border:1.5px dashed #d9b84a;border-radius:999px;padding:.05em .6em';
+      legend.appendChild(lg);
+      legend.appendChild(document.createTextNode(' where FVS can stop and restart (select to see how)'));
+      bar.appendChild(legend);
     }
+    root.appendChild(bar);
+  }
+
+  function render() {
+    var data = window.FVS_SEQUENCE;
+    var main = document.getElementById('fvs-sequence');
+    if (main && data && !main.dataset.rendered) {
+      main.dataset.rendered = '1';
+      main.classList.add('fvs-seq');
+      stopCtx = data.stopCtx || null;
+      toolbar(main, true);
+      main.appendChild(renderFlow(data.main, data.stops));
+    }
+    var figs = window.FVS_FIGURES || {};
+    [].forEach.call(document.querySelectorAll('[data-fvs-seq]'), function (root) {
+      var node = figs[root.getAttribute('data-fvs-seq')];
+      if (!node || root.dataset.rendered) return;
+      root.dataset.rendered = '1';
+      root.classList.add('fvs-seq', 'fvs-seq-solo');
+      toolbar(root, false);
+      [].concat(node.desc || []).forEach(function (d) { root.appendChild(el('p', 'fs-intro', d)); });
+      root.appendChild(renderFlow(node.steps || [], {}));
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render);
