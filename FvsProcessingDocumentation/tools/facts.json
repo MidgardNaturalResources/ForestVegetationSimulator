@@ -446,5 +446,47 @@
   "doc": "Chapter 11: DBSTRLS adds SCuFt to an existing table",
   "file": "dbsqlite/dbstrls.f",
   "regex": "\\\"SCuFt\\\"//CHAR\\(0\\)"
+ },
+ {
+  "id": "db-initre-stop-rtn2",
+  "type": "regex_in_file",
+  "doc": "Chapter 11 / Figure 11-2: INITRE sets return code 2 when KEYRDR returns 3 (STOP)",
+  "file": "vbase/initre.f",
+  "regex": "KODE\\.EQ\\.3\\)\\s*THEN\\s*\\n\\s*CALL\\s+fvsSetRtnCode\\s*\\(2\\)"
+ },
+ {
+  "id": "db-keyrdr-stop-kode3",
+  "type": "regex_in_file",
+  "doc": "Chapter 11: KEYRDR returns KODE=3 for the STOP record",
+  "file": "base/keyrdr.f",
+  "regex": "KODE=3"
+ },
+ {
+  "id": "db-setrtncode-filclose",
+  "type": "regex_in_file",
+  "doc": "Chapter 11: fvsSetRtnCode calls filclose for a nonzero code",
+  "file": "base/cmdline.f",
+  "regex": "if\\s*\\(fvsRtnCode\\s*/=\\s*0\\)\\s*call\\s+filclose"
+ },
+ {
+  "id": "db-stoppoint-end-100",
+  "type": "regex_in_file",
+  "doc": "Chapter 11: fvsStopPoint(-1) sets restartcode to 100",
+  "file": "base/cmdline.f",
+  "regex": "restartcode\\s*=\\s*100"
+ },
+ {
+  "id": "db-fvs-stoppoint-end",
+  "type": "regex_in_file",
+  "doc": "Chapter 11: FVS calls fvsStopPoint(-1) at the end of a stand",
+  "file": "base/fvs.f",
+  "regex": "call\\s+fvsStopPoint\\s*\\(-1,ISTOPDONE\\)"
+ },
+ {
+  "id": "db-errgro-eof-error",
+  "type": "regex_in_file",
+  "doc": "Chapter 11: error 2 is the missing STOP record message",
+  "file": "base/errgro.f",
+  "regex": "NO \\\"STOP\\\" RECORD IN KEYWORD FILE"
  }
 ]

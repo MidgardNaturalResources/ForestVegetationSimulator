@@ -484,7 +484,8 @@
       { label: "Stop and restart", subs: ["PUTSTD", "CHPUT", "GETSTD", "CHGET"],
         desc: "At a stop point PUTSTD calls DBSPPPUT, which saves the output switches and connection flags, and CHPUT calls DBSCHPUT, which saves the database names and CaseID and closes the connections. At restart GETSTD calls DBSPPGET and CHGET calls DBSCHGET to restore them and reopen the connections that were open." },
       { kind: "end", label: "Close the databases", subs: ["FILCLOSE", "DBSCLOSE", "DBSOPEN"],
-        desc: "DBSCLOSE closes the input and output connections. It is called from FILClose (an entry in FILOPN), which the command line routines call when FVS is reset after a nonzero return code or restart code and when a run ends in an error state. DBSOPEN also calls it before it opens a new connection, and DBSCHPUT and DBSPPGET call it at a stop and a restart. No call to FILClose or DBSCLOSE was found for a run that ends normally." }
+        desc: ["DBSCLOSE closes the input and output connections. It is called from FILClose (an entry in FILOPN), from DBSOPEN before it opens a new connection, and from DBSCHPUT and DBSPPGET at a stop and a restart. FILClose is called by fvsSetRtnCode whenever the return code is set to a nonzero value, and by fvsSetCmdLine when the return code or the restart code is nonzero.",
+               "The databases are therefore closed when INITRE reads the STOP record (or reaches the end of the keyword file), which sets return code 2, and not when a stand finishes. At the end of a stand FVS returns code 0 with restart code 100 and the connections stay open until the next call to FVS reads STOP, or until fvsSetCmdLine is called."] }
     ]
   };
 

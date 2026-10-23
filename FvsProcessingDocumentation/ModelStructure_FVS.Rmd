@@ -5593,6 +5593,31 @@ The database state is part of the data saved at a stop point.
 2. **DBSCHPUT** writes the input database name, the output database name, the keyword file name and the 36 characters of the CaseID, and then closes both connections.
 3. **DBSPPGET** and **DBSCHGET** read these values back at restart. The connections that were open at the stop are opened again, so tables written after the restart go to the same database under the same CaseID.
 
+### Releasing the Databases from an Interactive Session
+
+The input and output connections are held inside the FVS shared library, in the variables `IinDBref` and `IoutDBref`, and **DBSCLOSE** is the routine that closes them. When FVS runs as a program, the main routine calls FVS until it returns a nonzero code, and the databases are closed on the way out. When FVS is driven from R through the `rFVS` package (in the FVSInterface repository), the caller controls how many times FVS is called, and a completed projection does not by itself close the databases.
+
+**What `fvsRun()` does.** The `rFVS` function `fvsRun()` optionally sets a stop point and year, and then calls FVS repeatedly. It stops calling FVS when FVS returns a nonzero return code, or when the restart code reported by `fvsGetRestartcode()` is nonzero. The return codes are -1 (FVS has not been started), 0 (FVS is in a good running state), 1 (an error has occurred, and FVS cannot be used again until new input is given) and 2 (FVS has finished processing all of the stands).
+
+**What happens at the end of a stand.** When the last cycle of a stand is finished, FVS calls `fvsStopPoint(-1)`, which sets the restart code to 100. FVS then returns code 0. Because the restart code is not zero, `fvsRun()` stops its loop and returns 0, even though no stop point was requested. The restart code of 100 means "end of the current stand"; the custom run scripts of the FVS Online application test for it (`if (stopPoint == 100) break`) for this reason. At this point the projection is complete and the output tables have been written, but the database connections are still open.
+
+**What closes the connections.** The next call to FVS reads the next record of the keyword file. If another stand follows, FVS starts it, and `fvsRun()` again returns 0 at the end of that stand. If the record is `STOP`, **INITRE** sets return code 2 with `fvsSetRtnCode`, which calls **FILClose**, and **FILClose** calls **DBSCLOSE**. The call then returns code 2, which `fvsRun()` returns to the caller. If the end of the keyword file is reached without a `STOP` record, **ERRGRO** writes error FVS02 to the main output file and to the FVS_Error table, sets return code 2, and the connections are closed in the same way (the exit status of the standalone program is then 20).
+
+A consequence is that code 2 is returned by the call that follows the last stand, not by the call that finishes it. For a keyword file that contains one stand, the first call to `fvsRun()` runs the projection and returns 0, and a second call reads `STOP`, closes the databases and returns 2. The description of code 2 in the `rFVS` documentation, "finished processing all the stands", is correct for the second call only.
+
+```
+fvsLoad(bin = "FVSbin", fvsProgram = "FVSie")
+fvsSetCmdLine("--keywordfile=base.key")
+rtn <- fvsRun()
+while (rtn == 0) rtn <- fvsRun()   # the last call reads STOP and closes the databases
+```
+
+This example follows from the code described above; it was not run.
+
+**Other ways the connections are released.** A call to `fvsSetCmdLine()` calls **FILClose** when the return code or the restart code is nonzero. The restart code is 100 after a completed stand, so starting a new run from the same R session closes the connections left by the previous one. A later DSNIN or DSNOUT keyword record also replaces a connection, because **DBSOPEN** closes the connection it is replacing. An error that sets a nonzero return code closes the connections as well. The function `fvsInteractRun()` loops until the return code is nonzero, so it always reaches the `STOP` record and closes the databases.
+
+**Cases where the file stays in use.** If a script stops calling `fvsRun()` after the last stand has returned 0, the output database (and the input database) remain open in the R session. Loading another FVS library with `fvsLoad()` unloads the previous library without closing its databases, and unloading the library does not release the SQLite file in the Windows environment. The reliable way to release the files is to call `fvsRun()` once more after the last stand until it returns 2, or to call `fvsSetCmdLine()`.
+
 ### Upgrading Existing Databases
 
 Output tables are created when they do not exist. When a table already exists, the routines add the columns that older versions of FVS did not write, by the SQL statement `ALTER TABLE ... ADD COLUMN` in **fsql3_addcolifabsent**:
