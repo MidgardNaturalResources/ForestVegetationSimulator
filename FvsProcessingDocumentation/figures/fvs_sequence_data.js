@@ -433,12 +433,38 @@
   var stopDetail = {};
   for (var sn = 1; sn <= 7; sn++) stopDetail[sn] = { call: stopCall[sn], resume: stopResume[sn] };
 
+  /* ---------- Database extension architecture (section 11) ---------- */
+  var relDbArch = {
+    label: "Architecture of the Database Extension",
+    desc: "Every database request starts in an FVS routine and passes down through the layers below. Select a box to show what the layer contains.",
+    steps: [
+      { label: "FVS base and extension routines", subs: ["INITRE", "INTREE", "FVS", "SUMOUT", "DISPLY", "OPLIST", "PRTRLS", "ERRGRO", "FILOPN"],
+        desc: ["These routines call the database extension where data are read or written. INITRE calls DBSINIT and DBSIN while the keyword records are processed. INTREE calls DBSTREESIN for each tree record. FVS calls DBSREFERENCE. SUMOUT calls DBSSUMRY, DISPLY calls DBSSUMRY2, OPLIST calls DBSCMPU, and PRTRLS calls DBSTRLS, DBSCUTS and DBSATRTLS. ERRGRO calls DBSERROR, and FILOPN calls DBSCLOSE.",
+               "The fire, economics and regeneration extensions call their own table routines in the same way, for example DBSFUELS from FMDOUT, DBSECSUM from ECCALC and DBSTALLY from ESTAB."] },
+      { label: "DBSCOM.F77: shared control variables", subs: ["DBSCHR", "DBSCOM", "DBSBLKD"],
+        desc: ["The labeled COMMON blocks DBSCHR and DBSCOM hold what the layers share. DBSCHR holds the input and output database names (DSNIN and DSNOUT), the keyword file name (KEYFNAME) and the case identifier (CASEID). DBSCOM holds the switch for each output table (for example ISUMARY, ICOMPUTE, ITREELIST, ICUTLIST and IATRTLIST), which the keyword records processed by DBSIN turn on, and the two database connection handles (IINDBREF and IOUTDBREF).",
+               "The block data routine DBSBLKD sets the default names: FVS_Data.db for input and FVSOut.db for output."] },
+      { label: "Fortran database routines (dbsqlite/)", subs: ["DBSIN", "DBSOPEN", "DBSCLOSE", "DBSCASE", "DBSEXECSQL", "DBSPRSSQL", "DBSTREESIN", "DBSERROR"],
+        desc: ["The dbsqlite directory has 47 Fortran source files. DBSIN processes the 43 database keywords. DBSOPEN and DBSCLOSE open and close the input and output connections. DBSCASE manages the FVS_Cases table. DBSEXECSQL runs SQL statements, after DBSPRSSQL replaces the percent sign delimited tokens (such as %StandID%) in them. DBSTREESIN reads the tree records, and DBSERROR writes the FVS_Error table.",
+               "Most of the other files each write one output table or group of tables, for example DBSTRLS (FVS_TreeList), DBSCUTS (FVS_CutList), DBSATRTLS (FVS_ATRTList), DBSCMPU (FVS_Compute) and DBSCALIB (FVS_CalibStats), and the fire, economics, mistletoe, root disease and regeneration tables."] },
+      { label: "Variant-dependent routines (vdbsqlite/)", subs: ["DBSSTANDIN", "DBSSUMRY", "DBSSUMRY2", "DBSREFERENCE", "DBSCARBBIOSUMRY", "DBSFMPF", "DBSFMPFC"],
+        desc: "Six files depend on data that differ among variants, so they are kept apart from dbsqlite. DBSSTANDIN reads the stand record. DBSSUMRY and DBSSUMRY2 write FVS_Summary and FVS_Summary2. DBSREFERENCE writes FVS_InvReference. DBSCARBBIOSUMRY writes FVS_FIAVBC_Summary. DBSFMPF and DBSFMPFC write the fire model's potential fire output and potential fire conditions tables." },
+      { label: "C wrapper functions (fvsqlite3.c)", subs: ["fsql3_open", "fsql3_exec", "fsql3_prepare", "fsql3_bind_*", "fsql3_step", "fsql3_col*", "fsql3_finalize", "fsql3_close"],
+        desc: "The Fortran routines reach SQLite through the fsql3_ functions in fvsqlite3.c, which wrap the SQLite C interface. They open and close a database, run a statement, prepare a statement and bind integer, double or text values to it, step through the result rows, read column values, names and types, check whether a table exists, add a column if it is absent, and return error messages." },
+      { label: "SQLite engine (sqlite3.c)", subs: ["sqlite3.c", "sqlite3.h"],
+        desc: "The SQLite library, version 3.33.0, is embedded in the FVS source (dbsqlite/sqlite3.c and sqlite3.h)." },
+      { kind: "end", label: "Database files (.db)",
+        desc: "The input database (DSNIN) holds the stand and tree tables that DBSIN, DBSSTANDIN and DBSTREESIN read. The output database (DSNOUT) holds FVS_Cases and the output tables, each linked to the run by CaseID. The two names are set separately." }
+    ]
+  };
+
   window.FVS_FIGURES = {
     options: relOptions,
     events: relEvents,
     rpn: relRpn,
     stops: relStopPoint,
-    restart: relRestart
+    restart: relRestart,
+    dbarch: relDbArch
   };
 
   window.FVS_SEQUENCE = {

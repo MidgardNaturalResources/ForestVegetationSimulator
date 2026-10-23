@@ -5069,21 +5069,15 @@ The Database Extension utilizes:
 - **Fortran Interface**: Fortran subroutines call C functions via compiler directives
 - **Cross-Platform**: Supports Windows (.dll) and Unix/Linux (.so) builds
 
-**Architecture:**
+```{r fvs-seq-dbarch, echo=FALSE, results='asis'}
+if (knitr::is_html_output()) {
+  htmltools::tags$div(`data-fvs-seq` = "dbarch")
+} else {
+  cat("The interactive figure is available in the HTML version of this document.")
+}
+```
 
-```
-Fortran FVS Code
-       ↓
-DBSCOM.F77 (Common blocks)
-       ↓
-dbsin.f, dbsopen.f, etc. (Fortran database routines)
-       ↓
-fvsqlite3.c (C wrapper functions)
-       ↓
-sqlite3.c (SQLite engine)
-       ↓
-.db or .sqlite file (Database file)
-```
+**Figure 11-1. Architecture of the Database Extension. Select a box to show what the layer contains.**
 
 ### Database Structure
 
