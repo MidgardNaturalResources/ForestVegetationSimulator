@@ -1,0 +1,324 @@
+[
+ {
+  "id": "maxtre-oc",
+  "type": "regex_in_file",
+  "doc": "Chapter 9: MAXTRE is 2000 in OC",
+  "file": "oc/common/PRGPRM.F77",
+  "regex": "PARAMETER\\s*\\(\\s*MAXTRE\\s*=\\s*2000\\s*\\)"
+ },
+ {
+  "id": "maxtre-op",
+  "type": "regex_in_file",
+  "doc": "Chapter 9: MAXTRE is 2000 in OP",
+  "file": "op/common/PRGPRM.F77",
+  "regex": "PARAMETER\\s*\\(\\s*MAXTRE\\s*=\\s*2000\\s*\\)"
+ },
+ {
+  "id": "maxtre-pn",
+  "type": "regex_in_file",
+  "doc": "Chapter 9: MAXTRE is 3000 in PN",
+  "file": "pn/common/PRGPRM.F77",
+  "regex": "PARAMETER\\s*\\(\\s*MAXTRE\\s*=\\s*3000\\s*\\)"
+ },
+ {
+  "id": "maxsp-oc",
+  "type": "regex_in_file",
+  "doc": "Chapter 9: MAXSP is 50 in OC",
+  "file": "oc/common/PRGPRM.F77",
+  "regex": "PARAMETER\\s*\\(\\s*MAXSP\\s*=\\s*50\\s*\\)"
+ },
+ {
+  "id": "maxsp-ca",
+  "type": "regex_in_file",
+  "doc": "Chapter 9: MAXSP is 50 in CA",
+  "file": "ca/common/PRGPRM.F77",
+  "regex": "PARAMETER\\s*\\(\\s*MAXSP\\s*=\\s*50\\s*\\)"
+ },
+ {
+  "id": "maxsp-op",
+  "type": "regex_in_file",
+  "doc": "Chapter 9: MAXSP is 39 in OP",
+  "file": "op/common/PRGPRM.F77",
+  "regex": "PARAMETER\\s*\\(\\s*MAXSP\\s*=\\s*39\\s*\\)"
+ },
+ {
+  "id": "maxsp-pn",
+  "type": "regex_in_file",
+  "doc": "Chapter 9: MAXSP is 39 in PN",
+  "file": "pn/common/PRGPRM.F77",
+  "regex": "PARAMETER\\s*\\(\\s*MAXSP\\s*=\\s*39\\s*\\)"
+ },
+ {
+  "id": "stop-1",
+  "type": "regex_in_file",
+  "doc": "Chapter 8 / Figure 2-1: stop point 1 is called from GRINCR",
+  "file": "base/grincr.f",
+  "regex": "CALL\\s+fvsStopPoint\\s*\\(\\s*1\\s*,"
+ },
+ {
+  "id": "stop-2",
+  "type": "regex_in_file",
+  "doc": "Chapter 8 / Figure 2-1: stop point 2 is called from GRINCR",
+  "file": "base/grincr.f",
+  "regex": "CALL\\s+fvsStopPoint\\s*\\(\\s*2\\s*,"
+ },
+ {
+  "id": "stop-3",
+  "type": "regex_in_file",
+  "doc": "Chapter 8 / Figure 2-1: stop point 3 is called from GRINCR",
+  "file": "base/grincr.f",
+  "regex": "CALL\\s+fvsStopPoint\\s*\\(\\s*3\\s*,"
+ },
+ {
+  "id": "stop-4",
+  "type": "regex_in_file",
+  "doc": "Chapter 8 / Figure 2-1: stop point 4 is called from GRINCR",
+  "file": "base/grincr.f",
+  "regex": "CALL\\s+fvsStopPoint\\s*\\(\\s*4\\s*,"
+ },
+ {
+  "id": "stop-5",
+  "type": "regex_in_file",
+  "doc": "Chapter 8 / Figure 2-1: stop point 5 is called from GRADD",
+  "file": "base/gradd.f",
+  "regex": "CALL\\s+fvsStopPoint\\s*\\(\\s*5\\s*,"
+ },
+ {
+  "id": "stop-6",
+  "type": "regex_in_file",
+  "doc": "Chapter 8 / Figure 2-1: stop point 6 is called from GRADD",
+  "file": "base/gradd.f",
+  "regex": "CALL\\s+fvsStopPoint\\s*\\(\\s*6\\s*,"
+ },
+ {
+  "id": "stop-7",
+  "type": "regex_in_file",
+  "doc": "Chapter 8 / Figure 2-1: stop point 7 is called from FVS",
+  "file": "base/fvs.f",
+  "regex": "CALL\\s+fvsStopPoint\\s*\\(\\s*7\\s*,"
+ },
+ {
+  "id": "restart-fvs-7",
+  "type": "regex_in_file",
+  "doc": "Chapter 8: FVS jumps to calibration for restart code 7",
+  "file": "base/fvs.f",
+  "regex": "if\\s*\\(\\s*IRSTRTCD\\.eq\\.7\\s*\\)\\s*goto\\s+19"
+ },
+ {
+  "id": "restart-fvs-1",
+  "type": "regex_in_file",
+  "doc": "Chapter 8: FVS jumps to TREGRO for restart codes 1 to 6",
+  "file": "base/fvs.f",
+  "regex": "if\\s*\\(\\s*IRSTRTCD\\.ge\\.1\\s*\\)\\s*goto\\s+41"
+ },
+ {
+  "id": "restart-grincr",
+  "type": "regex_in_file",
+  "doc": "Chapter 8: GRINCR branches on the restart code",
+  "file": "base/grincr.f",
+  "regex": "GOTO\\s*\\(\\s*1,16,17,71,72,1\\s*\\)\\s*,\\s*ISTOPRES\\s*\\+\\s*1"
+ },
+ {
+  "id": "restart-tregro",
+  "type": "regex_in_file",
+  "doc": "Chapter 8: TREGRO skips GRINCR for restart codes 5 and 6",
+  "file": "base/tregro.f",
+  "regex": "ISTOPRES\\.GE\\.5\\s+\\.and\\.\\s+\\.not\\.\\s+ISTOPRES\\.EQ\\.7"
+ },
+ {
+  "id": "restart-gradd-5",
+  "type": "regex_in_file",
+  "doc": "Chapter 8: GRADD resumes at UPDATE for code 5",
+  "file": "base/gradd.f",
+  "regex": "IF\\s*\\(\\s*ISTOPRES\\.EQ\\.5\\s*\\)\\s*GOTO\\s+57"
+ },
+ {
+  "id": "restart-gradd-6",
+  "type": "regex_in_file",
+  "doc": "Chapter 8: GRADD resumes after stop point 6 for code 6",
+  "file": "base/gradd.f",
+  "regex": "IF\\s*\\(\\s*ISTOPRES\\.EQ\\.6\\s*\\)\\s*GOTO\\s+97"
+ },
+ {
+  "id": "clearrestart",
+  "type": "regex_in_file",
+  "doc": "Chapter 8: restart code cleared at the end of each cycle",
+  "file": "base/fvs.f",
+  "regex": "CALL\\s+ClearRestartCode\\s*\\n\\s*GOTO\\s+40"
+ },
+ {
+  "id": "cuts-priority-1",
+  "type": "regex_in_file",
+  "doc": "Chapter 4: removal priority equation (size, species, value class, special status)",
+  "file": "vbase/cuts.f",
+  "regex": "WK2\\(I\\)\\s*=\\s*XSZ\\s*\\+\\s*IORDER\\(IS\\)\\s*\\+\\s*TCWT\\s*\\*\\s*IMC\\(I\\)\\s*\\+\\s*SPCLWT\\*ISPECL\\(I\\)"
+ },
+ {
+  "id": "cuts-priority-2",
+  "type": "regex_in_file",
+  "doc": "Chapter 4: removal priority equation (point terms)",
+  "file": "vbase/cuts.f",
+  "regex": "PBAWT\\*PTBAA\\(IP\\)\\s*\\+\\s*PCCFWT\\*PCCF\\(IP\\)\\s*\\+\\s*PTPAWT\\*PTPA\\(IP\\)"
+ },
+ {
+  "id": "cuts-priority-3",
+  "type": "regex_in_file",
+  "doc": "Chapter 4: mistletoe preference added to the priority",
+  "file": "vbase/cuts.f",
+  "regex": "IF\\(IDMR\\.GT\\.0\\)\\s*WK2\\(I\\)\\s*=\\s*WK2\\(I\\)\\s*\\+\\s*PRFMIS\\(IS,IDMR\\)"
+ },
+ {
+  "id": "cuts-lbelow-reset",
+  "type": "regex_in_file",
+  "doc": "Chapter 4: LBELOW and LSPECL reset for each thinning request",
+  "file": "vbase/cuts.f",
+  "regex": "LBELOW\\s*=\\s*\\.FALSE\\.\\s*\\n\\s*LSPECL\\s*=\\s*\\.FALSE\\."
+ },
+ {
+  "id": "cuts-field7",
+  "type": "regex_in_file",
+  "doc": "Chapter 4: field 7 of the density thinnings selects ranking and direction",
+  "file": "vbase/cuts.f",
+  "regex": "IF\\(ICUT\\s*\\.GT\\.\\s*0\\)\\s*LSPECL\\s*=\\s*\\.FALSE\\.\\s*\\n\\s*IF\\(ICUT\\s*\\.EQ\\.\\s*1\\)\\s*LBELOW\\s*=\\s*\\.TRUE\\."
+ },
+ {
+  "id": "cuts-sort-bypass",
+  "type": "regex_in_file",
+  "doc": "Chapter 4: sort bypassed when LSPECL is true",
+  "file": "vbase/cuts.f",
+  "regex": "IF\\(LSPECL\\)\\s*GO TO 900"
+ },
+ {
+  "id": "svntr-int",
+  "type": "regex_in_file",
+  "doc": "Appendix B: SVNTR object tree count (integer part)",
+  "file": "base/svntr.f",
+  "regex": "NP\\s*=\\s*IFIX\\(XP\\)"
+ },
+ {
+  "id": "svntr-frac",
+  "type": "regex_in_file",
+  "doc": "Appendix B: SVNTR extra object tree for the fractional part",
+  "file": "base/svntr.f",
+  "regex": "IF\\s*\\(\\s*X\\.LT\\.XX\\s*\\)\\s*NP\\s*=\\s*NP\\s*\\+\\s*1"
+ },
+ {
+  "id": "svrann",
+  "type": "regex_in_file",
+  "doc": "Appendix B: SVRANN multiplier",
+  "file": "base/svrann.f",
+  "regex": "16807D0\\*SVS0"
+ },
+ {
+  "id": "svdead-limits",
+  "type": "regex_in_file",
+  "doc": "Appendix B: SV snag and CWD record limits",
+  "file": "common/SVDEAD.F77",
+  "regex": "MXDEAD\\s*=\\s*1000[\\s\\S]*MXCWD\\s*=\\s*5000"
+ },
+ {
+  "id": "fmeff-svmort",
+  "type": "regex_in_file",
+  "doc": "Appendix B: FMEFF calls SVMORT",
+  "file": "fire/vbase/fmeff.f",
+  "regex": "CALL\\s+SVMORT\\s*\\(\\s*1\\s*,\\s*FIRKIL\\s*,\\s*IYR\\s*\\)"
+ },
+ {
+  "id": "fmeff-fmsvout",
+  "type": "regex_in_file",
+  "doc": "Appendix B: FMEFF calls FMSVOUT",
+  "file": "fire/vbase/fmeff.f",
+  "regex": "CALL\\s+FMSVOUT\\s*\\("
+ },
+ {
+  "id": "grincr-svout",
+  "type": "regex_in_file",
+  "doc": "Appendix B: GRINCR calls SVOUT after the first cycle",
+  "file": "base/grincr.f",
+  "regex": "IF\\s*\\(\\s*ICYC\\.GT\\.1\\s*\\)\\s*CALL\\s+SVOUT"
+ },
+ {
+  "id": "estb-lautal",
+  "type": "regex_in_file",
+  "doc": "Chapter 10: full establishment model defaults LAUTAL true",
+  "file": "estb/esinit.f",
+  "regex": "LAUTAL\\s*=\\s*\\.TRUE\\."
+ },
+ {
+  "id": "strp-lautal",
+  "type": "regex_in_file",
+  "doc": "Chapter 10: partial establishment model defaults LAUTAL false",
+  "file": "strp/esinit.f",
+  "regex": "LAUTAL\\s*=\\s*\\.FALSE\\."
+ },
+ {
+  "id": "estb-minrep",
+  "type": "regex_in_file",
+  "doc": "Chapter 10: MINREP default",
+  "file": "estb/esinit.f",
+  "regex": "MINREP\\s*=\\s*50"
+ },
+ {
+  "id": "n-estb",
+  "type": "count_files",
+  "doc": "Chapter 10: five variants use the full establishment model (AK, CI, EM, IE, KT)",
+  "dir": "bin",
+  "glob": "FVS*_sourceList.txt",
+  "regex": "\\.\\./estb/",
+  "expected": 5
+ },
+ {
+  "id": "n-dbsqlite",
+  "type": "count_files",
+  "doc": "Chapter 11 / Appendix A: variants using dbsqlite",
+  "dir": "bin",
+  "glob": "FVS*_sourceList.txt",
+  "regex": "\\.\\./dbsqlite/",
+  "expected": 25
+ },
+ {
+  "id": "n-dbs",
+  "type": "count_files",
+  "doc": "Appendix A: no variant uses the SQL (dbs) extension",
+  "dir": "bin",
+  "glob": "FVS*_sourceList.txt",
+  "regex": "\\.\\./dbs/",
+  "expected": 0
+ },
+ {
+  "id": "n-fiavbc",
+  "type": "count_files",
+  "doc": "Appendix A: variants using fiavbc",
+  "dir": "bin",
+  "glob": "FVS*_sourceList.txt",
+  "regex": "\\.\\./fiavbc/",
+  "expected": 23
+ },
+ {
+  "id": "n-clim",
+  "type": "count_files",
+  "doc": "Appendix A: variants using the climate extension",
+  "dir": "bin",
+  "glob": "FVS*_sourceList.txt",
+  "regex": "\\.\\./clim/",
+  "expected": 19
+ },
+ {
+  "id": "n-organon",
+  "type": "count_files",
+  "doc": "Chapter 9: only OC and OP use the ORGANON code",
+  "dir": "bin",
+  "glob": "FVS*_sourceList.txt",
+  "regex": "\\.\\./organon/",
+  "expected": 2
+ },
+ {
+  "id": "n-exorganon",
+  "type": "count_files",
+  "doc": "Chapter 9: other variants link the ORGANON stub",
+  "dir": "bin",
+  "glob": "FVS*_sourceList.txt",
+  "regex": "exorganon\\.f",
+  "expected": 23
+ }
+]
