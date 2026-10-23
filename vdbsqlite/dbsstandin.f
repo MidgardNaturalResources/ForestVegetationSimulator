@@ -606,8 +606,7 @@ C     SET DEFAULT LOCATION CODE IF NOT PRESENT IN INPUT DATA
 
       IF(Ecoregion_LI.GT.0) THEN
          CECOREG = ADJUSTL(CECOREG)
-         ECOREG = CECOREG
-         CALL NVB_REGION_CHECK
+         ECOREG = CECOREG(:4)
         IF (VARACD.EQ.'SN') THEN
           READ (CECOREG,'(I10)',ERR=41)  ISTANDDATA(54)
           GOTO 46
@@ -1063,7 +1062,7 @@ C     selected is set, followed by tons/acre entered directly.
         WRITE(JOSTND,
      >  '(T12,''FIRE MODEL NOT LINKED, FUELS PHOTO DATA IGNORED.'')')
       ELSEIF ((FOTOREF_LI.GT.0).OR.(FotoCode_LI.GT.0)) THEN
-        WRITE(JOSTND,'(T12,''MISSING PHOTO ''
+        WRITE(JOSTND,'(T12,''MISSING PHOTO '',
      >  ''REFERENCE OR PHOTO CODE, FUELS PHOTO DATA IGNORED.'')')
       ENDIF
 

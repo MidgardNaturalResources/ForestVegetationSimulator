@@ -1,4 +1,6 @@
-.tables
+.mode tabs
+.separator ","
+SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;
 select count(*) from FVS_ATRTList   ;
 select count(*) from FVS_Down_Wood_Cov   ;
 select count(*) from FVS_Mortality       ;
@@ -10,9 +12,9 @@ select count(*) from FVS_EconHarvestValue;
 select count(*) from FVS_SnagSum         ;
 select count(*) from FVS_Cases           ;
 select count(*) from FVS_EconSummary     ;
-select count(*) from FVS_Summary    ;
+select count(*) from FVS_Summary         ;
 select count(*) from FVS_Consumption     ;
 select count(*) from FVS_Fuels           ;
-select count(*) from FVS_TreeList   ;
-select count(*) from FVS_CutList    ;
+select count(*) from FVS_TreeList        ;
+select count(*) from FVS_CutList         ;
 select count(*) from FVS_Hrv_Carbon      ;
