@@ -5501,11 +5501,21 @@ Individual tree records at end of each cycle. The table has 35 columns:
 
 ## Case Management and Run-Time Behavior
 
+```{r fvs-seq-dbrun, echo=FALSE, results='asis'}
+if (knitr::is_html_output()) {
+  htmltools::tags$div(`data-fvs-seq` = "dbrun")
+} else {
+  cat("The interactive figure is available in the HTML version of this document.")
+}
+```
+
+**Figure 11-2. Database processing during a run. Select a box to show the routines and what they do.**
+
 ### Cases and the FVS_Cases Table
 
 Every output table has a **CaseID** column that links its rows to one row of **FVS_Cases**. A case is one projection of one stand. The case is created by **DBSCASE** the first time an output routine needs it, and the same CaseID is used for all tables written for that stand until the next stand is started.
 
-1. **DBSINIT**, called from **INITRE** at the start of each stand, clears CaseID, so the first output routine to run creates a new case. The DSNOUT keyword record also clears CaseID.
+1. **DBSINIT**, called from **INITRE** at the start of each stand, clears CaseID and turns off all output switches, so a new case is needed for each stand. When the DSNOUT keyword record is read, **DBSIN** opens the output database, clears CaseID and calls **DBSCASE** with the argument 1, so the case is created at that point. Otherwise the first output routine to run creates it.
 2. **DBSCASE** (called with the argument 0) tests the output switches. When none is on, it returns without creating a case. The routines **DBSERROR**, **DBSREFERENCE** and the `%FVSCase%` substitution call it with the argument 1, which creates the case without testing the switches.
 3. If the output database connection is not open, **DBSOPEN** opens it. A failure to open turns off all output switches.
 4. If FVS_Cases does not exist it is created, with CaseID as the primary key.

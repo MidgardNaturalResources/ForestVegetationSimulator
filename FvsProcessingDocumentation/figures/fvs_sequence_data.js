@@ -458,13 +458,44 @@
     ]
   };
 
+  /* ---------- Database processing during a run (section 11) ---------- */
+  var relDbRun = {
+    label: "Database processing during a run",
+    desc: "The order in which the Database Extension acts on one stand. Select a box to show the routines and what they do.",
+    steps: [
+      { label: "Reset the database state", subs: ["INITRE", "DBSINIT"],
+        desc: "INITRE calls DBSINIT at the start of each stand. DBSINIT clears the CaseID and turns off every output switch." },
+      { label: "Process the database keywords", subs: ["DBSIN", "DBSOPEN", "DBSCASE"],
+        desc: ["INITRE passes each database keyword record to DBSIN. DSNIN opens the input database. DSNOUT opens the output database, clears the CaseID and calls DBSCASE, which creates the case in FVS_Cases. The output keywords (for example SUMMARY, TREELIDB and CUTLIDB) turn on the switch of the table they name.",
+               "An SQLIN or SQLOUT record with a blank field 1 is run at once. With a year or cycle in field 1 it is stored as activity 101 (SQLIN) or 102 (SQLOUT) and run later by DBSEVM."] },
+      { label: "Read the stand record", subs: ["DBSIN", "DBSPRSSQL", "DBSSTANDIN"],
+        desc: "STANDSQL, or STANDIN (which builds the query from a list of column names), runs the stand query. DBSPRSSQL replaces the percent sign tokens in the query, and DBSSTANDIN stores the returned columns in the FVS stand variables." },
+      { label: "Read the tree records", subs: ["DBSIN", "DBSPRSSQL", "INTREE", "DBSTREESIN"],
+        desc: "TREESQL runs the tree query after DBSPRSSQL replaces its tokens. INTREE reads each returned row, and DBSTREESIN supplies the column values for the tree record." },
+      { label: "Update the case row", subs: ["INITRE", "DBSCASE"],
+        desc: "When the PROCESS keyword record is read, INITRE calls DBSCASE with the argument 2, which updates SamplingWt, Groups and StandID in the FVS_Cases row." },
+      { label: "Write the inventory reference", subs: ["FVS", "DBSREFERENCE"],
+        desc: "After the inventory statistics are computed (STATS), FVS calls DBSREFERENCE, which writes FVS_InvReference." },
+      { label: "Run scheduled SQL", subs: ["EVTSTV", "DBSEVM", "DBSEXECSQL"],
+        desc: "In each cycle the Event Monitor routine EVTSTV finds the activities scheduled for the cycle. For activity 101 or 102 it calls DBSEVM, which opens the connection if needed and calls DBSEXECSQL to run the statement after DBSPRSSQL has substituted the Event Monitor variables." },
+      { label: "Write the output tables", subs: ["SUMOUT", "DISPLY", "PRTRLS", "OPLIST"],
+        desc: ["Each output routine tests its own switch and calls DBSCASE if the case does not yet exist. SUMOUT calls DBSSUMRY, DISPLY calls DBSSUMRY2, and PRTRLS calls DBSTRLS, DBSCUTS and DBSATRTLS. OPLIST calls DBSCMPU for FVS_Compute.",
+               "The fire, economics, mistletoe, root disease and regeneration extensions call their own table routines in the same way."] },
+      { label: "Stop and restart", subs: ["PUTSTD", "CHPUT", "GETSTD", "CHGET"],
+        desc: "At a stop point PUTSTD calls DBSPPPUT, which saves the output switches and connection flags, and CHPUT calls DBSCHPUT, which saves the database names and CaseID and closes the connections. At restart GETSTD calls DBSPPGET and CHGET calls DBSCHGET to restore them and reopen the connections that were open." },
+      { kind: "end", label: "Close the databases", subs: ["FILCLOSE", "DBSCLOSE", "DBSOPEN"],
+        desc: "DBSCLOSE closes the input and output connections. It is called from FILClose (an entry in FILOPN), which the command line routines call when FVS is reset after a nonzero return code or restart code and when a run ends in an error state. DBSOPEN also calls it before it opens a new connection, and DBSCHPUT and DBSPPGET call it at a stop and a restart. No call to FILClose or DBSCLOSE was found for a run that ends normally." }
+    ]
+  };
+
   window.FVS_FIGURES = {
     options: relOptions,
     events: relEvents,
     rpn: relRpn,
     stops: relStopPoint,
     restart: relRestart,
-    dbarch: relDbArch
+    dbarch: relDbArch,
+    dbrun: relDbRun
   };
 
   window.FVS_SEQUENCE = {

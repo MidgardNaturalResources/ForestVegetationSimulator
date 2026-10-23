@@ -320,5 +320,131 @@
   "glob": "FVS*_sourceList.txt",
   "regex": "exorganon\\.f",
   "expected": 23
+ },
+ {
+  "id": "db-initre-dbsinit",
+  "type": "regex_in_file",
+  "doc": "Chapter 11 / Figure 11-2: INITRE calls DBSINIT",
+  "file": "vbase/initre.f",
+  "regex": "CALL\\s+DBSINIT"
+ },
+ {
+  "id": "db-initre-dbscase2",
+  "type": "regex_in_file",
+  "doc": "Chapter 11 / Figure 11-2: INITRE calls DBSCASE(2)",
+  "file": "vbase/initre.f",
+  "regex": "CALL\\s+DBSCASE\\(2\\)"
+ },
+ {
+  "id": "db-fvs-dbsreference",
+  "type": "regex_in_file",
+  "doc": "Chapter 11 / Figure 11-2: FVS calls DBSREFERENCE",
+  "file": "base/fvs.f",
+  "regex": "CALL\\s+DBSREFERENCE"
+ },
+ {
+  "id": "db-evtstv-dbsevm",
+  "type": "regex_in_file",
+  "doc": "Chapter 11 / Figure 11-2: EVTSTV calls DBSEVM",
+  "file": "vbase/evtstv.f",
+  "regex": "CALL\\s+DBSEVM"
+ },
+ {
+  "id": "db-sumout-dbssumry",
+  "type": "regex_in_file",
+  "doc": "Chapter 11 / Figure 11-2: SUMOUT calls DBSSUMRY",
+  "file": "vbase/sumout.f",
+  "regex": "CALL\\s+DBSSUMRY\\("
+ },
+ {
+  "id": "db-disply-dbssumry2",
+  "type": "regex_in_file",
+  "doc": "Chapter 11 / Figure 11-2: DISPLY calls DBSSUMRY2",
+  "file": "vbase/disply.f",
+  "regex": "CALL\\s+DBSSUMRY2"
+ },
+ {
+  "id": "db-prtrls-dbstrls",
+  "type": "regex_in_file",
+  "doc": "Chapter 11 / Figure 11-2: PRTRLS calls DBSTRLS",
+  "file": "vbase/prtrls.f",
+  "regex": "CALL\\s+DBSTRLS"
+ },
+ {
+  "id": "db-putstd-dbsppput",
+  "type": "regex_in_file",
+  "doc": "Chapter 11 / Figure 11-2: PUTSTD calls DBSPPPUT",
+  "file": "pg/putstd.f",
+  "regex": "CALL\\s+DBSPPPUT"
+ },
+ {
+  "id": "db-getstd-dbsppget",
+  "type": "regex_in_file",
+  "doc": "Chapter 11 / Figure 11-2: GETSTD calls DBSPPGET",
+  "file": "pg/getstd.f",
+  "regex": "CALL\\s+DBSPPGET"
+ },
+ {
+  "id": "db-chput-dbschput",
+  "type": "regex_in_file",
+  "doc": "Chapter 11 / Figure 11-2: CHPUT calls DBSCHPUT",
+  "file": "pg/chput.f",
+  "regex": "CALL\\s+DBSCHPUT"
+ },
+ {
+  "id": "db-chget-dbschget",
+  "type": "regex_in_file",
+  "doc": "Chapter 11 / Figure 11-2: CHGET calls DBSCHGET",
+  "file": "pg/chget.f",
+  "regex": "CALL\\s+DBSCHGET"
+ },
+ {
+  "id": "db-filopn-dbsclose",
+  "type": "regex_in_file",
+  "doc": "Chapter 11 / Figure 11-2: FILClose calls DBSCLOSE",
+  "file": "base/filopn.f",
+  "regex": "CALL\\s+DBSCLOSE"
+ },
+ {
+  "id": "db-cmdline-filclose",
+  "type": "regex_in_file",
+  "doc": "Chapter 11 / Figure 11-2: cmdline.f calls FILClose",
+  "file": "base/cmdline.f",
+  "regex": "call\\s+FILClose"
+ },
+ {
+  "id": "db-pppput-mxi",
+  "type": "regex_in_file",
+  "doc": "Chapter 11: DBSPPPUT saves 57 integer values",
+  "file": "dbsqlite/dbsppput.f",
+  "regex": "PARAMETER\\s*\\(\\s*MXI\\s*=\\s*57\\s*\\)"
+ },
+ {
+  "id": "db-evm-101",
+  "type": "regex_in_file",
+  "doc": "Chapter 11: SQLIN is activity 101",
+  "file": "dbsqlite/dbsevm.f",
+  "regex": "IACTK\\.EQ\\.101"
+ },
+ {
+  "id": "db-evm-102",
+  "type": "regex_in_file",
+  "doc": "Chapter 11: SQLOUT is activity 102",
+  "file": "dbsqlite/dbsevm.f",
+  "regex": "IACTK\\.EQ\\.102"
+ },
+ {
+  "id": "db-case-uuidgen",
+  "type": "regex_in_file",
+  "doc": "Chapter 11: DBSCASE generates the CaseID with UUIDGEN",
+  "file": "dbsqlite/dbscase.f",
+  "regex": "CALL\\s+UUIDGEN\\(CASEID\\)"
+ },
+ {
+  "id": "db-scufta-addcol",
+  "type": "regex_in_file",
+  "doc": "Chapter 11: DBSTRLS adds SCuFt to an existing table",
+  "file": "dbsqlite/dbstrls.f",
+  "regex": "\\\"SCuFt\\\"//CHAR\\(0\\)"
  }
 ]

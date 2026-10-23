@@ -197,3 +197,7 @@ Existing Chapter 11 text to review.
 - The UUID Generation section says the routine guarantees uniqueness; `UUIDGEN` produces a version 4 UUID from pseudo-random numbers, which makes a repeat improbable but is not a guarantee.
 - The keyword example near the end of the chapter still lists FVS_DM_TreeList.
 - The Input Workflow section lists `%FVSCase%` among the substitutions; see the `KODE` concern above.
+
+## Figure 11-2 (Database processing during a run)
+- `DBSCLOSE` is called only from `FILClose` (an entry in `FILOPN`), from `DBSOPEN`, `DBSCHPUT` and `DBSPPGET`. `cmdline.f` calls `FILClose` only when FVS is reset with a nonzero return code or restart code, and when a run ends in an error state. No call that closes the connections at the end of a normal run was found; the figure says so. Whether the connections are closed when the process ends (about 90 percent) was not tested.
+- `DBSINIT` turns off every output switch at the start of each stand, so output keywords must be read for each stand (consistent with the documented per-stand keyword records).
