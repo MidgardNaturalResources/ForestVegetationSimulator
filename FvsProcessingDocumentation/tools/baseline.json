@@ -180,7 +180,7 @@
   "base/lbunin.f",
   "base/lnkchn.f",
   "base/lnkint.f",
-  "base/main.f",
+  "base/main.f90",
   "base/mbacal.f",
   "base/meansd.f",
   "base/msbmrt.f",
@@ -268,6 +268,7 @@
   "base/upcase.f",
   "base/update.f",
   "base/upkey.f",
+  "base/version.f90",
   "base/volkey.f",
   "bm/bfvol.f",
   "bm/blkdat.f",
@@ -554,7 +555,6 @@
   "common/GLBLCNTL.F77",
   "common/HTCAL.F77",
   "common/HVDNCM.F77",
-  "common/INCLUDESVN.F77",
   "common/KEYCOM.F77",
   "common/KOTCOM.F77",
   "common/METRIC.F77",
@@ -8391,6 +8391,7 @@
   "DB_ALL_TABLES",
   "DENSE_ARRAYS",
   "DENSITY_STATS",
+  "DFVS_GIT_VERSION",
   "EFVS",
   "EVMON_CONTROL_ARRAYS",
   "EVMON_GROUPS",
@@ -8528,6 +8529,7 @@
   "USE_CASE",
   "VARIABLE_EXAMPLES",
   "V_FINAL",
-  "WHEN_DEFINED"
+  "WHEN_DEFINED",
+  "YYYYMMDD"
  ]
 }
