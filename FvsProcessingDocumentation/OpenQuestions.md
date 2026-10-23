@@ -149,3 +149,32 @@ Rebuilt as a `tribble()` with 45 rows, one per table created by a `CREATE TABLE`
 - `FVS_Regen_Tally` is created with one of two column layouts in `dbstally.f` (14 or 15 columns, chosen by `PRBSTK > 1`), under the same table name.
 - Existing text not changed: "metric table names end in `_Metric`" (Chapter 11, metric units) is not supported by the code, which contains no `_Metric` table names.
 - Audit of the other Chapter 11 tables (not changed): the column mapping table puts three parallel names in one cell in the rows `DAMAGE1, DAMAGE2, DAMAGE3` / `DMG1, DMG2, DMG3` and `SEVERITY1, SEVERITY2, SEVERITY3` / `SVR1, SVR2, SVR3`, and the alias pair `HABITAT, PV_CODE`; the `DECAYCD` description now holds two sentences. The FVS_Summary, FVS_Summary2 and FVS_TreeList column descriptions are bulleted lists that group several columns per bullet (for example `TCuFt`, `MCuFt`, `SCuFt`, `BdFt`).
+
+## Appendix C (database output table reference) findings
+Appendix C lists 45 tables with 872 columns; names and types come from the `CREATE TABLE` statements, and descriptions are the Crookston guide wording where the column name matches. 846 columns have a description.
+Columns with no description because the guide has no column of that name (left blank in the appendix):
+- `FVS_TreeList`: `TreeVal`, `TreeAge`
+- `FVS_CutList`: `TreeVal`, `TreeAge`
+- `FVS_ATRTList`: `TreeVal`, `TreeAge`
+- `FVS_Stats_Species`: `FIA_AbvGrdCarb`
+- `FVS_PotFire_Cond`: `CaseID`, `StandID`, `Fire_Condition`, `Wind_Speed`, `Temperature`, `One_Hr_Moisture`, `Ten_Hr_Moisture`, `Hundred_Hr_Moisture`, `Thousand_Hr_Moisture`, `Duff_Moisture`, `Live_Woody_Moisture`, `Live_Herb_Moisture`
+- `FVS_Carbon`: `Carbon_Released_From_Fire`
+- `FVS_RD_Det`: `SpeciesFVS`, `SpeciesPLANTS`, `SpeciesFIA`
+- `FVS_FIAVBC_TreeList`: `MortTPA`
+- `FVS_FIAVBC_CutList`: `MortTPA`
+- `FVS_FIAVBC_ATRTList`: `MortTPA`
+- Probable near matches that were not used because the names differ: `TreeVal` (code) and `TreeValue` (guide); `MortTPA` (code) and `MortPA` (guide); `FIA_AbvGrdCarb` (code) and `FIA_AbvGrdCrb` (guide). `FVS_PotFire_Cond` is not in the guide.
+Guide columns not created by the code (not added to the appendix):
+- `FVS_Summary`: `TPrdTpa`, `TPrdTCuFt`, `TPrdMCuFt`, `TPrdSCuFt`, `TPrdBdFt`
+- `FVS_Compute`: `Variable1`, `Variable2`
+- `FVS_TreeList`: `TreeValue`
+- `FVS_CutList`: `TreeValue`, `TCuFt`, `MCuFt`, `SCuFt`, `BdFt`, `Ht2TDCF`, `Ht2TDBF`
+- `FVS_ATRTList`: `TreeValue`, `TCuFt`, `MCuFt`, `SCuFt`, `BdFt`, `Ht2TDCF`, `Ht2TDBF`
+- `FVS_Stats_Species`: `FIA_AbvGrdCrb`
+- `FVS_RD_Sum`: `RD_Type`
+- `FVS_RD_Det`: `RD_Type`, `Species`
+- `FVS_FIAVBC_TreeList`: `MortPA`
+- `FVS_FIAVBC_CutList`: `MortPA`
+- `FVS_FIAVBC_ATRTList`: `MortPA`
+The guide documents release 2025.4; where its column lists differ from the repository code, the appendix follows the code.
+Knitting Appendix C needs the `tibble` package (`tibble::tribble` is used); the setup chunk loads only `knitr` and `kableExtra`. R is not installed in the environment used to write it, so the chunks were checked structurally (balanced brackets, three quoted strings per row, row counts equal to the code) but not run.

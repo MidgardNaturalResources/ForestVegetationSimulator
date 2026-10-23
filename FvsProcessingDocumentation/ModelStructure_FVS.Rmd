@@ -5204,6 +5204,8 @@ kable(db_all_tables,
   column_spec(7, width = "22em")
 ```
 
+The columns of each table are listed in [Appendix C: Database Output Table Reference](#sec-appendix-c-database-output-table-reference).
+
 ### C Interface Functions
 
 The `fvsqlite3.c` file implements 20+ C functions that Fortran calls to interact with SQLite:
@@ -6162,6 +6164,1405 @@ kable(df,
 ```
 
 Table B-1 lists the principal calls. Subroutine TREDEL also calls SVCMP1, SVCMP2, and SVCMP3; SVSTART also calls SVESTB and SVOUT; SVCUTS calls SVRMOV and SVOUT; FMEFF calls SVMORT; and FMSALV calls SVSALV.
+
+# Appendix C: Database Output Table Reference {#sec-appendix-c-database-output-table-reference .unnumbered}
+
+This appendix lists the columns of each table that the Database Extension writes to the output database. Column names and types are those in the `CREATE TABLE` statements in the `dbsqlite` and `vdbsqlite` source directories, in the order the columns are created. The type is the SQLite column type used in the statement (TEXT, INT, or REAL). Descriptions are the wording of the Database Extension user's guide (Crookston and others, in the reference list) where the column name matches a column in the guide; a blank description means the guide has no entry with that column name. The tables are listed in the same order as in the Complete List of FVS Database Output Tables in the Database Input and Output Extension chapter.
+
+```{r appx-c-tables, echo=FALSE}
+appx_c_show <- function(x, caption) {
+  kable(x, col.names = c("Column", "Type", "Description"),
+        caption = caption, booktabs = TRUE) %>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                  full_width = FALSE, font_size = 10) %>%
+    column_spec(1, bold = TRUE, width = "14em") %>%
+    column_spec(2, width = "5em") %>%
+    column_spec(3, width = "40em")
+}
+
+c_FVS_Cases <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier (max length of 36)",
+  "Stand_CN", "TEXT", "Stand control number (max length of 40)",
+  "StandID", "TEXT", "Stand identification (max length of 26)",
+  "MgmtID", "TEXT", "Management identification (max length of 4)",
+  "RunTitle", "TEXT", "Label combining the StandID and the title assigned to the run (max length of 72)",
+  "KeywordFile", "TEXT", "The FVS keyword file name used to make the run (max length of 50)",
+  "SamplingWt", "REAL", "The stand sampling weight entered using the DESIGN keyword or from the input database.",
+  "Variant", "TEXT", "The FVS 2-character variant ID used for the run",
+  "Version", "TEXT", "Version number (e.g. 2063) of source code in repository from which release executable was built.",
+  "RV", "TEXT", "Revision version is the date assigned to the release (e.g. 20180108)",
+  "Groups", "TEXT", "List of grouping codes assigned to the stand (max length of 250)",
+  "RunDateTime", "TEXT", "The date and time of the run in the following format: YYYY-mm-dd-hh:mm:ss"
+)
+
+c_FVS_Summary <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "Age", "INT", "Stand age",
+  "Tpa", "INT", "Trees per acre",
+  "BA", "INT", "Basal area per acre",
+  "SDI", "INT", "Stand density index",
+  "CCF", "INT", "Crown competition factor",
+  "TopHt", "INT", "Average dominant height",
+  "QMD", "REAL", "Quadratic mean DBH",
+  "TCuFt", "INT", "Total cubic foot volume",
+  "MCuFt", "INT", "Merchantable cubic foot volume",
+  "SCuFt", "INT", "Sawlog cubic foot volume (only populated in western variants if FIAVBC keyword is used in simulation)",
+  "BdFt", "INT", "Merchantable board foot volume",
+  "RTpa", "INT", "Removed trees per acre",
+  "RTCuFt", "INT", "Removed total cubic foot volume",
+  "RMCuFt", "INT", "Removed merchantable cubic foot volume",
+  "RSCuFt", "INT", "Removed sawlog cubic foot volume (only populated in western variants if FIAVBC keyword is used in simulation)",
+  "RBdFt", "INT", "Removed merchantable board foot volume",
+  "ATBA", "INT", "After thin basal area",
+  "ATSDI", "INT", "After thin stand density index",
+  "ATCCF", "INT", "After thin crown competition factor",
+  "ATTopHt", "INT", "After thin average dominant height",
+  "ATQMD", "REAL", "After thin quadratic mean DBH",
+  "PrdLen", "INT", "Period length (years)",
+  "Acc", "INT", "Accretion (total ft3/acre/year)",
+  "Mort", "INT", "Mortality (total ft3/acre/year)",
+  "MAI", "REAL", "Mean annual increment",
+  "ForTyp", "INT", "Forest cover type",
+  "SizeCls", "INT", "Stand size class (see Appendix B of Essential FVS Guide)",
+  "StkCls", "INT", "Stand stocking class (see Appendix B of Essential FVS Guide)"
+)
+
+c_FVS_Summary2 <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "RmvCode", "INT", "0 = no removals occurred in cycle, 1 = trees were removed and row contains statistics for prior to removals, 2 = trees were removed and row contains statistics for after removals.",
+  "Age", "INT", "Stand age",
+  "Tpa", "REAL", "Trees per acre",
+  "TPrdTpa", "REAL", "Current TPA plus the sum TPA removed in prior cycles.",
+  "BA", "REAL", "Basal area per acre",
+  "SDI", "INT", "Stand density index. This is the SDI used in the estimation of mortality and for thinning targets with the THINSDI keyword. This can either be SDI estimated using the Reineke method (Reineke 1933) or Zeide method (Zeide 1983).",
+  "ZeideSDI", "INT", "Stand density index computed using the Zeide method (Zeide 1983)",
+  "ReinekeSDI", "INT", "Stand density index computed using the Reineke method (Reineke 1933)",
+  "SDIMax", "INT", "Maximum stand density index",
+  "RDSDI", "REAL", "Relative density based on stand density index (SDI / SDIMax)",
+  "CCF", "INT", "Crown competition factor",
+  "TopHt", "INT", "Average dominant height",
+  "QMD", "REAL", "Quadratic mean diameter",
+  "GMD", "REAL", "Generalized mean diameter (also referred to as Reineke’s diameter; Zeide 1983)",
+  "TCuFt", "REAL", "Total cubic foot volume",
+  "TPrdTCuFt", "REAL", "Total cubic foot volume plus sum of prior removals",
+  "MCuFt", "REAL", "Merchantable cubic foot volume",
+  "TPrdMCuFt", "REAL", "Total merchantable cubic foot volume plus sum of prior removals",
+  "SCuFt", "REAL", "Sawlog cubic foot volume (only populated in western variants when FIAVBC keyword is used in simulation)",
+  "TPrdSCuFt", "REAL", "Total sawlog cubic foot volume plus sum of prior removals (only populated in western variants when FIAVBC keyword is used in simulation)",
+  "BdFt", "REAL", "Merchantable board foot volume",
+  "TPrdBdFt", "REAL", "Total merchantable board volume plus sum of prior removals",
+  "RTpa", "REAL", "Removed trees per acre",
+  "RTCuFt", "REAL", "Removed total cubic foot volume",
+  "RMCuFt", "REAL", "Removed merchantable cubic foot volume",
+  "RSCuFt", "REAL", "Removed sawlog cubic foot volume",
+  "RBdFt", "REAL", "Removed merchantable board foot volume",
+  "PrdLen", "INT", "Period length (years)",
+  "Acc", "REAL", "Accretion (total ft3/acre/year)",
+  "Mort", "REAL", "Mortality (total ft3/acre/year)",
+  "MAI", "REAL", "Mean annual increment",
+  "ForTyp", "INT", "Forest cover type",
+  "SizeCls", "INT", "Stand size class (see Appendix B of Essential FVS Guide)",
+  "StkCls", "INT", "Stand stocking class (see Appendix B of Essential FVS Guide)"
+)
+
+c_FVS_Compute <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection"
+)
+
+c_FVS_TreeList <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "PrdLen", "INT", "Length of the projection cycle",
+  "TreeId", "TEXT", "Tree identification",
+  "TreeIndex", "INT", "Tree index",
+  "SpeciesFVS", "TEXT", "FVS species code",
+  "SpeciesPLANTS", "TEXT", "PLANTS database species symbol",
+  "SpeciesFIA", "TEXT", "FIA species code",
+  "TreeVal", "INT", "",
+  "SSCD", "INT", "Special tree code",
+  "PtIndex", "INT", "Point (or plot) index",
+  "TPA", "REAL", "Trees per acre",
+  "MortPA", "REAL", "Mortality trees per acre",
+  "DBH", "REAL", "Diameter at breast height",
+  "DG", "REAL", "Diameter growth (DBH increment)",
+  "Ht", "REAL", "Height",
+  "HtG", "REAL", "Height growth",
+  "PctCr", "INT", "Percent live crown",
+  "CrWidth", "REAL", "Crown width",
+  "MistCD", "INT", "Mistletoe rating code",
+  "BAPctile", "REAL", "Basal area percentile",
+  "PtBAL", "REAL", "Point-level basal area in larger trees",
+  "TCuFt", "REAL", "Total cubic feet",
+  "MCuFt", "REAL", "Merchantable cubic feet",
+  "SCuFt", "REAL", "Sawlog volume in cubic feet (only populated in western variants when FIAVBC keyword is used in simulation)",
+  "BdFt", "REAL", "Merchantable board feet",
+  "MDefect", "INT", "Defect percent on MCuFt",
+  "BDefect", "INT", "Defect percent on BdFt (Defect percent on SBdFt in eastern variants)",
+  "TruncHt", "INT", "Truncated height",
+  "EstHt", "REAL", "Estimated height",
+  "ActPt", "INT", "Actual point (or plot) number from input",
+  "Ht2TDCF", "REAL", "Height to the merchantable cubic foot top diameter in western variants and height to the pulpwood top diameter in eastern variants *only available when using profile equations",
+  "Ht2TDBF", "REAL", "Height to the merchantable board foot top diameter in western variants and height to the sawlog top diameter in eastern variants *only available when using profile equations",
+  "TreeAge", "REAL", ""
+)
+
+c_FVS_CutList <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "PrdLen", "INT", "Length of the projection cycle",
+  "TreeId", "TEXT", "Tree identification",
+  "TreeIndex", "INT", "Tree index",
+  "SpeciesFVS", "TEXT", "FVS species code",
+  "SpeciesPLANTS", "TEXT", "PLANTS database species symbol",
+  "SpeciesFIA", "TEXT", "FIA species code",
+  "TreeVal", "INT", "",
+  "SSCD", "INT", "Special tree code",
+  "PtIndex", "INT", "Point (or plot) index",
+  "TPA", "REAL", "Trees per acre",
+  "MortPA", "REAL", "Mortality trees per acre",
+  "DBH", "REAL", "Diameter at breast height",
+  "DG", "REAL", "Diameter growth (DBH increment)",
+  "Ht", "REAL", "Height",
+  "HtG", "REAL", "Height growth",
+  "PctCr", "INT", "Percent live crown",
+  "CrWidth", "REAL", "Crown width",
+  "MistCD", "INT", "Mistletoe rating code",
+  "BAPctile", "REAL", "Basal area percentile",
+  "PtBAL", "REAL", "Point-level basal area in larger trees",
+  "MDefect", "INT", "Defect percent on MCuFt",
+  "BDefect", "INT", "Defect percent on BdFt (Defect percent on SBdFt in eastern variants)",
+  "TruncHt", "INT", "Truncated height",
+  "EstHt", "REAL", "Estimated height",
+  "ActPt", "INT", "Actual point (or plot) number from input",
+  "TreeAge", "REAL", ""
+)
+
+c_FVS_ATRTList <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "PrdLen", "INT", "Length of the projection cycle",
+  "TreeId", "TEXT", "Tree identification",
+  "TreeIndex", "INT", "Tree index",
+  "SpeciesFVS", "TEXT", "FVS species code",
+  "SpeciesPLANTS", "TEXT", "PLANTS database species symbol",
+  "SpeciesFIA", "TEXT", "FIA species code",
+  "TreeVal", "INT", "",
+  "SSCD", "INT", "Special tree code",
+  "PtIndex", "INT", "Point (or plot) index",
+  "TPA", "REAL", "Trees per acre",
+  "MortPA", "REAL", "Mortality trees per acre",
+  "DBH", "REAL", "Diameter at breast height",
+  "DG", "REAL", "Diameter growth (DBH increment)",
+  "Ht", "REAL", "Height",
+  "HtG", "REAL", "Height growth",
+  "PctCr", "INT", "Percent live crown",
+  "CrWidth", "REAL", "Crown width",
+  "MistCD", "INT", "Mistletoe rating code",
+  "BAPctile", "REAL", "Basal area percentile",
+  "PtBAL", "REAL", "Point-level basal area in larger trees",
+  "MDefect", "INT", "Defect percent on MCuFt",
+  "BDefect", "INT", "Defect percent on BdFt (Defect percent on SBdFt in eastern variants)",
+  "TruncHt", "INT", "Truncated height",
+  "EstHt", "REAL", "Estimated height",
+  "ActPt", "INT", "Actual point (or plot) number from input",
+  "TreeAge", "REAL", ""
+)
+
+c_FVS_CalibStats <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand Identification Code",
+  "TreeSize", "TEXT", "Denotes whether the model type being calibrated is the large tree diameter growth (LG), or the small tree height growth (SM).",
+  "SpeciesFVSnum", "INT", "The variant specific sequential FVS species number",
+  "SpeciesFVS", "TEXT", "The FVS species code",
+  "SpeciesPLANTS", "TEXT", "The PLANTS database species symbol",
+  "SpeciesFIA", "TEXT", "The FIA species code",
+  "NumTrees", "INT", "Number of input tree records that included growth information used in calculating the scale factors for that species and growth model",
+  "ScaleFactor", "REAL", "This value is used to multiply the growth model estimates either up or down based upon its value, accounting for stand-to-stand variability.",
+  "StdErrRatio", "REAL", "Ratio of the standard deviation of the residuals from the input data to the standard error of the data used to develop the FVS variant.",
+  "WeightToInput", "REAL", "Values in the vicinity of zero imply the models were not adjusted, while values close to 1.0 imply the models were adjusted. The weight is an expression of confidence that the input growth sample represents a different population than does the data used to fit the growth model. In other words, a value of .90 would indicate a 90% certainty that the input growth sample represents a different population than the data used to fit the growth model.",
+  "ReadCorMult", "REAL", "Average large-tree diameter growth, or small-tree height growth, scale factors for a species within a given stand. Applied before calibration, these multipliers are used to permanently change the model to a different mean response level."
+)
+
+c_FVS_StrClass <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "Removal_Code", "INT", "0 = Before tree removal, 1 = After tree removal",
+  "Stratum_1_DBH", "REAL", "Stratum 1 nominal dbh",
+  "Stratum_1_Nom_Ht", "INT", "Stratum 1 nominal height",
+  "Stratum_1_Lg_Ht", "INT", "Height of the tallest tree in stratum 1",
+  "Stratum_1_Sm_Ht", "INT", "Height of the shortest tree in stratum 1",
+  "Stratum_1_Crown_Base", "INT", "Weighted average height to crown base for trees in stratum 1",
+  "Stratum_1_Crown_Cover", "INT", "Percent canopy cover, accounting for overlap, of trees in stratum",
+  "Stratum_1_SpeciesFVS_1", "TEXT", "Tree species (FVS code) that accounts for the most crown cover of the trees in stratum 1",
+  "Stratum_1_SpeciesFVS_2", "TEXT", "Tree species (FVS code) that accounts for the second most crown cover of the trees in stratum 1",
+  "Stratum_1_SpeciesPLANTS_1", "TEXT", "Tree species (USDA PLANTS Symbol) that accounts for the most crown cover of the trees in stratum 1",
+  "Stratum_1_SpeciesPLANTS_2", "TEXT", "Tree species (USDA PLANTS Symbol) that accounts for the second most crown cover of the trees in stratum 1",
+  "Stratum_1_SpeciesFIA_1", "TEXT", "Tree species (FIA code) that accounts for the most crown cover of the trees in stratum 1",
+  "Stratum_1_SpeciesFIA_2", "TEXT", "Tree species (FIA code) that accounts for the second most crown cover of the trees in stratum 1",
+  "Stratum_1_Status_Code", "INT", "Stratum 1 status code where 0 = invalid stratum, 1 = valid stratum, and 2 = the uppermost valid stratum",
+  "Stratum_2_DBH", "REAL", "Stratum 2 nominal dbh",
+  "Stratum_2_Nom_Ht", "INT", "Stratum 2 nominal height",
+  "Stratum_2_Lg_Ht", "INT", "Height of the tallest tree in stratum 2",
+  "Stratum_2_Sm_Ht", "INT", "Height of the shortest tree in stratum 2",
+  "Stratum_2_Crown_Base", "INT", "Weighted average height to crown base for trees in stratum 2",
+  "Stratum_2_Crown_Cover", "INT", "Percent canopy cover, accounting for overlap, of trees in stratum",
+  "Stratum_2_SpeciesFVS_1", "TEXT", "Tree species (FVS code) that accounts for the most crown cover of the trees in stratum 2",
+  "Stratum_2_SpeciesFVS_2", "TEXT", "Tree species (FVS code) that accounts for the second most crown cover of the trees in stratum 2",
+  "Stratum_2_SpeciesPLANTS_1", "TEXT", "Tree species (USDA PLANTS Symbol) that accounts for the most crown cover of the trees in stratum 2",
+  "Stratum_2_SpeciesPLANTS_2", "TEXT", "Tree species (USDA PLANTS Symbol) that accounts for the second most crown cover of the trees in stratum 2",
+  "Stratum_2_SpeciesFIA_1", "TEXT", "Tree species (FIA code) that accounts for the most crown cover of the trees in stratum 2",
+  "Stratum_2_SpeciesFIA_2", "TEXT", "Tree species (FIA code) that accounts for the second most crown cover of the trees in stratum 2",
+  "Stratum_2_Status_Code", "INT", "Stratum 2 status code where 0 = invalid stratum, 1 = valid stratum, and 2 = the uppermost valid stratum",
+  "Stratum_3_DBH", "REAL", "Stratum 3 nominal dbh",
+  "Stratum_3_Nom_Ht", "INT", "Stratum 3 nominal height",
+  "Stratum_3_Lg_Ht", "INT", "Height of the tallest tree in stratum 3",
+  "Stratum_3_Sm_Ht", "INT", "Height of the shortest tree in stratum 3",
+  "Stratum_3_Crown_Base", "INT", "Weighted average height to crown base for trees in stratum 3",
+  "Stratum_3_Crown_Cover", "INT", "Percent canopy cover, accounting for overlap, of trees in stratum",
+  "Stratum_3_SpeciesFVS_1", "TEXT", "Tree species (FVS code) that accounts for the most crown cover of the trees in stratum 3",
+  "Stratum_3_SpeciesFVS_2", "TEXT", "Tree species (FVS code) that accounts for the second most crown cover of the trees in stratum 3",
+  "Stratum_3_SpeciesPLANTS_1", "TEXT", "Tree species (USDA PLANTS Symbol) that accounts for the most crown cover of the trees in stratum 3",
+  "Stratum_3_SpeciesPLANTS_2", "TEXT", "Tree species (USDA PLANTS Symbol) that accounts for the second most crown cover of the trees in stratum 3",
+  "Stratum_3_SpeciesFIA_1", "TEXT", "Tree species (FIA code) that accounts for the most crown cover of the trees in stratum 3",
+  "Stratum_3_SpeciesFIA_2", "TEXT", "Tree species (FIA code) that accounts for the second most crown cover of the trees in stratum 3",
+  "Stratum_3_Status_Code", "INT", "Stratum 3 status code where 0 = invalid stratum, 1 = valid stratum, and 2 = the uppermost valid stratum",
+  "Number_of_Strata", "INT", "Number of valid strata",
+  "Total_Cover", "INT", "Total percent canopy cover, accounting for overlap, of trees in the stand",
+  "Structure_Class", "TEXT", "Stand structural class: 0 = bare ground, 1 = stand initiation, 2 = stem exclusion, 3 = understory reinitiation, 4 = young forest multistrata, 5 = old forest single stratum, 6 = old forest multistrata"
+)
+
+c_FVS_Stats_Species <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "SpeciesFVS", "TEXT", "The species that are present in your inventory (FVS alpha code)",
+  "SpeciesPLANTS", "TEXT", "PLANTS database species symbol",
+  "SpeciesFIA", "TEXT", "FIA species code",
+  "TreesPerAcre", "REAL", "Species trees per acre",
+  "BasalArea", "REAL", "Species basal area (sq ft/acre)",
+  "CubicFeet", "REAL", "Species cubic feet per acre",
+  "BoardFeet", "REAL", "Species board feet per acre",
+  "FIA_AbvGrdBio", "REAL", "Species above ground biomass (tons/ac). Requires use of FIAVBC keyword in simulation.",
+  "FIA_AbvGrdCarb", "REAL", ""
+)
+
+c_FVS_Stats_Stand <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "Characteristic", "TEXT", "The unit of interest being estimated (TPA, BA, cubic feet, board feet, above ground biomass, above ground carbon). Reporting of above ground biomass and carbon requires the use of FIAVBC keyword in simulation.",
+  "Average", "REAL", "The arithmetic average value for the characteristic",
+  "Standard_Dev", "REAL", "The standard deviation value for the characteristic",
+  "Coeff_of_Var", "REAL", "The coefficient of variation value, expressed as a proportion, for the characteristic",
+  "Sample_Size", "INT", "The number of plots in your inventory",
+  "Conf_Level_Percent", "INT", "The confidence level in percent",
+  "CI_LB", "REAL", "Confidence interval lower bound, expressed in the units of the characteristic",
+  "CI_UB", "REAL", "Confidence interval upper bound, expressed in the units of the characteristic",
+  "Samp_Error_Percent", "REAL", "Sampling error in percent for the characteristic",
+  "Samp_Error_Units", "REAL", "Sampling error in the units of the characteristic"
+)
+
+c_FVS_InvReference <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand Identification Code",
+  "LocationCode", "INT", "Forest location code representing the Region/Forest/District/Compartment of the stand",
+  "SpeciesNum", "INT", "FVS variant specific unique species index number",
+  "SpeciesFVS", "TEXT", "Species code using FVS alpha code",
+  "SpeciesPlants", "TEXT", "Species code using USDA Plants code",
+  "SpeciesFIA", "TEXT", "Species code using FIA code",
+  "SDIType", "TEXT", "Methodology for stand density index computation (Reineke 1933 or Zeide 1983). This relates to the SDI method being used for mortality estimation and thinning targets with the THINSDI keyword.",
+  "SDIMax", "INT", "Species maximum stand density index",
+  "SiteIndex", "INT", "Site index for species",
+  "CFCruiseType", "TEXT", "Cruise type variable indicating how merchantable cubic foot volume is calculated when the FIAVBC keyword is active. When the value is “FIA”, merchantable cubic volume is calculated as the total volume from stump height to the merchantable height. When the value is “FVS”, merchantable cubic foot volume is calculated from the sum of log volumes from stump height to the merchantable height where log trim is removed.",
+  "CFVolEq", "TEXT", "Volume equation identifier used for cubic foot volume estimation",
+  "CFMinDBH", "REAL", "Minimum diameter at breast height (DBH) for stem to be considered in merchantable stem cubic foot volume estimation",
+  "CFTopDia", "REAL", "Minimum top diameter for stem to be considered in merchantable stem cubic foot volume estimation",
+  "CFStump", "REAL", "Stump height used for merchantable stem cubic foot volume estimation",
+  "CFSawMinDBH", "REAL", "Minimum diameter at breast height (DBH) for stem to be considered in sawlog cubic foot volume estimation",
+  "CFSawTopDia", "REAL", "Minimum top diameter for stem to be considered in sawlog cubic foot volume estimation",
+  "CFSawStump", "REAL", "Stump height used for sawlog cubic foot volume estimation",
+  "BFVolEq", "TEXT", "Volume equation identifier used for board foot volume estimation",
+  "BFMinDBH", "REAL", "Minimum diameter at breast height (DBH) for stem to be considered in board foot volume estimation",
+  "BFTopDia", "REAL", "Minimum top diameter for stem to be considered in board foot volume estimation",
+  "BFStump", "REAL", "Stump height used for board foot volume estimation"
+)
+
+c_FVS_Error <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Message", "TEXT", "Error/warning identifier and description"
+)
+
+c_FVS_Climate <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "The year corresponding to the first year of the FVS cycle in which the output is generated.",
+  "SpeciesFVS", "TEXT", "FVS species alpha code",
+  "SpeciesPLANTS", "TEXT", "PLANTS database species symbol",
+  "SpeciesFIA", "TEXT", "FIA species code",
+  "Viability", "REAL", "The species climate viability score which ranges from 0 to 1.",
+  "BA", "REAL", "The basal area per acre at the beginning of the FVS cycle",
+  "TPA", "REAL", "The trees per acre at the beginning of the FVS cycle",
+  "ViabMort", "REAL", "The probability that a tree will die due to low viability scores (this is a 10-year rate, regardless of the length of the cycle). This number will reflect values coded using field 1 of the MortMult keyword. Note that it does not display the base model mortality rate for the species and also that the value displayed will be applied during the model run only when it implies the highest mortality rate for trees of the given species. Also see the MxDenMult information below as it also affects mortality.",
+  "dClimMort", "REAL", "The probability that a tree will die due to climate change corresponding to the amount of change expected with an elevation change of 300 m. The actual rate may be different for each tree because it is based on the year the tree was born. What is reported here is the basal-area-weighted average rate for trees of a given species. Values reported here reflect multipliers coded using field 2 of the MortMult keyword. Also see the MxDenMult information below as it also affects mortality.",
+  "GrowthMult", "REAL", "The proportion of FVS growth that trees of this species will get. This number reflects values coded using the Climate-FVS GrowMult keyword.",
+  "SiteMult", "REAL", "The growth rate multiplier related to changes in site index. Note that the value reported is after the Climate-FVS GrowMult keyword is applied.",
+  "MxDenMult", "REAL", "A multiplier of base FVS maximum stand density. This number is a stand level value and the same value is repeated for each species. Note that the value reported is after the Climate-FVS MxDenMlt keyword is applied. This option impacts FVS chiefly by changing the maximum density point which would trigger density-related mortality but it can also trigger harvest activities if they are dependent upon rules related to how close the stand is to its maximum carrying capacity.",
+  "AutoEstbTPA", "REAL", "This is the number of trees of a given species that would be inserted in to the FVS simulation if (1) the AutoEstb feature were turned on, and (2) the density were low enough to trigger establishment."
+)
+
+c_FVS_Fuels <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "Surface_Litter", "REAL", "Ground litter (tons/acre)",
+  "Surface_Duff", "REAL", "Surface duff (tons/acre)",
+  "Surface_lt3", "REAL", "Dead fuel less than 3 inches (tons/acre)",
+  "Surface_ge3", "REAL", "Dead fuel greater than or equal to 3 inches (tons/acre)",
+  "Surface_3to6", "REAL", "Dead fuel between 3 and 6 inches (tons/acre)",
+  "Surface_6to12", "REAL", "Dead fuel between 6 and 12 inches (tons/acre)",
+  "Surface_ge12", "REAL", "Dead fuel greater than or equal to 12 inches (tons/acre)",
+  "Surface_Herb", "REAL", "Live Herbs (tons/acre)",
+  "Surface_Shrub", "REAL", "Live Shrubs (tons/acre)",
+  "Surface_Total", "REAL", "Sum of all surface fuels (both dead and live) (tons/acre)",
+  "Standing_Snag_lt3", "REAL", "Dead standing wood less than 3 inches (tons/acre)",
+  "Standing_Snag_ge3", "REAL", "Dead standing wood greater than or equal to 3 inches (tons/acre)",
+  "Standing_Foliage", "REAL", "Standing Foliage (tons/acre)",
+  "Standing_Live_lt3", "REAL", "Live standing wood less than 3 inches (tons/acre)",
+  "Standing_Live_ge3", "REAL", "Live standing wood greater than or equal to 3 inches (tons/acre)",
+  "Standing_Total", "REAL", "Total standing wood (dead and live) (tons/acre)",
+  "Total_Biomass", "INT", "Total amount of all standing wood and surface fuels (tons/acre)",
+  "Total_Consumed", "INT", "Total amount of fuel (not including live trees) that was consumed in fire",
+  "Biomass_Removed", "INT", "Amount of wood that was harvested (dead or live) (tons/acre)"
+)
+
+c_FVS_PotFire <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "Surf_Flame_Sev", "REAL", "Surface Flame Length (ft), severe fire",
+  "Surf_Flame_Mod", "REAL", "Surface Flame Length (ft), moderate fire",
+  "Tot_Flame_Sev", "REAL", "Total Flame Length (ft), severe fire",
+  "Tot_Flame_Mod", "REAL", "Total Flame Length (ft), moderate fire",
+  "Fire_Type_Sev", "TEXT", "The Severe Fire Type",
+  "Fire_Type_Mod", "TEXT", "The Moderate Fire Type",
+  "PTorch_Sev", "REAL", "Probability of torching, severe fire",
+  "PTorch_Mod", "REAL", "Probability of torching, moderate fire",
+  "Torch_Index", "REAL", "The 20-ft wind speed (miles/hour) required to cause a torching of trees",
+  "Crown_Index", "REAL", "The 20-ft wind speed (miles/hour) required to cause an active crown fire",
+  "Canopy_Ht", "INT", "Height of the base of canopy (ft)",
+  "Canopy_Density", "REAL", "Bulk density of canopy (kg/m3)",
+  "Mortality_BA_Sev", "REAL", "Percent of the basal area that would be killed in severe fire conditions",
+  "Mortality_BA_Mod", "REAL", "Percent of the basal area that would be killed in moderate fire conditions",
+  "Mortality_VOL_Sev", "REAL", "Total volume that would be killed under severe fire conditions (ft 3)",
+  "Mortality_VOL_Mod", "REAL", "Total volume that would be killed under moderate fire conditions (ft 3)",
+  "Pot_Smoke_Sev", "REAL", "Potential amount of smoke (tons/acre) in severe fire conditions",
+  "Pot_Smoke_Mod", "REAL", "Potential amount of smoke (tons/acre) in moderate fire conditions",
+  "Fuel_Mod1", "INT", "Current fuel model 1",
+  "Fuel_Mod2", "INT", "Current fuel model 2",
+  "Fuel_Mod3", "INT", "Current fuel model 3",
+  "Fuel_Mod4", "INT", "Current fuel model 4",
+  "Fuel_Wt1", "REAL", "Percent weighting for corresponding model.",
+  "Fuel_Wt2", "REAL", "Percent weighting for corresponding model.",
+  "Fuel_Wt3", "REAL", "Percent weighting for corresponding model.",
+  "Fuel_Wt4", "REAL", "Percent weighting for corresponding model."
+)
+
+c_FVS_PotFire_East <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "Flame_Len_Sev", "REAL", "The Severe Flame Length (ft)",
+  "Flame_Len_Mod", "REAL", "The Moderate Flame Length (ft)",
+  "Canopy_Ht", "INT", "Height of the base of canopy (ft)",
+  "Canopy_Density", "REAL", "Bulk density of canopy (kg/m3)",
+  "Mortality_BA_Sev", "REAL", "Percent of the basal area that would be killed in severe fire conditions",
+  "Mortality_BA_Mod", "REAL", "Percent of the basal area that would be killed in moderate fire conditions",
+  "Mortality_VOL_Sev", "REAL", "Total volume that would be killed under severe fire conditions (ft 3)",
+  "Mortality_VOL_Mod", "REAL", "Total volume that would be killed under moderate fire conditions (ft3)",
+  "Pot_Smoke_Sev", "REAL", "Potential amount of smoke (tons/acre) in severe fire conditions",
+  "Pot_Smoke_Mod", "REAL", "Potential amount of smoke (tons/acre) in moderate fire conditions",
+  "Fuel_Mod1_Sev", "INT", "Current fuel model 1: Severe fire conditions",
+  "Fuel_Mod2_Sev", "INT", "Current fuel model 2: Severe fire conditions",
+  "Fuel_Mod3_Sev", "INT", "Current fuel model 3: Severe fire conditions",
+  "Fuel_Mod4_Sev", "INT", "Current fuel model 4: Severe fire conditions",
+  "Fuel_Wt1_Sev", "REAL", "Percent weighting for corresponding model.",
+  "Fuel_Wt2_Sev", "REAL", "Percent weighting for corresponding model.",
+  "Fuel_Wt3_Sev", "REAL", "Percent weighting for corresponding model.",
+  "Fuel_Wt4_Sev", "REAL", "Percent weighting for corresponding model.",
+  "Fuel_Mod1_Mod", "INT", "Current fuel model 1: Moderate conditions",
+  "Fuel_Mod2_Mod", "INT", "Current fuel model 2: Moderate conditions",
+  "Fuel_Mod3_Mod", "INT", "Current fuel model 3: Moderate conditions",
+  "Fuel_Mod4_Mod", "INT", "Current fuel model 4: Moderate conditions",
+  "Fuel_Wt1_Mod", "REAL", "Percent weighting for corresponding model.",
+  "Fuel_Wt2_Mod", "REAL", "Percent weighting for corresponding model.",
+  "Fuel_Wt3_Mod", "REAL", "Percent weighting for corresponding model.",
+  "Fuel_Wt4_Mod", "REAL", "Percent weighting for corresponding model."
+)
+
+c_FVS_PotFire_Cond <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "",
+  "StandID", "TEXT", "",
+  "Fire_Condition", "TEXT", "",
+  "Wind_Speed", "REAL", "",
+  "Temperature", "INT", "",
+  "One_Hr_Moisture", "REAL", "",
+  "Ten_Hr_Moisture", "REAL", "",
+  "Hundred_Hr_Moisture", "REAL", "",
+  "Thousand_Hr_Moisture", "REAL", "",
+  "Duff_Moisture", "REAL", "",
+  "Live_Woody_Moisture", "REAL", "",
+  "Live_Herb_Moisture", "REAL", ""
+)
+
+c_FVS_Consumption <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the fire",
+  "Min_Soil_Exp", "REAL", "Mineral Soil Exposure (%)",
+  "Litter_Consumption", "REAL", "Consumed litter (tons/acre)",
+  "Duff_Consumption", "REAL", "Consumed duff (tons/acre)",
+  "Consumption_lt3", "REAL", "Consumed dead fuel less than 3 inches (tons/acre)",
+  "Consumption_ge3", "REAL", "Consumed dead fuel greater than or equal to 3 inches (tons/acre)",
+  "Consumption_3to6", "REAL", "Consumed dead fuel between 3 and 6 inches (tons/acre)",
+  "Consumption_6to12", "REAL", "Consumed dead fuel between 6 and 12 inches (tons/acre)",
+  "Consumption_ge12", "REAL", "Consumed dead fuel greater than or equal to 12 inches (tons/acre)",
+  "Consumption_Herb_Shrub", "REAL", "Consumed Herbs and Shrubs (tons/acre)",
+  "Consumption_Crowns", "REAL", "Consumed crown material (tons/acre)",
+  "Total_Consumption", "REAL", "Consumption of all surface fuels (both dead and live) (tons/acre)",
+  "Percent_Consumption_Duff", "REAL", "Consumption of duff (%)",
+  "Percent_Consumption_ge3", "REAL", "Consumption of dead fuel greater than or equal to 3 inches (%)",
+  "Percent_Trees_Crowning", "INT", "Percentage of trees with crowning (%)",
+  "Smoke_Production_25", "REAL", "Smoke Produced < 2.5 microns (tons/acre)",
+  "Smoke_Production_10", "REAL", "Smoke Produced < 10 microns (tons/acre)"
+)
+
+c_FVS_BurnReport <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the burn",
+  "One_Hr_Moisture", "REAL", "Moisture of 0 – 0.25” fuels (%)",
+  "Ten_Hr_Moisture", "REAL", "Moisture of 0.25 – 1” fuels (%)",
+  "Hundred_Hr_Moisture", "REAL", "Moisture of 1 – 3” fuels (%)",
+  "Thousand_Hr_Moisture", "REAL", "Moisture of 3”+ fuels (%)",
+  "Duff_Moisture", "REAL", "Duff moisture (%)",
+  "Live_Woody_Moisture", "REAL", "Live woody fuel moisture (%)",
+  "Live_Herb_Moisture", "REAL", "Live herbaceous fuel moisture (%)",
+  "Midflame_Wind", "REAL", "Midflame wind speed (mi/hr)",
+  "Slope", "INT", "Stand slope (%)",
+  "Flame_length", "REAL", "Total flame length (ft)",
+  "Scorch_height", "REAL", "Scorch height (ft)",
+  "Fire_Type", "TEXT", "The type of fire",
+  "FuelModl1", "INT", "Fuel model 1",
+  "Weight1", "REAL", "Weight given to fuel model 1 (%)",
+  "FuelModl2", "INT", "Fuel model 2",
+  "Weight2", "REAL", "Weight given to fuel model 2 (%)",
+  "FuelModl3", "INT", "Fuel model 3",
+  "Weight3", "REAL", "Weight given to fuel model 3 (%)",
+  "FuelModl4", "INT", "Fuel model 4",
+  "Weight4", "REAL", "Weight given to fuel model 4 (%)"
+)
+
+c_FVS_Mortality <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the fire",
+  "SpeciesFVS", "TEXT", "FVS species code",
+  "SpeciesPLANTS", "TEXT", "PLANTS database species symbol",
+  "SpeciesFIA", "TEXT", "FIA species code",
+  "Killed_class1", "REAL", "Trees per acre killed in diameter class 1*",
+  "Total_class1", "REAL", "Trees per acre in diameter class 1 before fire",
+  "Killed_class2", "REAL", "Trees per acre killed in diameter class 2",
+  "Total_class2", "REAL", "Trees per acre in diameter class 2 before fire",
+  "Killed_class3", "REAL", "Trees per acre killed in diameter class 3",
+  "Total_class3", "REAL", "Trees per acre in diameter class 3 before fire",
+  "Killed_class4", "REAL", "Trees per acre killed in diameter class 4",
+  "Total_class4", "REAL", "Trees per acre in diameter class 4 before fire",
+  "Killed_class5", "REAL", "Trees per acre killed in diameter class 5",
+  "Total_class5", "REAL", "Trees per acre in diameter class 5 before fire",
+  "Killed_class6", "REAL", "Trees per acre killed in diameter class 6",
+  "Total_class6", "REAL", "Trees per acre in diameter class 6 before fire",
+  "Killed_class7", "REAL", "Trees per acre killed in diameter class 7",
+  "Total_class7", "REAL", "Trees per acre in diameter class 7 before fire",
+  "Bakill", "REAL", "Basal area of killed trees (ft2/acre)",
+  "Volkill", "REAL", "Volume of killed trees (cuft/acre) (This is total cuft volume in western variants and merchantable cuft volume in eastern variants.)"
+)
+
+c_FVS_SnagSum <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "Hard_snags_class1", "REAL", "Hard snags in size class 1",
+  "Hard_snags_class2", "REAL", "Hard snags in size class 2",
+  "Hard_snags_class3", "REAL", "Hard snags in size class 3",
+  "Hard_snags_class4", "REAL", "Hard snags in size class 4",
+  "Hard_snags_class5", "REAL", "Hard snags in size class 5",
+  "Hard_snags_class6", "REAL", "Hard snags in size class 6",
+  "Hard_snags_total", "REAL", "Hard snags total (>0”)",
+  "Soft_snags_class1", "REAL", "Soft snags in size class 1",
+  "Soft_snags_class2", "REAL", "Soft snags in size class 2",
+  "Soft_snags_class3", "REAL", "Soft snags in size class 3",
+  "Soft_snags_class4", "REAL", "Soft snags in size class 4",
+  "Soft_snags_class5", "REAL", "Soft snags in size class 5",
+  "Soft_snags_class6", "REAL", "Soft snags in size class 6",
+  "Soft_snags_total", "REAL", "Soft snags total (>0”)",
+  "Hard_soft_snags_total", "REAL", "Hard and soft snags total (>0”)"
+)
+
+c_FVS_SnagDet <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "SpeciesFVS", "TEXT", "FVS species code",
+  "SpeciesPLANTS", "TEXT", "PLANTS database species symbol",
+  "SpeciesFIA", "TEXT", "FIA species code",
+  "DBH_Class", "INT", "Diameter class (uses the same diameter break points as the FVS_SnagSum table as determined by the FFE SnagClas keyword)",
+  "Death_DBH", "REAL", "Average dbh (inches) at time of death",
+  "Current_Ht_Hard", "REAL", "Average height of hard snags",
+  "Current_Ht_Soft", "REAL", "Average height of soft snags",
+  "Current_Vol_Hard", "REAL", "Cuft volume of hard snags*",
+  "Current_Vol_Soft", "REAL", "Cuft volume of soft snags",
+  "Total_Volume", "REAL", "Total volume",
+  "Year_Died", "INT", "Year the snags died",
+  "Density_Hard", "REAL", "Density of hard snags (snags/acre)",
+  "Density_Soft", "REAL", "Density of soft snags (snags/acre)",
+  "Density_Total", "REAL", "Total density (snags/acre)"
+)
+
+c_FVS_Carbon <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "Aboveground_Total_Live", "REAL", "Aboveground live C (tons/ac)",
+  "Aboveground_Merch_Live", "REAL", "Aboveground merchantable C (tons/ac)",
+  "Belowground_Live", "REAL", "Belowground live C(tons/ac)",
+  "Belowground_Dead", "REAL", "Belowground dead C (tons/ac)",
+  "Standing_Dead", "REAL", "Standing dead C (snags) (tons/ac)",
+  "Forest_Down_Dead_Wood", "REAL", "Woody debris C (tons/ac)",
+  "Forest_Floor", "REAL", "Forest floor C (tons/ac)",
+  "Forest_Shrub_Herb", "REAL", "Shrub & herb C (tons/ac)",
+  "Total_Stand_Carbon", "REAL", "Total stand C (tons/ac)",
+  "Total_Removed_Carbon", "REAL", "Total removed C (tons/ac)",
+  "Carbon_Released_From_Fire", "REAL", ""
+)
+
+c_FVS_Hrv_Carbon <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "Products", "REAL", "Wood Products C (tons/ac)",
+  "Landfill", "REAL", "Landfill C (tons/ac)",
+  "Energy", "REAL", "Energy C (tons/ac)",
+  "Emissions", "REAL", "Emitted C (tons/ac)",
+  "Merch_Carbon_Stored", "REAL", "Stored C (tons/ac)",
+  "Merch_Carbon_Removed", "REAL", "Removed C (tons/ac)"
+)
+
+c_FVS_Down_Wood_Vol <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "DWD_Volume_0to3_Hard", "REAL", "Volume of 0 – 3” hard down wood (cuft/acre)",
+  "DWD_Volume_3to6_Hard", "REAL", "Volume of 3 – 6” hard down wood (cuft/acre)",
+  "DWD_Volume_6to12_Hard", "REAL", "Volume of 6 – 12” hard down wood (cuft/acre)",
+  "DWD_Volume_12to20_Hard", "REAL", "Volume of 12 – 20” hard down wood (cuft/acre)",
+  "DWD_Volume_20to35_Hard", "REAL", "Volume of 20 – 35” hard down wood (cuft/acre)",
+  "DWD_Volume_35to50_Hard", "REAL", "Volume of 35 – 50” hard down wood (cuft/acre)",
+  "DWD_Volume_ge_50_Hard", "REAL", "Volume of 50”+ hard down wood (cuft/acre)",
+  "DWD_Volume_Total_Hard", "REAL", "Total volume of hard down wood (cuft/acre)",
+  "DWD_Volume_0to3_Soft", "REAL", "Volume of 0 – 3” soft down wood (cuft/acre)",
+  "DWD_Volume_3to6_Soft", "REAL", "Volume of 3 – 6” soft down wood (cuft/acre)",
+  "DWD_Volume_6to12_Soft", "REAL", "Volume of 6 – 12” soft down wood (cuft/acre)",
+  "DWD_Volume_12to20_Soft", "REAL", "Volume of 12 – 20” soft down wood (cuft/acre)",
+  "DWD_Volume_20to35_Soft", "REAL", "Volume of 20 – 35” soft down wood (cuft/acre)",
+  "DWD_Volume_35to50_Soft", "REAL", "Volume of 35 – 50” soft down wood (cuft/acre)",
+  "DWD_Volume_ge_50_Soft", "REAL", "Volume of 50”+ soft down wood (cuft/acre)",
+  "DWD_Volume_Total_Soft", "REAL", "Total volume of soft down wood (cuft/acre)"
+)
+
+c_FVS_Down_Wood_Cov <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "DWD_Cover_3to6_Hard", "REAL", "Cover of 3 – 6” hard down wood (%)",
+  "DWD_Cover_6to12_Hard", "REAL", "Cover of 6 – 12” hard down wood (%)",
+  "DWD_Cover_12to20_Hard", "REAL", "Cover of 12 – 20” hard down wood (%)",
+  "DWD_Cover_20to35_Hard", "REAL", "Cover of 20 – 35” hard down wood (%)",
+  "DWD_Cover_35to50_Hard", "REAL", "Cover of 35 – 50” hard down wood (%)",
+  "DWD_Cover_ge_50_Hard", "REAL", "Cover of 50”+ hard down wood (%)",
+  "DWD_Cover_Total_Hard", "REAL", "Total cover of hard down wood (%)",
+  "DWD_Cover_3to6_Soft", "REAL", "Cover of 3 – 6” soft down wood (%)",
+  "DWD_Cover_6to12_Soft", "REAL", "Cover of 6 – 12” soft down wood (%)",
+  "DWD_Cover_12to20_Soft", "REAL", "Cover of 12 – 20” soft down wood (%)",
+  "DWD_Cover_20to35_Soft", "REAL", "Cover of 20 – 35” soft down wood (%)",
+  "DWD_Cover_35to50_Soft", "REAL", "Cover of 35 – 50” soft down wood (%)",
+  "DWD_Cover_ge_50_Soft", "REAL", "Cover of 50”+ soft down wood (%)",
+  "DWD_Cover_Total_Soft", "REAL", "Total cover of soft down wood (%)"
+)
+
+c_FVS_CanProfile <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "Height_m", "REAL", "Height above the ground in meters",
+  "Canopy_Fuel_kg_m3", "REAL", "Available canopy fuel in kg/m3 at the specified height.",
+  "Height_ft", "REAL", "Height above the ground in feet",
+  "Canopy_Fuel_lbs_acre_ft", "REAL", "Available canopy fuel in lbs/acre/ft at the specified height."
+)
+
+c_FVS_EconSummary <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "Period", "INT", "Cycle length",
+  "Pretend_Harvest", "TEXT", "Pretend or actual harvests, “yes” for pretend.",
+  "Undiscounted_Cost", "REAL", "Undiscounted cost (accumulation of all costs)",
+  "Undiscounted_Revenue", "REAL", "Undiscounted revenue (accumulation of all revenues)",
+  "Discounted_Cost", "REAL", "Discounted cost",
+  "Discounted_Revenue", "REAL", "Discounted revenue",
+  "PNV", "REAL", "Present Net Value",
+  "IRR", "REAL", "Internal Rate of Return",
+  "BC_Ratio", "REAL", "Benefit-Cost Ratio",
+  "RRR", "REAL", "Realizable Rate of Return",
+  "SEV", "REAL", "Soil Expectation Value",
+  "Value_of_Forest", "REAL", "Value of forest",
+  "Value_of_Trees", "REAL", "Value of trees",
+  "Mrch_Cubic_Volume", "INT", "Harvested Merchantable cubic foot volume (west) and Sawlog cubic foot volume (east)",
+  "Mrch_BoardFoot_Volume", "INT", "Harvested Merchantable board foot volume (west) and Sawlog board foot volume (east)",
+  "Discount_Rate", "REAL", "Discount rate",
+  "Given_SEV", "REAL", "SEV entered by user"
+)
+
+c_FVS_EconHarvestValue <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "Year", "INT", "Year of the projection",
+  "SpeciesFVS", "TEXT", "FVS species code",
+  "SpeciesPLANTS", "TEXT", "PLANTS database species symbol",
+  "SpeciesFIA", "TEXT", "FIA species code",
+  "Min_DIB", "REAL", "Minimum top diameter inside bark",
+  "Max_DIB", "REAL", "Maximum top diameter inside bark",
+  "Min_DBH", "REAL", "Minimum diameter at breast height",
+  "Max_DBH", "REAL", "Maximum diameter at breast height",
+  "TPA_Removed", "INT", "Trees per acre removed",
+  "TPA_Value", "INT", "Trees per acre value",
+  "Tons_Per_Acre", "INT", "Tons of material",
+  "Ft3_Removed", "INT", "Cubic foot volume removed",
+  "Ft3_Value", "INT", "Cubic foot volume value",
+  "Board_Ft_Removed", "INT", "Board foot volume removed",
+  "Board_Ft_Value", "INT", "Board foot volume value",
+  "Total_Value", "INT", "Total value"
+)
+
+c_FVS_DM_Spp_Sum <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "SpeciesFVS", "TEXT", "FVS species code",
+  "SpeciesPLANTS", "TEXT", "PLANTS database species symbol",
+  "SpeciesFIA", "TEXT", "FIA species code",
+  "Mean_DMR", "REAL", "Average dwarf mistletoe rating for species",
+  "Mean_DMI", "REAL", "Average dwarf mistletoe rating for infected trees for species",
+  "Inf_TPA", "INT", "Trees acre infected for species",
+  "Mort_TPA", "INT", "Trees per acre killed by mistletoe for species",
+  "Inf_TPA_Pct", "INT", "Trees per acre (% of stand) infected for species",
+  "Mort_TPA_Pct", "INT", "Trees per acre (% of stand) killed by mistletoe for species",
+  "Stnd_TPA_Pct", "INT", "Trees per acre (% of stand) for species"
+)
+
+c_FVS_DM_Stnd_Sum <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "Age", "INT", "Stand Age",
+  "Stnd_TPA", "INT", "Stand trees per acre at the start of cycle",
+  "Stnd_BA", "INT", "Stand basal area per acre at the start of cycle",
+  "Stnd_Vol", "INT", "Stand volume per acre at the start of cycle",
+  "Inf_TPA", "INT", "Trees per acre of the total infected by mistletoe",
+  "Inf_BA", "INT", "Basal area infected by mistletoe of the total",
+  "Inf_Vol", "INT", "Volume per acre infected by mistletoe of the total",
+  "Mort_TPA", "INT", "Trees per acre killed by mistletoe",
+  "Mort_BA", "INT", "Basal area killed by mistletoe of the total",
+  "Mort_Vol", "INT", "Volume killed by mistletoe of the total",
+  "Inf_TPA_Pct", "INT", "Trees per acre (% of stand) infected by mistletoe",
+  "Inf_Vol_Pct", "INT", "Volume (% of stand) infected by mistletoe",
+  "Mort_TPA_Pct", "INT", "Trees per acre (% of stand) killed by mistletoe",
+  "Mort_Vol_Pct", "INT", "Volume (% of stand) killed by mistletoe",
+  "Mean_DMR", "REAL", "Average dwarf mistletoe rating for the stand",
+  "Mean_DMI", "REAL", "Average dwarf mistletoe rating of infected trees"
+)
+
+c_FVS_DM_Sz_Sum <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "Type", "TEXT", "“TPA” (trees/acre); “INF” (trees/acre infected); “MRT” (trees/acre killed by mistletoe); “DMR” (average dwarf mistletoe rating); “DMI” (average dwarf mistletoe rating of infected trees)"
+)
+
+c_FVS_RD_Sum <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "Age", "INT", "Stand Age",
+  "Num_Centers", "INT", "Number of disease centers",
+  "RD_Area", "REAL", "Diseased area of stand (acres)",
+  "Spread_Ft_per_Year", "REAL", "Disease spread rate (ft/year)",
+  "Stumps_per_Acre", "REAL", "Number of stumps per acre",
+  "Stumps_BA", "REAL", "Basal area of stumps (square feet)",
+  "Mort_TPA", "REAL", "Mortality trees per acre",
+  "Mort_CuFt", "REAL", "Mortality cubic feet per acre",
+  "UnInf_TPA", "REAL", "Uninfected trees per acre",
+  "Inf_TPA", "REAL", "Infected trees per acre",
+  "Ave_Pct_Root_Inf", "REAL", "Average percent root system infected",
+  "Live_Merch_CuFt", "REAL", "Live merchantable cubic foot volume",
+  "Live_BA", "REAL", "Live basal area",
+  "New_Inf_Prp_Ins", "REAL", "New infected proportion of total TPA inside beginning period existing disease centers.",
+  "New_Inf_Prp_Exp", "REAL", "New infected proportion of total TPA within expansion area of disease centers.",
+  "New_Inf_Prp_Tot", "REAL", "New infected proportion of total TPA within new total disease area (existing + expansion)."
+)
+
+c_FVS_RD_Det <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "RD_Area", "REAL", "Disease area in acres",
+  "SpeciesFVS", "TEXT", "",
+  "SpeciesPLANTS", "TEXT", "",
+  "SpeciesFIA", "TEXT", "",
+  "Mort_10Pctile_DBH", "REAL", "Mortality trees 10 percentile DBH inches",
+  "Mort_30Pctile_DBH", "REAL", "Mortality trees 30 percentile DBH inches",
+  "Mort_50Pctile_DBH", "REAL", "Mortality trees 50 percentile DBH inches",
+  "Mort_70Pctile_DBH", "REAL", "Mortality trees 70 percentile DBH inches",
+  "Mort_90Pctile_DBH", "REAL", "Mortality trees 90 percentile DBH inches",
+  "Mort_100Pctile_DBH", "REAL", "Mortality trees 100 percentile DBH inches",
+  "Mort_TPA_Total", "REAL", "Mortality total trees per acre",
+  "Live_10Pctile_DBH", "REAL", "Live trees 10 percentile DBH inches",
+  "Live_30Pctile_DBH", "REAL", "Live trees 30 percentile DBH inches",
+  "Live_50Pctile_DBH", "REAL", "Live trees 50 percentile DBH inches",
+  "Live_70Pctile_DBH", "REAL", "Live trees 70 percentile DBH inches",
+  "Live_90Pctile_DBH", "REAL", "Live trees 90 percentile DBH inches",
+  "Live_100Pctile_DBH", "REAL", "Live trees 100 percentile DBH inches",
+  "UnInf_TPA_Total", "REAL", "Live uninfected total trees per acre",
+  "Inf_TPA_Total", "REAL", "Live infected total trees per acre",
+  "Pct_Roots_Inf", "REAL", "Average percent of root system infected"
+)
+
+c_FVS_RD_Beetle <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the projection",
+  "SpeciesFVS", "TEXT", "FVS species code",
+  "SpeciesPLANTS", "TEXT", "PLANTS database species symbol",
+  "SpeciesFIA", "TEXT", "FIA species code",
+  "In_Inf_0_5_DBH", "REAL", "Disease area infected TPA mortality in 0-5 inch DBH class",
+  "In_Inf_5_10_DBH", "REAL", "Disease area infected TPA mortality in 5-10 inch DBH class",
+  "In_Inf_10_15_DBH", "REAL", "Disease area infected TPA mortality in 10-15 inch DBH class",
+  "In_Inf_15_20_DBH", "REAL", "Disease area infected TPA mortality in 15-20 inch DBH class",
+  "In_Inf_20_25_DBH", "REAL", "Disease area infected TPA mortality in 20-25 inch DBH class",
+  "In_Inf_25_30_DBH", "REAL", "Disease area infected TPA mortality in 25-30 inch DBH class",
+  "In_Inf_30_DBH", "REAL", "Disease area infected TPA mortality in 30+ inch DBH class",
+  "In_Inf_Mort", "REAL", "Disease area infected TPA mortality total",
+  "In_Inf_Live_before", "REAL", "Disease area infected TPA live before beetle kill",
+  "In_UnInf_0_5_DBH", "REAL", "Disease area uninfected TPA mortality in 0-5 inch DBH class",
+  "In_UnInf_5_10_DBH", "REAL", "Disease area uninfected TPA mortality in 5-10 inch DBH class",
+  "In_UnInf_10_15_DBH", "REAL", "Disease area uninfected TPA mortality in 10-15 inch DBH class",
+  "In_UnInf_15_20_DBH", "REAL", "Disease area uninfected TPA mortality in 15-20 inch DBH class",
+  "In_UnInf_20_25_DBH", "REAL", "Disease area uninfected TPA mortality in 20-25 inch DBH class",
+  "In_UnInf_25_30_DBH", "REAL", "Disease area uninfected TPA mortality in 25-30 inch DBH class",
+  "In_UnInf_30_DBH", "REAL", "Disease area uninfected TPA mortality in 30+ inch DBH class",
+  "In_UnInf_Mort", "REAL", "Disease area uninfected TPA mortality total",
+  "In_UnInf_Live_Before", "REAL", "Disease area uninfected TPA live before beetle kill",
+  "Outside_0_5_DBH", "REAL", "Nondiseased area TPA mortality in 0-5 inch DBH class",
+  "Outside_5_10_DBH", "REAL", "Nondiseased area TPA mortality in 5-10 inch DBH class",
+  "Outside_10_15_DBH", "REAL", "Nondiseased area TPA mortality in 10-15 inch DBH class",
+  "Outside_15_20_DBH", "REAL", "Nondiseased area TPA mortality in 15-20 inch DBH class",
+  "Outside_20_25_DBH", "REAL", "Nondiseased area TPA mortality in 20-25 inch DBH class",
+  "Outside_25_30_DBH", "REAL", "Nondiseased area TPA mortality in 25-30 inch DBH class",
+  "Outside_30_DBH", "REAL", "Nondiseased area TPA mortality in 30+ inch DBH class",
+  "Outside_Mort", "REAL", "Nondiseased area TPA mortality total",
+  "Outside_Live_Before", "REAL", "Nondiseased area TPA live before beetle kill",
+  "Stand_Mort_Total", "REAL", "Mortality TPA for total stand area"
+)
+
+c_FVS_Regen_Sprouts <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the tally",
+  "SpeciesFVS", "TEXT", "Species that sprouted during the tally. A final row is added for ALL. (FVS alpha code)",
+  "SpeciesPLANTS", "TEXT", "PLANTS database species symbol",
+  "SpeciesFIA", "TEXT", "FIA species code",
+  "SprtTpa", "INT", "Trees per acre of the species that sprouted during the tally. A final row contains the summation of all sprouted TPA for the given tally",
+  "SprtAveHt", "REAL", "Average height of the sprouts for the species that sprouted during the tally. A final row has a weighted average for the height of all sprouted TPA for the given tally"
+)
+
+c_FVS_Regen_SitePrep <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "YearNone", "INT", "This year is by default the year of the cutting",
+  "YearMech", "INT", "This form of site prep can occur at years other than the year of disturbance, but it should be scheduled sometime during the first tally.",
+  "YearBurn", "INT", "This form of site prep can occur at years other than the year of disturbance, but it should be scheduled sometime during the first tally.",
+  "PcntNone", "INT", "The sum of the percentage of plots treated by these two methods should be less than, or equal to 100 percent. When the sum is less than 100 percent, the remaining plots are left untreated.",
+  "PcntMech", "INT", "The sum of the percentage of plots treated by these two methods should be less than, or equal to 100 percent. When the sum is less than 100 percent, the remaining plots are left untreated.",
+  "PcntBurn", "INT", "The sum of the percentage of plots treated by these two methods should be less than, or equal to 100 percent. When the sum is less than 100 percent, the remaining plots are left untreated."
+)
+
+c_FVS_Regen_HabType <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Series", "TEXT", "Species code(s) for the most prominent tree species of the calculated habitat type",
+  "GroupNum", "INT", "The numeric code corresponding to the calculated habitat type",
+  "HabitatType", "TEXT", "Text string containing the USDA Plants species abbreviations for the most prominent tree species of the calculated habitat type, a significant predictor of natural regeneration in the full establishment model",
+  "NumPlots", "INT", "The number of plots predicted to be in a given habitat type"
+)
+
+c_FVS_Regen_Tally <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the tally",
+  "ProbStock", "REAL", "Note: this value if only present and populated for variants with the full establishment model",
+  "TallyNumber", "INT", "A tally sequence, the process of passing regeneration to the FVS tree list at the end of a projection cycle, can be denoted with either a 1 or a 2.",
+  "SpeciesFVS", "TEXT", "Species that regenerated during the tally either by natural regeneration, plantings or sprouting. (FVS alpha code)",
+  "SpeciesPLANTS", "TEXT", "PLANTS database species symbol",
+  "SpeciesFIA", "TEXT", "FIA species code",
+  "TpaAll", "INT", "Trees per acre of all trees regenerating during a given tally, minus any sprouts, for a given species",
+  "PctOfTotalAll", "INT", "Percentage of the total trees per acre of all trees regenerating during a given tally, minus any sprouts, for a given species.",
+  "TpaBest", "INT", "Trees per acre of the best trees regenerating during a given tally, minus any sprouts, for a given species. Best trees are the “desirable” trees most likely to survive and contribute to yield & future stand development.",
+  "PctOfTotalBest", "INT", "Percentage of the total trees per acre of the best trees regenerating during a given tally, minus any sprouts, for a given species.",
+  "AverageHt", "REAL", "The average height of the best trees regenerating during a given tally, for a given species",
+  "TpaSmall", "INT", "Trees per acre of all small trees in the simulation (< 1 inch in AK variant and <3 inches in all other variants).",
+  "PctOfTotalSmall", "INT", "Percentage of the total trees per acre of all small trees in the simulation (< 1 inch in AK variant and <3 inches in all other variants)."
+)
+
+c_FVS_Regen_Ingrow <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand identification",
+  "Year", "INT", "Year of the tally",
+  "IngrowthTotalTpa", "REAL", "The total number of trees per acre regenerating as ingrowth",
+  "SpeciesFVS", "TEXT", "Species regenerating as ingrowth (FVS alpha code)",
+  "SpeciesPLANTS", "TEXT", "PLANTS database species symbol",
+  "SpeciesFIA", "TEXT", "FIA species code",
+  "IngrowthTpa", "INT", "The number of trees per acre regenerating as ingrowth for a given species"
+)
+
+c_FVS_FIAVBC_Summary <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand Identification Code",
+  "Year", "INT", "Year of the Projection",
+  "RmvCode", "INT", "0 = no removals occurred in cycle, 1 = trees were removed and row contains statistics for prior to removals, 2 = trees were removed and row contains statistics for after removals.",
+  "TCuFt", "REAL", "Total cubic foot volume (cuft / ac)",
+  "MCuFt", "REAL", "Merchantable cubic foot volume (cuft / ac)",
+  "SCuFt", "REAL", "Sawlog cubic foot volume (cuft / ac)",
+  "AbvGrdBio", "REAL", "Aboveground biomass of wood and bark (tons / ac)",
+  "MerchBio", "REAL", "Biomass of merchantable stem wood (tons / ac)",
+  "SawBio", "REAL", "Biomass of sawlog stem wood (tons / ac)",
+  "FoliBio", "REAL", "Biomass of foliage (tons / ac)",
+  "AbvGrdCarb", "REAL", "Aboveground carbon of wood and bark (tons / ac)",
+  "MerchCarb", "REAL", "Carbon contained in merchantable stem wood (tons / ac)",
+  "SawCarb", "REAL", "Carbon contained in sawlog stem wood (tons / ac)",
+  "FoliCarb", "REAL", "Carbon contained in foliage (tons / ac)",
+  "RTCuFt", "REAL", "Removed total cubic foot volume (cuft / ac)",
+  "RMCuFt", "REAL", "Removed merchantable cubic foot volume (cuft / ac)",
+  "RSCuFt", "REAL", "Removed sawlog cubic foot volume (cuft / ac)",
+  "RAbvGrdBio", "REAL", "Removed aboveground biomass of wood and bark (tons / ac)",
+  "RMerchBio", "REAL", "Removed biomass of merchantable stem wood (tons / ac)",
+  "RSawBio", "REAL", "Removed biomass of sawlog stem wood (tons / ac)",
+  "RFoliBio", "REAL", "Removed biomass of foliage (tons / ac)",
+  "RAbvGrdCarb", "REAL", "Removed aboveground carbon of wood and bark (tons / ac)",
+  "RMerchCarb", "REAL", "Removed carbon contained in merchantable stem wood (tons / ac)",
+  "RSawCarb", "REAL", "Removed carbon contained in sawlog stem wood (tons / ac)",
+  "RFoliCarb", "REAL", "Removed carbon contained in foliage (tons / ac)"
+)
+
+c_FVS_FIAVBC_TreeList <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand Identification Code",
+  "PtIndex", "INT", "Point number that is sequentially assigned the records based on the order in which the plot IDs (ITRE) are read from the input data.",
+  "ActPt", "INT", "Actual point (or plot) number from input",
+  "Year", "INT", "Year of the Projection",
+  "TreeId", "TEXT", "Unique identification number for the tree record. Plot ID (ITRE) and tree ID (IDTREE) are read from the input tree data. This number will be the tree ID if tree records are input from a database; otherwise this number will be a concatenation of the plot ID and the tree ID.",
+  "TreeIndex", "INT", "A sequential index number assigned to the tree records as they are processed by FVS.",
+  "SpeciesFVS", "TEXT", "Species code using FVS alpha code",
+  "SpeciesPLANTS", "TEXT", "Species code using USDA Plants code",
+  "SpeciesFIA", "TEXT", "Species code using FIA code",
+  "TPA", "REAL", "Trees represented by the record",
+  "MortTPA", "REAL", "",
+  "DBH", "REAL", "Current diameter",
+  "Ht", "REAL", "This height is used to determine taper on the stem for volume calculations. If the tree record represents trees with broken or dead tops, this is the height of the highest live limb. All trees with dead or broken tops are assumed to have a leader that becomes the new “top”. This is why even broken and dead top trees continue to increase in height.",
+  "EstHt", "REAL", "Estimated height",
+  "TruncHt", "INT", "This is the height to the point of breakage or top-kill. This is the height used in determining volumes for the record. This height will not increase due to height growth.",
+  "PctCr", "INT", "Crown ratio percent",
+  "Cull", "REAL", "Percentage of rotten or missing cull",
+  "WdldStem", "INT", "Count of stems for woodland species",
+  "DecayCd", "INT", "Decay code",
+  "CarbFrac", "REAL", "Wood carbon fraction used to convert biomass to mass of carbon content",
+  "TCuFt", "REAL", "Total cubic foot volume (cuft). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the total volume for the entire record.",
+  "MCuFt", "REAL", "Merchantable cubic foot volume (cuft). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the merchantable volume for the entire record.",
+  "SCuFt", "REAL", "Sawlog cubic foot volume (cuft). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the sawlog volume for the entire record.",
+  "AbvGrdBio", "REAL", "Aboveground biomass of wood and bark (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the aboveground biomass for the entire record.",
+  "MerchBio", "REAL", "Biomass of wood in merchantable stem (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the merchantable stem biomass for the entire record.",
+  "SawBio", "REAL", "Biomass of wood in sawlog portion of the stem (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the sawlog biomass for the entire record.",
+  "FoliBio", "REAL", "Biomass of foliage (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the foliage biomass for the entire record.",
+  "AbvGrdCarb", "REAL", "Carbon contained in aboveground wood and bark (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the aboveground carbon for the entire record.",
+  "MerchCarb", "REAL", "Carbon contained in wood of merchantable stem (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the merchantable stem carbon for the entire record.",
+  "SawCarb", "REAL", "Carbon contained in wood of sawlog portion of stem (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the sawlog carbon for the entire record.",
+  "FoliCarb", "REAL", "Carbon contained in foliage (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the foliage carbon for the entire record. A carbon fraction of 0.5 is used to calculate foliage carbon from foliage biomass (FoliBio)."
+)
+
+c_FVS_FIAVBC_CutList <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand Identification Code",
+  "PtIndex", "INT", "Point number that is sequentially assigned the records based on the order in which the plot IDs (ITRE) are read from the input data.",
+  "ActPt", "INT", "Actual point (or plot) number from input",
+  "Year", "INT", "Year of the Projection",
+  "TreeId", "TEXT", "Unique identification number for the tree record. Plot ID (ITRE) and tree ID (IDTREE) are read from the input tree data. This number will be the tree ID if tree records are input from a database; otherwise this number will be a concatenation of the plot ID and the tree ID.",
+  "TreeIndex", "INT", "A sequential index number assigned to the tree records as they are processed by FVS.",
+  "SpeciesFVS", "TEXT", "Species code using FVS alpha code",
+  "SpeciesPLANTS", "TEXT", "Species code using USDA Plants code",
+  "SpeciesFIA", "TEXT", "Species code using FIA code",
+  "TPA", "REAL", "Trees represented by the record",
+  "MortTPA", "REAL", "",
+  "DBH", "REAL", "Current diameter",
+  "Ht", "REAL", "This height is used to determine taper on the stem for volume calculations. If the tree record represents trees with broken or dead tops, this is the height of the highest live limb. All trees with dead or broken tops are assumed to have a leader that becomes the new “top”. This is why even broken and dead top trees continue to increase in height.",
+  "EstHt", "REAL", "Estimated height",
+  "TruncHt", "INT", "This is the height to the point of breakage or top-kill. This is the height used in determining volumes for the record. This height will not increase due to height growth.",
+  "PctCr", "INT", "Crown ratio percent",
+  "Cull", "REAL", "Percentage of rotten or missing cull",
+  "WdldStem", "INT", "Count of stems for woodland species",
+  "DecayCd", "INT", "Decay code",
+  "CarbFrac", "REAL", "Wood carbon fraction used to convert biomass to mass of carbon content",
+  "TCuFt", "REAL", "Total cubic foot volume (cuft). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the total volume for the entire record.",
+  "MCuFt", "REAL", "Merchantable cubic foot volume (cuft). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the merchantable volume for the entire record.",
+  "SCuFt", "REAL", "Sawlog cubic foot volume (cuft). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the sawlog volume for the entire record.",
+  "AbvGrdBio", "REAL", "Aboveground biomass of wood and bark (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the aboveground biomass for the entire record.",
+  "MerchBio", "REAL", "Biomass of wood in merchantable stem (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the merchantable stem biomass for the entire record.",
+  "SawBio", "REAL", "Biomass of wood in sawlog portion of the stem (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the sawlog biomass for the entire record.",
+  "FoliBio", "REAL", "Biomass of foliage (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the foliage biomass for the entire record.",
+  "AbvGrdCarb", "REAL", "Carbon contained in aboveground wood and bark (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the aboveground carbon for the entire record.",
+  "MerchCarb", "REAL", "Carbon contained in wood of merchantable stem (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the merchantable stem carbon for the entire record.",
+  "SawCarb", "REAL", "Carbon contained in wood of sawlog portion of stem (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the sawlog carbon for the entire record.",
+  "FoliCarb", "REAL", "Carbon contained in foliage (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the foliage carbon for the entire record. A carbon fraction of 0.5 is used to calculate foliage carbon from foliage biomass (FoliBio)."
+)
+
+c_FVS_FIAVBC_ATRTList <- tibble::tribble(
+  ~Column, ~Type, ~Description,
+  "CaseID", "TEXT", "Unique FVS case identifier that corresponds to the FVS_Cases table",
+  "StandID", "TEXT", "Stand Identification Code",
+  "PtIndex", "INT", "Point number that is sequentially assigned the records based on the order in which the plot IDs (ITRE) are read from the input data.",
+  "ActPt", "INT", "Actual point (or plot) number from input",
+  "Year", "INT", "Year of the Projection",
+  "TreeId", "TEXT", "Unique identification number for the tree record. Plot ID (ITRE) and tree ID (IDTREE) are read from the input tree data. This number will be the tree ID if tree records are input from a database; otherwise this number will be a concatenation of the plot ID and the tree ID.",
+  "TreeIndex", "INT", "A sequential index number assigned to the tree records as they are processed by FVS.",
+  "SpeciesFVS", "TEXT", "Species code using FVS alpha code",
+  "SpeciesPLANTS", "TEXT", "Species code using USDA Plants code",
+  "SpeciesFIA", "TEXT", "Species code using FIA code",
+  "TPA", "REAL", "Trees represented by the record",
+  "MortTPA", "REAL", "",
+  "DBH", "REAL", "Current diameter",
+  "Ht", "REAL", "This height is used to determine taper on the stem for volume calculations. If the tree record represents trees with broken or dead tops, this is the height of the highest live limb. All trees with dead or broken tops are assumed to have a leader that becomes the new “top”. This is why even broken and dead top trees continue to increase in height.",
+  "EstHt", "REAL", "Estimated height",
+  "TruncHt", "INT", "This is the height to the point of breakage or top-kill. This is the height used in determining volumes for the record. This height will not increase due to height growth.",
+  "PctCr", "INT", "Crown ratio percent",
+  "Cull", "REAL", "Percentage of rotten or missing cull",
+  "WdldStem", "INT", "Count of stems for woodland species",
+  "DecayCd", "INT", "Decay code",
+  "CarbFrac", "REAL", "Wood carbon fraction used to convert biomass to mass of carbon content",
+  "TCuFt", "REAL", "Total cubic foot volume (cuft). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the total volume for the entire record.",
+  "MCuFt", "REAL", "Merchantable cubic foot volume (cuft). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the merchantable volume for the entire record.",
+  "SCuFt", "REAL", "Sawlog cubic foot volume (cuft). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the sawlog volume for the entire record.",
+  "AbvGrdBio", "REAL", "Aboveground biomass of wood and bark (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the aboveground biomass for the entire record.",
+  "MerchBio", "REAL", "Biomass of wood in merchantable stem (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the merchantable stem biomass for the entire record.",
+  "SawBio", "REAL", "Biomass of wood in sawlog portion of the stem (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the sawlog biomass for the entire record.",
+  "FoliBio", "REAL", "Biomass of foliage (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the foliage biomass for the entire record.",
+  "AbvGrdCarb", "REAL", "Carbon contained in aboveground wood and bark (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the aboveground carbon for the entire record.",
+  "MerchCarb", "REAL", "Carbon contained in wood of merchantable stem (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the merchantable stem carbon for the entire record.",
+  "SawCarb", "REAL", "Carbon contained in wood of sawlog portion of stem (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the sawlog carbon for the entire record.",
+  "FoliCarb", "REAL", "Carbon contained in foliage (lbs). Since this is a per tree value it must be multiplied by the TPA value for the record in order to get the foliage carbon for the entire record. A carbon fraction of 0.5 is used to calculate foliage carbon from foliage biomass (FoliBio)."
+)
+```
+
+## Base FVS System Tables {-}
+### FVS_Cases {-}
+
+Source file `dbsqlite/dbscase.f`, subroutine DBSCASE. Keyword: none. Control variable: none. Written when any database output is requested, or when an output routine forces it (DBSCASE with IFORSURE = 1).
+
+```{r appx-c-fvs-cases, echo=FALSE}
+appx_c_show(c_FVS_Cases, "Table C-1: Columns of the FVS_Cases table")
+```
+### FVS_Summary {-}
+
+Source file `vdbsqlite/dbssumry.f`, subroutine DBSSUMRY. Keyword: SUMMARY. Control variable: ISUMARY = 1. Written from SUMOUT; SUMMARY field 1 blank or 1.
+
+```{r appx-c-fvs-summary, echo=FALSE}
+appx_c_show(c_FVS_Summary, "Table C-2: Columns of the FVS_Summary table")
+```
+### FVS_Summary2 {-}
+
+Source file `vdbsqlite/dbssumry.f`, subroutine DBSSUMRY2. Keyword: SUMMARY. Control variable: ISUMARY = 2. Written from DISPLY; SUMMARY field 1 is 2.
+
+```{r appx-c-fvs-summary2, echo=FALSE}
+appx_c_show(c_FVS_Summary2, "Table C-3: Columns of the FVS_Summary2 table")
+```
+### FVS_Compute {-}
+
+Source file `dbsqlite/dbscmpu.f`, subroutine DBSCMPU. Keyword: COMPUTDB. Control variable: ICOMPUTE > 0. Written from OPLIST; also requires user-defined event monitor variables (ITST5 > 0). The table has the three columns below plus one REAL column for each user-defined event monitor variable. Variables whose names start with an underscore are included only when field 2 of the COMPUTDB keyword record is greater than 0.
+
+```{r appx-c-fvs-compute, echo=FALSE}
+appx_c_show(c_FVS_Compute, "Table C-4: Columns of the FVS_Compute table")
+```
+### FVS_TreeList {-}
+
+Source file `dbsqlite/dbstrls.f`, subroutine DBSTRLS. Keyword: TREELIDB. Control variable: ITREELIST > 0. Written from PRTRLS.
+
+```{r appx-c-fvs-treelist, echo=FALSE}
+appx_c_show(c_FVS_TreeList, "Table C-5: Columns of the FVS_TreeList table")
+```
+### FVS_CutList {-}
+
+Source file `dbsqlite/dbscuts.f`, subroutine DBSCUTS. Keyword: CUTLIDB. Control variable: ICUTLIST > 0. Written from PRTRLS.
+
+```{r appx-c-fvs-cutlist, echo=FALSE}
+appx_c_show(c_FVS_CutList, "Table C-6: Columns of the FVS_CutList table")
+```
+### FVS_ATRTList {-}
+
+Source file `dbsqlite/dbsatrtls.f`, subroutine DBSATRTLS. Keyword: ATRTLIDB. Control variable: IATRTLIST > 0. Written from PRTRLS.
+
+```{r appx-c-fvs-atrtlist, echo=FALSE}
+appx_c_show(c_FVS_ATRTList, "Table C-7: Columns of the FVS_ATRTList table")
+```
+### FVS_CalibStats {-}
+
+Source file `dbsqlite/dbscalib.f`, subroutine DBSCALIB. Keyword: CALBSTDB. Control variable: ICALIB > 0.
+
+```{r appx-c-fvs-calibstats, echo=FALSE}
+appx_c_show(c_FVS_CalibStats, "Table C-8: Columns of the FVS_CalibStats table")
+```
+### FVS_StrClass {-}
+
+Source file `dbsqlite/dbsstrclass.f`, subroutine DBSSTRCLASS. Keyword: STRCLSDB. Control variable: ISTRCLAS > 0.
+
+```{r appx-c-fvs-strclass, echo=FALSE}
+appx_c_show(c_FVS_StrClass, "Table C-9: Columns of the FVS_StrClass table")
+```
+### FVS_Stats_Species {-}
+
+Source file `dbsqlite/dbsstats.f`, subroutine DBSSTATS. Keyword: INVSTATS. Control variable: ISTATS1 = 1. INVSTATS sets ISTATS1 and ISTATS2; DBSSTATS tests ISTATS1.
+
+```{r appx-c-fvs-stats-species, echo=FALSE}
+appx_c_show(c_FVS_Stats_Species, "Table C-10: Columns of the FVS_Stats_Species table")
+```
+### FVS_Stats_Stand {-}
+
+Source file `dbsqlite/dbsstats.f`, subroutine DBSSTATS. Keyword: INVSTATS. Control variable: ISTATS1 = 1. INVSTATS sets ISTATS1 and ISTATS2; DBSSTATS tests ISTATS1.
+
+```{r appx-c-fvs-stats-stand, echo=FALSE}
+appx_c_show(c_FVS_Stats_Stand, "Table C-11: Columns of the FVS_Stats_Stand table")
+```
+### FVS_InvReference {-}
+
+Source file `vdbsqlite/dbsreference.f`, subroutine DBSREFERENCE. Keyword: none. Control variable: none. Written for every stand; DBSREFERENCE is called from FVS.
+
+```{r appx-c-fvs-invreference, echo=FALSE}
+appx_c_show(c_FVS_InvReference, "Table C-12: Columns of the FVS_InvReference table")
+```
+### FVS_Error {-}
+
+Source file `dbsqlite/dbserror.f`, subroutine DBSERROR. Keyword: none. Control variable: none. Written from ERRGRO when a warning or error message is issued.
+
+```{r appx-c-fvs-error, echo=FALSE}
+appx_c_show(c_FVS_Error, "Table C-13: Columns of the FVS_Error table")
+```
+
+## Climate Extension Table {-}
+### FVS_Climate {-}
+
+Source file `dbsqlite/dbsclsum.f`, subroutine DBSCLSUM. Keyword: CLIMREDB. Control variable: ICLIM > 0.
+
+```{r appx-c-fvs-climate, echo=FALSE}
+appx_c_show(c_FVS_Climate, "Table C-14: Columns of the FVS_Climate table")
+```
+
+## Fire and Fuels Extension Tables {-}
+### FVS_Fuels {-}
+
+Source file `dbsqlite/dbsfuels.f`, subroutine DBSFUELS. Keyword: FUELSOUT. Control variable: IFUELS > 0.
+
+```{r appx-c-fvs-fuels, echo=FALSE}
+appx_c_show(c_FVS_Fuels, "Table C-15: Columns of the FVS_Fuels table")
+```
+### FVS_PotFire {-}
+
+Source file `vdbsqlite/dbsfmpf.f`, subroutine DBSFMPF. Keyword: POTFIRDB. Control variable: IPOTFIRE > 0. Used by all variants except SN and CS.
+
+```{r appx-c-fvs-potfire, echo=FALSE}
+appx_c_show(c_FVS_PotFire, "Table C-16: Columns of the FVS_PotFire table")
+```
+### FVS_PotFire_East {-}
+
+Source file `vdbsqlite/dbsfmpf.f`, subroutine DBSFMPF. Keyword: POTFIRDB. Control variable: IPOTFIRE > 0. Used by the SN and CS variants.
+
+```{r appx-c-fvs-potfire-east, echo=FALSE}
+appx_c_show(c_FVS_PotFire_East, "Table C-17: Columns of the FVS_PotFire_East table")
+```
+### FVS_PotFire_Cond {-}
+
+Source file `vdbsqlite/dbsfmpfc.f`, subroutine DBSFMPFC. Keyword: POTFIRDB. Control variable: IPOTFIREC > 0. POTFIRDB sets IPOTFIRE and IPOTFIREC.
+
+```{r appx-c-fvs-potfire-cond, echo=FALSE}
+appx_c_show(c_FVS_PotFire_Cond, "Table C-18: Columns of the FVS_PotFire_Cond table")
+```
+### FVS_Consumption {-}
+
+Source file `dbsqlite/dbsfmfuel.f`, subroutine DBSFMFUEL. Keyword: FUELREDB. Control variable: IFUELC > 0.
+
+```{r appx-c-fvs-consumption, echo=FALSE}
+appx_c_show(c_FVS_Consumption, "Table C-19: Columns of the FVS_Consumption table")
+```
+### FVS_BurnReport {-}
+
+Source file `dbsqlite/dbsfmburn.f`, subroutine DBSFMBURN. Keyword: BURNREDB. Control variable: IBURN > 0.
+
+```{r appx-c-fvs-burnreport, echo=FALSE}
+appx_c_show(c_FVS_BurnReport, "Table C-20: Columns of the FVS_BurnReport table")
+```
+### FVS_Mortality {-}
+
+Source file `dbsqlite/dbsfmmort.f`, subroutine DBSFMMORT. Keyword: MORTREDB. Control variable: IMORTF > 0.
+
+```{r appx-c-fvs-mortality, echo=FALSE}
+appx_c_show(c_FVS_Mortality, "Table C-21: Columns of the FVS_Mortality table")
+```
+### FVS_SnagSum {-}
+
+Source file `dbsqlite/dbsfmssnag.f`, subroutine DBSFMSSNAG. Keyword: SNAGSUDB. Control variable: ISSUM > 0.
+
+```{r appx-c-fvs-snagsum, echo=FALSE}
+appx_c_show(c_FVS_SnagSum, "Table C-22: Columns of the FVS_SnagSum table")
+```
+### FVS_SnagDet {-}
+
+Source file `dbsqlite/dbsfmdsnag.f`, subroutine DBSFMDSNAG. Keyword: SNAGOUDB. Control variable: ISDET > 0.
+
+```{r appx-c-fvs-snagdet, echo=FALSE}
+appx_c_show(c_FVS_SnagDet, "Table C-23: Columns of the FVS_SnagDet table")
+```
+### FVS_Carbon {-}
+
+Source file `dbsqlite/dbsfmcrpt.f`, subroutine DBSFMCRPT. Keyword: CARBREDB. Control variable: ICMRPT > 0. CARBREDB sets ICMRPT and ICHRPT.
+
+```{r appx-c-fvs-carbon, echo=FALSE}
+appx_c_show(c_FVS_Carbon, "Table C-24: Columns of the FVS_Carbon table")
+```
+### FVS_Hrv_Carbon {-}
+
+Source file `dbsqlite/dbsfmhrpt.f`, subroutine DBSFMHRPT. Keyword: CARBREDB. Control variable: ICHRPT > 0. CARBREDB sets ICMRPT and ICHRPT.
+
+```{r appx-c-fvs-hrv-carbon, echo=FALSE}
+appx_c_show(c_FVS_Hrv_Carbon, "Table C-25: Columns of the FVS_Hrv_Carbon table")
+```
+### FVS_Down_Wood_Vol {-}
+
+Source file `dbsqlite/dbsfmdwvol.f`, subroutine DBSFMDWVOL. Keyword: DWDVLDB. Control variable: IDWDVOL > 0.
+
+```{r appx-c-fvs-down-wood-vol, echo=FALSE}
+appx_c_show(c_FVS_Down_Wood_Vol, "Table C-26: Columns of the FVS_Down_Wood_Vol table")
+```
+### FVS_Down_Wood_Cov {-}
+
+Source file `dbsqlite/dbsfmdwcov.f`, subroutine DBSFMDWCOV. Keyword: DWDCVDB. Control variable: IDWDCOV > 0.
+
+```{r appx-c-fvs-down-wood-cov, echo=FALSE}
+appx_c_show(c_FVS_Down_Wood_Cov, "Table C-27: Columns of the FVS_Down_Wood_Cov table")
+```
+### FVS_CanProfile {-}
+
+Source file `dbsqlite/dbsfmcanpr.f`, subroutine DBSFMCANPR. Keyword: CANFPROF (fire extension keyword). Control variable: ICANPR > 0. ICANPR is set to 1 by the CANFPROF keyword record.
+
+```{r appx-c-fvs-canprofile, echo=FALSE}
+appx_c_show(c_FVS_CanProfile, "Table C-28: Columns of the FVS_CanProfile table")
+```
+
+## Economics Extension Tables {-}
+### FVS_EconSummary {-}
+
+Source file `dbsqlite/dbsecsum.f`, subroutine DBSECSUM. Keyword: ECONRPTS. Control variable: IDBSECON > 0.
+
+```{r appx-c-fvs-econsummary, echo=FALSE}
+appx_c_show(c_FVS_EconSummary, "Table C-29: Columns of the FVS_EconSummary table")
+```
+### FVS_EconHarvestValue {-}
+
+Source file `dbsqlite/dbsecharv.f`, subroutine DBSECHARV_OPEN. Keyword: ECONRPTS. Control variable: IDBSECON = 2. ECONRPTS field 1 equal to 1 sets IDBSECON to 1 and omits this table.
+
+```{r appx-c-fvs-econharvestvalue, echo=FALSE}
+appx_c_show(c_FVS_EconHarvestValue, "Table C-30: Columns of the FVS_EconHarvestValue table")
+```
+
+## Dwarf Mistletoe Tables {-}
+### FVS_DM_Spp_Sum {-}
+
+Source file `dbsqlite/dbsmis.f`, subroutine DBSMIS1. Keyword: MISRPTS. Control variable: IDM1 > 0. MISRPTS sets IDM1, IDM2, IDM3, IDM5 and IDM6.
+
+```{r appx-c-fvs-dm-spp-sum, echo=FALSE}
+appx_c_show(c_FVS_DM_Spp_Sum, "Table C-31: Columns of the FVS_DM_Spp_Sum table")
+```
+### FVS_DM_Stnd_Sum {-}
+
+Source file `dbsqlite/dbsmis.f`, subroutine DBSMIS2. Keyword: MISRPTS. Control variable: IDM2 > 0. MISRPTS sets IDM1, IDM2, IDM3, IDM5 and IDM6.
+
+```{r appx-c-fvs-dm-stnd-sum, echo=FALSE}
+appx_c_show(c_FVS_DM_Stnd_Sum, "Table C-32: Columns of the FVS_DM_Stnd_Sum table")
+```
+### FVS_DM_Sz_Sum {-}
+
+Source file `dbsqlite/dbsmis.f`, subroutine DBSMIS3. Keyword: MISRPTS. Control variable: IDM3 > 0. MISRPTS sets IDM1, IDM2, IDM3, IDM5 and IDM6.
+
+```{r appx-c-fvs-dm-sz-sum, echo=FALSE}
+appx_c_show(c_FVS_DM_Sz_Sum, "Table C-33: Columns of the FVS_DM_Sz_Sum table")
+```
+
+## Root Disease Tables {-}
+### FVS_RD_Sum {-}
+
+Source file `dbsqlite/dbsrd.f`, subroutine DBSRD1. Keyword: RDSUM. Control variable: IRD1 > 0.
+
+```{r appx-c-fvs-rd-sum, echo=FALSE}
+appx_c_show(c_FVS_RD_Sum, "Table C-34: Columns of the FVS_RD_Sum table")
+```
+### FVS_RD_Det {-}
+
+Source file `dbsqlite/dbsrd.f`, subroutine DBSRD2. Keyword: RDDETAIL. Control variable: IRD2 > 0.
+
+```{r appx-c-fvs-rd-det, echo=FALSE}
+appx_c_show(c_FVS_RD_Det, "Table C-35: Columns of the FVS_RD_Det table")
+```
+### FVS_RD_Beetle {-}
+
+Source file `dbsqlite/dbsrd.f`, subroutine DBSRD3. Keyword: RDBBMORT. Control variable: IRD3 > 0.
+
+```{r appx-c-fvs-rd-beetle, echo=FALSE}
+appx_c_show(c_FVS_RD_Beetle, "Table C-36: Columns of the FVS_RD_Beetle table")
+```
+
+## Regeneration Establishment Tables {-}
+### FVS_Regen_Sprouts {-}
+
+Source file `dbsqlite/dbssprt.f`, subroutine DBSSPRT. Keyword: REGREPTS. Control variable: IREG1 = 1. REGREPTS sets IREG1 through IREG5.
+
+```{r appx-c-fvs-regen-sprouts, echo=FALSE}
+appx_c_show(c_FVS_Regen_Sprouts, "Table C-37: Columns of the FVS_Regen_Sprouts table")
+```
+### FVS_Regen_SitePrep {-}
+
+Source file `dbsqlite/dbssiteprep.f`, subroutine DBSSITEPREP. Keyword: REGREPTS. Control variable: IREG2 = 1. REGREPTS sets IREG1 through IREG5.
+
+```{r appx-c-fvs-regen-siteprep, echo=FALSE}
+appx_c_show(c_FVS_Regen_SitePrep, "Table C-38: Columns of the FVS_Regen_SitePrep table")
+```
+### FVS_Regen_HabType {-}
+
+Source file `dbsqlite/dbsplothab.f`, subroutine DBSPLOTHAB. Keyword: REGREPTS. Control variable: IREG3 = 1. REGREPTS sets IREG1 through IREG5.
+
+```{r appx-c-fvs-regen-habtype, echo=FALSE}
+appx_c_show(c_FVS_Regen_HabType, "Table C-39: Columns of the FVS_Regen_HabType table")
+```
+### FVS_Regen_Tally {-}
+
+Source file `dbsqlite/dbstally.f`, subroutine DBSTALLY. Keyword: REGREPTS. Control variable: IREG4 = 1. REGREPTS sets IREG1 through IREG5. The table is created with the 15 columns below when PRBSTK is 1 or less; when PRBSTK is greater than 1 it is created without the ProbStock column (14 columns).
+
+```{r appx-c-fvs-regen-tally, echo=FALSE}
+appx_c_show(c_FVS_Regen_Tally, "Table C-40: Columns of the FVS_Regen_Tally table")
+```
+### FVS_Regen_Ingrow {-}
+
+Source file `dbsqlite/dbsingrow.f`, subroutine DBSINGROW. Keyword: REGREPTS. Control variable: IREG5 = 1. REGREPTS sets IREG1 through IREG5.
+
+```{r appx-c-fvs-regen-ingrow, echo=FALSE}
+appx_c_show(c_FVS_Regen_Ingrow, "Table C-41: Columns of the FVS_Regen_Ingrow table")
+```
+
+## FIA Volume and Biomass Tables {-}
+### FVS_FIAVBC_Summary {-}
+
+Source file `vdbsqlite/dbscarbbiosumry.f`, subroutine DBSCARBBIOSUMRY. Keyword: VBCSUMDB. Control variable: IVBCSUM > 0. Requires the FIAVBC keyword.
+
+```{r appx-c-fvs-fiavbc-summary, echo=FALSE}
+appx_c_show(c_FVS_FIAVBC_Summary, "Table C-42: Columns of the FVS_FIAVBC_Summary table")
+```
+### FVS_FIAVBC_TreeList {-}
+
+Source file `dbsqlite/dbs_fiavbc_trls.f`, subroutine DBS_FIAVBC_TRLS. Keyword: VBCTRLDB. Control variable: IVBCTRELST > 0. Requires the FIAVBC keyword.
+
+```{r appx-c-fvs-fiavbc-treelist, echo=FALSE}
+appx_c_show(c_FVS_FIAVBC_TreeList, "Table C-43: Columns of the FVS_FIAVBC_TreeList table")
+```
+### FVS_FIAVBC_CutList {-}
+
+Source file `dbsqlite/dbs_fiavbc_cutlst.f`, subroutine DBS_FIAVBC_CUTLST. Keyword: VBCCUTDB. Control variable: IVBCCUTLST > 0. Requires the FIAVBC keyword.
+
+```{r appx-c-fvs-fiavbc-cutlist, echo=FALSE}
+appx_c_show(c_FVS_FIAVBC_CutList, "Table C-44: Columns of the FVS_FIAVBC_CutList table")
+```
+### FVS_FIAVBC_ATRTList {-}
+
+Source file `dbsqlite/dbs_fiavbc_atrtls.f`, subroutine DBS_FIAVBC_ATRTLS. Keyword: VBCATRDB. Control variable: IVBCATRLST > 0. Requires the FIAVBC keyword.
+
+```{r appx-c-fvs-fiavbc-atrtlist, echo=FALSE}
+appx_c_show(c_FVS_FIAVBC_ATRTList, "Table C-45: Columns of the FVS_FIAVBC_ATRTList table")
+```
 
 # Literature Cited
 
