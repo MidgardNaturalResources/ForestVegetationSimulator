@@ -178,3 +178,22 @@ Guide columns not created by the code (not added to the appendix):
 - `FVS_FIAVBC_ATRTList`: `MortPA`
 The guide documents release 2025.4; where its column lists differ from the repository code, the appendix follows the code.
 Knitting Appendix C needs the `tibble` package (`tibble::tribble` is used); the setup chunk loads only `knitr` and `kableExtra`. R is not installed in the environment used to write it, so the chunks were checked structurally (balanced brackets, three quoted strings per row, row counts equal to the code) but not run.
+
+## Chapter 11 mechanisms (Case Management and Run-Time Behavior; column matching and data types)
+Differences between the Database Extension user's guide (release 2025.4) and the code. The Rmd follows the code.
+- Guide section 5.0 says a statement is not run when a substituted variable is not defined. In `DBSPRSSQL`, a scheduled statement with an undefined or unknown `%name%` has the token replaced by `NULL` and the statement still runs.
+- Guide section 3.3 says a decimal value cannot be coded for an integer variable. `fsql3_colint` truncates a real value and reads the leading integer of a text value; it does not reject either.
+- Guide section 5.0 says only user-defined Event Monitor variables are matched to result columns. `DBSEXECSQL` also creates a new Event Monitor variable (first 8 characters of the column name) for an unmatched column when the variable table has room.
+
+Code concerns (not changed; confirmed with a scratch build of `DBSPRSSQL` unless noted).
+- `%FVSCase%` inserts a blank before the CaseID (`' '//CASEID`), so a quoted token gives a value with a leading blank.
+- In the `FVSCASE` branch of `DBSPRSSQL`, `KODE` is not set to 1. When `%FVSCase%` is the last token in the statement, `KODE` stays 0 and the statement fails with the parsing error (`WHERE C='%FVSCase%'` fails; `WHERE C='%FVSCase%' AND S='%StandID%'` succeeds).
+- In `DBSCASE`, `INDEX(".KEY",KEYFNAME)` has its arguments in the reverse order, so the `.key` extension is not stripped from `KeywordFile` (about 85 percent; not run).
+- `DBSERROR` calls `DBSCASE(1)`, and `ERRGRO` calls `DBSERROR` for warnings and errors. A run with no output switch on that issues a warning therefore appears to create the output database and a FVS_Cases row (about 70 percent; not run).
+- The FVS_InvReference upgrade in `DBSREFERENCE` adds `LocationCode` but not `SDIType`, so an older table without `SDIType` would fail on insert (about 70 percent; not run).
+- Table upgrades exist only for `SCuFt` (tree list, cut list, ATRTList), FVS_Compute variables and `LocationCode`. No other column added in later releases is added to an existing table.
+
+Existing Chapter 11 text to review.
+- The UUID Generation section says the routine guarantees uniqueness; `UUIDGEN` produces a version 4 UUID from pseudo-random numbers, which makes a repeat improbable but is not a guarantee.
+- The keyword example near the end of the chapter still lists FVS_DM_TreeList.
+- The Input Workflow section lists `%FVSCase%` among the substitutions; see the `KODE` concern above.

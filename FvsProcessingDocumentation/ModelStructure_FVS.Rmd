@@ -5320,6 +5320,42 @@ DBSTREESIN maps SQL column names to FVS tree attributes using a SELECT CASE stru
 
 Only two pairs of names are treated as aliases: DBH and DIAMETER, and HABITAT and PV_CODE.
 
+### Column Matching, Data Types, and Keyword Order
+
+**Column matching.** Column names in a query result are matched to FVS variables by name. The match does not depend on case (the C interface converts column names to upper case) or on the order of the columns. A column that FVS does not recognize is ignored. The Database Extension user's guide (Crookston and others, in the reference list) notes that numeric columns that FVS does not recognize can be made available to the Event Monitor; the example is in section 6.6 of the guide.
+
+**Data types.** The type of the value stored in the database does not have to match the type of the FVS variable. Each value is converted by one of four C functions in `fvsqlite3.c`, chosen by the type of the FVS variable. When the stored value is NULL, a blank string, or cannot be converted, the function returns the default supplied by the calling routine.
+
+```{r db-type-conversion, echo=FALSE}
+db_type_conversion <- tibble::tribble(
+  ~FVS_Variable, ~Stored_Value, ~Result,
+  "Integer", "Integer", "The value",
+  "Integer", "Real", "The value with the decimal part dropped (truncated)",
+  "Integer", "Text", "The leading integer of the string; the default if the string does not begin with an integer",
+  "Integer", "NULL or blob", "The default",
+  "Real", "Integer", "The value converted to a real number",
+  "Real", "Real", "The value",
+  "Real", "Text", "The leading number of the string; the default if the string does not begin with a number",
+  "Real", "NULL or blob", "The default",
+  "Character", "Integer", "The digits of the value",
+  "Character", "Real", "The value written with six decimal places",
+  "Character", "Text", "The string; the default if the string is empty",
+  "Character", "NULL or blob", "The default"
+)
+
+kable(db_type_conversion,
+      col.names = c("FVS Variable", "Stored Value", "Result"),
+      caption = "Conversion of stored values to FVS variables",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
+
+The guide states that a number with a decimal part cannot be coded for an integer variable. The code does not reject such a value; it drops the decimal part. The differences between the guide and the code are listed in `OpenQuestions.md`.
+
+**Keyword order.** FVS keywords and the database queries are processed in the order they appear in the keyword file. A value set by a keyword record placed before a query acts as a default, and the value from the database replaces it when the query returns one. A keyword record placed after a query replaces the value from the database.
+
 ## Database Output Processing
 
 ### Output Workflow
@@ -5462,6 +5498,126 @@ Individual tree records at end of each cycle. The table has 35 columns:
 - **ActPt** (INT): Actual point (plot) number from the input data
 - **Ht2TDCF**, **Ht2TDBF** (REAL): Height to the cubic and board foot top diameters
 - **TreeAge** (REAL): Tree age
+
+## Case Management and Run-Time Behavior
+
+### Cases and the FVS_Cases Table
+
+Every output table has a **CaseID** column that links its rows to one row of **FVS_Cases**. A case is one projection of one stand. The case is created by **DBSCASE** the first time an output routine needs it, and the same CaseID is used for all tables written for that stand until the next stand is started.
+
+1. **DBSINIT**, called from **INITRE** at the start of each stand, clears CaseID, so the first output routine to run creates a new case. The DSNOUT keyword record also clears CaseID.
+2. **DBSCASE** (called with the argument 0) tests the output switches. When none is on, it returns without creating a case. The routines **DBSERROR**, **DBSREFERENCE** and the `%FVSCase%` substitution call it with the argument 1, which creates the case without testing the switches.
+3. If the output database connection is not open, **DBSOPEN** opens it. A failure to open turns off all output switches.
+4. If FVS_Cases does not exist it is created, with CaseID as the primary key.
+5. **UUIDGEN** generates the CaseID, a 36 character version 4 UUID built from pseudo-random numbers.
+6. One row is inserted into FVS_Cases.
+7. When the PROCESS keyword record is read, **INITRE** calls **DBSCASE** with the argument 2, which updates SamplingWt, Groups and StandID in the existing row. This picks up values set by keyword records after the case row was created.
+
+```{r db-cases-columns, echo=FALSE}
+db_cases_columns <- tibble::tribble(
+  ~Column, ~Value, ~Source,
+  "CaseID", "A version 4 UUID", "UUIDGEN",
+  "Stand_CN", "The stand control number", "The STANDCN keyword record; otherwise the Stand_CN column of the stand query",
+  "StandID", "The stand identifier", "The first field of the STDIDENT keyword record",
+  "MgmtID", "The management identifier", "The MGMTID keyword record",
+  "RunTitle", "The run title", "The text after the stand identifier on the STDIDENT keyword record",
+  "KeywordFile", "The name of the keyword file", "The file name given to FVS when the run was started",
+  "SamplingWt", "The stand sampling weight", "The DESIGN keyword record (field 6) or the stand query",
+  "Variant", "The two character variant code", "The variant being run",
+  "Version", "The FVS version", "The FVSVERSION module",
+  "RV", "The revision date of the variant", "REVISE",
+  "Groups", "The list of stand groups", "SLSET, the set of group labels to which the stand belongs",
+  "RunDateTime", "The date and time the case was created", "GRDTIM"
+)
+
+kable(db_cases_columns,
+      col.names = c("Column", "Value", "Source"),
+      caption = "Source of the values in the FVS_Cases table",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
+
+Single quotes are removed from the stand identifier, management identifier, title, stand control number, group list and keyword file name before the row is inserted. The code intends to remove a trailing `.key` extension from the keyword file name, but see `OpenQuestions.md` for the argument order in that test.
+
+### Event Monitor Interaction
+
+The **SQLIN** and **SQLOUT** keyword records run an SQL statement on the input and output database connections. Field 1 determines when the statement runs:
+
+1. When field 1 is blank, the statement is run when the keyword record is read.
+2. When field 1 has a year or cycle, the statement becomes an activity (activity code 101 for SQLIN and 102 for SQLOUT) and is run by **DBSEVM**, which is called from the Event Monitor routine **EVTSTV** where the activities scheduled for the cycle are processed. A scheduled statement can be placed inside an IF-THEN block like any other activity. **DBSEVM** opens the connection if it is not yet open.
+3. A scheduled statement is marked done only if it ran without a parsing or preparation error.
+
+Before a statement is run, **DBSPRSSQL** replaces each item enclosed in percent signs with a value.
+
+```{r db-tokens, echo=FALSE}
+db_tokens <- tibble::tribble(
+  ~Token, ~Available, ~Replaced_With, ~When_No_Value,
+  "%StandID%", "Always", "The stand identifier", "NULL",
+  "%MgmtID%", "Always", "The management identifier", "NULL",
+  "%Stand_CN%", "Always", "The stand control number", "NULL",
+  "%Variant%", "Always", "The two character variant code", "Always has a value",
+  "%FVSCase%", "Always", "The CaseID, preceded by one blank; the case is created if it does not exist", "Always has a value",
+  "%name%", "Scheduled statements only", "The current value of the Event Monitor variable or COMPUTE variable called name", "NULL"
+)
+
+kable(db_tokens,
+      col.names = c("Token", "Available", "Replaced With", "When No Value"),
+      caption = "Substitutions made in SQLIN, SQLOUT, STANDSQL and TREESQL statements",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
+
+Token names are not case sensitive. The substituted text is not quoted, so a token that stands for text is coded inside quotes in the statement. An Event Monitor value is written as an integer when it has no decimal part, and otherwise in E14.7 format. Event Monitor functions such as SPMCDBH are not substituted. In a statement that is run when read (and in STANDSQL and TREESQL statements) a token other than the first five is an error; the message is written to the main output file, the run return code is set, and the statement is not run.
+
+When a statement returns a result table, **DBSEXECSQL** compares the first eight characters of each column name with the names of the Event Monitor variables. A matching variable is set from the column value, and when the table has several rows the value in the last row remains. A NULL value sets the variable to zero and marks it as undefined. The statement should be coded after the variable is defined (by a COMPUTE keyword record, a logical expression, or a PARMS field), as the guide describes in section 5.0.
+
+### Stop and Restart
+
+The database state is part of the data saved at a stop point.
+
+1. **DBSPPPUT** writes 57 integer values: the output switches (for example the summary, tree list, cut list, compute, and the extension report switches), a flag for each of the input and output connections that is open, and the lengths of the input database name, the output database name and the keyword file name.
+2. **DBSCHPUT** writes the input database name, the output database name, the keyword file name and the 36 characters of the CaseID, and then closes both connections.
+3. **DBSPPGET** and **DBSCHGET** read these values back at restart. The connections that were open at the stop are opened again, so tables written after the restart go to the same database under the same CaseID.
+
+### Upgrading Existing Databases
+
+Output tables are created when they do not exist. When a table already exists, the routines add the columns that older versions of FVS did not write, by the SQL statement `ALTER TABLE ... ADD COLUMN` in **fsql3_addcolifabsent**:
+
+1. **DBSTRLS**, **DBSCUTS** and **DBSATRTLS** add `SCuFt` (real) to the tree list, cut list and after-treatment tree list tables.
+2. **DBSCMPU** adds a real column to FVS_Compute for each COMPUTE variable that the table does not yet contain.
+3. **DBSREFERENCE** adds `LocationCode` (integer) to FVS_InvReference.
+
+### The FVS_Error Table
+
+**ERRGRO**, the FVS error and warning processor, calls **DBSERROR** with the stand identifier and the message text. **DBSERROR** creates the case if necessary, creates the table FVS_Error (CaseID, StandID and Message) if it does not exist, and inserts one row for the message.
+
+### Relationships among Tables
+
+```{r db-relationships, echo=FALSE}
+db_relationships <- tibble::tribble(
+  ~Table, ~Key_Column, ~Relationship,
+  "FVS_Cases", "CaseID", "Primary key; one row for each case",
+  "Each of the other 44 output tables", "CaseID", "Matches FVS_Cases.CaseID",
+  "Each output table except FVS_EconHarvestValue", "StandID", "Matches FVS_Cases.StandID",
+  "FVS_Cases", "Stand_CN", "Holds the stand control number of the input record",
+  "FVS_StandInit or FVS_PlotInit", "Stand_ID", "Matches FVS_TreeInit.Stand_ID",
+  "FVS_TreeInit", "Stand_ID", "Matches FVS_StandInit.Stand_ID or FVS_PlotInit.Stand_ID"
+)
+
+kable(db_relationships,
+      col.names = c("Table", "Key Column", "Relationship"),
+      caption = "Columns that relate the input and output tables",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
+
+The user's guide (appendix 1) assigns each output table to a level: run (FVS_Cases), stand, tree, species, or height class. The levels determine which tables the FVS user interface allows to be combined in an output view. Appendix C lists the columns of each table.
 
 ## Practical Applications
 
