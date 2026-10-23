@@ -140,3 +140,12 @@ Documentation items not yet done:
 - The repository `CLAUDE.md` mentions `tests/test.py`, which was deleted (a new `tests/check_test_results_US.sh` exists).
 - Appendix A: the "FVS/FIRE/COMMON" row should be `fire/base/common`.
 - `tools/check_doc_names.py`: planned improvements (record PARAMETER values, parse free-form `.f90` routines, record SQLite CREATE TABLE columns); `baseline.json` still describes the pre-sync tree and should be regenerated with `--update-baseline` after these edits are committed.
+
+## Chapter 11 Complete List of FVS Database Output Tables (rebuilt as one row per table)
+Rebuilt as a `tribble()` with 45 rows, one per table created by a `CREATE TABLE` statement in `dbsqlite/` and `vdbsqlite/`. Control variables come from the first test in each writing routine; keywords come from the `dbsin.f` option blocks (and `fire/base/fmin.f` for CANFPROF).
+- `FVS_DM_TreeList` was removed from the list: it appears only in the table comment of `dbsqlite/dbsinit.f` and in `metric/dbsqlite/dbsmis.f`; the production `dbsmis.f` creates only `FVS_DM_Spp_Sum`, `FVS_DM_Stnd_Sum` and `FVS_DM_Sz_Sum`. MISRPTS still sets `IDM5` and `IDM6`, which no production routine tests.
+- The comment table in `dbsqlite/dbsinit.f` also lists `FVS_Summary_East` and `FVS_Summary2_East`, which no code creates. It omits `FVS_InvReference`, `FVS_Error` and the four FVS_FIAVBC tables.
+- `DBSREFERENCE` calls `DBSCASE(1)`, which forces a case row, and `FVS` calls `DBSREFERENCE` for every stand. Read from the code, not run: a run without any database keyword may therefore still create a case row and `FVS_InvReference` in the output database (about 70 percent likely).
+- `FVS_Regen_Tally` is created with one of two column layouts in `dbstally.f` (14 or 15 columns, chosen by `PRBSTK > 1`), under the same table name.
+- Existing text not changed: "metric table names end in `_Metric`" (Chapter 11, metric units) is not supported by the code, which contains no `_Metric` table names.
+- Audit of the other Chapter 11 tables (not changed): the column mapping table puts three parallel names in one cell in the rows `DAMAGE1, DAMAGE2, DAMAGE3` / `DMG1, DMG2, DMG3` and `SEVERITY1, SEVERITY2, SEVERITY3` / `SVR1, SVR2, SVR3`, and the alias pair `HABITAT, PV_CODE`; the `DECAYCD` description now holds two sentences. The FVS_Summary, FVS_Summary2 and FVS_TreeList column descriptions are bulleted lists that group several columns per bullet (for example `TCuFt`, `MCuFt`, `SCuFt`, `BdFt`).

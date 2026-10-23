@@ -5140,106 +5140,68 @@ Each output table has a dedicated Fortran file:
 
 ### Complete Table List
 
-The database extension supports 50+ output tables across all FVS components:
+The database extension writes the following 45 tables. Each row describes one table. The Keyword and Control Variable columns give the keyword record that requests the table and the variable in the DBSCOM labeled COMMON block that the writing routine tests; a variable is set by the keyword record named in the same row.
 
 ```{r db-all-tables, echo=FALSE}
-db_all_tables <- data.frame(
-  Table_Name = c(
-    "FVS_Cases",
-    "FVS_Summary / FVS_Summary2",
-    "FVS_Compute",
-    "FVS_TreeList",
-    "FVS_CutList",
-    "FVS_ATRTList",
-    "FVS_CalibStats",
-    "FVS_Climate",
-    "FVS_StrClass",
-    "FVS_Stats_Species / FVS_Stats_Stand",
-    "FVS_Fuels",
-    "FVS_PotFire / FVS_PotFire_East / FVS_PotFire_Cond",
-    "FVS_Consumption",
-    "FVS_BurnReport",
-    "FVS_Mortality",
-    "FVS_SnagSum / FVS_SnagDet",
-    "FVS_Carbon / FVS_Hrv_Carbon",
-    "FVS_Down_Wood_Vol / FVS_Down_Wood_Cov",
-    "FVS_CanProfile",
-    "FVS_EconSummary / FVS_EconHarvestValue",
-    "FVS_DM_Spp_Sum / FVS_DM_Stnd_Sum / FVS_DM_Sz_Sum / FVS_DM_TreeList",
-    "FVS_RD_Sum / FVS_RD_Det / FVS_RD_Beetle",
-    "FVS_Regen_Sprouts / FVS_Regen_SitePrep / FVS_Regen_HabType / FVS_Regen_Tally / FVS_Regen_Ingrow",
-    "FVS_InvReference",
-    "FVS_FIAVBC_Summary / FVS_FIAVBC_TreeList / FVS_FIAVBC_CutList / FVS_FIAVBC_ATRTList",
-    "FVS_Error"
-  ),
-  Subroutine = c(
-    "dbscase",
-    "dbssumry",
-    "dbscmpu",
-    "dbstrls",
-    "dbscuts",
-    "dbsatrtls",
-    "dbscalib",
-    "dbsclsum",
-    "dbsstrclass",
-    "dbsstats",
-    "dbsfuels",
-    "dbsfmpf / dbsfmpfc",
-    "dbsfmfuel",
-    "dbsfmburn",
-    "dbsfmmort",
-    "dbsfmssnag / dbsfmdsnag",
-    "dbsfmcrpt / dbsfmhrpt",
-    "dbsfmdwvol / dbsfmdwcov",
-    "dbsfmcanpr",
-    "dbsecsum / dbsecharv",
-    "dbsmis",
-    "dbsrd",
-    "dbssprt / dbssiteprep / dbsplothab / dbstally / dbsingrow",
-    "dbsreference",
-    "dbscarbbiosumry / dbs_fiavbc_trls / dbs_fiavbc_cutlst / dbs_fiavbc_atrtls",
-    "dbserror"
-  ),
-  Control_Var = c(
-    "CASEID",
-    "ISUMARY",
-    "ICOMPUTE",
-    "ITREELIST",
-    "ICUTLIST",
-    "IATRTLIST",
-    "ICALIB",
-    "ICLIM",
-    "ISTRCLAS",
-    "ISTATS1 / ISTATS2",
-    "IFUELS",
-    "IPOTFIRE / IPOTFIREC",
-    "IFUELC",
-    "IBURN",
-    "IMORTF",
-    "ISSUM / ISDET",
-    "ICMRPT / ICHRPT",
-    "IDWDVOL / IDWDCOV",
-    "ICANPR",
-    "IDBSECON",
-    "IDM1 / IDM2 / IDM3 / IDM5 / IDM6",
-    "IRD1 / IRD2 / IRD3",
-    "IREG1 / IREG2 / IREG3 / IREG4 / IREG5",
-    "(written automatically for each stand)",
-    "IVBCSUM / IVBCTRELST / IVBCCUTLST / IVBCATRLST",
-    "(written automatically when a message is issued)"
-  ),
-  stringsAsFactors = FALSE
+db_all_tables <- tibble::tribble(
+  ~Table, ~Extension, ~Source_File, ~Subroutine, ~Keyword, ~Control_Variable, ~Note,
+  "FVS_Cases", "Base", "dbsqlite/dbscase.f", "DBSCASE", "(none)", "(none)", "Written when any database output is requested, or when an output routine forces it (DBSCASE with IFORSURE = 1)",
+  "FVS_Summary", "Base", "vdbsqlite/dbssumry.f", "DBSSUMRY", "SUMMARY", "ISUMARY = 1", "Written from SUMOUT; SUMMARY field 1 blank or 1",
+  "FVS_Summary2", "Base", "vdbsqlite/dbssumry.f", "DBSSUMRY2", "SUMMARY", "ISUMARY = 2", "Written from DISPLY; SUMMARY field 1 is 2",
+  "FVS_Compute", "Base", "dbsqlite/dbscmpu.f", "DBSCMPU", "COMPUTDB", "ICOMPUTE > 0", "Written from OPLIST; also requires user-defined event monitor variables (ITST5 > 0)",
+  "FVS_TreeList", "Base", "dbsqlite/dbstrls.f", "DBSTRLS", "TREELIDB", "ITREELIST > 0", "Written from PRTRLS",
+  "FVS_CutList", "Base", "dbsqlite/dbscuts.f", "DBSCUTS", "CUTLIDB", "ICUTLIST > 0", "Written from PRTRLS",
+  "FVS_ATRTList", "Base", "dbsqlite/dbsatrtls.f", "DBSATRTLS", "ATRTLIDB", "IATRTLIST > 0", "Written from PRTRLS",
+  "FVS_CalibStats", "Base", "dbsqlite/dbscalib.f", "DBSCALIB", "CALBSTDB", "ICALIB > 0", "",
+  "FVS_StrClass", "Base", "dbsqlite/dbsstrclass.f", "DBSSTRCLASS", "STRCLSDB", "ISTRCLAS > 0", "",
+  "FVS_Stats_Species", "Base", "dbsqlite/dbsstats.f", "DBSSTATS", "INVSTATS", "ISTATS1 = 1", "INVSTATS sets ISTATS1 and ISTATS2; DBSSTATS tests ISTATS1",
+  "FVS_Stats_Stand", "Base", "dbsqlite/dbsstats.f", "DBSSTATS", "INVSTATS", "ISTATS1 = 1", "INVSTATS sets ISTATS1 and ISTATS2; DBSSTATS tests ISTATS1",
+  "FVS_InvReference", "Base", "vdbsqlite/dbsreference.f", "DBSREFERENCE", "(none)", "(none)", "Written for every stand; DBSREFERENCE is called from FVS",
+  "FVS_Error", "Base", "dbsqlite/dbserror.f", "DBSERROR", "(none)", "(none)", "Written from ERRGRO when a warning or error message is issued",
+  "FVS_Climate", "Climate", "dbsqlite/dbsclsum.f", "DBSCLSUM", "CLIMREDB", "ICLIM > 0", "",
+  "FVS_Fuels", "Fire and Fuels", "dbsqlite/dbsfuels.f", "DBSFUELS", "FUELSOUT", "IFUELS > 0", "",
+  "FVS_PotFire", "Fire and Fuels", "vdbsqlite/dbsfmpf.f", "DBSFMPF", "POTFIRDB", "IPOTFIRE > 0", "Used by all variants except SN and CS",
+  "FVS_PotFire_East", "Fire and Fuels", "vdbsqlite/dbsfmpf.f", "DBSFMPF", "POTFIRDB", "IPOTFIRE > 0", "Used by the SN and CS variants",
+  "FVS_PotFire_Cond", "Fire and Fuels", "vdbsqlite/dbsfmpfc.f", "DBSFMPFC", "POTFIRDB", "IPOTFIREC > 0", "POTFIRDB sets IPOTFIRE and IPOTFIREC",
+  "FVS_Consumption", "Fire and Fuels", "dbsqlite/dbsfmfuel.f", "DBSFMFUEL", "FUELREDB", "IFUELC > 0", "",
+  "FVS_BurnReport", "Fire and Fuels", "dbsqlite/dbsfmburn.f", "DBSFMBURN", "BURNREDB", "IBURN > 0", "",
+  "FVS_Mortality", "Fire and Fuels", "dbsqlite/dbsfmmort.f", "DBSFMMORT", "MORTREDB", "IMORTF > 0", "",
+  "FVS_SnagSum", "Fire and Fuels", "dbsqlite/dbsfmssnag.f", "DBSFMSSNAG", "SNAGSUDB", "ISSUM > 0", "",
+  "FVS_SnagDet", "Fire and Fuels", "dbsqlite/dbsfmdsnag.f", "DBSFMDSNAG", "SNAGOUDB", "ISDET > 0", "",
+  "FVS_Carbon", "Fire and Fuels", "dbsqlite/dbsfmcrpt.f", "DBSFMCRPT", "CARBREDB", "ICMRPT > 0", "CARBREDB sets ICMRPT and ICHRPT",
+  "FVS_Hrv_Carbon", "Fire and Fuels", "dbsqlite/dbsfmhrpt.f", "DBSFMHRPT", "CARBREDB", "ICHRPT > 0", "CARBREDB sets ICMRPT and ICHRPT",
+  "FVS_Down_Wood_Vol", "Fire and Fuels", "dbsqlite/dbsfmdwvol.f", "DBSFMDWVOL", "DWDVLDB", "IDWDVOL > 0", "",
+  "FVS_Down_Wood_Cov", "Fire and Fuels", "dbsqlite/dbsfmdwcov.f", "DBSFMDWCOV", "DWDCVDB", "IDWDCOV > 0", "",
+  "FVS_CanProfile", "Fire and Fuels", "dbsqlite/dbsfmcanpr.f", "DBSFMCANPR", "CANFPROF (fire extension keyword)", "ICANPR > 0", "ICANPR is set to 1 by the CANFPROF keyword record",
+  "FVS_EconSummary", "Economics", "dbsqlite/dbsecsum.f", "DBSECSUM", "ECONRPTS", "IDBSECON > 0", "",
+  "FVS_EconHarvestValue", "Economics", "dbsqlite/dbsecharv.f", "DBSECHARV_OPEN", "ECONRPTS", "IDBSECON = 2", "ECONRPTS field 1 equal to 1 sets IDBSECON to 1 and omits this table",
+  "FVS_DM_Spp_Sum", "Dwarf Mistletoe", "dbsqlite/dbsmis.f", "DBSMIS1", "MISRPTS", "IDM1 > 0", "MISRPTS sets IDM1, IDM2, IDM3, IDM5 and IDM6",
+  "FVS_DM_Stnd_Sum", "Dwarf Mistletoe", "dbsqlite/dbsmis.f", "DBSMIS2", "MISRPTS", "IDM2 > 0", "MISRPTS sets IDM1, IDM2, IDM3, IDM5 and IDM6",
+  "FVS_DM_Sz_Sum", "Dwarf Mistletoe", "dbsqlite/dbsmis.f", "DBSMIS3", "MISRPTS", "IDM3 > 0", "MISRPTS sets IDM1, IDM2, IDM3, IDM5 and IDM6",
+  "FVS_RD_Sum", "Root Disease", "dbsqlite/dbsrd.f", "DBSRD1", "RDSUM", "IRD1 > 0", "",
+  "FVS_RD_Det", "Root Disease", "dbsqlite/dbsrd.f", "DBSRD2", "RDDETAIL", "IRD2 > 0", "",
+  "FVS_RD_Beetle", "Root Disease", "dbsqlite/dbsrd.f", "DBSRD3", "RDBBMORT", "IRD3 > 0", "",
+  "FVS_Regen_Sprouts", "Regeneration", "dbsqlite/dbssprt.f", "DBSSPRT", "REGREPTS", "IREG1 = 1", "REGREPTS sets IREG1 through IREG5",
+  "FVS_Regen_SitePrep", "Regeneration", "dbsqlite/dbssiteprep.f", "DBSSITEPREP", "REGREPTS", "IREG2 = 1", "REGREPTS sets IREG1 through IREG5",
+  "FVS_Regen_HabType", "Regeneration", "dbsqlite/dbsplothab.f", "DBSPLOTHAB", "REGREPTS", "IREG3 = 1", "REGREPTS sets IREG1 through IREG5",
+  "FVS_Regen_Tally", "Regeneration", "dbsqlite/dbstally.f", "DBSTALLY", "REGREPTS", "IREG4 = 1", "REGREPTS sets IREG1 through IREG5",
+  "FVS_Regen_Ingrow", "Regeneration", "dbsqlite/dbsingrow.f", "DBSINGROW", "REGREPTS", "IREG5 = 1", "REGREPTS sets IREG1 through IREG5",
+  "FVS_FIAVBC_Summary", "FIA Volume and Biomass", "vdbsqlite/dbscarbbiosumry.f", "DBSCARBBIOSUMRY", "VBCSUMDB", "IVBCSUM > 0", "Requires the FIAVBC keyword",
+  "FVS_FIAVBC_TreeList", "FIA Volume and Biomass", "dbsqlite/dbs_fiavbc_trls.f", "DBS_FIAVBC_TRLS", "VBCTRLDB", "IVBCTRELST > 0", "Requires the FIAVBC keyword",
+  "FVS_FIAVBC_CutList", "FIA Volume and Biomass", "dbsqlite/dbs_fiavbc_cutlst.f", "DBS_FIAVBC_CUTLST", "VBCCUTDB", "IVBCCUTLST > 0", "Requires the FIAVBC keyword",
+  "FVS_FIAVBC_ATRTList", "FIA Volume and Biomass", "dbsqlite/dbs_fiavbc_atrtls.f", "DBS_FIAVBC_ATRTLS", "VBCATRDB", "IVBCATRLST > 0", "Requires the FIAVBC keyword"
 )
 
 kable(db_all_tables,
-      col.names = c("Table Name(s)", "Subroutine", "Control Variable"),
+      col.names = c("Table", "Extension", "Source File", "Subroutine",
+                    "Keyword", "Control Variable", "Note"),
       caption = "Complete List of FVS Database Output Tables",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
-                full_width = FALSE, font_size = 10) %>%
-  column_spec(1, bold = TRUE, width = "22em") %>%
-  column_spec(2, width = "18em") %>%
-  column_spec(3, width = "18em")
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "14em") %>%
+  column_spec(3, width = "14em") %>%
+  column_spec(7, width = "22em")
 ```
 
 ### C Interface Functions
@@ -5335,13 +5297,18 @@ DBSTREESIN maps SQL column names to FVS tree attributes using a SELECT CASE stru
 | HTG | HTG | REAL | Height growth or previous height, depending on the stand growth measurement settings |
 | HTTOPK | HTTOPK | REAL | Height to top kill (feet); used only with damage code 96 or 97 |
 | CRRATIO | CRWNR | INTEGER | Values 1 to 9 are read as a crown ratio code; values 10 to 99 are percent live crown |
-| DAMAGE1, DAMAGE2, DAMAGE3 | DMG1, DMG2, DMG3 | INTEGER | Damage codes 1 to 3 |
-| SEVERITY1, SEVERITY2, SEVERITY3 | SVR1, SVR2, SVR3 | INTEGER | Severity codes 1 to 3 |
+| DAMAGE1 | DMG1 | INTEGER | Damage code 1 |
+| DAMAGE2 | DMG2 | INTEGER | Damage code 2 |
+| DAMAGE3 | DMG3 | INTEGER | Damage code 3 |
+| SEVERITY1 | SVR1 | INTEGER | Severity code 1 |
+| SEVERITY2 | SVR2 | INTEGER | Severity code 2 |
+| SEVERITY3 | SVR3 | INTEGER | Severity code 3 |
 | TREEVALUE | TREEVAL | INTEGER | Tree value class: 1 desirable, 2 acceptable, 8 non-stockable, any other value a live cull (set to 7 or 9 for records with history codes 6 to 9) |
 | PRESCRIPTION | PRESCRIPT | INTEGER | Prescription code used only with the THINPRSC keyword record; values of 1 or less are leave trees |
 | SLOPE | SLOPE | INTEGER | Slope for the plot |
 | ASPECT | ASPECT | INTEGER | Aspect for the plot |
-| HABITAT, PV_CODE | HABITAT | INTEGER | Habitat type or plant association code |
+| HABITAT | HABITAT | INTEGER | Habitat type or plant association code |
+| PV_CODE | HABITAT | INTEGER | Alias of HABITAT |
 | TOPOCODE | TOPOCODE | INTEGER | Topography code: 1 bottom, 2 lower, 3 mid slope, 4 upper slope, 5 ridge top |
 | SITEPREP | SITEPREP | INTEGER | Site preparation code: 1 none, 2 mechanical, 3 burn, 4 road cuts, fills, or stockable road beds |
 | AGE | ABIRTH | REAL | Age of the tree record (used only when not null) |
