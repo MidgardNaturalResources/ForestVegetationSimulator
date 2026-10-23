@@ -122,3 +122,21 @@ Open:
 - Code comment conflict: `svsnage.f` says snags under 1 inch are removed in SVOUT; SVOUT keeps them and drops a snag only when its height reaches 0.
 - In `fmsvout.f` the blocks that subtract fallen-snag volume from the CWD pools are disabled (`if (i.lt.0)`); the SVCWD header still describes a subtraction of fallen snag volumes.
 - Not added to the text: `YHFHTH`, `YHFHTS`, `HRATE` defaults in `svinit.f` are used only to back-date heights of snags in the initial treelist and the code comment says they are not valid for most other variants.
+
+## Upstream sync of October 2026 (merge f05b028): code concerns and open items
+Documentation updated for this sync: MAXTRE for OC and OP (3000), FVS_Summary2 columns, event monitor variables BGMD, AGMD and LOCCODE, REVISE, MAIN and the `--version` / `--build-info` options, `fvsGetVersion` and `fvsGetBuildInfo`, the `bin/` description, and the INTREE decay code rule.
+Correction to the sync report: the five new columns (`ZeideSDI`, `ReinekeSDI`, `SDIMax`, `RDSDI`, `GMD`) were added to FVS_Summary2 (DBSSUMRY2), not FVS_Summary.
+
+Code concerns (for the code maintainers; not changed here):
+- `MAXTRE` is now 3000 in OC and OP, but the ORGANON arrays are still dimensioned 2000 (`organon/execute2.f`, `organon/crngrow.f`, `ITEM(2000)` in `oc/cratet.f` and `op/cratet.f`, and `DO I = 1, 2000` loops in `oc/dgdriv.f`). A stand with more than 2000 tree records could overrun them (about 70 percent likely to be a real risk; no guard was found).
+- `base/apisubs.f` maps `agmd` to 237, the same code as `rfolcrb`; ALGKEY and EVTSTV use 238 for AGMD (about 90 percent a bug).
+- `vdbsqlite/dbssumry.f` (DBSSUMRY2): in the after-treatment row, `RDSDI` is `REAL(IOSDI)/BTSDIX`, the before-thinning maximum SDI, while `SDIMax` in that row uses `ATSDIX` (about 65 percent unintended). The Rmd text describes RDSDI only as SDI divided by the maximum SDI.
+- `vbase/revise.f` says it returns the build date but returns the date of the last git commit (`FVSVER_DATE`, from `git log -1`).
+
+Documentation items not yet done:
+- `FVS_InvReference` gained `LocationCode` and `SDIType` columns; the table is not described in the Rmd.
+- FIA merchantability defaults moved into INITRE (`MRCHLMTS`, `SETCUBICDFLTS`, with the FIAVBC keyword no longer setting them); not described in the Rmd.
+- `MAXTRE_IMPACT_ANALYSIS.md`: only the current-status lines were updated; the analysis and recommendations still assume OC/OP at 2000 and HI at 5000.
+- The repository `CLAUDE.md` mentions `tests/test.py`, which was deleted (a new `tests/check_test_results_US.sh` exists).
+- Appendix A: the "FVS/FIRE/COMMON" row should be `fire/base/common`.
+- `tools/check_doc_names.py`: planned improvements (record PARAMETER values, parse free-form `.f90` routines, record SQLite CREATE TABLE columns); `baseline.json` still describes the pre-sync tree and should be regenerated with `--update-baseline` after these edits are committed.

@@ -2,16 +2,16 @@
  {
   "id": "maxtre-oc",
   "type": "regex_in_file",
-  "doc": "Chapter 9: MAXTRE is 2000 in OC",
+  "doc": "Chapter 9: MAXTRE is 3000 in OC",
   "file": "oc/common/PRGPRM.F77",
-  "regex": "PARAMETER\\s*\\(\\s*MAXTRE\\s*=\\s*2000\\s*\\)"
+  "regex": "PARAMETER\\s*\\(\\s*MAXTRE\\s*=\\s*3000\\s*\\)"
  },
  {
   "id": "maxtre-op",
   "type": "regex_in_file",
-  "doc": "Chapter 9: MAXTRE is 2000 in OP",
+  "doc": "Chapter 9: MAXTRE is 3000 in OP",
   "file": "op/common/PRGPRM.F77",
-  "regex": "PARAMETER\\s*\\(\\s*MAXTRE\\s*=\\s*2000\\s*\\)"
+  "regex": "PARAMETER\\s*\\(\\s*MAXTRE\\s*=\\s*3000\\s*\\)"
  },
  {
   "id": "maxtre-pn",

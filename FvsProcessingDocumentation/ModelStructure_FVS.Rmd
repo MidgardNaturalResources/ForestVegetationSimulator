@@ -1080,7 +1080,7 @@ C----------
 
 ## The Main FVS Routine
 
-The main routine for the FVS model is appropriately called PROGRAM MAIN.  MAIN calls subroutine fvsSetCmdLine (the source code for this subroutine is part of the source code of subroutine CMDLINE) to retrieve any options that may, optionally, have been specified in the command that starts FVS (those may include the name of the keyword record file, the name of the restart file, or parameters that control stopping points (see [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)).  PROGRAM MAIN is very short and most programmers can ignore it. It calls one major subroutine, named FVS, which orchestrates all other subroutines, and it contains the only STOP statement in the program. In short, subroutine FVS contains what was once the MAIN program. This top-level organization was introduced in about 2010 to support the use of FVS as a shared library that is called by other upper-level programs (see [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)).
+The main routine for the FVS model is appropriately called PROGRAM MAIN (source file base/main.f90). MAIN first checks whether the first command line argument is --version or --build-info. If it is, MAIN writes the version string (--version) or the build information (--build-info), taken from the FVSVERSION module in base/version.f90 (version, organization, remote, branch, commit hash, and commit date, set by the makefile when the program is built), and stops before any simulation is initialized; no keyword file is needed. Otherwise MAIN calls subroutine fvsSetCmdLine (the source code for this subroutine is part of the source code of subroutine CMDLINE) to retrieve any options that may, optionally, have been specified in the command that starts FVS (those may include the name of the keyword record file, the name of the restart file, or parameters that control stopping points (see [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)).  PROGRAM MAIN is very short and most programmers can ignore it. It calls one major subroutine, named FVS, which orchestrates all other subroutines, and it contains the only STOP statement in the program. In short, subroutine FVS contains what was once the MAIN program. This top-level organization was introduced in about 2010 to support the use of FVS as a shared library that is called by other upper-level programs (see [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)).
 
 As part of its projection initialization phase, subroutine FVS calls subroutines to perform the following tasks:
 
@@ -1995,7 +1995,7 @@ If some, or all, of the stand initialization parameters or individual tree data 
 
 Various other subroutines serve minor, but either necessary or nice, roles in this process.
 
-Subroutine REVISE is used to retrieve the variants last revision date. This is used, along with the 2-character unique alpha variant code, to label FVS output files.
+Subroutine REVISE is used to retrieve the date (YYYYMMDD) of the last git commit at the time the program was built, which is stored in the FVSVERSION module (source file base/version.f90); the value is “unknown” if the build could not read it from git. REVISE formerly returned a revision date stored for each variant. This date is used, along with the 2-character unique alpha variant code, to label FVS output files.
 
 Subroutine UNBLNK is used to remove blanks from a character string, leaving the nonblank contents of the string left justified in the string and the rest of the string blank. It also returns the length of the nonblank portion of the string.
 
@@ -2761,7 +2761,7 @@ regen_arrays <- data.frame(
   ),
   Description = c(
     "Index of the first dead tree record; dead records are stored from IREC2 to MAXTRE (MAXTP1 if none)",
-    "Maximum tree records (3000 in most variants, 2000 in the ORGANON variants, 6000 in HI)",
+    "Maximum tree records (3000 in all variants except HI, which has 6000)",
     "MAXTRE + 1",
     "Flag to select new sample trees after regen",
     "Best tree designation by species (1=present)",
@@ -3588,7 +3588,7 @@ OPGET, an entry point in subroutine OPFIND, is used to retrieve any RESETAGE, FV
 
 Subroutine OPSORT is used to sort activities by projection cycles for printing in the activity summary table.
 
-Subroutine REVISE is called to retrieve the variant’s revision date for labeling output tables.
+Subroutine REVISE is called to retrieve the date of the last git commit at the time of the build, for labeling output tables.
 
 Subroutine SDICAL is called to compute the end-of-cycle SDI maximum.
 
@@ -3981,7 +3981,7 @@ Key rules in the evaluation process include the concept of a variable being defi
 
 A frequent programming task is to add new functions to FVS (see [Steps in adding a new event monitor function to FVS](#sec-steps-in-adding-a-new-event-monitor-function-to-fvs)). The name and operations code is added to subroutine ALGKEY (see the comments in that code and follow the establish patterns). They are evaluated in subroutine ALGEVL; read that code to see how the evaluation logic is programmed.
 
-Variables are divided into groups depending on when they are defined. Those defined during phase 1, for example the variable BADBH that is the before thin average diameter at breast height, are in group 1. Those that are always known are also in group 1. They have corresponding operations codes that are in the hundreds.
+Variables are divided into groups depending on when they are defined. Those defined during phase 1, for example the variable BADBH that is the before thin average diameter at breast height, are in group 1. Those that are always known are also in group 1. They have corresponding operations codes that are in the hundreds. Variables added more recently include BGMD (code 159, the before thin generalized mean diameter, which is the Reineke diameter computed by the Zeide method and held in the variable DR016) and LOCCODE (code 160, the location code, KODFOR) in group 1, and AGMD (code 238, the after thin generalized mean diameter) in group 2. Subroutine DENSE now computes DR016 whether or not the Zeide method is used for SDI, and the labeled COMMON block CONTRL holds its values at the end of the previous cycle (ODR016, set before thinning) and after thinning (ATDR016).
 
 A multiplier or an expression can be coded on the THEN (or ALSOTRY) keyword records to modify the branch weighting factor of the former Parallel Processing Extension when the event occurs. This capability was included to support decision-tree analytics. The Parallel Processing Extension has been removed, so the feature has no effect; however, column 6 of IEVACT still stores the setting (it is set in subroutine EVTACT and tested in subroutine OPSAME), so deleting column 6 would require changing both subroutines.
 
@@ -4048,6 +4048,8 @@ Follow the established patterns when modifying subroutines ALGEVL and EVLDX.
 A key source of information regarding stop and restart is in the FVS wiki, currently stored at https://github.com/USDAForestService/ForestVegetationSimulator/wiki/Stop-Restart. It is essential to understand that document prior to reading more here.
 
 The FVS_API is documented at https://github.com/USDAForestService/ForestVegetationSimulator/wiki/FVS-API
+
+The code also provides the subroutines fvsGetVersion and fvsGetBuildInfo (source file base/version.f90). Each fills a caller-allocated character buffer and returns the number of characters written. fvsGetVersion returns the version tag followed by the organization in parentheses, and fvsGetBuildInfo returns six labeled lines (Version, Org, Remote, Branch, Commit, and Date). Comments in the source say they can be called from R, Python, or any language with a Fortran or C interface. The command line options --version and --build-info print the same text.
 
 ```{r fvs-seq-stops, echo=FALSE, results='asis'}
 if (knitr::is_html_output()) {
@@ -4805,7 +4807,7 @@ Rather than try to take all the necessary equations out of ORGANON and embed the
 
 ### Code limits on the number of tree records
 
-ORGANON is limited to 2000 individual tree records. This number cannot be easily changed since that limit is hard coded in many places in the ORGANON source routines. FVS is currently set to handle up to 3000 tree records and this number can be easily changed. The variable MAXTRE was changed from 3000 to 2000 in the labeled COMMON block PRGPRM. This redefines all the necessary array dimensions and loop indexes at compile time in the FVS code.
+ORGANON is limited to 2000 individual tree records. This number cannot be easily changed since that limit is hard coded in many places in the ORGANON source routines (for example, the tree arrays in subroutine EXECUTE and in the OC and OP versions of subroutine CRATET). FVS is currently set to handle up to 3000 tree records, in the OC and OP variants as in most other variants, and this number can be easily changed through the variable MAXTRE in the labeled COMMON block PRGPRM, which redefines all the necessary array dimensions and loop indexes at compile time in the FVS code. The OC and OP versions of PRGPRM previously set MAXTRE to 2000 to match the ORGANON limit; the current versions set it to 3000, so the FVS tree list can hold more tree records than the ORGANON arrays.
 
 ### Species codes and tree size limits
 
@@ -5350,7 +5352,7 @@ DBSTREESIN maps SQL column names to FVS tree attributes using a SELECT CASE stru
 | SITEPREP | SITEPREP | INTEGER | Site preparation code: 1 none, 2 mechanical, 3 burn, 4 road cuts, fills, or stockable road beds |
 | AGE | ABIRTH | REAL | Age of the tree record (used only when not null) |
 | CULL | RCULL | REAL | Percent of the cubic foot volume that is rotten or missing; used only when the FIAVBC keyword record is active |
-| DECAYCD | IDECAY | INTEGER | Decay code (1 to 5) of a standing dead tree; used only when the FIAVBC keyword record is active |
+| DECAYCD | IDECAY | INTEGER | Decay code (1 to 5) of a standing dead tree; used only when the FIAVBC keyword record is active. After a record is read, INTREE sets the code to 3 if the tree history code is above 5 (a dead tree) and the code is not 1 to 5, and sets it to 0 if the history code is 5 or less |
 | WDLND_STEMS | IWDLDSTMS | INTEGER | Stem count for woodland species; used only when the FIAVBC keyword record is active |
 
 Only two pairs of names are treated as aliases: DBH and DIAMETER, and HABITAT and PV_CODE.
@@ -5466,7 +5468,7 @@ The FVS_Summary table is the most commonly used output table, containing stand-l
 - **SizeCls** (INT): Size class code
 - **StkCls** (INT): Stocking class code
 
-The FVS_Summary2 table (requested with a value of 2 in field 1 of the SUMMARY keyword record) has the same columns except that it adds **RmvCode** (INT, removal code), adds the **TPrdTpa**, **TPrdTCuFt**, **TPrdMCuFt**, **TPrdSCuFt**, and **TPrdBdFt** columns, omits the after-treatment columns (ATBA through ATQMD), and stores most of the numeric columns as REAL.
+The FVS_Summary2 table (requested with a value of 2 in field 1 of the SUMMARY keyword record) has the same columns except that it adds **RmvCode** (INT, removal code), adds the **TPrdTpa**, **TPrdTCuFt**, **TPrdMCuFt**, **TPrdSCuFt**, and **TPrdBdFt** columns, omits the after-treatment columns (ATBA through ATQMD), and stores most of the numeric columns as REAL. It also has five columns that FVS_Summary does not: **ZeideSDI** and **ReinekeSDI** (INT, stand density index computed by the Zeide and the Reineke methods), **SDIMax** (INT, maximum stand density index), and **RDSDI** (REAL, relative density, computed as SDI divided by the maximum SDI), which follow SDI, and **GMD** (REAL, generalized mean diameter, the Reineke diameter computed by the Zeide method), which follows QMD. The table has 37 columns. If an existing FVS_Summary2 table does not have these five columns, FVS adds them.
 
 ### FVS_TreeList Table Structure
 
@@ -5785,7 +5787,7 @@ The listing here might not be a mirror image of what you would get when download
 
 COMMON indicates a file directory containing labeled COMMON blocks. This file directory occurs at two levels in the FVS directory structure: 1) if it is immediately under the FVS file directory, it contains base model labeled COMMON blocks used in all variants and some labeled COMMON blocks for some of the extensions; 2) if it is under a variant-specific directory (e.g. FVS/AK/COMMON), it contains labeled COMMON blocks which are specific to that variant.
 
-The FVS/BIN file directory contains the makefile, build scripts, and build lists for each variant. After a variant is built, it also contains the program executable and compiled object code. Instructions for building program executables are documented in wiki pages at url:https://github.com/USDAForestService/ForestVegetationSimulator/wiki. The build list is a listing of every routine that goes into building a variant executable; these have the file name FVSvar_sourceList.txt, where var is the variant designator (e.g. FVSie_sourceList.txt for the Inland Empire (IE) variant).
+The FVS/BIN file directory contains the makefile, CMakeLists.txt, and build lists for each variant. When a variant is built, the makefile reads the version, organization, branch, commit hash, and commit date from git and passes them to the compiler (the -DFVS_GIT_VERSION and related options); they appear in the output header and in the --version and --build-info output. After a variant is built, it also contains the program executable and compiled object code. Instructions for building program executables are documented in wiki pages at url:https://github.com/USDAForestService/ForestVegetationSimulator/wiki. The build list is a listing of every routine that goes into building a variant executable; these have the file name FVSvar_sourceList.txt, where var is the variant designator (e.g. FVSie_sourceList.txt for the Inland Empire (IE) variant).
 
 When source code is first downloaded from the repository, the BIN directory will not contain any subdirectories. However, when variant executables are built, subdirectories named FVSvar_buildDir are created in the BIN directory for each variant built (e.g. FVSie_buildDir). These subdirectories contain a copy of the source code and compiled object code for each file that has gone into building the executable.
 

@@ -2,17 +2,20 @@
 
 ## Executive Summary
 
-This document analyzes the potential downstream consequences of increasing the `MAXTRE` parameter beyond its current value of 3000 (or 5000 in HI variant, 2000 in OC/OP variants).
+This document analyzes the potential downstream consequences of increasing the `MAXTRE` parameter beyond its current value of 3000 (or 6000 in the HI variant).
 
 **Current Status:**
 - Most variants: `MAXTRE = 3000`
-- HI variant: `MAXTRE = 5000`
-- OC/OP variants: `MAXTRE = 2000`
+- HI variant: `MAXTRE = 6000`
+- OC/OP variants: `MAXTRE = 3000` (2000 until the June 2026 build clean up, commit 58f1b2a)
 
 **Historical Context:**
 - Original value: 1350
 - Changed to 3000 in November 2009 (R. Havis)
 - OC/OP reduced to 2000 in March 2015 (G. Dixon)
+- OC/OP returned to 3000 in the June 2026 build clean up (commit 58f1b2a, "Build clean up (#135)")
+
+**Note (October 2026):** the sections below, including the recommendations, were written when OC/OP were at 2000 and HI at 5000. They have not been revised for the June 2026 change in OC/OP or for the current HI value. The ORGANON arrays are still dimensioned 2000.
 
 ## 1. Memory Implications
 
@@ -716,14 +719,14 @@ IF(ISIZE.GT.MAXTRE.OR.ISIZE.LT.1) THEN
 - cs/common/PRGPRM.F77
 - ec/common/PRGPRM.F77
 - em/common/PRGPRM.F77
-- hi/common/PRGPRM.F77 (MAXTRE=5000)
+- hi/common/PRGPRM.F77 (MAXTRE=6000)
 - ie/common/PRGPRM.F77
 - kt/common/PRGPRM.F77
 - ls/common/PRGPRM.F77
 - nc/common/PRGPRM.F77
 - ne/common/PRGPRM.F77
-- oc/common/PRGPRM.F77 (MAXTRE=2000)
-- op/common/PRGPRM.F77 (MAXTRE=2000)
+- oc/common/PRGPRM.F77 (MAXTRE=3000)
+- op/common/PRGPRM.F77 (MAXTRE=3000)
 - pn/common/PRGPRM.F77
 - sn/common/PRGPRM.F77
 - so/common/PRGPRM.F77
@@ -798,9 +801,11 @@ REAL    ABIRTH(MAXTRE), BFV(MAXTRE), CFV(MAXTRE), CRWDTH(MAXTRE),
   - Reason not explicitly documented
   - Other variants remained at 3000
 
+- **June 2026 (Build clean up, #135):** OC/OP: MAXTRE=2000 → 3000
+
 - **Present:**
-  - Most variants: 3000
-  - OC/OP variants: 2000
+  - Most variants and OC/OP: 3000
+  - HI variant: 6000
 
 ## Appendix D: Compression Trigger Locations
 
