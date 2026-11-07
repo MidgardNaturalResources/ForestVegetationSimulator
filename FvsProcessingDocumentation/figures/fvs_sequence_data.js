@@ -280,8 +280,8 @@
     desc: "Large-tree diameter growth and height growth are estimated for all tree records, and the small-tree equations later replace or blend them where they apply.",
     steps: [
       { label: "Diameter growth", subs: ["DGDRIV", "MULTS", "AUTCOR", "DGF", "DGSCOR", "CLGMULT"], sec: "4.2.1.1",
-        desc: ["DGDRIV retrieves growth multipliers with MULTS, and the climate multiplier with CLGMULT. AUTCOR computes the variance and covariance multipliers for the autoregressive error term. DGF holds the species regressions (ln of basal area increment, stored in WK2). DGSCOR computes the error term, which is added, and the result is multiplied by the dwarf mistletoe effect and bounded.",
-               "Estimates are on a 10-year basis and are rescaled to the cycle length in GRADD. In the ORGANON variants DGDRIV calls EXECUTE for valid ORGANON trees."] },
+        desc: ["DGDRIV retrieves growth multipliers with MULTS, and the climate multiplier with CLGMULT. AUTCOR computes the variance and covariance multipliers for the autoregressive error term. DGF holds the species regressions (ln of basal area increment, stored in WK2).",
+               "For each tree, D = DBH x BRATIO is the diameter inside bark and DDS = exp(WK2 + ln of the BAIMULT multiplier), times the climate multiplier in 17 variants. DGSCOR returns the error as a multiplier FRM, and DG = sqrt(D^2 + DDS x FRM) - D. DG is then multiplied by the dwarf mistletoe factor (MISDGF) and bounded (DGBND). DG is an inside bark increment on the YR basis (10 years; 5 in NC, OC, OP and SN), and GRADD scales it to the cycle length. DBH itself is always outside bark. In the ORGANON variants DGDRIV calls EXECUTE for valid ORGANON trees."] },
       { label: "Height growth", subs: ["HTGF", "MULTS", "HTCALC", "FINDAG"], sec: "4.2.1.1",
         desc: "HTGF has the same species and tree loop structure as DGF, retrieves height growth multipliers, and bounds each tree to the species maximum height (TRESZCP). Where site index curves are used, FINDAG estimates tree age, 10 years are added, and HTCALC gives the end-of-cycle height. Estimates are on a cycle-length basis." }
     ]
@@ -291,11 +291,11 @@
     desc: "REGENT estimates growth for trees below a threshold diameter. Afterwards every tree has a height and diameter growth estimate, from the large-tree equations, the small-tree equations or a weighted average.",
     steps: [
       { label: "Weight small- and large-tree height growth", sec: "4.2.1.2.1",
-        desc: "Between the species diameters XMIN and XMAX the two height growth estimates are blended with the weight XWT, which rises linearly from 0 to 1 across that range. Below XMIN only the small-tree estimate is used and above XMAX only the large-tree estimate. Diameter growth is not blended: a species threshold diameter (for example BREAK(i)) decides which estimate is used." },
+        desc: "Between the species diameters XMIN and XMAX the two height growth estimates are blended with the weight XWT, which rises linearly from 0 to 1 across that range. Below XMIN only the small-tree estimate is used and above XMAX only the large-tree estimate. Diameter growth has its own threshold diameter (for example BREAK(i)), which differs by variant and species. Below it the small-tree increment replaces the DGDRIV value in most variants and is averaged with it in others (AK, CA, CS, HI, LS, NC, NE, OC, ON, OP, PN, SO, WC and WS, for the species listed in the table in the diameter increment section); at or above it the DGDRIV value is kept." },
       { label: "Estimate height, then diameter growth", subs: ["MULTS", "CCFCAL"], sec: "4.2.1.2.2",
-        desc: "Height growth comes from regressions fit over 10 years (5 years in NC), scaled to the cycle length. Diameter growth then comes from species height-diameter curves, on a 10-year basis. Variants fit to 5-year data divide the cycle into periods of at most 5 years and update stand density each period, calling CCFCAL for crown competition." },
+        desc: "Height growth comes from regressions fit over 10 years (5 years in NC), scaled to the cycle length. Diameter growth then comes from the species height-diameter relation at the heights before and after the increment (from SMHGDG in HI, OP, PN and WC except species 17), converted to an inside bark increment on the YR basis. Variants fit to 5-year data divide the cycle into periods of at most 5 years and update stand density each period, calling CCFCAL for crown competition." },
       { label: "Apply FIXDG and FIXHTG", subs: ["OPFIND", "OPGET", "OPDONE"], sec: "4.2.1.2.2",
-        desc: "GRINCR checks the growth estimates for compliance with any FIXDG or FIXHTG keyword records scheduled for the cycle." }
+        desc: "For each FIXDG record, DG of the tree records in the species (or group) and in the start-of-cycle DBH range is multiplied by the multiplier (negative multipliers become 0). This is done after DGDRIV and REGENT, so small-tree increments are included, and it multiplies the YR-basis inside bark increment. FIXHTG does the same to HTG." }
     ]
   };
   var mortality = {
@@ -328,8 +328,8 @@
     desc: "TREGRO calls GRADD. The active extensions may modify or replace the growth and mortality estimates made so far. Disturbances can also be modeled outside FVS and applied through the API after a stop (section 8.0).",
     steps: [
       { label: "Mountain pine beetle and Douglas-fir beetle", subs: ["MPBCUP", "DFBWIN", "DFBDRV"], sec: "4.4.1",
-        desc: "If an outbreak occurs this cycle, MPBCUP applies mountain pine beetle effects and DFBDRV applies Douglas-fir beetle effects (DFBWIN checks for a Douglas-fir beetle outbreak window). Diameter growth must be on a per-year basis when these are called." },
-      { label: "Dwarf mistletoe", subs: ["MISTOE"], sec: "4.4.1", desc: "Diameter growth is scaled to a FINT-year basis, then MISTOE applies dwarf mistletoe effects." },
+        desc: "If an outbreak occurs this cycle, MPBCUP applies mountain pine beetle effects and DFBDRV applies Douglas-fir beetle effects (DFBWIN checks for a Douglas-fir beetle outbreak window). DG is still on the YR basis when these are called; the source comment states this is required for the mountain pine beetle model." },
+      { label: "Dwarf mistletoe", subs: ["MISTOE"], sec: "4.4.1", desc: "GRADD scales DG to the cycle length (only when FINT is not equal to YR): DDS = DG x (2 x BARK x D + DG) x FINT/YR, then DG = sqrt((D x BARK)^2 + DDS) - BARK x D. MISTOE then applies dwarf mistletoe effects." },
       { label: "Tussock moth and budworm", subs: ["TMCOUP", "BWECUP"], sec: "4.4.1",
         desc: "TMCOUP applies Douglas-fir tussock moth effects if an outbreak occurs this cycle, and BWECUP is the interface to the western spruce budworm (BUDLITE) model." },
       { label: "Fire, blister rust and root disease", subs: ["FMMAIN", "FMKILL", "BRTREG", "RDTREG", "OPSTUS"], sec: "4.4.1",
@@ -345,7 +345,7 @@
     desc: "FVS is finished estimating growth and mortality. GRADD now applies the estimates to the tree descriptions and recalculates the stand statistics.",
     steps: [
       { label: "Apply growth and mortality", subs: ["UPDATE", "VOLS", "PCTILE", "DIST", "COMP"], sec: "4.5.1",
-        desc: "UPDATE adds increments (rescaling growth to the cycle length) and deducts mortality. Height, normal height and PROB are updated at the start, and diameter last, because VOLS accounts for diameter growth. UPDATE also computes volume statistics, the mortality volume array SPCMO(sp,vc), its percentile points and composition." },
+        desc: "UPDATE adds the height increment to HT and NORMHT, and deducts mortality from PROB (WK2 limited to PROB). VOLS then computes volumes for the end-of-cycle diameter DBH + DG/BARK, and DBH is updated last: DBH = DBH + DG/BRATIO, with HT already updated. DG is an inside bark increment already scaled to the cycle length by GRADD, and UPDATE does not change it. UPDATE also computes the mortality volume array SPCMO(sp,vc), its percentile points and composition." },
       { label: "Re-sort and recompute density", subs: ["RDPSRT", "DENSE"], sec: "4.5.1", desc: "RDPSRT re-sorts the records by updated diameter and DENSE recomputes the density statistics." },
       { label: "Cover model, tree ages", subs: ["CVGO", "CVBROW"], sec: "4.5.1", desc: "If the cover extension is active, CVBROW computes shrub density and browse statistics. The tree age array ABIRTH(j) is advanced by the cycle length. Stop point 6 follows." }
     ]

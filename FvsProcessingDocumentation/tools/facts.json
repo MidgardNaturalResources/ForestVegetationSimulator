@@ -488,5 +488,383 @@
   "doc": "Chapter 11: error 2 is the missing STOP record message",
   "file": "base/errgro.f",
   "regex": "NO \\\"STOP\\\" RECORD IN KEYWORD FILE"
+ },
+ {
+  "id": "dg-gradd-scale",
+  "type": "regex_in_file",
+  "doc": "Growth sections: GRADD scales DG on the DDS scale by FINT/YR",
+  "file": "base/gradd.f",
+  "regex": "DDS=\\(DG\\(I\\)\\*\\(2\\.0\\*BARK\\*D\\+DG\\(I\\)\\)\\)\\*SCALE"
+ },
+ {
+  "id": "dg-gradd-scale-factor",
+  "type": "regex_in_file",
+  "doc": "Growth sections: GRADD scale factor is FINT/YR",
+  "file": "base/gradd.f",
+  "regex": "SCALE=FINT/YR"
+ },
+ {
+  "id": "dg-gradd-restart5",
+  "type": "regex_in_file",
+  "doc": "Stop point 5: GRADD branches to UPDATE on restart code 5",
+  "file": "base/gradd.f",
+  "regex": "IF \\(ISTOPRES\\.EQ\\.5\\) GOTO 57"
+ },
+ {
+  "id": "dg-gradd-stop5",
+  "type": "regex_in_file",
+  "doc": "Stop point 5: called from GRADD",
+  "file": "base/gradd.f",
+  "regex": "CALL fvsStopPoint \\(5,ISTOPRES\\)"
+ },
+ {
+  "id": "dg-tregro-skip-grincr",
+  "type": "regex_in_file",
+  "doc": "Stop point 5: TREGRO skips GRINCR for restart codes 5 and above except 7",
+  "file": "base/tregro.f",
+  "regex": "ISTOPRES\\.GE\\.5 \\.and\\. \\.not\\. ISTOPRES\\.EQ\\.7"
+ },
+ {
+  "id": "dg-update-dbh",
+  "type": "regex_in_file",
+  "doc": "Update section: DBH is increased by DG/BRATIO",
+  "file": "base/update.f",
+  "regex": "DBH\\(I\\)=DBH\\(I\\)\\+DG\\(I\\)/BRATIO\\(IS,DBH\\(I\\),HT\\(I\\)\\)"
+ },
+ {
+  "id": "dg-update-wk6",
+  "type": "regex_in_file",
+  "doc": "Update section: mortality volume is divided by FINT",
+  "file": "base/update.f",
+  "regex": "WK6\\(I\\) = WKI\\*CFV\\(I\\)/FINT"
+ },
+ {
+  "id": "dg-vols-ie",
+  "type": "regex_in_file",
+  "doc": "Update section: VOLS uses D+DG/BARK (IE)",
+  "file": "ie/vols.f",
+  "regex": "D=D\\+DG\\(I\\)/BARK"
+ },
+ {
+  "id": "dg-dgdriv-wk1",
+  "type": "regex_in_file",
+  "doc": "Growth section: DGDRIV copies DG to WK1 (CS)",
+  "file": "cs/dgdriv.f",
+  "regex": "WK1\\(I\\)=DG\\(I\\)"
+ },
+ {
+  "id": "dg-dgdriv-inside-bark",
+  "type": "regex_in_file",
+  "doc": "Growth section: DGDRIV computes the inside bark diameter (CS)",
+  "file": "cs/dgdriv.f",
+  "regex": "D=DBH\\(I\\)\\*BRATIO\\(ISPC,DBH\\(I\\),HT\\(I\\)\\)"
+ },
+ {
+  "id": "dg-dgdriv-formula",
+  "type": "regex_in_file",
+  "doc": "Growth section: DG = sqrt(DSQ+DDS*FRM)-D (CS)",
+  "file": "cs/dgdriv.f",
+  "regex": "DG\\(I\\)=\\(SQRT\\(DSQ\\+DDS\\*FRM\\)-D\\)"
+ },
+ {
+  "id": "dg-dgscor-ln5",
+  "type": "regex_in_file",
+  "doc": "Growth section: DGSCOR zeroes the error above ln(DDS) 5",
+  "file": "base/dgscor.f",
+  "regex": "IF\\(DDS\\.GT\\.5\\.0\\) THEN"
+ },
+ {
+  "id": "dg-api-dg",
+  "type": "regex_in_file",
+  "doc": "Stop point 5: the API dg attribute is the DG array",
+  "file": "base/apisubs.f",
+  "regex": "case \\(\"dg\"\\)"
+ },
+ {
+  "id": "dg-ie-dgbnd",
+  "type": "regex_in_file",
+  "doc": "Growth section: IE DGBND size cap test",
+  "file": "ie/dgbnd.f",
+  "regex": "SIZCAP\\(ISPC,3\\)\\.LT\\.1\\.5"
+ },
+ {
+  "id": "dg-ffert-yr-fint",
+  "type": "regex_in_file",
+  "doc": "Growth section: FFERT converts DDS with YR/FINT",
+  "file": "base/ffert.f",
+  "regex": "DDSYR = DDSIT \\* YR/FINT"
+ },
+ {
+  "id": "dg-ie-regent-scale2",
+  "type": "regex_in_file",
+  "doc": "Growth section: IE REGENT scales DDS with YR/NTYR",
+  "file": "ie/regent.f",
+  "regex": "SCALE2 = YR/FLOAT\\(NTYR\\)"
+ },
+ {
+  "id": "yr5-nc",
+  "type": "regex_in_file",
+  "doc": "Growth section: YR is 5 in NC",
+  "file": "nc/blkdat.f",
+  "regex": "DATA YR\\s*/\\s*5\\.0\\s*/"
+ },
+ {
+  "id": "yr5-oc",
+  "type": "regex_in_file",
+  "doc": "Growth section: YR is 5 in OC",
+  "file": "oc/blkdat.f",
+  "regex": "DATA YR\\s*/\\s*5\\.0\\s*/"
+ },
+ {
+  "id": "yr5-op",
+  "type": "regex_in_file",
+  "doc": "Growth section: YR is 5 in OP",
+  "file": "op/blkdat.f",
+  "regex": "DATA YR\\s*/\\s*5\\.0\\s*/"
+ },
+ {
+  "id": "yr5-sn",
+  "type": "regex_in_file",
+  "doc": "Growth section: YR is 5 in SN",
+  "file": "sn/blkdat.f",
+  "regex": "DATA YR\\s*/\\s*5\\.0\\s*/"
+ },
+ {
+  "id": "yr10-cs",
+  "type": "regex_in_file",
+  "doc": "Growth section: YR is 10 in CS",
+  "file": "cs/blkdat.f",
+  "regex": "DATA YR\\s*/\\s*10\\.0\\s*/"
+ },
+ {
+  "id": "ls-ie-regent-thr3",
+  "type": "regex_in_file",
+  "doc": "Growth sections: IE REGENT diameter threshold 3.0",
+  "file": "ie/regent.f",
+  "regex": "IF\\(D\\.GE\\.3\\.0\\) GO TO 23"
+ },
+ {
+  "id": "ls-ie-regent-thr1",
+  "type": "regex_in_file",
+  "doc": "Growth sections: IE REGENT diameter threshold 1.0 for CR-type species",
+  "file": "ie/regent.f",
+  "regex": "IF\\(CRVAR\\.AND\\.D\\.GE\\.1\\.0\\)GOTO 23"
+ },
+ {
+  "id": "ls-ie-regent-blend",
+  "type": "regex_in_file",
+  "doc": "Growth sections: IE REGENT blends height growth with XWT",
+  "file": "ie/regent.f",
+  "regex": "HTG\\(K\\)=HTGR\\*\\(1\\.0-XWT\\) \\+ XWT\\*HTG\\(K\\)"
+ },
+ {
+  "id": "ls-ie-regent-hk",
+  "type": "regex_in_file",
+  "doc": "Growth sections: IE REGENT derives diameters from the height after the increment",
+  "file": "ie/regent.f",
+  "regex": "HK=H\\+HTG\\(K\\)"
+ },
+ {
+  "id": "rg-cs-xmin-xmax",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): CS XMIN 3.0 and XMAX 5.0",
+  "file": "cs/regent.f",
+  "regex": "DATA XMIN / MAXSP\\*3\\.0 /, XMAX/ MAXSP\\*5\\.0 /"
+ },
+ {
+  "id": "rg-ls-xmin-xmax",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): LS XMIN 3.0 and XMAX 5.0",
+  "file": "ls/regent.f",
+  "regex": "DATA XMIN / MAXSP\\*3\\.0 /, XMAX/ MAXSP\\*5\\.0 /"
+ },
+ {
+  "id": "rg-ne-xmin-xmax",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): NE XMIN 1.5 and XMAX 5.0",
+  "file": "ne/regent.f",
+  "regex": "DATA XMIN / MAXSP\\*1\\.5 /, XMAX/ MAXSP\\*5\\.0 /"
+ },
+ {
+  "id": "rg-on-xmin-xmax",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): ON XMIN 3.15 and XMAX 4.72",
+  "file": "canada/on/regent.f",
+  "regex": "DATA XMIN / MAXSP\\*3\\.15 /, XMAX/ MAXSP\\*4\\.72 /"
+ },
+ {
+  "id": "rg-cs-weight",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): CS averages with the height weight XWT",
+  "file": "cs/regent.f",
+  "regex": "DGGR=DGSM\\*\\(1\\.0-XWT\\) \\+ XWT\\*DG\\(K\\)"
+ },
+ {
+  "id": "rg-ca-dgmin",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): CA DGMIN",
+  "file": "ca/regent.f",
+  "regex": "DATA DGMIN/22\\*3\\.0, 7\\.0, 26\\*3\\.0, 7\\.0/"
+ },
+ {
+  "id": "rg-oc-dgmin",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): OC DGMIN",
+  "file": "oc/regent.f",
+  "regex": "DATA DGMIN/22\\*3\\.0, 7\\.0, 26\\*3\\.0, 7\\.0/"
+ },
+ {
+  "id": "rg-nc-dgmin",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): NC DGMIN",
+  "file": "nc/regent.f",
+  "regex": "DATA DGMIN/11\\*3\\.0, 7\\.0/"
+ },
+ {
+  "id": "rg-hi-dgmin",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): HI DGMIN",
+  "file": "hi/regent.f",
+  "regex": "DATA DGMIN/ 16\\*3\\.0, 7\\.0,"
+ },
+ {
+  "id": "rg-wc-dgmin",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): WC DGMIN",
+  "file": "wc/regent.f",
+  "regex": "DATA DGMIN/ 16\\*3\\.0, 7\\.0,"
+ },
+ {
+  "id": "rg-op-dgmin",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): OP DGMIN",
+  "file": "op/regent.f",
+  "regex": "DATA DGMIN/ 16\\*3\\.0, 7\\.0,"
+ },
+ {
+  "id": "rg-so-bkpt",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): SO BKPT 99 for species 11",
+  "file": "so/regent.f",
+  "regex": "IF\\(ISPC\\.EQ\\.11\\)BKPT=99\\."
+ },
+ {
+  "id": "rg-bm-bkpt",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): BM BKPT 99 for species 6",
+  "file": "bm/regent.f",
+  "regex": "IF\\(ISPC \\.EQ\\. 6\\)BKPT=99\\."
+ },
+ {
+  "id": "rg-ws-bkpt7",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): WS BKPT 7.0 for species 4 and 23",
+  "file": "ws/regent.f",
+  "regex": "ELSE IF\\(ISPC \\.EQ\\. 4 \\.OR\\. ISPC \\.EQ\\. 23\\) THEN"
+ },
+ {
+  "id": "rg-tt-break",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): TT BREAK values",
+  "file": "tt/blkdat.f",
+  "regex": "3\\.,   3\\.,   3\\.,  99\\.,   3\\.,   3\\.,   3\\.,   3\\.,   3\\.,   3\\.,"
+ },
+ {
+  "id": "rg-ut-break",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): UT BREAK values",
+  "file": "ut/blkdat.f",
+  "regex": "99\\.,  99\\.,  99\\.,  99\\.,  99\\.,  99\\.,  99\\.,   1\\.,   1\\.,  99\\.,"
+ },
+ {
+  "id": "rg-cr-break",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): CR BREAK values",
+  "file": "cr/blkdat.f",
+  "regex": "1\\.,   1\\.,   1\\.,   3\\.,   1\\.,   3\\.,   3\\.,   3\\.,  99\\.,   2\\.,"
+ },
+ {
+  "id": "rg-ci-bkpt",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): CI BKPT 1.0 for species 17 and 19",
+  "file": "ci/regent.f",
+  "regex": "CASE\\(17,19\\)\\s*\\n\\s*BKPT=1\\.0"
+ },
+ {
+  "id": "rg-em-ut6",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): EM tests the threshold except for species 6",
+  "file": "em/regent.f",
+  "regex": "IF\\(UTVAR\\.AND\\.ISPC\\.EQ\\.6\\)GO TO 1020"
+ },
+ {
+  "id": "rg-ie-ut1516",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): IE bypasses the threshold for species 15 and 16",
+  "file": "ie/regent.f",
+  "regex": "IF\\(UTVAR\\.AND\\.ISPC\\.EQ\\.15 \\.OR\\. ISPC\\.EQ\\.16\\)GO TO 1020"
+ },
+ {
+  "id": "rg-ak-dgmax",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): AK threshold array DGMAX",
+  "file": "ak/regent.f",
+  "regex": "IF\\(D\\.GE\\.DGMAX\\(ISPC\\)\\) GO TO 23"
+ },
+ {
+  "id": "rg-so-skip-dgbnd",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): SO species 9 and 27 jump to 23 after averaging",
+  "file": "so/regent.f",
+  "regex": "DG\\(K\\)=DGSM\\*\\(1\\.0-XDWT\\)\\+DG\\(K\\)\\*XDWT"
+ },
+ {
+  "id": "rg-oc-organon",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): OC ORGANON trees keep the large-tree increment",
+  "file": "oc/regent.f",
+  "regex": "IF\\(LORGANON \\.AND\\. \\(IORG\\(K\\) \\.EQ\\. 1\\)\\) XDWT = 1\\.0"
+ },
+ {
+  "id": "dgbnd-wc-7.92",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): WC and HI DGBND maximum",
+  "file": "wc/dgbnd.f",
+  "regex": "DGMAX = \\(7\\.92\\*EXP\\(-0\\.03\\*TEMDBH\\)\\)"
+ },
+ {
+  "id": "dgbnd-on",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): ON DGBND maximum",
+  "file": "canada/on/dgbnd.f",
+  "regex": "DGMAX = 6\\.0\\*EXP\\(-0\\.03\\*DBH\\)"
+ },
+ {
+  "id": "dgbnd-sn-min",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): SN DGBND minimum 0.048",
+  "file": "sn/dgbnd.f",
+  "regex": "DDG= 0\\.048"
+ },
+ {
+  "id": "dgbnd-ws-formula",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): WS DGBND maximum",
+  "file": "ws/dgbnd.f",
+  "regex": "DGMAX = DGAMAX\\(ISPC\\) \\* \\(DBH\\*\\*DGBMAX\\(ISPC\\)\\)"
+ },
+ {
+  "id": "src-pn-wc",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): PN compiles the WC REGENT",
+  "file": "bin/FVSpn_sourceList.txt",
+  "regex": "\\.\\./wc/regent\\.f"
+ },
+ {
+  "id": "src-pn-wc-dgdriv",
+  "type": "regex_in_file",
+  "doc": "Growth sections (REGENT table): PN compiles the WC DGDRIV",
+  "file": "bin/FVSpn_sourceList.txt",
+  "regex": "\\.\\./wc/dgdriv\\.f"
  }
 ]

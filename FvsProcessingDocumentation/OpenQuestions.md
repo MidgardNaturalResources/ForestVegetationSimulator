@@ -53,7 +53,7 @@ Open (the Rmd follows the repository code; the PDF documents a newer release, 20
 Done (Batches 1-2): NATCRZ, BGCFVS and SYSTEM keyword statements removed; stop points 1-6, ECSTATUS, ECCALC, second FMKILL, RDMN2/RDTRP/FMSDIT added; FIA-VBC and DBS summary calls added; VARMRT variant list (ACD, WS added); end-of-cycle flow; tree list compression thresholds (40%, 70%/30%, MXRR/2); CWCALC locations (VIE, HI, LS). Verified as written: MORTS 55%/85% SDI thresholds, 0.1" QMD tolerance, 10 passes, 1 ft2 BA tolerance; 1/300-acre plots; minimum 50 plots (MINREP default; ESTAB keyword minimum 20); NC 5-year small-tree basis; BREAK in GGCOM.
 Open:
 - [M] SYSTEM keyword: not found in the base keyword table (`base/keywds.f`); only `metric/ppbase/ppin.f` lists it. Statements removed (about 85% confident).
-- [M] VARMRT callers per grep: acd, ca, cr, ec, oc, sn, vls (CS/LS/NE), ws. OC calls VARMRT; the text lists variants without OC.
+- [M] VARMRT callers per grep: ca, cr, ec, oc, sn, vls (CS/LS/NE), ws. OC calls VARMRT; the text lists variants without OC.
 - [L] ESNUTR/ESTAB internals (ESETPR, ESPREP, ESTOCK, ESPADV/ESPSUB/ESPXCS, ESSUBH, ESGENT) not read line by line.
 - [L] DISPLY database summary calls and FIA-VBC "when requested" conditions are only confirmed for the FIA-VBC early-return checks.
 - [M] ECCALC is described as running when the economics extension is active; the condition in GRADD was not confirmed.
@@ -112,7 +112,7 @@ Open:
 ## Appendix A (source organization) findings
 Text corrected: added `hi/`, `fiavbc/`, `vorganon/`, `canada/fire/on/`; `baseDocument` path; SVN replaced by git; FVSiec example; SQL/SQLite database rows (no source list uses `dbs/` or `vdbs/`); review date.
 Open:
-- Variant and extension descriptions were not individually verified; `acd/` "under development" status unconfirmed (no source list or test directory); whether `dbs/` and `vdbs/` should stay in the repository; `pg/` description not checked against its contents.
+- Variant and extension descriptions were not individually verified; whether `dbs/` and `vdbs/` should stay in the repository; `pg/` description not checked against its contents.
 
 ## Appendix B (Stand Visualization) findings
 Text corrected: SVFMOUT renamed FMSVOUT and its behavior described; SVNTR rule added; CWD description (litter and duff omitted, four size classes); snag size sentence; "32 SV source files"; SVOUT first-cycle note; note on additional SV call sites; Rebain citation form.
@@ -204,3 +204,40 @@ Existing Chapter 11 text to review.
 - `fvsLoad()` in `rFVS` calls `dyn.unload` on a previously loaded library without closing the databases first. Unloading the library does not release the SQLite file in the Windows environment (reported by the project owner); the code has no unload hook that closes the connections.
 - The `fvsRun()` documentation in `rFVS` describes return code 2 as "finished processing all the stands". The code returns 2 only on the call after the last stand, not on the call that finishes it.
 - `DBSINIT` turns off every output switch at the start of each stand, so output keywords must be read for each stand (consistent with the documented per-stand keyword records).
+
+## Diameter increment sequence (Growth, Update and Stop point 5 sections)
+Existing statements corrected (they disagreed with the code):
+- The Growth chapter said DG is scaled back to the cycle length in `UPDATE`; the scaling is in `GRADD` (`gradd.f`, before stop point 5). `UPDATE` does not change DG. The cross-reference to Regeneration establishment in that sentence was also wrong.
+- Several places said DG after `DGDRIV` is on a "10-year basis". It is on the `YR` basis: 10 years in every variant except NC, OC, OP and SN (5 years).
+- The `UPDATE` arrays table said FINT scales DG. In `UPDATE`, FINT divides the mortality volume (`WK6 = WKI*CFV/FINT`).
+- The Figure 2-1 update box said `UPDATE` rescales growth to the cycle length; the box for dwarf mistletoe now carries the `GRADD` scaling.
+- The Figure 2-1 pest box said DG must be on a "per-year basis"; the `GRADD` comment says "YR-period basis" for `MPBMOD`.
+
+Not verified (the text states only what was read):
+- Each variant's `DGF` must return `WK2` on the `YR` basis for the `GRADD` scaling to be consistent. Confirmed for NC (5-year) and AK (`YR` times the annual rate) only (about 90 percent that all follow it).
+- The 22 `DGDRIV` files (all except `acd/`) were compared by their DG statements, not line by line. Beyond the `WK4` climate multiplier (17 variants) and the 1.33 limit (CI, CR, EM, IE, UT, with the species lists given in the text), other differences may exist.
+- `MISTOE`, `BWECUP`, `FMMAIN`, `FMKILL`, `BRTREG` and `RDTREG` were not traced for changes to DG. Only `TMCOUP` (subtracts `DGLOSS`) was confirmed. `RDGROW` also rewrites DG, but whether it is reached in this window was not traced.
+- `FFERT` was read only for its DG and HTG statements, not for the conditions under which it acts.
+- `MORTS` use of DG and `WK1` is variant-specific (IE uses `DG(I)/BARK`); only the copy to `WK1` in `DGDRIV` is documented.
+- When a stop point file is in use, `fvsRestart` calls `GETSTD` for stop status 1 and 2 (`cmdline.f`). Whether that reload overwrites values written through the API after the stop was not traced (about 80 percent that it does).
+- The `DGDRIV` header comment says `DGF` loads `WK3`; the code uses `WK2`.
+- `BRATIO` is variant-specific and was not read. The documented formulas use it only as a function of species, `DBH` and `HT`, as the call sites do.
+
+
+### REGENT, DGBND and DGDRIV compared across the variants (second pass)
+All REGENT files with a source list were read at the diameter increment statements (AK, BC, BM, CA, CI, CR, CS, EC, EM, HI, IE, KT, LS, NC, NE, OC, ON, OP, SN, SO, TT, UT, WC, WS; PN compiles the WC REGENT, DGDRIV and DGBND). The table in "Diameter increment through the projection cycle" follows the code, which differs from the earlier statement that diameter growth is never averaged: it is averaged in 14 variants for the species shown.
+Code observations (not changed):
+- SO `REGENT`: for species 9 and 27, after the averaging `GO TO 23` skips the `CALL DGBND` that every other path reaches, so the size limit is not applied to those species in the cycle calculation.
+- WS `REGENT`, species 41: the increment is not converted to the `YR` basis (no `DDS*SCALE2` step), whereas the other species are. `GRADD` then scales it by `FINT/YR`. This matters only when the cycle length differs from `YR` (about 80 percent that the omission is unintended).
+- CS, LS, NE and ON `REGENT`: the averaged increment is given a minimum of 0.1 (`IF(DGGR .LT. .1) DGGR = .1`) and a negative increment becomes 0.1, so trees in the averaging range cannot have an increment below 0.1 on the `YR` basis.
+- The comments in CI and TT `REGENT` say the increment is scaled back to a `FINT`-year basis in `UPDATE`; the scaling is in `GRADD`. Comments in BM, EC and other files say "10-YR" where the basis is `YR` (5 years in NC, OC, OP and SN).
+- AK `REGENT` uses a local array named `DGMAX` as the diameter threshold; other variants use `DGMAX` for a maximum increment.
+- NC `REGENT` tests `IF(DG(K).LT.0.) DG(K)=0.` before `DGSM` is computed; the test appears to be on the wrong variable (no effect expected).
+Not verified:
+- The units of the thresholds in BC and ON (the Canadian variants are metric builds); the table gives the values as coded.
+- For TT, UT, CI, KT, EM, IE and BC, only the diameter statements were read in full; the height increment code was not compared across variants.
+- The bounds on the small-tree increment (0 or 0.1 below; a species maximum above in many variants) were read per variant but are summarized in the text only in general terms.
+- `SMHGDG` (HI, OP, PN, WC) was not read; only how `REGENT` uses its result.
+- `DGBND` in ON: the argument `DBH` is reset to 150 when it is larger, which changes the caller's value (not checked for effect).
+
+- The repository's `acd/` directory is not used in this documentation: the ACD variant is an R hybrid of the FVS-NE solution in the fvsOL package (as for FVS-ADK), not the Fortran in `acd/`. It was removed from the VARMRT variant list and from the Appendix A directory list.

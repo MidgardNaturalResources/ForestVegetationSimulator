@@ -148,7 +148,7 @@ growth_mort <- data.frame(
     "Variant-specific common blocks; Stand density (BA, SDI, CCF), tree attributes"
   ),
   Output = c(
-    "DG() - diameter growth (10-year basis); HTG() - height growth; WK2() - mortality (TPA)",
+    "DG() - inside bark diameter increment on the YR basis; HTG() - height growth; WK2() - mortality (TPA)",
     "Updated DBH(), HT(), scaled DG() to cycle length",
     "Updated HT(), DBH(), PROB(); WK6() - mortality volume; OMORT() - mortality summary",
     "WK2() - mortality (trees/acre)"
@@ -513,7 +513,7 @@ grincr_arrays <- data.frame(
     "Current total height (feet)",
     "Species code (FVS sequence number)",
     "Crown ratio (percent)",
-    "Diameter increment on a 10-year basis (scaled to the cycle length in GRADD)",
+    "Inside bark diameter increment on the YR basis (10 years in most variants, 5 years in NC, OC, OP and SN); GRADD scales it to the cycle length",
     "Height growth increment (feet for cycle)",
     "Mortality (trees per acre for this cycle)",
     "Tree value class (1 = desirable, 2 = acceptable, 3 = live cull)",
@@ -611,7 +611,7 @@ update_arrays <- data.frame(
     "Tree height - updated with HTG",
     "Height growth increment to add",
     "Tree diameter, increased by DG/BRATIO",
-    "Cycle-length diameter increment, added to DBH divided by the bark ratio (BRATIO)",
+    "Inside bark diameter increment for the cycle length (scaled by GRADD), added to DBH after division by the bark ratio (BRATIO); not changed by UPDATE",
     "Trees per acre - reduced by WK2",
     "Mortality (TPA) to subtract from PROB",
     "Total cubic foot volume per tree",
@@ -620,7 +620,7 @@ update_arrays <- data.frame(
     "Mortality volume (cubic feet)",
     "Accumulated mortality by size/species",
     "Current stand totals by size/species",
-    "Cycle length (years) to scale DG",
+    "Cycle length (years); divides the mortality volume to give WK6, a per-year rate",
     "Tree value class (1 = desirable, 2 = acceptable, 3 = live cull)"
   ),
   stringsAsFactors = FALSE
@@ -3006,7 +3006,17 @@ Subroutine DGDRIV calls subroutine DGF to obtain large tree diameter growth esti
 
 Subroutine DGDRIV has an extra task in the two ORGANON-FVS variants (OC and OP). That is to direct estimation of large tree diameter and height growth, crown ratio change, and mortality using ORGANON equations for valid ORGANON trees. This step is done by calling the ORGANON subroutine EXECUTE and does not occur in any of the other FVS variants. Processing then continues somewhat as described below, with structural differences as discussed in [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants).
 
-Subroutine DGDRIV then enters its own nested species and trees-within-species DO loops. For each species, the serial correlation of diameter growth estimates from one cycle to the next is adjusted for the cycle length and diameter growth errors are calculated. The scale factors are attenuated and then the tree loop within species is entered. For each tree record, diameter growth is converted from ln(DDS) terms to inches. DGDRIV calls subroutine DGSCOR to calculate the diameter growth error term and then adds the error to the diameter growth estimate. The diameter growth estimate is multiplied by a factor to account for the negative impacts of dwarf-mistletoe, if any, on diameter growth. Diameter growth is then bounded to a maximum value (diameter growth is only constrained in some variants). Diameter growth is similarly assigned to tree record triples if record tripling is in effect and control returns to subroutine GRINCR. Diameter growth estimates after subroutine DGDRIV are on a 10-year basis. These will be scaled to the cycle length at the end of the growth projection cycle in subroutine GRADD.
+Subroutine DGDRIV then enters its own nested species and trees-within-species DO loops. Before the loops, DGDRIV copies the diameter increment of the previous cycle, DG(i), to work array WK1(i), where the mortality routines use it. In 17 variants (BM, CA, CI, CR, EC, EM, HI, IE, KT, NC, OC, OP, SO, TT, UT, WC and WS) and in PN, which compiles the WC version of DGDRIV, DGDRIV also calls subroutine CLGMULT to load a tree-level growth multiplier from the climate extension into work array WK4(i). For each species, the serial correlation of diameter growth estimates from one cycle to the next is adjusted for the cycle length and diameter growth errors are calculated. The scale factors are attenuated and then the tree loop within species is entered. For each tree record the following steps are made.
+
+1. The diameter inside bark is computed as D = DBH(i) × BRATIO(species, DBH(i), HT(i)). The array DBH(i) is always the diameter outside bark; FVS does not keep an inside bark diameter array.
+2. The expected change in squared inside bark diameter is DDS = exp(WK2(i) + ln(XDMULT)). WK2(i) is the ln(DDS) estimate from subroutine DGF, and XDMULT is the species multiplier from the BAIMULT keyword record (1.0 if none). In the variants listed above, DDS is also multiplied by WK4(i).
+3. Subroutine DGSCOR returns the error term as a multiplier, FRM. DGSCOR draws an error from a normal distribution about the predicted ln(DDS), combines it with the error of the previous cycle (OLDRN) through the serial correlation, and draws again when the result is more than DGSD standard deviations from zero. The error is zero when DGSD is less than 1.0. It is also set to zero when the predicted ln(DDS) is greater than 5.0, and it is multiplied by (ln(DDS) − 4.0) when the predicted ln(DDS) is between 4.0 and 5.0. FRM is the exponential of the error.
+4. The diameter increment is DG(i) = sqrt(D² + DDS × FRM) − D. When record tripling is in effect, each of the three records receives its own error term.
+5. In the CI, CR, EM, IE and UT variants, DG(i) is limited so that it does not exceed 1.33 times the expected increment, sqrt(D² + DDS) − D. The limit applies to all species in the CR variant and to selected species in the other four (species 17 and 19 in CI; 11, 13 to 16 and 19 in EM; 19 and 22 in IE; 17 to 19 and 22 in UT).
+6. DG(i) is multiplied by the dwarf mistletoe factor, MISDGF(i, species).
+7. Subroutine DGBND bounds DG(i). Five versions are compiled. The IE version, which most variants compile, applies only the size limit: when DBH(i) + DG(i) is greater than SIZCAP(species,1) and SIZCAP(species,3) is less than 1.5, DG(i) is set to SIZCAP(species,1) − DBH(i), with a minimum of 0.01. The HI and WC versions (also compiled by OP and PN) first limit DG(i) to 7.92 × exp(−0.03 × DBH(i)), with DBH(i) taken as no more than 150, for all species except species 17, and then apply the size limit. The WS version first limits DG(i) to a species-specific function of DBH(i) (a × DBH^b × exp(c × DBH)) for the species and diameters it lists (DBH of 3.0 or more), and then applies the size limit. The SN version reduces DG(i) between two species-specific diameters (DLODHI), with a minimum of 0.048, and then applies the size limit. The ON version limits DG(i) to 6.0 × exp(−0.03 × DBH(i)) and has no size limit.
+
+Diameter growth is similarly assigned to tree record triples if record tripling is in effect and control returns to subroutine GRINCR. After subroutine DGDRIV, DG(i) is an inside bark increment on a YR-year basis. YR is 10 years in all variants except NC, OC, OP and SN, where it is 5 years. The source comment in subroutine GRINCR states that DG is returned on the YR basis, and the diameter increment is scaled to the cycle length by subroutine GRADD (see [Diameter increment through the projection cycle](#sec-diameter-increment-through-the-projection-cycle)).
 
 Subroutine HTGF has a similar construction as subroutine DGF does. It has nested species and trees-within-species DO loops controlling subroutine execution. Subroutine MULTS is called to retrieve large-tree height growth multipliers. Each trees’ height growth is bounded so current height plus height growth does not exceed a morphological maximum height for the species as entered with the TRESZCP keyword record. Height growth estimates are assigned to record triples if record tripling is in effect and control returns to subroutine GRINCR. Height growth estimates at the end of subroutine HTGF are on a cycle-length basis.
 
@@ -3053,7 +3063,7 @@ STGE is the height growth estimate obtained using the small-tree equations
 
 LTGE is the height growth estimate obtained using the large-tree equations
 
-For diameter growth, weighting of the estimate obtained using the large tree equations with that obtained using the small tree equations does not occur; one or the other is used. The one used depends on a different threshold diameter, also specified in the variant overview document. The threshold diameter used in deciding which estimate to use for diameter growth may be contained locally in subroutine REGENT, or it may be contained in an array subscripted by species called BREAK(i) in the GGCOM labeled COMMON block and initialized in subroutine BLKDAT. For species i, trees with DBH(i) less than the threshold diameter are assigned the diameter growth estimate obtained using the small tree diameter growth equations; trees with DBH(i) greater than or equal to the threshold diameter are assigned the diameter growth estimate obtained using the large tree diameter growth equations.
+For diameter growth, the small-tree estimate is considered only for trees with DBH(i) less than a threshold diameter that is specific to the variant and often to the species. The threshold may be contained locally in subroutine REGENT (for example in the arrays XMAX(i), DGMIN(i) or DGMAX(i), or in the variable BKPT), or it may be contained in an array subscripted by species called BREAK(i) in the GGCOM labeled COMMON block and initialized in subroutine BLKDAT. The values are listed in the table in [Diameter increment through the projection cycle](#sec-diameter-increment-through-the-projection-cycle). Trees with DBH(i) greater than or equal to the threshold diameter keep the diameter growth estimate obtained using the large tree equations. For trees below the threshold, the small-tree estimate either replaces the large-tree estimate or is averaged with it, depending on the variant and the species. Averaging is used in the AK, CA, CS, HI, LS, NC, NE, OC, ON, OP, PN, SO, WC and WS variants for the species shown in that table, which also gives the weights. In the other variants, and for the other species of the variants listed, the small-tree estimate replaces the large-tree estimate.
 
 For a few species in some variants, equations contained in subroutine REGENT are used to estimate height and diameter growth for all sized trees. For example, this happens with pinyon pine in the Central Rockies (CR) variant. In these cases, the logic is the same as just discussed with the threshold diameters being set to artificially high values so only estimates using the small tree equations are used.
 
@@ -3061,7 +3071,7 @@ For a few species in some variants, equations contained in subroutine REGENT are
 
 Subroutine REGENT is another one of those subroutines containing two sections; the top section is used for growth estimation in projection cycling; the bottom section is used for calibration in projection initialization. The structure of each section is similar, and understanding the top section will lead to understanding the bottom section. First, the overall structure of subroutine REGENT will be described and then this structure will be broken down into more detail.
 
-For most variants, a single pair of nested species and trees-within-species DO loops control subroutine execution. In these variants, height growth is estimated for the period length for which the small tree equations were fit (10-years, except for the Klamath Mountain variant (NC) which is 5-years), scaled to the cycle length, and then weighted with height growth estimates previously calculated using the large tree equations. Diameter growth is then estimated for the cycle length and scaled to a 10-year basis. Diameter growth gets scaled back to a cycle length basis in subroutine UPDATE when stand statistics are updated at the end of the projection cycle (see [Regeneration establishment](#sec-regeneration-establishment)).
+For most variants, a single pair of nested species and trees-within-species DO loops control subroutine execution. In these variants, height growth is estimated for the period length for which the small tree equations were fit (10-years, except for the Klamath Mountain variant (NC) which is 5-years), scaled to the cycle length, and then weighted with height growth estimates previously calculated using the large tree equations. Diameter growth is then estimated for the cycle length and converted to the YR basis used by subroutine DGDRIV. The conversion is made on the DDS scale: DDS = G × (2 × BARK × D + G) × YR/L, then DG(i) = sqrt((D × BARK)² + DDS) − BARK × D, where G is the small-tree increment for the cycle length of L years converted to inside bark, D is DBH(i) and BARK is BRATIO(species, DBH(i), HT(i)). Where the small-tree and large-tree increments are averaged, the small-tree increment is converted before it is averaged with the large-tree increment, which is already on the YR basis. (Species 41 in the WS variant is the exception: its increment is not converted.) Diameter growth is scaled back to the cycle length in subroutine GRADD, not in subroutine UPDATE (see [Diameter increment through the projection cycle](#sec-diameter-increment-through-the-projection-cycle)).
 
 Some variants use a slightly different logic because the small tree height growth equations were fit to 5-year data. To avoid bias associated with projection cycles longer than the period to which the equation was fit, the projection cycle is first divided into periods that are no longer than 5-years in length (i.e. a 10-year projection cycle would have 2 periods of 5-years; a 7-year projection cycle would have 2 periods with the first being 5-years and the second being 2-years; a 13-year projection cycle would have 3 periods with the first two being 5-years and the third being 3 years, etc.). A triple-nested DO loop structure is used to estimate end of cycle tree height for each tree record which gets stored in work array WK3(j), where j is the tree index. The outside loop is over periods, the middle loop is over species, and the inner loop is over tree records within species. Stand density statistics and tree attributes are updated each period. The height estimate for the last period is scaled to the length of the last period. Double nested species and trees-within-species DO loops are then entered. Height growth for the projection cycle is obtained by subtracting the start-of-cycle tree height from the end-of-cycle tree height. This estimate gets weighted with height growth estimates previously calculated using the large tree equations as discussed above. Diameter growth is estimated and then scaled to a 10-year basis for rescaling in subroutine UPDATE.
 
@@ -3085,9 +3095,123 @@ In variants using period sub-cycling, the triple nested DO loops to estimate tre
 
 In all variants, the double nested DO loop structure to estimate diameter and height growth is next. These loops follow the general structure discussed above. Height and diameter growth are then assigned to tripled tree records if record tripling is in effect and program control returns to subroutine GRINCR.
 
-Subroutine GRINCR calls subroutine OPFIND to check for any FIXDG or FIXHTG keyword records scheduled for the projection cycle. If any are found, OPGET, an entry point in subroutine OPFIND, is called to retrieve parameters associated with each of these keyword records and height and diameter growth estimates for all tree records are checked for compliance with these parameters. OPDONE, another entry point in subroutine OPFIND, is called to mark the activities’ disposition.
+Subroutine GRINCR calls subroutine OPFIND to check for any FIXDG or FIXHTG keyword records scheduled for the projection cycle. If any are found, OPGET, an entry point in subroutine OPFIND, is called to retrieve parameters associated with each of these keyword records. OPDONE, another entry point in subroutine OPFIND, is called to mark the activities’ disposition.
+
+For a FIXDG activity, a tree record is included when its species matches the species or species group in the record (0 includes all species) and its diameter at the start of the cycle, DBH(i), is at least the lower diameter limit and less than the upper diameter limit. A negative multiplier is set to 0, a negative lower limit is set to 0, and an upper limit that is 0 or less is set to 999. For each included record, DG(i) is multiplied by the multiplier; the tripled records of the tree receive the same multiplier. Because FIXDG is applied after subroutines DGDRIV and REGENT, it multiplies the small-tree increments as well as the large-tree increments, and it multiplies the increment itself (an inside bark increment on the YR basis), not the change in squared diameter. FIXHTG applies a multiplier to HTG(i) with the same species and diameter test; a negative multiplier is set to 0.
 
 FVS is now done with basic growth estimates. However, growth estimates may be modified later in the projection cycle to account for fertilization or insect and disease effects on growth.
+
+#### Diameter increment through the projection cycle {#sec-diameter-increment-through-the-projection-cycle}
+
+The diameter increment array DG(i) is an increment of the **inside bark** diameter. The tree diameter array DBH(i) is the diameter **outside bark** at all times. The conversion between them uses the bark ratio function BRATIO(species, DBH(i), HT(i)), which is variant-specific. The table follows DG(i) through one projection cycle in the order the subroutines are called.
+
+```{r dg-sequence, echo=FALSE}
+dg_sequence <- tibble::tribble(
+  ~Step, ~Subroutine, ~What_Happens_To_DG, ~Basis_Afterward,
+  "1", "DGDRIV", "Computed for every tree record, large and small, from the large-tree ln(DDS) estimate, the error term, the dwarf mistletoe factor and the size bound", "Inside bark; YR years",
+  "2", "REGENT", "Replaced by, or averaged with, the small-tree estimate for trees below the threshold diameter, depending on the variant and species; trees at or above the threshold keep the DGDRIV value", "Inside bark; YR years",
+  "3", "GRINCR (FIXDG)", "Multiplied by the FIXDG multiplier for records in the species and diameter range", "Inside bark; YR years",
+  "4", "FFERT", "Recomputed on the DDS scale for the fertilizer response", "Inside bark; YR years",
+  "5", "GRADD (MPBCUP, DFBDRV)", "Called before the scaling; the source comment states that DG must be on the YR basis for the mountain pine beetle model (MPBMOD)", "Inside bark; YR years",
+  "6", "GRADD (scaling)", "DDS = DG × (2 × BARK × D + DG) × FINT/YR, then DG = sqrt((D × BARK)² + DDS) − BARK × D; done only when FINT is not equal to YR; a DG that is not positive is set to 0", "Inside bark; FINT years",
+  "7", "GRADD (MISTOE, TMCOUP and later calls)", "Called after the scaling, so any change is to the cycle-length increment; TMCOUP subtracts DGLOSS from DG", "Inside bark; FINT years",
+  "8", "GRADD (stop point 5)", "Not changed; available through the API as the attribute dg", "Inside bark; FINT years",
+  "9", "UPDATE (VOLS)", "Not changed; VOLS computes volume at D = DBH + DG/BARK", "Inside bark; FINT years",
+  "10", "UPDATE (diameters)", "Not changed; DBH(i) = DBH(i) + DG(i)/BRATIO(species, DBH(i), HT(i)), with HT(i) already updated", "DBH is outside bark",
+  "11", "DGDRIV, next cycle", "Copied to WK1(i) as the previous increment, then overwritten", "Inside bark; FINT years"
+)
+
+kable(dg_sequence,
+      col.names = c("Step", "Subroutine", "What Happens to DG", "Basis Afterward"),
+      caption = "The diameter increment DG(i) through one projection cycle",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "3em") %>%
+  column_spec(3, width = "30em")
+```
+
+**Large and small trees.** Subroutine DGDRIV computes a large-tree diameter increment for every tree record, including the small ones. Subroutine REGENT is called next and changes DG(i) only for trees below a threshold diameter. For height growth, REGENT blends the small-tree and large-tree estimates between the diameters XMIN and XMAX of each species. Diameter growth is handled differently in each variant. The table lists, for each variant and species group, the threshold diameter, whether the small-tree increment replaces the DGDRIV value or is averaged with it, and how the small-tree increment is obtained. Trees at or above the threshold keep the DGDRIV value in every case. The table lists the variants that have a source list in the repository. A threshold of 99.0 means that the small-tree equations are used at all diameters, and "None" means that the test is not made for the species. The threshold values for the ON variant are as coded in the source.
+
+```{r regent-dg-by-variant, echo=FALSE}
+regent_dg <- tibble::tribble(
+  ~Variant, ~Species, ~Threshold, ~Combination, ~Source,
+  "AK", "1 to 3 and 8 to 12", "5.0", "Averaged; weight (DBH - 1.0)/(5.0 - 1.0)", "Height before and after the increment",
+  "AK", "4 to 7 and 13 to 23", "3.0", "Averaged; weight (DBH - 1.0)/(3.0 - 1.0)", "Height before and after the increment",
+  "BC", "All", "3.0", "Replaced", "Height before and after the increment",
+  "BM", "6", "99.0", "Replaced", "Height before and after the increment",
+  "BM", "All others", "3.0", "Replaced", "Height before and after the increment",
+  "CA", "23 and 50", "7.0", "Averaged; weight (DBH - 2.0)/(7.0 - 2.0)", "Height before and after the increment",
+  "CA", "All others", "3.0", "Averaged; weight (DBH - 1.5)/1.5", "Height before and after the increment",
+  "CI", "17 and 19", "1.0", "Replaced", "Height before and after the increment",
+  "CI", "14 and 15", "99.0", "Replaced", "Height before and after the increment",
+  "CI", "All others", "3.0", "Replaced", "Height before and after the increment",
+  "CR", "1 to 3, 5, 11, 13, 15, 17 to 22, 28 and 36 to 38", "1.0", "Replaced", "Height before and after the increment",
+  "CR", "10", "2.0", "Replaced", "Height before and after the increment",
+  "CR", "4, 6 to 8 and 14", "3.0", "Replaced", "Height before and after the increment",
+  "CR", "9, 12, 16, 23 to 27 and 29 to 35", "99.0", "Replaced", "Height before and after the increment",
+  "CS", "All", "5.0", "Averaged; weight (DBH - 3.0)/(5.0 - 3.0), the weight used for height", "Height before and after the increment",
+  "EC", "All", "3.0", "Replaced", "Height before and after the increment",
+  "EM", "11, 13 to 16 and 19", "1.0", "Replaced", "Height before and after the increment",
+  "EM", "6", "None", "Replaced", "Height before and after the increment",
+  "EM", "All others", "3.0", "Replaced", "Height before and after the increment",
+  "HI", "17", "7.0", "Averaged; weight (DBH - 2.0)/(7.0 - 2.0)", "Height before and after the increment",
+  "HI", "All others", "3.0", "Replaced", "SMHGDG",
+  "IE", "19 and 22", "1.0", "Replaced", "Height before and after the increment",
+  "IE", "15 and 16", "None", "Replaced", "Height before and after the increment",
+  "IE", "All others", "3.0", "Replaced", "Height before and after the increment",
+  "KT", "All", "3.0", "Replaced", "Height before and after the increment",
+  "LS", "All", "5.0", "Averaged; weight (DBH - 3.0)/(5.0 - 3.0), the weight used for height", "Height before and after the increment",
+  "NC", "12", "7.0", "Averaged; weight (DBH - 2.0)/(7.0 - 2.0)", "Height before and after the increment",
+  "NC", "1 to 11", "3.0", "Replaced", "Height before and after the increment",
+  "NE", "All", "5.0", "Averaged; weight (DBH - 1.5)/(5.0 - 1.5), the weight used for height", "Height before and after the increment",
+  "OC", "23 and 50", "7.0", "Averaged; weight (DBH - 2.0)/(7.0 - 2.0)", "Height before and after the increment",
+  "OC", "All others", "3.0", "Averaged; weight (DBH - 1.5)/1.5", "Height before and after the increment",
+  "OC", "ORGANON trees", "As for the species", "Not changed (weight 1.0)", "Not used",
+  "ON", "All", "4.72", "Averaged; weight (DBH - 3.15)/(4.72 - 3.15), the weight used for height", "Height before and after the increment",
+  "OP", "17", "7.0", "Averaged; weight (DBH - 2.0)/(7.0 - 2.0)", "Height before and after the increment",
+  "OP", "All others", "3.0", "Replaced", "SMHGDG",
+  "PN", "All", "As for WC", "As for WC", "As for WC",
+  "SN", "All", "3.0", "Replaced", "Height before and after the increment",
+  "SO", "11", "99.0", "Replaced", "Height before and after the increment",
+  "SO", "9 and 27", "3.0", "Averaged; weight (DBH - 1.5)/1.5", "Height before and after the increment",
+  "SO", "All others", "3.0", "Replaced", "Height before and after the increment",
+  "TT", "4, 11 to 13 and 16", "99.0", "Replaced", "Height before and after the increment",
+  "TT", "15 and 18", "1.0", "Replaced", "Height before and after the increment",
+  "TT", "1 to 3, 5 to 10, 14 and 17", "3.0", "Replaced", "Height before and after the increment",
+  "UT", "11 to 17, 20, 21 and 24", "99.0", "Replaced", "Height before and after the increment",
+  "UT", "18, 19 and 22", "1.0", "Replaced", "Height before and after the increment",
+  "UT", "1 to 10 and 23", "3.0", "Replaced", "Height before and after the increment",
+  "WC", "17", "7.0", "Averaged; weight (DBH - 2.0)/(7.0 - 2.0)", "Height before and after the increment",
+  "WC", "All others", "3.0", "Replaced", "SMHGDG",
+  "WS", "21", "99.0", "Replaced", "Height before and after the increment",
+  "WS", "4 and 23", "7.0", "Averaged; weight (DBH - 2.0)/(7.0 - 2.0)", "Height before and after the increment",
+  "WS", "41", "3.0", "Replaced; not converted to the YR basis", "Height before and after the increment",
+  "WS", "All others", "3.0", "Averaged; weight (DBH - 1.5)/1.5", "Height before and after the increment"
+)
+
+kable(regent_dg,
+      col.names = c("Variant", "Species", "Threshold DBH", "Small-tree and large-tree increments", "Source of the small-tree increment"),
+      caption = "Small-tree diameter increment in REGENT by variant",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "4em") %>%
+  column_spec(4, width = "22em")
+```
+
+**How the small-tree increment is obtained.** In every variant except HI, OP, PN and WC (species other than 17) the small-tree diameter increment is derived from the height growth of the same cycle, not from a diameter regression. REGENT does the following for a tree below the threshold.
+
+1. The height increment HTG(i) is computed first, with the small-tree and large-tree height estimates weighted as described under threshold diameters.
+2. When HT(i) + HTG(i) is 4.5 feet or less, DG(i) is set to 0 and DBH(i) is raised by a small amount. Otherwise the species height-diameter relation gives the diameter at the height before the increment and at the height after the increment.
+3. The difference between the two diameters is multiplied by the small-tree diameter growth multiplier (REGDMULT) and by the bark ratio, which gives an inside bark increment. When either diameter is negative, most variants use 0.2 × HTG(i) × BARK × the multiplier instead.
+4. The increment is bounded below (by 0 in some variants and by 0.1 in others) and, in many variants, above by a species maximum. It is then converted to the YR basis as described above, raised if DBH(i) + DG(i) would be less than the species minimum diameter DIAM, and bounded by DGBND.
+
+In the HI, OP, PN and WC variants, the small-tree diameter increment of every species except species 17 comes from subroutine SMHGDG, which returns both the small-tree height and diameter increments. The diameter increment is multiplied by the climate multiplier WK4(i), the bark ratio and the REGDMULT multiplier, bounded, and converted to the YR basis.
+
+The small-tree diameter increment depends on the height increment of the same cycle, whereas the large-tree increment depends on the ln(DDS) regression and the error term. Subroutine DGSCOR is not called in any REGENT subroutine, so the large-tree error term is not applied to the small-tree increment.
+
+YR is the period length of the growth models and is set in subroutine BLKDAT: 10 years in all variants except NC, OC, OP and SN, where it is 5 years. FINT is the cycle length.
 
 #### Mortality
 
@@ -3095,7 +3219,7 @@ Mortality is estimated using either the Prognosis-type mortality model or SDI-ba
 
 In the two ORGANON-FVS variants, mortality for all tree records will be estimated using the ORGANON mortality equations or the SDI-based mortality model depending on whether there are valid ORGANON trees in the input data or not. The ORGANON mortality model is described in the OC and OP variant overview documents. Structural differences in the two ORGANON-FVS variants are discussed in more detail in [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants).
 
-Subroutine GRINCR calls subroutine MORTS to estimate mortality. Subroutine MORTS may call another subroutine which distributes mortality using variant-specific methods (subroutine VARMRT for the ACD, CA, CR, CS, EC, LS, NE, SN, and WS variants; subroutine SEAMRT for the AK variant; subroutine BMTMRT for the BM variant; subroutine NWCMRT for the NC variant; subroutine SCOMRT for the SO variant; subroutine TTMRT for the TT variant; subroutine UTMRT for the UT variant). Mortality subroutines estimate the number of trees to kill and distribute that mortality across tree records by reducing the trees per acre representation, PROB(j), for each tree record j.
+Subroutine GRINCR calls subroutine MORTS to estimate mortality. Subroutine MORTS may call another subroutine which distributes mortality using variant-specific methods (subroutine VARMRT for the CA, CR, CS, EC, LS, NE, SN, and WS variants; subroutine SEAMRT for the AK variant; subroutine BMTMRT for the BM variant; subroutine NWCMRT for the NC variant; subroutine SCOMRT for the SO variant; subroutine TTMRT for the TT variant; subroutine UTMRT for the UT variant). Mortality subroutines estimate the number of trees to kill and distribute that mortality across tree records by reducing the trees per acre representation, PROB(j), for each tree record j.
 
 Subroutine MORTS calls subroutine DBCHK to see if debug output is called for and then calls subroutine OPFIND, OPGET (an entry point in subroutine OPFIND), and OPDONE (another entry point in subroutine OPFIND) to process any mortality multipliers scheduled for the projection cycle.
 
@@ -3179,7 +3303,7 @@ Various FVS extension specific code segments are called by subroutine TRIPLE to 
 
 Subroutine GRINCR calls subroutine REASS to realign the FVS internal pointers following tripling. Subroutine REASS resets the vectors IND(k), IND1(k), and the array ISCT(k1,k2).
 
-Subroutine GRINCR calls subroutine FFERT to compute adjustments to diameter and height growth due to effects of applying fertilizer. Fertilizer treatments can be specified using the FERTILIZ keyword record. With the call to subroutine FFERT in this position, fertilizer treatments do not affect tree mortality through increased competition. This is probably an error but the effects would likely be small. Moving the call to subroutine FFERT before the call to subroutine MORTS should be considered.
+Subroutine GRINCR calls subroutine FFERT to compute adjustments to diameter and height growth due to effects of applying fertilizer. For each tree FFERT converts DG(i) to a change in squared inside bark diameter, DDS = 2 × DIB × DG(i) + DG(i)², where DIB = DBH(i) × BRATIO(species, DBH(i), HT(i)). It multiplies the annual rate (DDS/YR) by a factor for the fertilizer response over the duration of the treatment within the cycle, converts the result to the YR basis by multiplying by YR/FINT, and computes DG(i) = sqrt(DIB² + DDS) − DIB. The result remains an inside bark increment on the YR basis, which subroutine GRADD scales to the cycle length. FFERT also changes HTG(i) in a similar way. Fertilizer treatments can be specified using the FERTILIZ keyword record. With the call to subroutine FFERT in this position, fertilizer treatments do not affect tree mortality through increased competition. This is probably an error but the effects would likely be small. Moving the call to subroutine FFERT before the call to subroutine MORTS should be considered.
 
 Subroutine GRINCR is now done with its’ tasks; program control is returned to subroutine TREGRO for further processing.
 
@@ -3227,7 +3351,14 @@ FVS is now finished with estimation of growth and mortality for the projection c
 
 Subroutine GRADD calls subroutine SVMORT to update the file needed for stand visualization. This update includes the effects of mortality that occurred during the projection cycle. Subroutine SVMORT assumes that all mortality trees are standing snags for purposes of stand visualization. SVMORT calls subroutine SVRMOV to remove tree records associated with mortality (normal, fire-caused, beetle-caused, etc.) from the file needed for stand visualization. Stop point 5 is processed immediately after this call, before the tree records are updated.
 
-Subroutine GRADD calls subroutine UPDATE to update tree descriptions. Subroutine UPDATE adds the growth increments, deducts mortality, computes new volume statistics, and calculates some summary information. For each tree record j, updates are made to: tree height, HT(j); normal height, NORMHT(j); trees per acre, PROB(j); and diameter, DBH(j). Tree diameters are updated at the very end of the subroutine, while other values are updated at the beginning of the subroutine. This is because subroutine VOLS, which computes tree volumes, accounts for diameter growth in its calculations.
+Subroutine GRADD calls subroutine UPDATE to update tree descriptions. Subroutine UPDATE adds the growth increments, deducts mortality, computes new volume statistics, and calculates some summary information. For each tree record j, the following is done in this order:
+
+1. Tree height is increased by the height increment, HT(j) = HT(j) + HTG(j). When the normal height, NORMHT(j), is greater than 0, 100 × HTG(j) is added to it (rounded to an integer).
+2. The mortality is capped at the trees per acre of the record, WKI = min(WK2(j), PROB(j)), and trees per acre is reduced, PROB(j) = max(0, PROB(j) − WKI). The mortality volume is WK6(j) = WKI × CFV(j)/FINT, which is added to the array SPCMO by species and tree class.
+3. After all records are processed, subroutine VOLS computes tree and stand volumes. When LSTART is false, VOLS uses the end-of-cycle diameter D = DBH(j) + DG(j)/BARK, where BARK = BRATIO(species, DBH(j), HT(j)) and HT(j) is the updated height.
+4. At the end of UPDATE, the tree diameter is increased, DBH(j) = DBH(j) + DG(j)/BRATIO(species, DBH(j), HT(j)), using the same expression for the bark ratio. DG(j) is an inside bark increment on the cycle-length basis (scaled by subroutine GRADD before stop point 5), and dividing it by the bark ratio converts it to an outside bark increment. UPDATE does not change DG(j).
+
+Tree diameters are therefore updated at the very end of the subroutine, while other values are updated at the beginning of the subroutine. Subroutine VOLS, which computes tree volumes, adds the diameter growth to the diameter itself in its calculations (step 3), so volumes are computed for the end-of-cycle diameters while DBH(j) still holds the start-of-cycle values.
 
 Subroutine UPDATE updates the array storing mortality-related volume information by tree species and tree value class, SPCMO(sp,vc). It calls subroutine PCTILE to compute percentiles in the distribution of mortality-related volume, and subroutine DIST to compute percentile points in the distribution of mortality-related volume. Subroutine COMP is called to compute percentages of mortality-related volume by species and tree value class.
 
@@ -4176,7 +4307,7 @@ stop_points <- data.frame(
     "Act on the results of the pre-thinning event monitor call before thinning",
     "Inspect or change the stand after thinning",
     "Act after both event monitor calls, before growth",
-    "Access the estimated growth and mortality before they are applied",
+    "Read or change the inside bark diameter increment (dg), the height increment (htg) and the mortality (mort) before UPDATE applies them",
     "Modify trees after growth and mortality have been applied",
     "Inspect or change the stand as read, before calibration",
     "Read the final state of the stand; the stand cannot be continued"
@@ -4194,6 +4325,26 @@ kable(stop_points,
   column_spec(1, bold = TRUE, width = "2cm") %>%
   column_spec(4, width = "5cm")
 ```
+
+### Stop Point 5 and the Diameter Increment {-}
+
+Stop point 5 is called from subroutine GRADD, after subroutine SVMORT and before subroutine UPDATE. When the stop is taken, GRADD returns up the call stack and the tree list holds the following values.
+
+1. `DBH(i)` is the diameter outside bark at the start of the cycle. It has not been updated.
+2. `DG(i)` is the diameter increment for the cycle, **inside bark**, on the cycle-length basis. It includes the large-tree and small-tree estimates, the FIXDG and fertilizer adjustments, the scaling from the YR basis to the cycle length done by GRADD (when FINT is not equal to YR), and any change made by the pest, disease and fire routines called before the stop point (see [Diameter increment through the projection cycle](#sec-diameter-increment-through-the-projection-cycle)).
+3. `HTG(i)` is the height increment for the cycle, and `HT(i)` has not been updated.
+4. `WK2(i)` is the mortality in trees per acre, and `PROB(i)` has not been reduced.
+
+The API attributes `dg`, `htg`, `mort` and `dbh` read and write `DG`, `HTG`, `WK2` and `DBH` directly (subroutine fvsTreeAttr). No bark conversion and no scaling is applied in either direction. A value written to `dg` is therefore taken as an inside bark increment for the cycle length.
+
+When the run is continued with restart code 5, subroutine TREGRO does not call GRINCR and calls GRADD, which branches to the call to UPDATE. The scaling of DG, the pest and fire calls, SVMORT and the stop point itself are not repeated, so the values in the arrays are used as they are. UPDATE then:
+
+1. adds the height increment to the height, `HT(i) = HT(i) + HTG(i)`;
+2. reduces `PROB(i)` by `WK2(i)`, with the mortality limited to the trees per acre of the record;
+3. calls VOLS, which computes volumes for the end-of-cycle diameter, `DBH(i) + DG(i)/BARK`; and
+4. sets `DBH(i) = DBH(i) + DG(i)/BRATIO(species, DBH(i), HT(i))`.
+
+The bark ratio in the last two steps is evaluated with the diameter at the start of the cycle and the updated height. An outside bark increment of Δ inches is therefore obtained by writing `dg = Δ × BRATIO(species, DBH(i), HT(i) + HTG(i))`. UPDATE does not change `DG(i)` and nothing clears it. At the start of the next cycle subroutine DGDRIV copies it to `WK1(i)`, the previous increment used by the mortality routines, and then recomputes `DG(i)`. Values written to `dg` at stop point 5 therefore also become the previous-cycle increment of the next cycle.
 
 ### Data Persistence Arrays {-}
 
@@ -4424,7 +4575,7 @@ Retrieves attributes of the tree records.
 
 - **Parameters:** `vars` is a character vector of attribute names.
 - **Returns:** a data frame with one row per tree record and one column per requested attribute.
-- **Available attributes (lower case, 25 in all):** `id`, `species` (FVS numeric species index), `tpa`, `mort` (trees per acre predicted to die), `dbh`, `dg` (diameter growth scaled to cycle length), `ht`, `htg`, `crwdth` (crown width), `cratio`, `age`, `plot` (FVS plot index), `tcuft`, `mcuft`, `bdft`, `ptbal` (point basal area in larger trees), `bapctile` (percentile in the basal area distribution), `defect` (coded 11223344), `mgmtcd` (tree value class), `plotsize`, and `crownwt0` to `crownwt5` (weights of foliage and of crown material in the 0 to 0.25, 0.25 to 1, 1 to 3, 3 to 6, and 6 to 12 inch classes).
+- **Available attributes (lower case, 25 in all):** `id`, `species` (FVS numeric species index), `tpa`, `mort` (trees per acre predicted to die), `dbh`, `dg` (inside bark diameter increment; it is on the cycle-length basis at stop point 5, after GRADD has scaled it), `ht`, `htg`, `crwdth` (crown width), `cratio`, `age`, `plot` (FVS plot index), `tcuft`, `mcuft`, `bdft`, `ptbal` (point basal area in larger trees), `bapctile` (percentile in the basal area distribution), `defect` (coded 11223344), `mgmtcd` (tree value class), `plotsize`, and `crownwt0` to `crownwt5` (weights of foliage and of crown material in the 0 to 0.25, 0.25 to 1, 1 to 3, 3 to 6, and 6 to 12 inch classes).
 
 **`fvsGetSummary()`**
 
@@ -5989,8 +6140,6 @@ kable(df,
 ```{r appx-a-variant, echo=FALSE}
 df <- data.frame(
   c1 = c(
-    "FVS/ACD",
-    "FVS/ACD/COMMON",
     "FVS/AK",
     "FVS/AK/COMMON",
     "FVS/BM",
@@ -6055,8 +6204,6 @@ df <- data.frame(
     "FVS/WS/COMMON"
   ),
   c2 = c(
-    "Acadian variant-specific source code (under development)",
-    "ACD variant-specific labeled COMMON blocks",
     "Southeast Alaska / Coastal British Columbia variant-specific source code",
     "AK variant-specific labeled COMMON blocks",
     "Blue Mountains variant-specific source code",
