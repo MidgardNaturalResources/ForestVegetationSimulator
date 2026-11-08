@@ -2374,9 +2374,15 @@ Subroutine OPGET2 is called by subroutine ESFLTR to check for a TALLYONE option 
 
 Subroutine PCTILE is used to calculate percentile points in the distribution of annual total cubic foot accretion.
 
-Subroutine VARVOL contains entry points NATCRS, OCFVOL, OBFVOL, and GETEQN. Subroutine VOLS calls entry point NATCRS which calls PROFILE when equations from the National Cruise Program are being used to estimate volumes, or calls other Region specific subroutines (e.g. FORMCL and R6VOL for Region 6; R5HARV for Region 5); VOLS calls entries OCFVOL and OBFVOL or subroutines CFVOL and BFVOL when users change the volume calculation method using field 7 of the VOLUME keyword record. By default, FVS uses the National Cruise Program equations. Entry point GETEQN is used by subroutine NATCRZ to return the volume equation number being used when writing an output file for the National Cruise Program post-processor. Equation numbers used by the National Cruise Program also get written to the FVS main output file. Subroutine VOLS calls subroutines CFTOPK and BFTOPK to compute volume lost to broken or dead tops.
+Subroutine VOLS computes the volumes of the tree records. It first calls subroutine VOLKEY, and then selects the calculation of each tree record by the cubic foot volume method of the species, METHC(i), and the board foot volume method, METHB(i). The default of both is method 6 in every variant (subroutine SITSET changes a method that is still 999 to 6). The methods are used as follows.
 
-Subroutine VOLKEY is called by VOLS to process any keyword records used to change volume standards or volume equations. These keyword records include MCDEFECT, BFDEFECT, VOLUME, and BFVOLUME.
+1. Methods 6 and 10 (and method 5 in the CS, LS and NE variants) call entry point NATCRS of subroutine FVSVOL, in the file `vvolume/fvsvol.f`. FVSVOL calls subroutine VOLINITNVB of the National Volume Estimator Library (NVEL, the git submodule `volume/NVEL`). For a National Scale Volume and Biomass equation (a name that begins with `NVB`), VOLINITNVB calls subroutine NVBC. For any other equation it calls subroutine VOLINIT, which uses the National Cruise System equations (for example the profile routine PROFILE, and R6VOL for some Region 6 equations). Method 10 is set by the FIAVBC keyword record and selects the National Scale Volume and Biomass equations, which are described in [National Scale Volume and Biomass (NSVB) estimation](#sec-national-scale-volume-and-biomass). Subroutine SITSET chooses the equation of each species and writes a table of the volume equation numbers to the main output file. FVSVOL also calls the variant subroutine FORMCL for the form class.
+2. Method 8 calls the variant-specific entry points OCFVOL and OBFVOL of subroutine FVSVOL.
+3. The other methods call the variant subroutines CFVOL and BFVOL.
+
+When the board foot method is 5 (CS, LS and NE), 6 or 9 and the cubic foot method is 6 or 10, the board foot volume comes from the same call of NATCRS as the cubic foot volume. Subroutine VOLS calls subroutines CFTOPK and BFTOPK to compute volume lost to broken or dead tops. CFTOPK is not called when an NSVB equation is used or when the FIAVBC keyword record is active; NSVB makes the allowance for the top itself (see the NSVB section). Entry point GETEQN of FVSVOL is used by subroutine NATCRZ to return the volume equation numbers being used when writing an output file for the National Cruise Program post-processor.
+
+Subroutine VOLKEY is called by VOLS to process any keyword records used to change volume standards or volume equations. These keyword records include MCDEFECT, BFDEFECT, VOLUME, and BFVOLUME. After a FIAVBC keyword record has been read, the MCDEFECT and VOLUME records are recognized but have no effect.
 
 # Projection Cycling Phase {#sec-projection-cycling-phase}
 
@@ -3378,11 +3384,134 @@ Subroutine DBCHK is used to see if debug output should be written to the output 
 
 Subroutine ECVOL is used to process volume information for the economics post-processor if an economics analysis is called for.
 
-Subroutine VARVOL contains entry points NATCRS, OCFVOL, OBFVOL, and GETEQN. Subroutine VOLS calls entry point NATCRS which calls PROFILE when equations from the National Cruise Program are being used to estimate volumes, or calls other Region specific subroutines (e.g. subroutines FORMCL and R6VOL for Region 6; subroutine R5HARV for Region 5); subroutine VOLS calls entries OCFVOL and OBFVOL or subroutines CFVOL and BFVOL when users change the volume calculation method using field 7 of the VOLUME keyword record. By default, FVS uses the National Cruise Program equations. Entry point GETEQN is used by subroutine NATCRZ to return the volume equation number being used when writing an output file for the National Cruise Program post-processor. Subroutine VOLS calls subroutines CFTOPK and BFTOPK to compute volume lost to broken or dead tops.
+Subroutine VOLS computes the volumes of the tree records. It first calls subroutine VOLKEY, and then selects the calculation of each tree record by the cubic foot volume method of the species, METHC(i), and the board foot volume method, METHB(i). The default of both is method 6 in every variant (subroutine SITSET changes a method that is still 999 to 6). The methods are used as follows.
 
-Subroutine VOLKEY is called by subroutine VOLS to process any keyword records used to change volume standards or volume equations. These keyword records include MCDEFECT, BFDEFECT, VOLUME, and BFVOLUME.
+1. Methods 6 and 10 (and method 5 in the CS, LS and NE variants) call entry point NATCRS of subroutine FVSVOL, in the file `vvolume/fvsvol.f`. FVSVOL calls subroutine VOLINITNVB of the National Volume Estimator Library (NVEL, the git submodule `volume/NVEL`). For a National Scale Volume and Biomass equation (a name that begins with `NVB`), VOLINITNVB calls subroutine NVBC. For any other equation it calls subroutine VOLINIT, which uses the National Cruise System equations (for example the profile routine PROFILE, and R6VOL for some Region 6 equations). Method 10 is set by the FIAVBC keyword record and selects the National Scale Volume and Biomass equations, which are described in [National Scale Volume and Biomass (NSVB) estimation](#sec-national-scale-volume-and-biomass). Subroutine SITSET chooses the equation of each species and writes a table of the volume equation numbers to the main output file. FVSVOL also calls the variant subroutine FORMCL for the form class.
+2. Method 8 calls the variant-specific entry points OCFVOL and OBFVOL of subroutine FVSVOL.
+3. The other methods call the variant subroutines CFVOL and BFVOL.
+
+When the board foot method is 5 (CS, LS and NE), 6 or 9 and the cubic foot method is 6 or 10, the board foot volume comes from the same call of NATCRS as the cubic foot volume. Subroutine VOLS calls subroutines CFTOPK and BFTOPK to compute volume lost to broken or dead tops. CFTOPK is not called when an NSVB equation is used or when the FIAVBC keyword record is active; NSVB makes the allowance for the top itself (see the NSVB section). Entry point GETEQN of FVSVOL is used by subroutine NATCRZ to return the volume equation numbers being used when writing an output file for the National Cruise Program post-processor.
+
+Subroutine VOLKEY is called by subroutine VOLS to process any keyword records used to change volume standards or volume equations. These keyword records include MCDEFECT, BFDEFECT, VOLUME, and BFVOLUME. After a FIAVBC keyword record has been read, the MCDEFECT and VOLUME records are recognized but have no effect.
 
 Subroutines fvsGetRestartCode, getAmStopping, fvsGetRtnCode, and fvsStopPoint (the source code for these subroutines is part of the source code of subroutine CMDLINE) are covered in [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api). They are used to control program flow when a stop point is specified.
+
+## National Scale Volume and Biomass (NSVB) estimation {#sec-national-scale-volume-and-biomass}
+
+
+The National Scale Volume and Biomass (NSVB) system estimates tree volume, biomass and carbon with one set of equations for the United States (Westfall and others, 2023). The equations are in the National Volume Estimator Library (NVEL), which FVS includes as the git submodule `volume/NVEL` (FMSC-Measurements/VolumeLibrary). The calculation is in subroutine NVBC of the file `nsvb.f`. NSVB is used in an FVS run only after the **FIAVBC** keyword record has been read. Without it, FVS uses its usual volume methods and does not estimate biomass or carbon.
+
+### The FIAVBC keyword record
+
+When the FIAVBC record is read in subroutine INITRE, the logical variable LFIANVB is set to true. The first FIAVBC record in a run also does the following:
+
+1. The cubic foot volume method of every species, METHC(i), is set to 10.
+2. The user's cubic foot defect (CFLA0, CFLA1, CFDEFT) is set to none.
+3. The merchantability standards of every species are set to 0: the minimum DBH, top diameter and stump height of the cubic foot product (DBHMIN, TOPD, STMP) and of the sawlog cubic foot product (SCFMIND, SCFTOPD, SCFSTMP).
+
+Every FIAVBC record then does the following:
+
+1. Field 1 selects the merchantability standards. A blank or 0 selects the FIA standards, and the cruise type CFCTYPE is set to `I`. A value of 1 selects the National Forest System (NFS) standards, and CFCTYPE is set to `F`. Any other value is reported as an error and the FIA standards are used.
+2. Field 2 has been disabled. A value in it is reported as an error, and the cruise type comes from field 1.
+3. Field 3 names the species or species group for the standards in fields 4 to 9. The fields set, in order, the cubic foot minimum DBH, top diameter and stump height, and the sawlog cubic foot minimum DBH, top diameter and stump height. A field left blank keeps its value.
+
+The keyword records that change cubic foot volume or defect are recognized but have no effect after FIAVBC: MCFDLN, MCDEFECT, VOLUME and the cubic foot part of DEFECT. The board foot records BFFDLN and BFDEFECT, and the board foot part of DEFECT, still apply to board foot volume only. The merchantability standards in effect are listed in the FVS_InvReference table.
+
+### Selection of the equation
+
+Subroutine SITSET of each variant calls subroutine NVB_REGION_CHECK and, for each species with METHC(i) equal to 10, subroutine NVBEQDEF. NVB_REGION_CHECK sets the last digit of the ecological division code ECOREG to 0 and checks the result against a list of 19 divisions (130, 210, 220, 230, 240, 250, 260, 310, 330, 340 and the mountain divisions M130, M210, M220, M230, M240, M260, M310, M330 and M340). A code that is not on the list is replaced by `0000` and a warning is written.
+
+NVBEQDEF builds the equation name, VEQNNC(i), as `NVB`, the four character division code and the three digit FIA species code. The letter `P` is added in position 11 for managed plantations of species 111 and 131 when the division is `0000` or `0230`. Sixteen woodland species (FIA codes 62, 63, 65, 66, 69, 106, 133, 134, 143, 321, 322, 475, 803, 810, 814 and 843) are not given an NSVB equation. NVBEQDEF assigns them regional equations by state (for example `R03CHO0065`, `400DVEW133` and `200DVEW475`), and a warning is written when the state code ISTATE is 0.
+
+### Call sequence
+
+Subroutine VOLS calls the entry point NATCRS of subroutine FVSVOL for species with a cubic foot volume method of 6 or 10. FVSVOL calls subroutine VOLINITNVB of NVEL, which calls subroutine NVBC when the equation name begins with `NVB`. FVSVOL passes, among other values, the diameter, total height, merchantability standards, crown ratio, live or dead status, cull percent, decay code, FIA species code and the cruise type. When a live tree has a broken or dead top (top kill), the height of the break is passed as well; it is taken from ITRUNC(i), which holds the truncation height in hundredths of a foot. For the woodland species the region used is set from the state, and the number of stems per tree is passed instead of the form class.
+
+NVEL does not call NVBC for a tree that has a diameter but no height. Its biomass is estimated with the Jenkins equations, which give above ground biomass, foliage and branch components but no volume. The woodland species are handled separately in VOLINITNVB with regional biomass equations.
+
+### Calculation in subroutine NVBC
+
+Subroutine NVBC returns three arrays of 15 elements: the volumes VOL, the dry weights DRYBIO and the green weights GRNBIO. The following steps are made for a tree.
+
+1. The species data (species group, specific gravity of the wood, softwood or hardwood indicator SFTHRD, carbon fraction, and green and dry weight factors) are looked up by species code. The merchantability rules for the region are retrieved with subroutine MRULES. When the total height is missing it is estimated from the heights and diameters at the tops of the products or from the broken height and diameter.
+2. When the tree has a broken top, the proportion of the stem that remains (Rrem) is computed from the ratio equation, and the proportion of the branches and foliage that remain (BrchRem) is computed from the crown ratio, or from the average crown ratio of the division when the crown ratio is not given.
+3. The total stem wood volume inside bark, the total stem bark volume and the total stem volume outside bark are computed from equations of the form given in the supplementary tables of Westfall and others (2023). The equation of the species (or of its Jenkins species group, or the default of the national table) is selected from the equation name. The equations are functions of diameter at breast height and total height. Five forms are coded, among them a power function of the form a × D^b × H^c. The soundness adjustments are applied: Rrem for broken tops and the cull percent for rot.
+4. The volumes of the stump, the sawlog, the topwood and the tip are obtained from a taper ratio equation, R = (1 − (1 − h/H)^a)^b, which gives the proportion of the total stem volume below height h. The diameter at a height is obtained from the same equation. For the FIA cruise type (`I`) the sawlog and topwood volumes are the ratio volumes between the stump, the top of the sawlog product and the top of the topwood product. For the other cruise types the stem is divided into logs, with the trim between logs, and the log volumes are summed and scaled to the merchantable ratio volume. The board foot volumes (Scribner and International 1/4 inch) are computed from the log diameters and lengths. A tree can have at most 20 logs.
+5. The dry weights of the stem wood (volume times specific gravity), the stem bark, the branches and the above ground total are computed from the supplementary tables. The component weights are reduced for broken tops and for dead trees. The above ground total from its own equation is kept, and the difference between it and the sum of the components is shared among the wood, bark and branches in proportion to their weights, so that the components add up to the total. The foliage is computed for live trees only.
+6. The weights of the stump, sawlog, topwood and tip are the volumes times the adjusted wood and bark densities.
+7. Carbon is the above ground biomass times the carbon fraction of the species, rounded to three decimals. For a dead tree with a decay code the carbon fraction of the decay class is used.
+8. Green weight is the dry weight times (1 + the moisture content), where the moisture content is computed from the green weight factor of the region and species and the dry weight factor of the tree.
+9. Cord volume is the sawlog cubic volume divided by 90 (79 in regions 3, 8 and 9).
+
+A live tree takes the decay code as 0. For a dead tree with no decay code, class 3 is used. The values for the decay classes are in the next table.
+
+```{r nsvb-decay, echo=FALSE}
+nsvb_decay <- tibble::tribble(
+  ~Decay_Code, ~Bark_Remaining, ~Branches_Remaining, ~Density_Softwood, ~Density_Hardwood, ~Carbon_Softwood, ~Carbon_Hardwood,
+  "1", "1.0", "1.0", "0.97", "0.99", "0.501", "0.470",
+  "2", "0.8", "0.5", "1.00", "0.80", "0.504", "0.473",
+  "3", "0.5", "0.1", "0.92", "0.54", "0.506", "0.481",
+  "4", "0.2", "0.0", "0.55", "0.43", "0.520", "0.480",
+  "5", "0.0", "0.0", "0.55", "0.43", "0.527", "0.472"
+)
+
+kable(nsvb_decay,
+      col.names = c("Decay Code", "Bark Remaining", "Branches Remaining",
+                    "Density Proportion, Softwood", "Density Proportion, Hardwood",
+                    "Carbon Fraction, Softwood", "Carbon Fraction, Hardwood"),
+      caption = "Proportions used by NSVB for dead trees",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
+
+The softwood columns are used when the softwood or hardwood indicator SFTHRD of the species is 0. The remaining proportions of bark and branches are the same for both groups. The density proportion is applied to the stem wood, bark and branch weights of a dead tree.
+
+The elements of the DRYBIO and GRNBIO arrays are listed in the next table.
+
+```{r nsvb-elements, echo=FALSE}
+nsvb_elements <- tibble::tribble(
+  ~Element, ~Contents,
+  "1", "Above ground biomass, without foliage",
+  "2", "Total stem wood",
+  "3", "Total stem bark",
+  "4", "Stump wood",
+  "5", "Stump bark",
+  "6", "Sawtimber (primary product) wood",
+  "7", "Sawtimber bark",
+  "8", "Topwood (secondary product) wood",
+  "9", "Topwood bark",
+  "10", "Tip wood",
+  "11", "Tip bark",
+  "12", "Branches",
+  "13", "Foliage",
+  "14", "Top and limbs (above ground biomass less the stump and the sawtimber and topwood wood and bark)",
+  "15", "Carbon content"
+)
+
+kable(nsvb_elements,
+      col.names = c("Element", "Contents"),
+      caption = "Elements of the DRYBIO and GRNBIO arrays returned by NVBC",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "4em")
+```
+
+### Use of the results in FVS
+
+Subroutine VOLS stores the total cubic foot volume of the tree in CFV(i), the merchantable cubic foot volume in MCFV(i), and, with FIAVBC, the sawlog cubic foot volume in SCFV(i). The biomass and carbon of each tree are stored in the arrays of per-tree values in ARRAYS.F77:
+
+1. ABVGRD_BIO(i) is DRYBIO element 1, and ABVGRD_CARB(i) is element 15.
+2. FOLI_BIO(i) is element 13, and FOLI_CARB(i) is element 13 times 0.5.
+3. MERCH_BIO(i) is the sum of elements 6 and 8 for trees at or above the minimum DBH DBHMIN(i), and CUBSAW_BIO(i) is element 6 for trees at or above the sawlog minimum DBH SCFMIND(i). Both are 0 otherwise.
+4. MERCH_CARB(i) and CUBSAW_CARB(i) are MERCH_BIO(i) and CUBSAW_BIO(i) times the carbon fraction CARB_FRAC(i), which is the species carbon fraction, or the fraction of the decay class for a dead tree.
+5. For the 16 woodland species, the merchantable and sawlog volumes, biomass and carbon are set to 0.
+
+Subroutine GRADD multiplies these per-tree values by PROB(i) to get per-acre values, computes the percentile points of their distributions (the arrays OAGBIOCUR, OMERBIOCUR, OCSAWBIOCUR, OFOLIBIO and the matching carbon arrays), and divides them by PROB(i) again. Subroutine CUTS computes the same percentile points for the removed trees. The summary table FVS_FIAVBC_Summary is written from these distributions, divided by the stand area and by 2000 (tons per acre), and the FVS_FIAVBC_TreeList, FVS_FIAVBC_CutList and FVS_FIAVBC_ATRTList tables are written from the per-tree arrays (see the Database Input and Output Extension chapter and Appendix C).
+
+When FIAVBC is active, the snag volume subroutine of the fire and fuels extension (FMSVOL) passes the live or dead status to the volume routine: `D` for standing dead trees, and the status of the tree for snags created by CUTS. The sawlog volume field (field 4) of the MINHARV keyword record is accepted in every variant. The decay code (DECAYCD) of the input data is used for dead trees (see the column mapping table of the Database Input and Output Extension chapter).
 
 ## Regeneration establishment {#sec-regeneration-establishment}
 

@@ -241,3 +241,16 @@ Not verified:
 - `DGBND` in ON: the argument `DBH` is reset to 150 when it is larger, which changes the caller's value (not checked for effect).
 
 - The repository's `acd/` directory is not used in this documentation: the ACD variant is an R hybrid of the FVS-NE solution in the fvsOL package (as for FVS-ADK), not the Fortran in `acd/`. It was removed from the VARMRT variant list and from the Appendix A directory list.
+## National Scale Volume and Biomass (NSVB) section and the volume subroutine description
+Existing text corrected:
+- The paragraph on "Subroutine VARVOL" (initialization and "Updating the tree descriptions", auxiliary subroutines) was replaced. `VARVOL` exists only in `canada/on/varvol.f`. `NATCRS`, `OCFVOL`, `OBFVOL` and `GETEQN` are entry points of `FVSVOL` in `vvolume/fvsvol.f`. `NATCRS` calls `VOLINITNVB` in NVEL, not `PROFILE` directly (`VOLINIT` calls `PROFILE` and `R6VOL`). No subroutine `R5HARV` was found in the repository or in the NVEL submodule. `FORMCL` is called by `FVSVOL` for the form class, not as a Region 6 volume routine.
+- The sentence that equation numbers are written to the main output file by the National Cruise Program was replaced: `SITSET` writes the volume equation number table (23 `SITSET` files contain the table).
+
+Not verified (the text says only what was read):
+- `volume/NVEL` is a git submodule (FMSC-Measurements/VolumeLibrary) pinned to commit 38548071. It must be initialized to read `nsvb.f`; no fact in `facts.json` refers to NVEL files for that reason.
+- The coefficient tables (`tables1.inc` to `tables11.inc`, `wdbkwtdata.inc`, `regndftdata.inc`) and the routines `JENKINS` and `WOODLAND_BIO` were not read.
+- The Westfall and others (2023) citation is in the text but not in the Literature Cited list; only the title and "Westfall, J.A. etal 2023" are in the source header.
+- The unit of the per-tree weights (pounds) is inferred from the division by 2000 in `DBSCARBBIOSUMRY`; the section does not state it for the per-tree values.
+- Where `ECOREG` is set was not traced. VOLS versions other than `ie/vols.f` were not compared for the NSVB block (`organon/vols.f` and `vls/vols.f` exist).
+- The comment dated "Spring 2026" in `fvsvol.f` about the top diameter inputs for cruise types `I` and `F` is not described.
+- In the FIAVBC option of `INITRE` the echo of the species uses `KARD(2)` although the species is read from field 3 (`SPDECD(3,...)`); the echo may print the wrong field. Not changed.

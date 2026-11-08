@@ -866,5 +866,131 @@
   "doc": "Growth sections (REGENT table): PN compiles the WC DGDRIV",
   "file": "bin/FVSpn_sourceList.txt",
   "regex": "\\.\\./wc/dgdriv\\.f"
+ },
+ {
+  "id": "nsvb-initre-methc10",
+  "type": "regex_in_file",
+  "doc": "NSVB section: FIAVBC sets METHC to 10",
+  "file": "vbase/initre.f",
+  "regex": "METHC\\(ISPC\\) = 10"
+ },
+ {
+  "id": "nsvb-initre-cfctype-f",
+  "type": "regex_in_file",
+  "doc": "NSVB section: FIAVBC field 1 equal to 1 selects cruise type F",
+  "file": "vbase/initre.f",
+  "regex": "IF\\(MRCHLMTS\\.EQ\\.1\\) CFCTYPE = 'F'"
+ },
+ {
+  "id": "nsvb-initre-field2",
+  "type": "regex_in_file",
+  "doc": "NSVB section: FIAVBC field 2 is disabled",
+  "file": "vbase/initre.f",
+  "regex": "FIELD TWO HAS BEEN DISABLED"
+ },
+ {
+  "id": "nsvb-initre-mcfdln",
+  "type": "regex_in_file",
+  "doc": "NSVB section: MCFDLN is deactivated after FIAVBC",
+  "file": "vbase/initre.f",
+  "regex": "OPTION NUMBER 39: MCFDLN"
+ },
+ {
+  "id": "nsvb-nvbeqdef-plantation",
+  "type": "regex_in_file",
+  "doc": "NSVB section: NVBEQDEF adds P for managed plantations",
+  "file": "fiavbc/nvbeqdef.f",
+  "regex": "VOLEQ\\(11:11\\) = 'P'"
+ },
+ {
+  "id": "nsvb-nvbeqdef-name",
+  "type": "regex_in_file",
+  "doc": "NSVB section: NVBEQDEF builds NVB + division + species",
+  "file": "fiavbc/nvbeqdef.f",
+  "regex": "VOLEQ = 'NVB' // DivSplit // TRIM\\(SppID\\)"
+ },
+ {
+  "id": "nsvb-region-check-m340",
+  "type": "regex_in_file",
+  "doc": "NSVB section: NVB_REGION_CHECK division list",
+  "file": "fiavbc/nvb_region_check.f",
+  "regex": "\"M260\", \"M310\", \"M330\", \"M340\""
+ },
+ {
+  "id": "nsvb-sitset-nvbeqdef",
+  "type": "regex_in_file",
+  "doc": "NSVB section: SITSET calls NVBEQDEF for METHC 10 (IE)",
+  "file": "ie/sitset.f",
+  "regex": "CALL NVBEQDEF\\(IFIASP, VOLEQ\\)"
+ },
+ {
+  "id": "nsvb-vols-natcrs",
+  "type": "regex_in_file",
+  "doc": "NSVB section: VOLS calls NATCRS for METHC 6 or 10",
+  "file": "ie/vols.f",
+  "regex": "METHC\\(ISPC\\)\\.EQ\\.6 \\.OR\\. METHC\\(ISPC\\)\\.EQ\\.10"
+ },
+ {
+  "id": "nsvb-vols-abvgrd",
+  "type": "regex_in_file",
+  "doc": "NSVB section: VOLS loads ABVGRD_BIO from element 1",
+  "file": "ie/vols.f",
+  "regex": "ABVGRD_BIO\\(I\\) = BIOMAS\\(1\\)"
+ },
+ {
+  "id": "nsvb-vols-foli-carb",
+  "type": "regex_in_file",
+  "doc": "NSVB section: VOLS foliage carbon is 0.5 of foliage biomass",
+  "file": "ie/vols.f",
+  "regex": "FOLI_CARB\\(I\\) = BIOMAS\\(13\\)\\*0\\.5"
+ },
+ {
+  "id": "nsvb-vols-merch-bio",
+  "type": "regex_in_file",
+  "doc": "NSVB section: VOLS merchantable biomass is elements 6 and 8",
+  "file": "ie/vols.f",
+  "regex": "MERCH_BIO\\(I\\) = BIOMAS\\(6\\) \\+ BIOMAS\\(8\\)"
+ },
+ {
+  "id": "nsvb-fvsvol-volinitnvb",
+  "type": "regex_in_file",
+  "doc": "NSVB section: FVSVOL calls VOLINITNVB",
+  "file": "vvolume/fvsvol.f",
+  "regex": "CALL VOLINITNVB\\(IREGN,FORST,VOLEQ,TOPDIAM"
+ },
+ {
+  "id": "nsvb-fvsvol-brkht",
+  "type": "regex_in_file",
+  "doc": "NSVB section: FVSVOL passes the top-kill height from ITRUNC",
+  "file": "vvolume/fvsvol.f",
+  "regex": "BRKHT = FLOAT\\(ITRNC\\)/100"
+ },
+ {
+  "id": "nsvb-gradd-percentiles",
+  "type": "regex_in_file",
+  "doc": "NSVB section: GRADD takes percentiles of biomass when LFIANVB",
+  "file": "base/gradd.f",
+  "regex": "CALL PCTILE\\(ITRN,IND,ABVGRD_BIO,WK3,OAGBIOCUR\\(7\\)\\)"
+ },
+ {
+  "id": "nsvb-cuts-percentiles",
+  "type": "regex_in_file",
+  "doc": "NSVB section: CUTS takes percentiles of removed biomass",
+  "file": "vbase/cuts.f",
+  "regex": "CALL PCTILE\\(ITRN,IND,WK8,PCT,OAGBIOREM\\(7\\)\\)"
+ },
+ {
+  "id": "nsvb-dbs-2000",
+  "type": "regex_in_file",
+  "doc": "NSVB section: The FIAVBC summary divides by 2000",
+  "file": "vdbsqlite/dbscarbbiosumry.f",
+  "regex": "DPAGBIO  = OAGBIOCUR\\(7\\)/GROSPC/2000"
+ },
+ {
+  "id": "nsvb-sitset-default6",
+  "type": "regex_in_file",
+  "doc": "NSVB section: SITSET changes METHC 999 to 6 (IE)",
+  "file": "ie/sitset.f",
+  "regex": "IF\\(METHC\\(ISPC\\)\\.EQ\\.999\\)METHC\\(ISPC\\)=6"
  }
 ]
