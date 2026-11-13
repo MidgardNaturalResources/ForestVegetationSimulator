@@ -92,7 +92,7 @@ if (knitr::is_html_output()) {
 **Figure 2-1. Overview of the general FVS Processing Sequence for a single stand serial model run. Select a box to show the steps involved.**
 
 
-## Detailed Input and Output Array Specifications {-}
+## Input and Output Arrays {-}
 
 The following tables summarize the major FVS subroutines and the arrays they use:
 
@@ -1142,7 +1142,7 @@ The differences in program flow for a parallel run will be discussed in [Stop/re
 
 The FVS model must go through various steps and checks in preparation for a single stand growth projection. Model parameters and variables must be initialized to their default starting values. User model controls must be input and stored. Tree data (if any) must be input, any missing data values filled in, and the data expanded to a per-acre basis. Self-calibration of model equations to the input data needs to take place. Once this phase is completed FVS is calibrated to local stand conditions, knows what projection to make in terms of projection length, management actions, model output, and other user instructions, and has the tree data to make it. Upon completion of the projection initialization phase, tree data may not yet exist if this is a bare ground projection.
 
-## Detailed Input and Output Array Specifications {-}
+## Input and Output Arrays {-}
 
 The following tables document the major arrays used in each phase of projection initialization:
 
@@ -2404,7 +2404,7 @@ Compare ICYC and NCYC; if ICYC is equal to NCYC then the projection cycling phas
 
 Step 1 happens in subroutine FVS. Subroutine FVS calls subroutine TREGRO which calls subroutine GRINCR to handle step 2 and subroutine GRADD to handle step 3. Both GRINCR and GRADD call several other subroutines, as outlined in the following sections. Subroutine FVS then calls several subroutines to handle step 4, and performs step 5. Steps 2-4 will be explained in detail in the following sections.
 
-## Detailed Input and Output Array Specifications {-}
+## Input and Output Arrays {-}
 
 The following tables document the major arrays used in the projection cycling phase:
 
@@ -3673,7 +3673,7 @@ Subroutine SDICAL is called to compute the end-of-cycle SDI maximum.
 
 When all projection cycles have been completed, FVS enters the projection summarization phase. The final output reports must be produced, another projection of the same stand, or a different stand, may be called for, or the program might be directed to stop.
 
-## Detailed Input and Output Array Specifications {-}
+## Input and Output Arrays {-}
 
 ### Output Generation Arrays {-}
 
@@ -3995,7 +3995,7 @@ if (knitr::is_html_output()) {
 
 **Figure 7-2. Event monitor: compiling and evaluating an expression. Select a box to show the steps involved.**
 
-## Detailed Input and Output Array Specifications {-}
+## Input and Output Arrays {-}
 
 ### Event Monitor Control Arrays {-}
 
@@ -4331,7 +4331,7 @@ if (knitr::is_html_output()) {
 
 **Figure 8-2. Restarting after a stop. Select a box to show the steps involved.**
 
-## Detailed Input and Output Array Specifications {-}
+## Input and Output Arrays {-}
 
 ### Stop/Restart Control Arrays {-}
 
@@ -4867,13 +4867,34 @@ Unlike standalone FVS with restart files, rFVS keeps all state in memory:
 
 **API Function Access:**
 
-All FVS API functions documented at https://github.com/USDAForestService/ForestVegetationSimulator/wiki/FVS-API are accessible through rFVS via `.C()` and `.Fortran()` calls, including:
+All FVS API functions documented at https://github.com/USDAForestService/ForestVegetationSimulator/wiki/FVS-API are accessible through rFVS via `.C()` and `.Fortran()` calls. The list below shows the compiled routine that each rFVS function calls. A name that begins with `Cfvs` is a C function in `base/apisubsc.c` that is called with `.C()`; it calls a Fortran routine with a C binding (`fvsXC`), which calls the Fortran API subroutine `fvsX`. The routines `fvsSpeciesCodeC` and `fvsStandIDC` do the work themselves. The other names are Fortran API subroutines that are called with `.Fortran()`.
 
-- `fvsSetCmdLine()`
-- `fvsGetDims()`
-- `fvsGetEventMonitorVariables()`
-- `fvsSetStoppointCodes()`
-- And many others
+- `fvsLoad()` calls no API routine. It loads the library with `dyn.load()` and uses `is.loaded()` to check that these routines are present: `CfvsEvmonAttr`, `CfvsFFEAttrs`, `CfvsSVSObjData`, `CfvsSetCmdLine`, `CfvsSpeciesAttr`, `CfvsSpeciesCode`, `CfvsStandID`, `CfvsTreeAttr`, `CfvsUnitConversion`, `fvs`, `fvsAddActivity`, `fvsAddTrees`, `fvsDimSizes`, `fvsGetRestartCode`, `fvsSVSDimSizes`, `fvsSetStoppointCodes` and `fvsSummary`
+- `fvsSetCmdLine()` calls `CfvsSetCmdLine`
+- `fvsMakeKeyFile()` calls no API routine; it writes a keyword file
+- `fvsRun()` calls `fvs`, `fvsGetRestartCode` and `fvsSetStoppointCodes`
+- `fvsInteractRun()` calls `fvs`, `fvsGetRestartCode` and `fvsSetStoppointCodes`, and the R functions `fvsGetEventMonitorVariables()` and `fvsGetStandIDs()`
+- `fvsGetRestartcode()` calls `fvsGetRestartCode`
+- `fvsGetDims()` calls `fvsDimSizes`
+- `fvsGetTreeAttrs()` calls `CfvsTreeAttr` (and `fvsGetDims()`)
+- `fvsSetTreeAttrs()` calls `CfvsTreeAttr` (and `fvsGetDims()`)
+- `fvsGetSpeciesAttrs()` calls `CfvsSpeciesAttr` (and `fvsGetDims()`)
+- `fvsSetSpeciesAttrs()` calls `CfvsSpeciesAttr` (and `fvsGetDims()`)
+- `fvsGetSpeciesCodes()` calls `CfvsSpeciesCode` (and `fvsGetDims()`)
+- `fvsGetEventMonitorVariables()` calls `CfvsEvmonAttr`
+- `fvsSetEventMonitorVariables()` calls `CfvsEvmonAttr`
+- `fvsGetStandIDs()` calls `CfvsStandID`
+- `fvsGetSummary()` calls `fvsSummary` (and `fvsGetDims()`)
+- `fvsSetupSummary()` calls no API routine; it adds the columns `TPrdTpa`, `TPrdTCuFt`, `TPrdMCuFt` and `TPrdBdFt` to a summary table
+- `fvsCompositeSum()` calls no API routine; it combines summary tables
+- `fvsUnitConversion()` calls `CfvsUnitConversion`
+- `fvsGetSVSDims()` calls `fvsSVSDimSizes`
+- `fvsGetSVSObjectSet()` calls `CfvsSVSObjData` and `CfvsFFEAttrs` (and the R functions `fvsGetSVSDims()`, `fvsGetEventMonitorVariables()`, `fvsGetSpeciesCodes()` and `fvsGetTreeAttrs()`)
+- `fvsAddTrees()` calls `fvsAddTrees` (and `fvsGetDims()`)
+- `fvsAddActivity()` calls `fvsAddActivity`
+- `fvsCutNow()` calls no API routine directly. It calls the R functions `fvsGetRestartcode()`, `fvsGetDims()`, `fvsGetEventMonitorVariables()`, `fvsAddActivity()` and `fvsSetTreeAttrs()`
+
+No rFVS function calls these API routines: `fvsGetKeywordFileName`, `fvsGetStoppointCodes`, `fvsRestartLastStand`, `fvsGetRtnCode`, `fvsSetRtnCode`, `fvsGetICCode`, `fvsCutTrees` (it returns an error because it is not yet implemented), `fvsCloseFile`, `fvsGetVersion` and `fvsGetBuildInfo`. They can be called with `.C()` or `.Fortran()` after `fvsLoad()`.
 
 ### Advanced Use Cases
 
