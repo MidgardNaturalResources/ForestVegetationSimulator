@@ -254,3 +254,23 @@ Not verified (the text says only what was read):
 - Where `ECOREG` is set was not traced. VOLS versions other than `ie/vols.f` were not compared for the NSVB block (`organon/vols.f` and `vls/vols.f` exist).
 - The comment dated "Spring 2026" in `fvsvol.f` about the top diameter inputs for cruise types `I` and `F` is not described.
 - In the FIAVBC option of `INITRE` the echo of the species uses `KARD(2)` although the species is read from field 3 (`SPDECD(3,...)`); the echo may print the wrong field. Not changed.
+
+## Height-diameter calibration and height dubbing (CRATET)
+
+Text revised: "Calibrate height-diameter equation and dub missing heights". The calibration sample, K1 test, intercept formula, IABFLG rule, LHTDRG defaults and the NOHTDREG keyword were read directly in the code (`facts.json`, ids beginning `htdbh-`).
+
+Existing text corrected:
+- "Only equations of the form {3.6.2.3.1} can be calibrated" is not true for KT (square-root regression), BC (metric form) and ON (the intercept is calculated, but dubbing uses HTONT).
+- "At least 3 measured heights" applies to trees meeting the height, top and minimum diameter conditions; the minimum diameter is 5.0 inches in AK, HI, OP, WC and PN and for some species in other variants.
+
+Not verified (the text states only what was read, or says "some species"):
+- The small-tree equations for trees below 5.0 inches in BM, EC, HI, OP, PN, SO, WC and WS were not written out; the species-to-HTT1 mapping for HI and OP was not checked.
+- The Region 5 site index equation in WS (live and dead species lists differ, and R5SI and SC may be stale in the dead-tree loop).
+- CI: `IABF` is not set when fewer than 3 trees of species 15 are available.
+- SO: HTT2 is 0.0 for many species, so the calibration sum and the dubbing equation use different slopes.
+- CR: the comment says the Black Hills logistic is used if calibration occurred; the code uses it when IABFLG is 1.
+- CA and OC: the BLKDAT comment says HT1 and HT2 apply to trees of 5.0 inches and larger; CRATET uses 3.0 inches.
+- ON: AX and BX are calculated in CRATET and not used in an equation there.
+- OC and OP: the internal behavior of ORGANON subroutine PREPARE on heights was not read.
+- The Curtis-Arney coefficients (P2, P3, P4) and the join diameters by species were not tabulated.
+- Where calibrated values are reused (REGENT) is described in the survey but not written into this subsection.

@@ -992,5 +992,124 @@
   "doc": "NSVB section: SITSET changes METHC 999 to 6 (IE)",
   "file": "ie/sitset.f",
   "regex": "IF\\(METHC\\(ISPC\\)\\.EQ\\.999\\)METHC\\(ISPC\\)=6"
+ },
+ {
+  "id": "htdbh-sn-min",
+  "type": "regex_in_file",
+  "doc": "Height-diameter calibration: SN uses D.LT.3.0 and H.LE.4.5 in the calibration sum",
+  "file": "sn/cratet.f",
+  "regex": "IF\\(H\\.LE\\.4\\.5 \\.OR\\. NH\\.LT\\.0 \\.OR\\. D\\.LT\\.3\\.0\\) GO TO 70"
+ },
+ {
+  "id": "htdbh-wc-min",
+  "type": "regex_in_file",
+  "doc": "Height-diameter calibration: WC (and PN) use D.LT.5.0",
+  "file": "wc/cratet.f",
+  "regex": "IF\\(H\\.LE\\.4\\.5 \\.OR\\. NH\\.LT\\.0 \\.OR\\. D\\.LT\\.5\\.0\\) GO TO 70"
+ },
+ {
+  "id": "htdbh-ak-min",
+  "type": "regex_in_file",
+  "doc": "Height-diameter calibration: AK uses D.LT.5.0",
+  "file": "ak/cratet.f",
+  "regex": "IF\\(H\\.LE\\.4\\.5 \\.OR\\. NH\\.LT\\.0 \\.OR\\. D\\.LT\\.5\\.0\\) GO TO 70"
+ },
+ {
+  "id": "htdbh-so-min",
+  "type": "regex_in_file",
+  "doc": "Height-diameter calibration: SO species list with 5.0",
+  "file": "so/cratet.f",
+  "regex": "CASE \\(15,19:23,25,26,28:31,33\\)"
+ },
+ {
+  "id": "htdbh-ec-min",
+  "type": "regex_in_file",
+  "doc": "Height-diameter calibration: EC species list with 5.0",
+  "file": "ec/cratet.f",
+  "regex": "CASE\\(11,13:15,17:30,32\\)"
+ },
+ {
+  "id": "htdbh-ws-min",
+  "type": "regex_in_file",
+  "doc": "Height-diameter calibration: WS species list with 5.0",
+  "file": "ws/cratet.f",
+  "regex": "CASE\\(9:10,12,14:17,19:20,25:27\\)"
+ },
+ {
+  "id": "htdbh-ci-min",
+  "type": "regex_in_file",
+  "doc": "Height-diameter calibration: CI species 15 with 5.0",
+  "file": "ci/cratet.f",
+  "regex": "CASE \\(15\\)\\s*\\n\\s*IF\\(H\\.LE\\.4\\.5 \\.OR\\. NH\\.LT\\.0 \\.OR\\. D\\.LT\\.5\\.0\\)"
+ },
+ {
+  "id": "htdbh-k1",
+  "type": "regex_in_file",
+  "doc": "Height-diameter calibration: SN requires K1 of 3",
+  "file": "sn/cratet.f",
+  "regex": "IF\\(K1 \\.LT\\.3 \\.OR\\. \\.NOT\\. LHTDRG\\(ISPC\\)\\) GO TO 100"
+ },
+ {
+  "id": "htdbh-aa",
+  "type": "regex_in_file",
+  "doc": "Height-diameter calibration: SN intercept is the mean of ln(H-4.5) minus B2/(D+1)",
+  "file": "sn/cratet.f",
+  "regex": "AA\\(ISPC\\)=SUMX/XN"
+ },
+ {
+  "id": "htdbh-iabflg",
+  "type": "regex_in_file",
+  "doc": "Height-diameter calibration: SN sets IABFLG to 0 when AA is nonnegative",
+  "file": "sn/cratet.f",
+  "regex": "IF\\(AA\\(ISPC\\)\\.GE\\.0\\.0\\)THEN\\s*\\n\\s*IABFLG\\(ISPC\\)=0"
+ },
+ {
+  "id": "htdbh-trunc80",
+  "type": "regex_in_file",
+  "doc": "Height-diameter calibration: SN sets ITRUNC to 80 percent",
+  "file": "sn/cratet.f",
+  "regex": "ITRUNC\\(II\\)=INT\\(80\\.0\\*HT\\(II\\)\\+0\\.5\\)"
+ },
+ {
+  "id": "htdbh-sn-lhtdrg",
+  "type": "regex_in_file",
+  "doc": "Height-diameter calibration: SN default LHTDRG false",
+  "file": "sn/grinit.f",
+  "regex": "LHTDRG\\(I\\) = \\.FALSE\\."
+ },
+ {
+  "id": "htdbh-em-lhtdrg",
+  "type": "regex_in_file",
+  "doc": "Height-diameter calibration: EM default LHTDRG true",
+  "file": "em/grinit.f",
+  "regex": "LHTDRG\\(I\\) = \\.TRUE\\."
+ },
+ {
+  "id": "htdbh-nohtdreg",
+  "type": "regex_in_file",
+  "doc": "Height-diameter calibration: NOHTDREG is in the keyword table",
+  "file": "base/keywds.f",
+  "regex": "'NOHTDREG'"
+ },
+ {
+  "id": "htdbh-ak-cr",
+  "type": "regex_in_file",
+  "doc": "Height-diameter calibration: AK Chapman-Richards",
+  "file": "ak/cratet.f",
+  "regex": "H= 4\\.5 \\+ \\(AX1\\) \\* \\(1-EXP\\(BX1\\*D\\)\\)\\*\\*CX1"
+ },
+ {
+  "id": "htdbh-kt-sqrt",
+  "type": "regex_in_file",
+  "doc": "Height-diameter calibration: KT sqrt(D) dubbing",
+  "file": "kt/cratet.f",
+  "regex": "H=AA \\+ BB\\*SQRT\\(D\\)"
+ },
+ {
+  "id": "htdbh-ca-0.3",
+  "type": "regex_in_file",
+  "doc": "Height-diameter calibration: CA join at 0.3",
+  "file": "ca/htdbh.f",
+  "regex": "\\(D-0\\.3\\)/\\(Z-0\\.3\\)"
  }
 ]
