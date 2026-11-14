@@ -1,5 +1,4 @@
 ---
-
 title: "Model Structure of the Forest Vegetation Simulator"
 
 author: "Gary E. Dixon and Nicholas L. Crookston"
@@ -2269,36 +2268,86 @@ It is important to note that FVS is not done with the dead tree information yet,
 
 #### Calibrate height-diameter equation and dub missing heights
 
-Subroutine CRATET works through the live tree records one species at a time. For each species it calibrates the height-diameter equation when the conditions below are met, and then estimates (dubs) the total heights that are missing. Height-diameter equations vary by variant, and the variant overview documents give the coefficients.
+Subroutine CRATET works through the live tree records one species at a time. For each species it calibrates the height-diameter equation when the conditions below are met, and then estimates (dubs) the total heights that are missing. Height-diameter equations vary by variant, and the variant overview documents give the coefficients. The variables named in this section are defined in the next table.
 
-**Default equation.** In most variants the default equation has the form shown in equation {3.6.2.3.1}, with species-specific coefficients B1 = HT1 and B2 = HT2. The variants in which another form is used for the calibration or the dubbing are listed under "Variant differences" below.
+```{r htdbh-variables, echo=FALSE}
+htdbh_variables <- tibble::tribble(
+  ~Variable, ~Definition,
+  "HT", "Total tree height, in feet",
+  "DBH", "Tree diameter at breast height, in inches",
+  "B1", "Intercept of equation {3.6.2.3.1}",
+  "B2", "Slope of equation {3.6.2.3.1}",
+  "HT1", "Default value of B1 for a species, set by the variant",
+  "HT2", "Default value of B2 for a species, set by the variant",
+  "AA", "Intercept calibrated to the trees of a species, equation {3.6.2.3.2}",
+  "K1", "Number of trees in the calibration sample of a species",
+  "LHTDRG", "Logical variable by species; true when calibration is turned on",
+  "IABFLG", "Integer flag by species; 1 when the default intercept is used and 0 when the calibrated intercept AA is used; 1 at the start of a run",
+  "NORMHT", "Height of the tree without the broken or dead top, in hundredths of a foot; negative on input for a record with a broken or dead top",
+  "ITRUNC", "Broken height, the height of the tree with a broken or dead top, in hundredths of a foot",
+  "HTDBH", "Subroutine that calculates the height of a tree from its diameter",
+  "HTONT", "Subroutine in the ON variant that calculates the height of a tree with the Ontario equations",
+  "IWYKCA", "Integer flag by species in subroutine HTDBH of CS, LS, NE and ON; 0 for the Wykoff equation and 1 for the Curtis-Arney equation",
+  "IFOR", "Forest code of the stand",
+  "P2", "Coefficient of equation {3.6.2.3.4}",
+  "P3", "Coefficient of equation {3.6.2.3.4}",
+  "P4", "Coefficient of equation {3.6.2.3.4}",
+  "Z", "Join diameter by species in subroutine HTDBH of CA and WS, in inches",
+  "DB", "Diameter by species in subroutine HTDBH of SN, CS, LS, NE and ON at which the interpolated height is 4.51 feet, in inches",
+  "HTT11", "Coefficient A of the Chapman-Richards equation in AK, by species",
+  "HTT12", "Coefficient B of the Chapman-Richards equation in AK, by species",
+  "HTT13", "Coefficient C of the Chapman-Richards equation in AK, by species",
+  "BB", "Slope of the regression of height on the square root of diameter in KT",
+  "SMDBH", "Diameter by species in KT that separates the small-tree line from the height equation, in inches",
+  "SMA", "Slope by species of the small-tree line in KT, HT = SMA x DBH + 4.5",
+  "LMHTDUB", "Logical variable by species in BC; true when the metric form of the equation is used"
+)
+
+kable(htdbh_variables,
+      col.names = c("Variable", "Definition"),
+      caption = "Variables used in the height-diameter calibration and the dubbing of heights",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
+
+**Default equation.** In most variants the default equation is the logistic height-diameter equation of Wykoff et al. (1982), shown in equation {3.6.2.3.1}, with species-specific coefficients B1 = HT1 and B2 = HT2. The variants in which another form is used for the calibration or the dubbing are listed under "Variant differences" below.
 
 $$
 HT = 4.5 + \exp\left(B_1 + \frac{B_2}{DBH + 1.0}\right)
 \tag{3.6.2.3.1}
 $$
 
+Where:
+
+- HT: Total tree height (feet)
+- DBH: Diameter at breast height (inches)
+- B1: Intercept (the default value is HT1; the calibrated value is AA)
+- B2: Slope (the default value is HT2)
+
+
 **Trees used for the calibration.** A live tree record is used for a species only when all of the following are true: the total height is greater than 4.5 feet, the tree does not have a broken or dead top (NORMHT is not negative), and the diameter is at least the minimum diameter for the variant and species. The minimum diameter is 3.0 inches in the variants and species not listed in the next table.
 
 ```{r htdbh-min-dbh, echo=FALSE}
 htdbh_min_dbh <- tibble::tribble(
-  ~Variant, ~Species_Index, ~Minimum_DBH,
+  ~Variant, ~Species, ~Minimum_DBH,
   "AK", "All", "5.0",
   "HI", "All", "5.0",
   "OP", "All", "5.0",
   "WC", "All", "5.0",
   "PN", "All", "5.0",
-  "BM", "13, 14, 16 and 18", "5.0",
-  "EC", "11, 13 to 15, 17 to 30 and 32", "5.0",
-  "SO", "15, 19 to 23, 25, 26, 28 to 31 and 33", "5.0",
-  "WS", "9, 10, 12, 14 to 17, 19, 20 and 25 to 27", "5.0",
-  "CI", "15", "5.0",
-  "TT", "13 and 16", "5.0",
-  "UT", "20 and 21", "5.0"
+  "BM", "PY, YC, CW and OH", "5.0",
+  "EC", "WH, PY, WB, NF, LL, YC, WJ, BM, VN, RA, PB, GC, DG, AS, CW, WO, PL, WI and OH", "5.0",
+  "SO", "NF, WH, PY, WA, RA, BM, CW, CH, WI, GC, MC, MB and OH", "5.0",
+  "WS", "LP, WB, PM, KP, FP, CP, LM, GP, WE, WJ, UJ and CJ", "5.0",
+  "CI", "MC", "5.0",
+  "TT", "BI and MC", "5.0",
+  "UT", "MC and BI", "5.0"
 )
 
 kable(htdbh_min_dbh,
-      col.names = c("Variant", "Species Index", "Minimum DBH (inches)"),
+      col.names = c("Variant", "Species", "Minimum DBH (inches)"),
       caption = "Minimum diameter of the trees used to calibrate the height-diameter equation, where it is not 3.0 inches",
       booktabs = TRUE) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
@@ -2306,37 +2355,85 @@ kable(htdbh_min_dbh,
   column_spec(1, bold = TRUE)
 ```
 
-The species index is the position of the species in the species list of the variant. PN is compiled with the WC version of CRATET. The remaining variants use 3.0 inches for all species.
+The species are identified by the two character FVS species codes of the variant. PN is compiled with the WC version of CRATET. The remaining variants use 3.0 inches for all species.
 
-**Calibration.** The calibration is done for a species when at least 3 trees meet the conditions above (K1 is 3 or more) and calibration has not been turned off for the species (LHTDRG is true). The intercept B1 is replaced by the mean residual of the ln(HT - 4.5) values from the curve with its slope B2 kept, as shown in equation {3.6.2.3.2}, where the sum is over the K1 trees and AA is the calibrated intercept.
+**Calibration.** The calibration is done separately for each species. It replaces the intercept of equation {3.6.2.3.1}, B1, with an intercept, AA, that is fitted to the measured heights of the species in the inventory. The slope, B2, is not changed, and the default coefficients, HT1 and HT2, are not changed. The steps are:
+
+1. The calibration sample is selected, as described above: the live trees of the species with a measured total height greater than 4.5 feet, without a broken or dead top, and with a diameter at or above the minimum diameter.
+2. The trees in the sample are counted. K1 is the number of trees in the sample. The calibration is done only when K1 is 3 or more, and when calibration has not been turned off for the species (LHTDRG is true).
+3. The intercept AA is calculated with equation {3.6.2.3.2}. It is the intercept that makes the mean residual of the sample trees equal to zero on the scale of ln(HT - 4.5), with the slope B2 kept.
+4. The intercept AA is tested. When AA is negative, the calibration is discarded and the default intercept, HT1, is kept.
+5. When AA is zero or positive, IABFLG for the species is set to 0. IABFLG is 1 for all species at the start of a run. There is no upper limit on AA.
 
 $$
 AA = \frac{1}{K_1}\sum_{i=1}^{K_1}\left[\ln\left(HT_i - 4.5\right) - \frac{B_2}{DBH_i + 1.0}\right]
 \tag{3.6.2.3.2}
 $$
 
-If AA is negative, the default intercept is kept. Otherwise IABFLG for the species is set to 0, and AA is used in place of B1 for dubbing the missing heights of the species. IABFLG is 1 for all species at the start of a run. There is no upper limit on AA.
+Where:
+
+- AA: Calibrated intercept
+- K1: Number of trees in the calibration sample of the species
+- $i$: Index of a tree in the calibration sample
+- $HT_i$: Total height of tree $i$ (feet)
+- $DBH_i$: Diameter at breast height of tree $i$ (inches)
+- B2: Slope of equation {3.6.2.3.1}
+
+When the species is calibrated (IABFLG is 0), the calibrated equation is equation {3.6.2.3.1} with AA in place of B1, as shown in equation {3.6.2.3.3}. When the species is not calibrated (IABFLG is 1), equation {3.6.2.3.1} is used with the default intercept, B1 equal to HT1.
+
+$$
+HT = 4.5 + \exp\left(AA + \frac{B_2}{DBH + 1.0}\right)
+\tag{3.6.2.3.3}
+$$
+
+Where:
+
+- HT: Total tree height (feet)
+- DBH: Diameter at breast height (inches)
+- AA: Calibrated intercept from equation {3.6.2.3.2}
+- B2: Slope of equation {3.6.2.3.1} (the default value is HT2)
+
+The calibrated equation is used by CRATET to dub the missing heights of the species, as described below. The calibration is also used after CRATET, as described next.
+
+**Use of the calibration after CRATET.** Subroutine REGENT, which grows the small trees, uses the calibrated intercept when it calculates the diameter of a small tree from its height. REGENT does this for the trees that are smaller than the breakpoint diameter of the variant and species (3.0 inches in SN and EC, for example; the breakpoint is set by variant and species in the other variants). It inverts equation {3.6.2.3.1}, as shown in equation {3.6.2.3.5}, and applies the inverted equation twice: to the height at the start of the cycle, and to the height at the end of the cycle. The diameter increment of the tree is the difference between the two diameters, adjusted by the bark ratio and the user-supplied diameter increment multiplier. When REGENT is called from the regeneration establishment extension, the inverted diameter is assigned as the diameter of the new tree.
+
+$$
+DBH = \frac{B_2}{\ln\left(HT - 4.5\right) - B_1} - 1.0
+\tag{3.6.2.3.5}
+$$
+
+Where:
+
+- DBH: Diameter at breast height (inches)
+- HT: Total tree height (feet), at the start or at the end of the cycle
+- B1: Intercept, equal to HT1 when IABFLG is 1, and equal to AA otherwise
+- B2: Slope (the value is HT2)
+
+REGENT contains this calculation in AK, BM, CA, CI, CR, CS, EC, EM, HI, IE, LS, NC, NE, OC, ON, OP, SN, SO, TT, UT, WC, WS and PN (PN is compiled with the WC version of REGENT). In CI, CR, EM, IE, TT, UT and WS, the calculation is used only for some of the species, and the other species use other equations. In SO, the slope, B2, and the intercept, B1, are HTT2 and HTT1 of the species and the crown ratio class JCR for species 1 to 8, 10, 12, 13 and 32 when IABFLG is 1, and AA is used when IABFLG is not 1. The other variants use the following rules:
+
+- KT does not refer to AA or to IABFLG in REGENT.
+- BC does not use the calibrated intercept. Its REGENT sets its own intercept and slope from the arrays HHT1 and HHT2.
+- When the variant has subroutine HTDBH and calibration is off for the species, or the species was not calibrated (LHTDRG is false, or IABFLG is 1), REGENT calls subroutine HTDBH, which calculates the diameter from the height, in place of equation {3.6.2.3.5}. AK uses the inverted Chapman-Richards equation in place of equation {3.6.2.3.5} under the same condition.
+- In BM (species PY, YC, CW and OH), EC (species BM, VN, RA, PB, GC, DG, AS, CW, WO, PL, WI and OH), TT and UT, a diameter increment of 0.1 x HTG x XRDGRO is used for some species when calibration was done (LHTDRG is true and IABFLG is 0), where HTG is the height increment and XRDGRO is the user-supplied diameter increment multiplier.
+- In BM, EC, TT and UT, for some species, the diameter assigned to a new tree is adjusted when calibration was done, so that the regression passes through the bud width at a height of 4.5 feet.
 
 **Default setting of the calibration.** The calibration is turned on by default (LHTDRG is true) in the variants and species listed as on in the next table, and is turned off by default in the other variants. The NOHTDREG keyword changes the setting. Its first field is a species code, a species group, or 0 for all species. If its second field is greater than 0 the calibration is turned on; if the second field is blank or 0 the calibration is turned off.
 
 ```{r htdbh-calib-default, echo=FALSE}
 htdbh_calib_default <- tibble::tribble(
   ~Variant, ~Default, ~Exceptions,
-  "BC", "On", "None",
-  "CI", "On", "Species 15 is off",
-  "CR", "On", "None",
-  "EM", "On", "None",
-  "IE", "On", "None",
-  "KT", "On", "None",
-  "TT", "On", "Species 13 and 16 are off",
-  "UT", "On", "Species 20 and 21 are off",
-  "WS", "On", "Species 9, 10, 12, 14 to 17, 19, 20, 25 to 27 and 41 are off",
-  "BM", "Off", "Species 6, 11, 12 and 15 are on",
   "AK", "Off", "None",
+  "BC", "On", "None",
+  "BM", "Off", "Species WJ, WB, LM and AS are on",
   "CA", "Off", "None",
+  "CI", "On", "Species MC is off",
+  "CR", "On", "None",
   "CS", "Off", "None",
   "EC", "Off", "None",
+  "EM", "On", "None",
   "HI", "Off", "None",
+  "IE", "On", "None",
+  "KT", "On", "None",
   "LS", "Off", "None",
   "NC", "Off", "None",
   "NE", "Off", "None",
@@ -2346,7 +2443,10 @@ htdbh_calib_default <- tibble::tribble(
   "PN", "Off", "None",
   "SN", "Off", "None",
   "SO", "Off", "None",
-  "WC", "Off", "None"
+  "TT", "On", "Species BI and MC are off",
+  "UT", "On", "Species MC and BI are off",
+  "WC", "Off", "None",
+  "WS", "On", "Species LP, WB, PM, KP, FP, CP, LM, GP, WE, WJ, UJ, CJ and MC are off"
 )
 
 kable(htdbh_calib_default,
@@ -2358,9 +2458,9 @@ kable(htdbh_calib_default,
   column_spec(1, bold = TRUE)
 ```
 
-**Dubbing the missing heights.** CRATET then estimates the height of every live and dead tree record that has no height. A record that has a diameter of 0.1 inch or less is given a height of 1.01 feet. For the other records the height is calculated from equation {3.6.2.3.1}, with B1 equal to AA when the species was calibrated and equal to HT1 otherwise. A height below 4.5 feet is set to 4.5 feet. In the variants that have subroutine HTDBH (see the next table), the height from that subroutine replaces this height when calibration is off for the species or when the species was not calibrated (IABFLG is 1). Subroutine HTDBH calculates the height from the diameter alone. Species that have no live tree records, and the dead trees, are dubbed with HT1, or with HTDBH where the same condition holds.
+**Dubbing the missing heights.** CRATET then estimates the height of every live and dead tree record that has no height. A record that has a diameter of 0.1 inch or less is given a height of 1.01 feet. For the other records the height is calculated from equation {3.6.2.3.1}, with B1 equal to AA when the species was calibrated, and equal to HT1 otherwise. A height below 4.5 feet is set to 4.5 feet. In the variants that have subroutine HTDBH (see the next table), the height from that subroutine replaces this height when calibration is off for the species (LHTDRG is false), or when the species was not calibrated (IABFLG is 1). Subroutine HTDBH calculates the height from the diameter alone. Dead trees are dubbed in the same way. For a species with no live tree records, B1 is equal to HT1, and subroutine HTDBH replaces the height where the same condition holds.
 
-**Broken and dead tops.** For a record with a broken or dead top (NORMHT is negative) CRATET dubs the height the tree would have without the damage, and stores it in NORMHT (in hundredths of a foot). When the record has a measured height, that height is kept as the height of the damaged tree. When the height is missing and the broken height ITRUNC is zero, ITRUNC is set to 80 percent of the dubbed height and the tree height is set to the dubbed height. When the broken height is given, a height that is smaller than the broken height is raised to it.
+**Broken and dead tops.** For a record with a broken or dead top (NORMHT, the height of the tree without the damage, is negative), CRATET dubs the height the tree would have without the damage, and stores it in NORMHT, in hundredths of a foot. When the record has a measured height and the broken height, ITRUNC, is zero, ITRUNC is set to 80 percent of the measured height. When the height is missing and ITRUNC is zero, ITRUNC is set to 80 percent of the dubbed height, and the tree height is set to the dubbed height. When ITRUNC is given, a tree height that is smaller than ITRUNC is raised to ITRUNC.
 
 ```{r htdbh-forms, echo=FALSE}
 htdbh_forms <- tibble::tribble(
@@ -2370,12 +2470,12 @@ htdbh_forms <- tibble::tribble(
   "HI", "Curtis-Arney, with two special cases (see below)",
   "NC", "Curtis-Arney",
   "PN", "Curtis-Arney, with two special cases (see below)",
-  "OP", "Curtis-Arney (uses the PN subroutine)",
+  "OP", "Curtis-Arney (uses the HTDBH subroutine of PN)",
   "SO", "Curtis-Arney",
   "WC", "Curtis-Arney",
-  "SN", "Curtis-Arney, with a join diameter DB below 3.0 inches",
+  "SN", "Curtis-Arney, with a height of 4.51 feet at a diameter DB",
   "CA", "Curtis-Arney, with a join diameter Z",
-  "OC", "Curtis-Arney, with a join diameter Z (uses the CA subroutine)",
+  "OC", "Curtis-Arney, with a join diameter Z (uses the HTDBH subroutine of CA)",
   "WS", "Curtis-Arney, with a join diameter Z",
   "CS", "Wykoff or Curtis-Arney by species (IWYKCA)",
   "LS", "Wykoff or Curtis-Arney by species (IWYKCA)",
@@ -2392,23 +2492,52 @@ kable(htdbh_forms,
   column_spec(1, bold = TRUE)
 ```
 
-The Curtis-Arney form is shown in equation {3.6.2.3.3}, where P2, P3 and P4 are coefficients by species (and by national forest in some variants). Below the join diameter the height is interpolated linearly between the height at the join diameter and a height of 4.51 feet at a diameter of DB (0.3 inch in subroutine CA).
-
-Subroutine HTDBH in the HI and PN variants has two special cases. For forest codes (IFOR) 2, 4 and 6 and species index 16, the join diameter is 5.0 inches instead of 3.0 inches (the code comment refers to Douglas-fir on the Siuslaw). For a diameter of 100 inches or more, species index 6 and forest code 1 or 3, the height is 0.25 x DBH + 248 (the code comment refers to Sitka spruce on the Olympic National Forest).
+The Curtis-Arney form is shown in equation {3.6.2.3.4}, where P2, P3 and P4 are coefficients by species (and by forest in some variants).
 
 $$
 HT = 4.5 + P_2 \exp\left(-P_3 \, DBH^{P_4}\right)
-\tag{3.6.2.3.3}
+\tag{3.6.2.3.4}
 $$
+
+Where:
+
+- HT: Total tree height (feet)
+- DBH: Diameter at breast height (inches)
+- P2: Coefficient by species (and by forest in some variants)
+- P3: Coefficient by species (and by forest in some variants)
+- P4: Coefficient by species (and by forest in some variants)
+
+
+Below the join diameter, the height is interpolated linearly between two points. The upper point is the height from equation {3.6.2.3.4} at the join diameter. The join diameter is 3.0 inches, except in CA and WS, where it is Z, a diameter by species. The lower point is a height of 4.51 feet at a diameter of 0.3 inch, except in SN, CS, LS, NE and ON, where the diameter is DB, a value by species.
+
+Subroutine HTDBH in the HI and PN variants has two special cases. For the forest codes, IFOR, 2, 4 and 6 and the species DF, the join diameter is 5.0 inches instead of 3.0 inches (the code comment refers to Douglas-fir on the Siuslaw). For a diameter of 100 inches or more, the species SS and the forest code 1 or 3, the height is 0.25 x DBH + 248 (the code comment refers to Sitka spruce on the Olympic National Forest).
 
 **Variant differences.** The following variants differ from the description above.
 
-- AK does not call subroutine HTDBH. When calibration is off, or the species was not calibrated, the Chapman-Richards equation $HT = 4.5 + A(1 - e^{B \cdot DBH})^{C}$ is used, with A, B and C from the HTT11, HTT12 and HTT13 arrays. The dubbed height is then multiplied by 0.45 for species 14, 21 and 23 and by 0.65 for species 22.
-- KT regresses the heights on the square root of the diameter, $HT = AA + BB\sqrt{DBH}$, using the calibration trees, and uses the default coefficients when the slope BB is negative. Trees smaller than the species diameter SMDBH are given the height SMA x DBH + 4.5, and the regression is joined to this line at the diameter where the two equations meet.
-- BC calibrates and dubs in metric units (height and diameter converted to meters and centimeters, with a breast height of 1.3 meters) for the species for which the BEC-specific coefficients differ from the default coefficients (LMHTDUB).
+- AK does not call subroutine HTDBH. When calibration is off, or the species was not calibrated, the Chapman-Richards equation $HT = 4.5 + A(1 - e^{B \cdot DBH})^{C}$ is used, with the coefficients A, B and C coming from the arrays HTT11, HTT12 and HTT13. The dubbed height is then multiplied by 0.45 for the species AD, WI and OH, and by 0.65 for the species SU.
+
+  Where:
+
+  - $HT$: Total tree height (feet)
+  - $DBH$: Diameter at breast height (inches)
+  - $A$: Coefficient HTT11 of the species
+  - $B$: Coefficient HTT12 of the species
+  - $C$: Coefficient HTT13 of the species
+  - $e$: Base of the natural logarithm
+
+- KT regresses the heights on the square root of the diameter, $HT = AA + BB\sqrt{DBH}$, using the calibration trees, and uses the default coefficients when the slope, BB, is negative. Trees smaller than the diameter SMDBH are given the height SMA x DBH + 4.5 when the default coefficients are used, and the regression is joined to this line at the diameter where the two equations meet.
+
+  Where:
+
+  - $HT$: Total tree height (feet)
+  - $DBH$: Diameter at breast height (inches)
+  - $AA$: Intercept of the regression (feet)
+  - $BB$: Slope of the regression (feet per square root of inch)
+
+- BC calibrates and dubs in metric units (height and diameter converted to meters and centimeters, with a breast height of 1.3 meters) for the species for which LMHTDUB, a logical variable, is true.
 - ON calculates the calibrated intercept as above, but the dubbed height comes from subroutine HTONT, and subroutine HTDBH replaces it when calibration is off or the species was not calibrated. Dead trees are dubbed with HTONT only.
 - CR, when the model type is 3 (Black Hills) and the species was not calibrated, uses a logistic equation based on the site index to dub the height.
-- CI (species 15), TT (species 13 and 16) and UT (species 20 and 21) use the Curtis-Arney equation of this section directly, with coefficients written in CRATET, when calibration is off or the species was not calibrated. When the species was calibrated, the height is 0.0994 + 4.9767 x DBH below 5.0 inches and equation {3.6.2.3.1} at 5.0 inches or more.
+- CI (species MC), TT (species BI and MC) and UT (species MC and BI) use the Curtis-Arney equation of this section directly, with coefficients written in CRATET, when calibration is off or the species was not calibrated. When the species was calibrated, the height is 0.0994 + 4.9767 x DBH below 5.0 inches and equation {3.6.2.3.1} at 5.0 inches or more.
 - BM, EC, HI, OP, PN, SO, WC and WS use small-tree equations for trees below 5.0 inches in diameter for some species. These equations are in CRATET and are applied before the HTDBH replacement.
 - WS replaces the dubbed height with a Region 5 equation based on site index for some species when the species was not calibrated.
 
@@ -8215,6 +8344,8 @@ Rebain, Stephanie A. comp. 2010 (revised March 23, 2015). The Fire and Fuels Ext
 Reineke, L.H. 1933. Perfecting a stand density index for even aged forests. J. Agric. Res. 46:627-638.
 
 Van Dyck, M. G.; Smith-Mateja, E. E. comp. 2000 (revised frequently). Keyword reference guide for the forest vegetation simulator. Internal Rep. Fort Collins, CO: U. S. Department of Agriculture, Forest Service, Forest Management Service Center.
+
+Wykoff, William R., Crookston, Nicholas L., and Stage, Albert R. 1982. User’s guide to the Stand Prognosis Model. Gen. Tech. Rep. INT-133. Ogden, UT: Forest Service, Intermountain Forest and Range Experiment Station. 112p.
 
 Zeide, B. 1983. The mean diameter for stand density index. Can. J. For. Res. 13:1023-1024.
 

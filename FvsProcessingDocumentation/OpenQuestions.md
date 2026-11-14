@@ -273,4 +273,3 @@ Not verified (the text states only what was read, or says "some species"):
 - ON: AX and BX are calculated in CRATET and not used in an equation there.
 - OC and OP: the internal behavior of ORGANON subroutine PREPARE on heights was not read.
 - The Curtis-Arney coefficients (P2, P3, P4) and the join diameters by species were not tabulated.
-- Where calibrated values are reused (REGENT) is described in the survey but not written into this subsection.
