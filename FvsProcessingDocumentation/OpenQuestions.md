@@ -273,3 +273,29 @@ Not verified (the text states only what was read, or says "some species"):
 - ON: AX and BX are calculated in CRATET and not used in an equation there.
 - OC and OP: the internal behavior of ORGANON subroutine PREPARE on heights was not read.
 - The Curtis-Arney coefficients (P2, P3, P4) and the join diameters by species were not tabulated.
+
+## Crown ratio dubbing (CROWN, DUBSCR, CRATET)
+
+Text revised: "Dub missing crown ratios", the DUBSCR paragraph in the REGENT auxiliary subroutines, and the AK bound in "Computing crown ratio change and crown width". Facts in `facts.json` have ids beginning `crown-`.
+
+Existing text corrected:
+- "CROWN calls DUBSCR for some small sized trees and dead trees" is not true for CR, CS, LS, NE and ON (DUBSCR is never called; CR compiles an unused `cr/dubscr.f`) or for the live trees of SN (DUBSCR is called for dead trees only).
+- DUBSCR is called by REGENT only in IE, KT, EM and BC, not "in some variants" in general.
+- The 1 percent per year bound on the crown ratio increase does not hold for AK (3 percent per year, `ak/crown.f`).
+
+Code observations (not changed):
+- `em/regent.f` line 1039 calls DUBSCR with 8 arguments, and `em/dubscr.f` declares 6. `ie/regent.f` and `ie/dubscr.f` match.
+- `canada/on/crown.f` has no assignment of `ISPCC` for CRNMULT (other variants assign it after `OPDONE`).
+- `tt/crown.f` evaluates `TPCCF=PCCF(IITRE)` before `IITRE=ITRE(I)` in the dead tree loop (UT and SO assign `IITRE` first).
+- `ci/crown.f` and `ie/crown.f` limit `RMAI` where `RMAILM` appears to be intended (`IF(RMAILM .GT. 128.0)RMAI=128.0`).
+- The headers of `bm/dubscr.f`, `so/dubscr.f`, `tt/dubscr.f`, `ut/dubscr.f` and `ws/dubscr.f` give a 5.0 inch threshold and `wc/crown.f`, `bm/crown.f`, `ec/crown.f` and `nc/crown.f` give 3 inches; the code uses 1.0 inch.
+- `canada/bc/crown.f` has a comment that a bug fails to calculate ICR in the change calculation, and the block is commented out.
+- In OC and OP, the lower bounds of 10 percent and CRMAX in CROWN are inside a test of `.NOT.LORGANON`, so they are skipped when ORGANON is on (the default).
+- `base/intree.f` has a comment that crown ratios of trees under 3 inches are set to zero in CRATET; no such code was found.
+
+Not documented (the text states only what was read):
+- The coefficient values of CROWN (BCR, Weibull, C0 and C1 arrays) and DUBSCR (BCR, CRSD arrays) are not transcribed.
+- The species equations in GEMCR (CR), the SN mean crown ratio function types 2 to 5, the NI-type constants by habitat type, the BC V3 subroutine CRNMD, and the ORGANON crown model (PRDCR) are not written out.
+- Whether a CRNMULT keyword for cycle 1 is applied at the dubbing was not traced through OPFIND (`ICYC` is 1 during CRATET).
+- The density variables (BA, RELDEN, PCT) at the time of dubbing depend on the DENSE call and the back-dating setting; they were not traced for each variant.
+- The IE and EM crown models by species use the flags set in `ie/crown.f` and `em/crown.f`; the Weibull species of EM and IE were not tabulated.

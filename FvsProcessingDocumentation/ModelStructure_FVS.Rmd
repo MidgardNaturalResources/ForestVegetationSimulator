@@ -2549,7 +2549,309 @@ Subroutine CRATET calls FMSSEE to add the dead trees to the FFE snag list. FMSSE
 
 #### Dub missing crown ratios
 
-Subroutine CRATET next calls subroutine CROWN to control dubbing of any crown ratios missing in the input data (live and dead trees). CROWN calls subroutine DUBSCR for some small sized trees and dead trees. Again this is variant-specific and the appropriate variant overview should be consulted for the equations being used.
+After the heights have been dubbed, subroutine CRATET dubs the crown ratios that are missing in the input data, for the live and the dead tree records. The variables named in this section are defined in the next table.
+
+```{r crown-variables, echo=FALSE}
+crown_variables <- tibble::tribble(
+  ~Variable, ~Definition,
+  "ICR", "Crown ratio of a tree record, in percent; 0 or negative when missing",
+  "ICRI", "Integer working value of the crown ratio, in percent",
+  "CRNEW", "Crown ratio predicted by the crown model for a tree record",
+  "CR", "Crown ratio as a proportion from 0 to 1, or a crown class code, as returned by the equation named in the text",
+  "DBH", "Tree diameter at breast height, in inches",
+  "HT", "Total tree height, in feet",
+  "HF", "Total tree height at the end of the cycle, HT + HTG, in feet",
+  "HTG", "Height increment of the tree, in feet",
+  "BA", "Stand basal area, in square feet per acre",
+  "RELDEN", "Stand crown competition factor (CCF)",
+  "PCT", "Percentile of the tree in the basal area distribution of the stand",
+  "SDIAC", "Stand density index of the stand",
+  "SDIDEF", "Maximum stand density index of the species",
+  "RELSDI", "Relative stand density index of the species",
+  "ISORT", "Rank of the tree record by diameter among the ITRN tree records; 1 is the smallest",
+  "ITRN", "Number of tree records",
+  "X", "Percentile of the tree in the crown ratio distribution",
+  "SCALE", "Density scalar of the percentile X, from 0.30 to 1.0",
+  "ACR", "Mean crown ratio of the species predicted from relative stand density index",
+  "A", "Location parameter of the Weibull distribution of crown ratio",
+  "B", "Scale parameter of the Weibull distribution of crown ratio",
+  "C", "Shape parameter of the Weibull distribution of crown ratio",
+  "CL", "Crown length of the tree, in feet",
+  "PRD", "Relative density of the inventory point, the point Zeide SDI divided by the point maximum SDI",
+  "QMDPLT", "Quadratic mean diameter of the inventory point, in inches; at least 1.0",
+  "FCR", "Random error added to the linear predictor of DUBSCR",
+  "CRSD", "Standard error of the linear predictor of DUBSCR, by species",
+  "DGSD", "Standard deviation of the random error of diameter increment, set with keyword DGSTDEV",
+  "CRNMLT", "Crown ratio multiplier by species, set with keyword CRNMULT",
+  "DLOW", "Lower diameter limit of the CRNMULT multiplier, in inches",
+  "DHI", "Upper diameter limit of the CRNMULT multiplier, in inches",
+  "ICFLG", "Flag by species; 1 when keyword CRNMULT has a nonzero value in field 6",
+  "NORMHT", "Height of the tree without the broken or dead top, in hundredths of a foot",
+  "ITRUNC", "Broken height, in hundredths of a foot",
+  "LSTART", "Logical variable; true during the projection initialization, when missing values are dubbed"
+)
+
+kable(crown_variables,
+      col.names = c("Variable", "Definition"),
+      caption = "Variables used in the dubbing of crown ratios",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
+
+**Missing crown ratios.** Subroutine INTREE converts the crown ratio of each input record. A value from 1 to 9 is a crown class code and is converted to a percent, ICR = 10 x code - 5 (the classes become 5, 15, and so on to 85). A value from 10 to 99 is kept as a percent, and a value above 99 is set to 99. A value of 0 or a negative value is not changed, and the crown ratio is considered missing. Dead tree records are converted in the same way before they are moved to the bottom of the tree arrays.
+
+CRATET sets a logical variable, MISSCR, to true when any live or dead tree record has a crown ratio that is 0 or negative, and calls subroutine CROWN only then. A tree record that has a crown ratio is not changed.
+
+**Subroutine CROWN.** Subroutine CROWN is used for two purposes. When LSTART is true, as it is when CRATET calls it, CROWN dubs the missing crown ratios. A tree record with ICR greater than 0 is skipped. At the end of each projection cycle, subroutine GRADD calls CROWN to change the crown ratios, as described in [Computing crown ratio change and crown width](#sec-computing-crown-ratio-change-and-crown-width).
+
+**Crown ratio models.** The crown ratio of a live tree is dubbed with the crown ratio model of the variant. A dead tree is dubbed with the same model in the variants that have no subroutine DUBSCR for the tree, and with subroutine DUBSCR in the other variants. The models are listed by variant in the next table. In the variants with subroutine DUBSCR other than SN, DUBSCR dubs the live trees that are smaller than a threshold diameter as well, and the model of the variant dubs the larger live trees.
+
+```{r crown-models, echo=FALSE}
+crown_models <- tibble::tribble(
+  ~Variant, ~Live_Tree_Model, ~DUBSCR_Used_For,
+  "AK", "Logistic equation of height, diameter and point density", "Live trees below 1.0 inch and dead trees",
+  "BC", "Percentile regression (V2) or logistic equation of the BEC zone (V3)", "Live trees below 3.0 inches (V2) or 2 cm (V3) and dead trees",
+  "BM", "Weibull", "Live trees below 1.0 inch and dead trees",
+  "CA", "Weibull", "Live trees below 1.0 inch and dead trees",
+  "CI", "Weibull, and crown length equations for some species", "Live trees below 1.0 inch and dead trees",
+  "CR", "Crown length equations by species (subroutine GEMCR)", "Not called",
+  "CS", "TWIGS", "Not called",
+  "EC", "Weibull", "Live trees below 1.0 inch and dead trees",
+  "EM", "Percentile regression, crown length equations, or Weibull, by species", "Live trees below the threshold of the model, and dead trees of the species that use the regression or the Weibull model",
+  "HI", "Weibull", "Live trees below 1.0 inch and dead trees",
+  "IE", "Percentile regression, crown length equations, or Weibull, by species", "Live trees below the threshold of the model, and dead trees of the species that use the regression or the Weibull model",
+  "KT", "Percentile regression", "Live trees below 3.0 inches and dead trees",
+  "LS", "TWIGS", "Not called",
+  "NC", "Weibull", "Live trees below 1.0 inch and dead trees",
+  "NE", "TWIGS", "Not called",
+  "OC", "Weibull; ORGANON for the trees that are valid for ORGANON", "Live trees below 1.0 inch and dead trees",
+  "ON", "TWIGS", "Not called",
+  "OP", "Weibull; ORGANON for the trees that are valid for ORGANON", "Live trees below 1.0 inch and dead trees",
+  "PN", "Weibull", "Live trees below 1.0 inch and dead trees",
+  "SN", "Weibull, with the mean crown ratio from relative stand density index", "Dead trees only",
+  "SO", "Weibull", "Live trees below 1.0 inch and dead trees",
+  "TT", "Weibull, and crown length equations for some species", "Live trees below 1.0 inch and dead trees",
+  "UT", "Weibull, and crown length equations for some species", "Live trees below 1.0 inch and dead trees",
+  "WC", "Weibull", "Live trees below 1.0 inch and dead trees",
+  "WS", "Weibull", "Live trees below 1.0 inch and dead trees"
+)
+
+kable(crown_models,
+      col.names = c("Variant", "Live Tree Model", "DUBSCR Used For"),
+      caption = "Crown ratio models used to dub missing crown ratios",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
+
+The CR variant compiles subroutine DUBSCR but does not call it. The dead trees of the CR variant are dubbed with the crown length equations. The BC, EM and IE entries are described under "Variant differences" below.
+
+**TWIGS model (CS, LS, NE and ON).** The crown ratio is predicted from the stand basal area and the tree diameter with equation {3.6.2.5.1}, and the result is rounded to an integer percent.
+
+$$
+CRNEW = 10\left[\frac{BCR_1}{1 + BCR_2 \cdot BA} + BCR_3\left(1 - \exp\left(BCR_4 \cdot DBH\right)\right)\right]
+\tag{3.6.2.5.1}
+$$
+
+Where:
+
+- CRNEW: Crown ratio (percent)
+- BCR1, BCR2, BCR3, BCR4: Coefficients by species; BCR4 is negative in LS, NE and ON, and is positive in CS, where the exponent is written as $-BCR_4 \cdot DBH$
+- BA: Stand basal area (square feet per acre)
+- DBH: Diameter at breast height (inches)
+
+**Weibull model.** In the variants that use the Weibull model, the crown ratio is a percentile of a Weibull distribution of the crown ratios of the species, and the percentile is the rank of the tree by diameter. The parameters of the distribution are calculated for each species from the relative stand density index. The steps are as follows.
+
+1. The mean crown ratio of the species, ACR, is calculated with equation {3.6.2.5.2} from RELSDI, where RELSDI is SDIAC divided by SDIDEF (1.0 when SDIDEF is not greater than 0), and is limited to 1.5.
+2. The Weibull parameters A, B and C are calculated from ACR with equation {3.6.2.5.3}. B is set to a minimum value that depends on the variant and the species (see the table after the equations), and C is set to 2.0 when it is less than 2.0.
+3. The percentile of the tree, X, is the rank of the tree by diameter divided by the number of tree records, multiplied by a density scalar, SCALE. A tree record with a diameter of 0 is given a random rank. The percentile is limited to 0.05 to 0.95.
+4. The crown ratio is calculated from the Weibull distribution with equation {3.6.2.5.4}.
+
+$$
+ACR = C_0 + C_1 \cdot 100 \cdot RELSDI
+\tag{3.6.2.5.2}
+$$
+
+Where:
+
+- ACR: Mean crown ratio of the species
+- C0, C1: Coefficients by species or species group
+- RELSDI: Relative stand density index of the species
+
+$$
+A = WEIBA, \qquad B = WEIBB_0 + WEIBB_1 \cdot ACR, \qquad C = WEIBC_0 + WEIBC_1 \cdot ACR
+\tag{3.6.2.5.3}
+$$
+
+Where:
+
+- A, B, C: Location, scale and shape parameters of the Weibull distribution
+- WEIBA, WEIBB0, WEIBB1, WEIBC0, WEIBC1: Coefficients by species or species group
+- ACR: Mean crown ratio of the species from equation {3.6.2.5.2}
+
+$$
+CR = A + B\left[-\ln\left(1 - X\right)\right]^{1/C}, \qquad X = \frac{ISORT}{ITRN}\cdot SCALE
+\tag{3.6.2.5.4}
+$$
+
+Where:
+
+- CR: Crown ratio in tenths of a percent, which is multiplied by 10 to obtain the percent (in SN the result is already in percent)
+- A, B, C: Weibull parameters from equation {3.6.2.5.3}
+- X: Percentile of the tree, limited to 0.05 to 0.95
+- ISORT: Rank of the tree record by diameter (1 is the smallest)
+- ITRN: Number of tree records
+- SCALE: Density scalar, from 0.30 to 1.0
+
+The mean crown ratio, the scalar, and the minimum of B differ among the variants, as listed in the next table. In SN, RELSDI is ten times SDIAC divided by SDIDEF (6.0 when SDIDEF is not greater than 0), limited to 1.0 to 12.0, ACR is calculated with a function selected by species (for example Hoerl's equation, $ACR = \exp(a + b \ln RELSDI + c \cdot RELSDI)$), and equation {3.6.2.5.4} gives the crown ratio directly in percent. In WS, SCALE is $1.5 - RELSDI$ for the species LP, WB, PM, KP, FP, CP, LM, GP, WE, WJ, UJ and CJ; $1 - 0.00167\,(RELDEN - 100)$ for the species MC; and $1 - 0.00333\,(RELDEN - 50)$ for the other species. In all variants the scalar is limited to 0.30 to 1.0.
+
+```{r crown-weibull-variants, echo=FALSE}
+crown_weibull <- tibble::tribble(
+  ~Variant, ~SCALE, ~Minimum_B,
+  "BM", "1 - 0.00167 (RELDEN - 100)", "1.0 for WJ, LM and AS; 3.0 for the other species",
+  "CA", "1.5 - RELSDI", "3.0",
+  "CI", "1 - 0.00167 (RELDEN - 100)", "1.0 for WB, PY, AS, WJ, MC, LM, CW and OH; 3.0 for the other species",
+  "EC", "1 - 0.00167 (RELDEN - 100)", "3.0",
+  "EM", "1 - 0.00167 (RELDEN - 100)", "1.0",
+  "HI", "1 - 0.00167 (RELDEN - 100)", "3.0",
+  "IE", "1 - 0.00167 (RELDEN - 100)", "1.0",
+  "NC", "1.5 - RELSDI", "3.0",
+  "OC", "1.5 - RELSDI", "3.0",
+  "OP", "1 - 0.00167 (RELDEN - 100)", "3.0",
+  "PN", "1 - 0.00167 (RELDEN - 100)", "3.0",
+  "SN", "1 - 0.00167 (RELDEN - 100)", "3.0",
+  "SO", "1 - 0.00167 (RELDEN - 100)", "3.0",
+  "TT", "1 - 0.00167 (RELDEN - 100)", "3.0 for PP; 1.0 for the other species",
+  "UT", "1 - 0.00167 (RELDEN - 100)", "1.0",
+  "WC", "1 - 0.00167 (RELDEN - 100)", "3.0",
+  "WS", "By species (see the text)", "3.0"
+)
+
+kable(crown_weibull,
+      col.names = c("Variant", "SCALE", "Minimum B"),
+      caption = "Density scalar and minimum of the Weibull parameter B",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
+
+**Crown length equations.** In the CR variant, and for some species in CI, EM, IE, TT and UT, the crown length of the tree is predicted from the height of the tree and the crown ratio is the crown length divided by the height, as shown in equation {3.6.2.5.5}. The crown length is limited to a minimum of 1.0 foot and a maximum of HF.
+
+$$
+CR = \frac{CL}{HF}, \qquad CL = a + b \cdot HF + c \cdot BA
+\tag{3.6.2.5.5}
+$$
+
+Where:
+
+- CR: Crown ratio (proportion)
+- CL: Crown length (feet)
+- HF: Total tree height at the end of the cycle (feet)
+- BA: Stand basal area (square feet per acre)
+- a, b, c: Coefficients; the two forms used outside CR are $CL = 5.17281 + 0.32552\,HF - 0.01675\,BA$ and $CL = -0.59373 + 0.67703\,HF$
+
+In CR, the equations differ by species, include the diameter and the basal area above the tree, and are in subroutine GEMCR. In the other variants, the species that use a crown length equation, and the equation of each, are listed in the next table.
+
+```{r crown-cl-species, echo=FALSE}
+crown_cl_species <- tibble::tribble(
+  ~Variant, ~Species, ~Equation,
+  "CI", "CW and OH", "CL = 5.17281 + 0.32552 HF - 0.01675 BA",
+  "CI", "WJ", "CL = -0.59373 + 0.67703 HF",
+  "EM", "GA, CW, BA, PW, NC and OH", "CL = 5.17281 + 0.32552 HF - 0.01675 BA",
+  "EM", "RM", "CL = -0.59373 + 0.67703 HF",
+  "IE", "CO and OH", "CL = 5.17281 + 0.32552 HF - 0.01675 BA",
+  "IE", "PM and RM", "CL = -0.59373 + 0.67703 HF",
+  "TT", "NC and OH", "CL = 5.17281 + 0.32552 HF - 0.01675 BA",
+  "TT", "PM, UJ and RM", "CL = -0.59373 + 0.67703 HF",
+  "UT", "NC, FC and BE", "CL = 5.17281 + 0.32552 HF - 0.01675 BA",
+  "UT", "PI, WJ, GO, PM, RM, UJ, GB and OH", "CL = -0.59373 + 0.67703 HF"
+)
+
+kable(crown_cl_species,
+      col.names = c("Variant", "Species", "Crown Length Equation"),
+      caption = "Species that use a crown length equation to dub the crown ratio",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
+
+**Subroutine DUBSCR.** Subroutine DUBSCR is a species-specific regression that dubs the crown ratio of small live trees and of dead trees. The coefficients, the form of each species, and the standard errors CRSD are in the DUBSCR source file of the variant (the OC variant uses the file of CA, and the OP and PN variants use the file of WC). DUBSCR has two forms, and each returns a crown ratio proportion that is limited to 0.05 to 0.95.
+
+- Crown class form: a crown class code is calculated with a linear function of the height and the stand basal area, as shown in equation {3.6.2.5.6}, and it is converted to a proportion, $CR = ((code - 1) \cdot 10 + 1)/100$. In WC, for example, all species except RW use this form.
+- Logistic form: $CR = 1/(1 + \exp(Z + FCR))$, where Z is a linear function of the diameter, the height and the stand basal area. In some variants the function includes more terms (the point crown competition factor, the average height of the largest trees, and the mean annual increment). KT uses $Z = BCR_0 + BCR_1\,DBH + BCR_2\,HT + BCR_3\,BA$. For the species RW in WC, the form is $Z = -1.021064 + 0.309296\ln(12\,HT/DBH) + 0.869720\,PRD - 0.116274\,(DBH/QMDPLT)$ and the standard deviation of FCR is 0.15.
+
+$$
+code = BCR_0 + BCR_1 \cdot HT + BCR_2 \cdot BA + FCR
+\tag{3.6.2.5.6}
+$$
+
+Where:
+
+- code: Crown class code
+- BCR0, BCR1, BCR2: Coefficients by species group
+- HT: Total tree height (feet)
+- BA: Stand basal area (square feet per acre)
+- FCR: Random error (see below)
+
+The random error, FCR, is drawn from a normal distribution with a mean of 0 and a standard deviation of CRSD, and is drawn again until its absolute value does not exceed CRSD. In AK, BM, CA, EC, HI, NC, OC, OP, PN, SO, WC and WS the error is always added. In CI, EM, IE, KT, TT, UT and BC (V2) it is added only when DGSD is 1.0 or more. In SN the random error is not implemented. For the species that use the crown class form in CI, TT and UT, and for the species MC in WS, the error is not added to the crown class code.
+
+**Bounds and adjustments.** After a crown ratio has been dubbed for a live tree, the following are applied. The crown ratio of a tree with a broken or dead top (ITRUNC is not zero) is reduced to the crown that remains, as shown in equation {3.6.2.5.7}. A dubbed crown ratio above 95 is set to 95, a value below 10 is set to 10 when CRNMLT is 1.0, and a value below 1 is set to 1. A dead tree that is dubbed is bounded to 10 to 95.
+
+$$
+CL = \frac{ICRI}{100}\,HN - HD, \qquad ICRI = \frac{100\,CL}{HN}
+\tag{3.6.2.5.7}
+$$
+
+Where:
+
+- ICRI: Crown ratio (percent) before and after the adjustment for the broken top
+- CL: Crown length that remains (feet)
+- HN: Height of the tree without the broken or dead top, NORMHT divided by 100 (feet)
+- HD: Length of the broken or dead part, HN minus ITRUNC divided by 100 (feet)
+
+**Keyword CRNMULT.** Keyword CRNMULT multiplies the crown ratios dubbed by CROWN. Field 1 is the date or cycle, field 2 the species, field 3 the multiplier (CRNMLT), field 4 the lower diameter limit (DLOW), field 5 the upper diameter limit (DHI, 99 inches when not given), and field 6 a flag. When DBH is within the limits, the dubbed crown ratio is multiplied by CRNMLT. When field 6 is greater than 0 (ICFLG is 1), the multiplier applies only to the dubbed values and CRNMLT is set to 1.0 after the dubbing.
+
+**Variant differences.** The following variants differ from the description above.
+
+- AK predicts the crown ratio of live trees of 1.0 inch or more with equation {3.6.2.5.8}, without a random error. The dead trees and the live trees below 1.0 inch are dubbed with DUBSCR, which uses the same relationship.
+- KT, the species WP, WL, DF, GF, WH, RC, LP, ES, AF, PP, MH, WB, LL and OS of IE, and the species LL of EM use a percentile regression with the habitat type for trees of 3.0 inches or more (equation {3.6.2.5.9}). Trees below 3.0 inches are dubbed with DUBSCR. When DGSD is 1.0 or more, a random error with a standard deviation (CRSD) of 6.35 percent is added at the dubbing in IE and EM.
+- IE and EM use the crown length equations for some species (see the table of crown length equations). The remaining species of IE and EM use the Weibull model, with DUBSCR for the trees below 1.0 inch.
+- BC uses one of two models that are selected by the BEC zone. The V3 model is used in the zones that contain ICH, IDF, SBS or SBPS, and the V2 model, which is the percentile regression, is used in the other zones. A tree below 3.0 inches (V2) or 2 cm (V3) is dubbed with DUBSCR.
+- SN dubs only the dead trees with DUBSCR: $CR = 0.70 - 0.40\,DBH/24$ for DBH of 24 inches or less, and 0.30 for larger trees, bounded to 0.05 to 0.95.
+- OC and OP dub the crown ratio of the trees that are valid for ORGANON in subroutine PREPARE, before CROWN is called (see [Dubbing of missing input data and calibration of ORGANON equations](#sec-dubbing-of-missing-input-data-and-calibration-of-organon-equations)). CROWN dubs the other trees with the Weibull model.
+
+$$
+X = B_1 + B_2 \ln\left(\frac{12\,HT}{DBH}\right) + B_3\,PRD + B_4\,\frac{DBH}{QMDPLT}, \qquad CR = \frac{1}{1 + \exp(X)}
+\tag{3.6.2.5.8}
+$$
+
+Where:
+
+- CR: Crown ratio (proportion, limited to 0.05 to 0.95)
+- B1, B2, B3, B4: Coefficients by species
+- HT: Total tree height (feet)
+- DBH: Diameter at breast height (inches)
+- PRD: Relative density of the inventory point
+- QMDPLT: Quadratic mean diameter of the inventory point (inches)
+
+$$
+CR = \exp\left(XCRCON + B_7\,DBH + B_8\,DBH^2 + B_9\ln DBH + B_{10}\,HT + B_{11}\,HT^2 + B_{12}\ln HT + B_{13}\,P + B_{14}\ln P\right)
+\tag{3.6.2.5.9}
+$$
+
+Where:
+
+- CR: Crown ratio (proportion)
+- XCRCON: Constant that depends on the species, the habitat type, the stand basal area and the stand crown competition factor
+- B7 to B14: Coefficients by species
+- DBH: Diameter at breast height (inches)
+- HT: Total tree height (feet)
+- P: Percentile of the tree in the basal area distribution, PCT, with a minimum of 0.01
 
 #### Calibrate growth equations
 
@@ -3538,7 +3840,7 @@ Subroutine DBCHK is used to see if debug output should be written to the output 
 
 Subroutine DGBND is called by subroutine REGENT to check for compliance with any morphological maximum tree diameters.
 
-Subroutine DUBSCR is called by subroutine REGENT in some variants to assign a crown ratio to trees larger than 3.0” in diameter.
+Subroutine DUBSCR is called by subroutine REGENT in the IE, KT, EM and BC variants. When the diameter of a tree at the end of the cycle is projected to reach 3.0 inches (2 cm in the BC V3 model), DUBSCR assigns a crown ratio to the tree. In IE, EM and BC the crown ratio is assigned only when the tree does not already have one, and EM skips the species that are dubbed with the Weibull model of EM.
 
 Subroutine MULTS is used by:
 
@@ -3872,7 +4174,7 @@ Subroutine SPESRT is used to reset the species order sort of tree records.
 
 ## Computing crown ratio change and crown width {#sec-computing-crown-ratio-change-and-crown-width}
 
-Change in a trees’ crown ratio and a trees’ crown width are the last tree attributes to be estimated during a growth projection cycle. A tree’s crown ratio may decrease, stay the same, or increase. In all variants except IE, and for species in the IE variant that are not one of the original 11 NI variant species, the increase in crown ratio is explicitly bounded to either 1% per year of the growth projection cycle (i.e. 10% for a 10-year cycle), or the amount of change possible if all height growth contributes to crown ratio, whichever is less. For the original 11 NI species in the IE variant the increase is bounded only to 1% per year of the growth projection cycle but the height growth bound is implicit in the logic.
+Change in a trees’ crown ratio and a trees’ crown width are the last tree attributes to be estimated during a growth projection cycle. A tree’s crown ratio may decrease, stay the same, or increase. In all variants except IE, and for species in the IE variant that are not one of the original 11 NI variant species, the increase in crown ratio is explicitly bounded to either 1% per year of the growth projection cycle (i.e. 10% for a 10-year cycle), or the amount of change possible if all height growth contributes to crown ratio, whichever is less. For the original 11 NI species in the IE variant the increase is bounded only to 1% per year of the growth projection cycle but the height growth bound is implicit in the logic. In the AK variant, the increase is bounded to 3% per year of the growth projection cycle and the decrease to 1% per year.
 
 ### Subroutines involved and their function
 

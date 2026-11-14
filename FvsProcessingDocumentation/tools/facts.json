@@ -1111,5 +1111,152 @@
   "doc": "Height-diameter calibration: CA join at 0.3",
   "file": "ca/htdbh.f",
   "regex": "\\(D-0\\.3\\)/\\(Z-0\\.3\\)"
+ },
+ {
+  "id": "crown-intree-class",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: INTREE converts class 1-9 to ICR*10-5",
+  "file": "base/intree.f",
+  "regex": "ICR\\(I\\)=ICR\\(I\\)\\*10-5"
+ },
+ {
+  "id": "crown-intree-cap",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: INTREE caps ICR at 99",
+  "file": "base/intree.f",
+  "regex": "IF\\(ICR\\(I\\)\\.GT\\.99\\)ICR\\(I\\)=99"
+ },
+ {
+  "id": "crown-sn-misscr",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: SN calls CROWN only when MISSCR",
+  "file": "sn/cratet.f",
+  "regex": "IF\\(MISSCR\\)CALL CROWN"
+ },
+ {
+  "id": "crown-sn-lstart",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: SN skips trees with ICR above 0 at LSTART",
+  "file": "sn/crown.f",
+  "regex": "IF\\(LSTART \\.AND\\. ICR\\(I\\)\\.GT\\.0\\)GOTO 60"
+ },
+ {
+  "id": "crown-wc-acr",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: WC mean crown ratio from RELSDI",
+  "file": "wc/crown.f",
+  "regex": "ACRNEW = C0\\(JSPC\\) \\+ C1\\(JSPC\\) \\* RELSDI\\*100\\.0"
+ },
+ {
+  "id": "crown-wc-small",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: WC small trees below 1.0 inch go to DUBSCR",
+  "file": "wc/crown.f",
+  "regex": "IF\\(D\\.LT\\.1\\.0 \\.AND\\. LSTART\\) GO TO 58"
+ },
+ {
+  "id": "crown-wc-scale",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: WC SCALE",
+  "file": "wc/crown.f",
+  "regex": "SCALE = \\(1\\.0 - \\.00167 \\* \\(RELDEN-100\\.0\\)\\)"
+ },
+ {
+  "id": "crown-ca-scale",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: CA SCALE is 1.5-RELSDI",
+  "file": "ca/crown.f",
+  "regex": "SCALE=1\\.5-RELSDI"
+ },
+ {
+  "id": "crown-sn-weibull",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: SN Weibull percent result",
+  "file": "sn/crown.f",
+  "regex": "CRNEW\\(I\\) = A \\+ B\\*\\(\\(-1\\.0\\*ALOG\\(1-X\\)\\)\\*\\*\\(1\\.0/C\\)\\)"
+ },
+ {
+  "id": "crown-cs-twigs",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: CS TWIGS equation",
+  "file": "cs/crown.f",
+  "regex": "CRNEW\\(I\\)=10\\*\\(BCR1\\(ISPC\\)/DEN\\+BCR3\\(ISPC\\)\\*\\(1-EXP\\(-1\\.\\*BCR4\\(ISPC\\)\\*D\\)\\)\\)"
+ },
+ {
+  "id": "crown-ls-twigs",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: LS TWIGS equation",
+  "file": "ls/crown.f",
+  "regex": "CRNEW\\(I\\)=10\\*\\(BCR1\\(ISPC\\)/DEN\\+BCR3\\(ISPC\\)\\*\\(1-EXP\\(BCR4\\(ISPC\\)\\*D\\)\\)\\)"
+ },
+ {
+  "id": "crown-ak-3pct",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: AK 3 percent increase bound",
+  "file": "ak/crown.f",
+  "regex": "IF\\(PDIFPY\\.GT\\.0\\.03\\)CHG=REAL\\(ICR\\(I\\)\\)\\*\\(0\\.03\\)\\*FINT"
+ },
+ {
+  "id": "crown-ak-logistic",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: AK logistic",
+  "file": "ak/crown.f",
+  "regex": "\\+ B2 \\* LOG\\(H\\*12/D\\)"
+ },
+ {
+  "id": "crown-wc-rw",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: WC DUBSCR redwood equation",
+  "file": "wc/dubscr.f",
+  "regex": "-1\\.021064 \\+ 0\\.309296\\*LOG\\(HDR\\)"
+ },
+ {
+  "id": "crown-sn-dubscr-dead",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: SN calls DUBSCR for dead trees",
+  "file": "sn/crown.f",
+  "regex": "CALL DUBSCR \\(D,CR\\)"
+ },
+ {
+  "id": "crown-cr-gemcr",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: CR calls GEMCR",
+  "file": "cr/crown.f",
+  "regex": "CALL GEMCR\\(IMODTY,ISPC,CR,TBAU,BA,HF,DF,H,RELDEN,PCTI\\)"
+ },
+ {
+  "id": "crown-ie-cl",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: IE CRVAR crown length",
+  "file": "ie/crown.f",
+  "regex": "CL = 5\\.17281 \\+ 0\\.32552 \\* HF - 0\\.01675 \\* BA"
+ },
+ {
+  "id": "crown-ut-b",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: UT minimum B 1.0",
+  "file": "ut/crown.f",
+  "regex": "IF\\(B \\.LT\\. 1\\.0\\) B=1\\.0"
+ },
+ {
+  "id": "crown-regent-ie",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: IE REGENT calls DUBSCR at 3.0 inches",
+  "file": "ie/regent.f",
+  "regex": "IF\\(DNEW\\.GE\\.3\\.0\\) THEN"
+ },
+ {
+  "id": "crown-initre-dhi",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: CRNMULT upper limit default 99",
+  "file": "vbase/initre.f",
+  "regex": "IF \\(ARRAY\\(5\\) \\.LE\\. 0\\.0\\) ARRAY\\(5\\)=99\\.0"
+ },
+ {
+  "id": "crown-bc-v3",
+  "type": "regex_in_file",
+  "doc": "Crown ratio dubbing: BC V3 zones",
+  "file": "canada/bc/becset.f",
+  "regex": "INDEX\\(BEC%Zone,'SBPS'\\) \\.GT\\. 0"
  }
 ]
