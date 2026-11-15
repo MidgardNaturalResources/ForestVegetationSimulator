@@ -326,3 +326,32 @@ Not documented (the text states only what was read):
 - The PSIGSQ and SIGMAR arrays and the equations of the small-tree height models by variant.
 - How a RANNSEED seed carries across several stands in one run.
 - The meaning of the IDG and IHTG codes beyond the conversion in CRATET.
+
+## Mortality (MORTS and the distribution subroutines)
+
+Text revised: "Mortality" (equations {4.2.1.4.1} to {4.2.1.4.12}), the mortality kinds in the growth chapter introduction, and the ORGANON mortality paragraph. Facts in `facts.json` have ids beginning `mort-`.
+
+Existing text corrected:
+- "Prognosis-type or SDI-based in all variants except OC and OP" is not true. AK uses an individual logistic survival equation, HI, PN, WC and OP use survival equations derived from ORGANON, EM and TT combine two models by species, and BC is Prognosis-type with a BC-specific individual rate in the zones that are not V2.
+- Subroutine SEAMRT is compiled in AK but never called. No distribution subroutine is called in AK, BC, CI, EM, HI, IE, KT, OP, PN and WC. OC (the CA source file) and ON were missing from the VARMRT list.
+- MORTS and the distribution subroutines do not reduce PROB; they store the dying trees in WK2, and UPDATE subtracts it.
+- CLMORTS is not called in CS, LS, NE, SN and ON.
+- MORTMULT multiplies the whole combined rate in the Prognosis-type model, and only the background rate in the SDI-based model. It is not applied to ORGANON mortality.
+- OP does not fall back to SDI-based mortality; it uses the HI-family survival equations.
+- The manual (Dixon 2002, section 7.3.3) describes a TWIGS-based model that has no code in MORTS of LS, CS and NE.
+
+Code observations (not changed):
+- `hi/morts.f` index 44 of BM0 is -4.13142 where the other added species have -4.13412.
+- In the SDI-based variants the distribution total is taken from the stand total only when the last tree processed has the density related rate (RIP equals RN); otherwise the sum of the background mortality is used (`SUMTRE`, `ca/morts.f`).
+- MSBMRT uses FINT/10 for the end of cycle diameter, while NC uses FINT/5 in MORTS.
+- `ak/morts.f` has the header "VWC" and AK calls CLMORTS but links the stub in `base/exclim.f`.
+- The Prognosis-type Ra uses SQRT(D) and SQRT(BA); the form in Dixon (2002) section 7.3.1 was not compared.
+- `ak/morts.f` multiplies WK2 by the pass number, which can exceed the trees per acre of a record (capped at PROB).
+
+Not documented (the text states only what was read):
+- The habitat index arrays IPDG and IPDG2 (30 habitat types by 6 to 15 forests) and the potential index of each habitat type are not listed.
+- The SDI-based background coefficients (PMSC, PMD) and species group maps are not listed (array names and variants only).
+- The distribution efficiencies of VARMRT (other than CA), BMTMRT, NWCMRT, SCOMRT, TTMRT and UTMRT, and the metric equations of ON, are not described.
+- The BC non-V2 individual rate and the ON mortality equations were not read.
+- Mortality interactions with dwarf mistletoe, the fire and fuels extension, and snag creation were not in scope.
+- Whether XMMULT is reset between cycles: no reset was found in MORTS.

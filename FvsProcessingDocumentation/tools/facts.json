@@ -1447,5 +1447,215 @@
   "doc": "Growth calibration: MULTS kinds",
   "file": "base/mults.f",
   "regex": "3 IS REGHMULT"
+ },
+ {
+  "id": "mort-ci-ra",
+  "type": "regex_in_file",
+  "doc": "Mortality: CI individual rate Ra",
+  "file": "ci/morts.f",
+  "regex": "RIP=2\\.76253\\+0\\.222310\\*SQRT\\(D\\)-0\\.0460508\\*SQRT\\(BA\\)\\+"
+ },
+ {
+  "id": "mort-ci-rz",
+  "type": "regex_in_file",
+  "doc": "Mortality: CI Rb",
+  "file": "ci/morts.f",
+  "regex": "RZ=1\\.0-\\(1\\.0-\\(TTB\\)\\)\\*\\*0\\.1"
+ },
+ {
+  "id": "mort-ci-ba10",
+  "type": "regex_in_file",
+  "doc": "Mortality: CI basal area projection",
+  "file": "ci/morts.f",
+  "regex": "BA10=BA\\+\\(\\(BAMAX-BA\\)/BAMAX\\)\\*DELTBA"
+ },
+ {
+  "id": "mort-ci-comb",
+  "type": "regex_in_file",
+  "doc": "Mortality: CI combination of the rates",
+  "file": "ci/morts.f",
+  "regex": "RIPP=RIPP\\+\\(BAMAX-BA\\)\\*RIP"
+ },
+ {
+  "id": "mort-ci-rein",
+  "type": "regex_in_file",
+  "doc": "Mortality: CI REIN",
+  "file": "ci/morts.f",
+  "regex": "REIN\\(1\\)=\\(1-\\(POTEN/20\\.\\+1\\.\\)\\*\\*\\(-1\\.605\\)\\)/\\.06821"
+ },
+ {
+  "id": "mort-ci-mult",
+  "type": "regex_in_file",
+  "doc": "Mortality: CI species multiplier 0.6",
+  "file": "ci/morts.f",
+  "regex": "WKI=P\\*\\(1\\.0-\\(1\\.0-RIPP\\)\\*\\*FINT\\)\\*X\\*0\\.6"
+ },
+ {
+  "id": "mort-ie-mult",
+  "type": "regex_in_file",
+  "doc": "Mortality: IE species multiplier 0.2",
+  "file": "ie/morts.f",
+  "regex": "WKI=P\\*\\(1\\.0-\\(1\\.0-RIPP\\)\\*\\*FINT\\)\\*X\\*0\\.2"
+ },
+ {
+  "id": "mort-ca-const",
+  "type": "regex_in_file",
+  "doc": "Mortality: CA SDI constant",
+  "file": "ca/morts.f",
+  "regex": "CONST = SDIMAX / 0\\.02483133"
+ },
+ {
+  "id": "mort-ca-rn",
+  "type": "regex_in_file",
+  "doc": "Mortality: CA RN",
+  "file": "ca/morts.f",
+  "regex": "RN=1\\.0-\\(1\\.0-\\(\\(T-TN10\\)/T\\)\\)\\*\\*\\(1\\./FINT\\)"
+ },
+ {
+  "id": "mort-ca-ri",
+  "type": "regex_in_file",
+  "doc": "Mortality: CA RI",
+  "file": "ca/morts.f",
+  "regex": "RI=\\(1\\.0/\\(1\\.0\\+EXP\\(B0\\+B1\\*D\\)\\)\\)"
+ },
+ {
+  "id": "mort-ca-xbg",
+  "type": "regex_in_file",
+  "doc": "Mortality: CA MORTMULT applied only to background",
+  "file": "ca/morts.f",
+  "regex": "IF\\(RIP \\.EQ\\. RN\\) X=1\\.0"
+ },
+ {
+  "id": "mort-ca-dist",
+  "type": "regex_in_file",
+  "doc": "Mortality: CA calls VARMRT",
+  "file": "ca/morts.f",
+  "regex": "CALL VARMRT\\(SUMTRE,DEBUG,SUMKIL\\)"
+ },
+ {
+  "id": "mort-ca-bacheck",
+  "type": "regex_in_file",
+  "doc": "Mortality: CA 1 square foot check",
+  "file": "ca/morts.f",
+  "regex": "IF\\(\\(BANEW-BAMAX\\) \\.GT\\. 1\\.\\) THEN"
+ },
+ {
+  "id": "mort-ca-peff",
+  "type": "regex_in_file",
+  "doc": "Mortality: VARMRT efficiency",
+  "file": "ca/varmrt.f",
+  "regex": "PEFF = 0\\.84525 - 0\\.01074\\*PCT\\(I\\) \\+ 0\\.0000002\\*PCT\\(I\\)\\*\\*3\\.0"
+ },
+ {
+  "id": "mort-sdical",
+  "type": "regex_in_file",
+  "doc": "Mortality: SDICAL sets BAMAX",
+  "file": "vbase/sdical.f",
+  "regex": "BAMAX = XMAX \\* 0\\.5454154 \\* PMSDIU"
+ },
+ {
+  "id": "mort-update",
+  "type": "regex_in_file",
+  "doc": "Mortality: UPDATE subtracts WK2",
+  "file": "base/update.f",
+  "regex": "PROB\\(I\\)=MAX\\(0\\.,PROB\\(I\\)-WKI\\)"
+ },
+ {
+  "id": "mort-ak-surv",
+  "type": "regex_in_file",
+  "doc": "Mortality: AK survival equation",
+  "file": "ak/morts.f",
+  "regex": "RIP = EXP\\(RIP\\)/\\(1 \\+ EXP\\(RIP\\)\\)"
+ },
+ {
+  "id": "mort-hi-form5",
+  "type": "regex_in_file",
+  "doc": "Mortality: HI-family form 5",
+  "file": "hi/morts.f",
+  "regex": "RIP=-6\\.6707 \\+ 0\\.5105\\*ALOG\\(5\\+BA\\) - 1\\.3183\\*RELHT"
+ },
+ {
+  "id": "mort-hi-form6",
+  "type": "regex_in_file",
+  "doc": "Mortality: HI-family form 6",
+  "file": "hi/morts.f",
+  "regex": "RIP = 2\\.901447 \\+ \\(0\\.578694\\*D\\) \\+ \\(-0\\.001793\\*PTBAL\\)"
+ },
+ {
+  "id": "mort-hi-alpha",
+  "type": "regex_in_file",
+  "doc": "Mortality: HI-family small-tree constants",
+  "file": "op/morts.f",
+  "regex": "DATA ALPHA/ -4\\.4384, 0\\.0053, -0\\.6001/"
+ },
+ {
+  "id": "mort-wc-king",
+  "type": "regex_in_file",
+  "doc": "Mortality: WC King site index",
+  "file": "vwc/morts.f",
+  "regex": "XSITE1=5\\.21486\\+0\\.66486\\*SITEAR\\(16\\)"
+ },
+ {
+  "id": "mort-wc-floor",
+  "type": "regex_in_file",
+  "doc": "Mortality: WC and PN 0.999 cap",
+  "file": "vwc/morts.f",
+  "regex": "IF\\( \\(1\\.0-RIP\\) \\.LT\\. 0\\.001 \\) RIP = 0\\.001"
+ },
+ {
+  "id": "mort-op-smc",
+  "type": "regex_in_file",
+  "doc": "Mortality: OP SMC DF coefficients",
+  "file": "op/morts.f",
+  "regex": "RBM0 = -3\\.12161659"
+ },
+ {
+  "id": "mort-oc-organon",
+  "type": "regex_in_file",
+  "doc": "Mortality: OC ORGANON test",
+  "file": "oc/morts.f",
+  "regex": "IF\\(LORGANON \\.AND\\. \\(SMORMT \\.GT\\. 0\\.\\)\\)THEN"
+ },
+ {
+  "id": "mort-ci-pmsc",
+  "type": "regex_in_file",
+  "doc": "Mortality: CI PMSC array",
+  "file": "ci/morts.f",
+  "regex": "-\\.17603, 0\\.317888, 0\\.317888, 0\\.607725, 0\\.94019|0\\.0,  -\\.17603, 0\\.317888"
+ },
+ {
+  "id": "mort-tt-pp",
+  "type": "regex_in_file",
+  "doc": "Mortality: TT species 10 Prognosis-type",
+  "file": "tt/morts.f",
+  "regex": "CASE\\(10\\)"
+ },
+ {
+  "id": "mort-bc-ra",
+  "type": "regex_in_file",
+  "doc": "Mortality: BC V2 Ra uses CI form",
+  "file": "canada/bc/morts.f",
+  "regex": "RIP=2\\.76253\\+0\\.222310\\*SQRT\\(D\\)-0\\.0460508\\*SQRT\\(BA\\)\\+"
+ },
+ {
+  "id": "mort-initre-pmsd",
+  "type": "regex_in_file",
+  "doc": "Mortality: SDIMAX fields 5 and 6",
+  "file": "vbase/initre.f",
+  "regex": "IF \\(LNOTBK\\(5\\)\\) PMSDIL=ARRAY\\(5\\)"
+ },
+ {
+  "id": "mort-fixmort",
+  "type": "regex_in_file",
+  "doc": "Mortality: FIXMORT multiply option",
+  "file": "ca/morts.f",
+  "regex": "WK2\\(I\\)=AMIN1\\(PROB\\(I\\),WK2\\(I\\)\\*PRM\\(2\\)\\)"
+ },
+ {
+  "id": "mort-ak-pass",
+  "type": "regex_in_file",
+  "doc": "Mortality: AK pass multiplier",
+  "file": "ak/morts.f",
+  "regex": "WKI=WK2\\(I\\)\\*\\(PASS\\)"
  }
 ]

@@ -3844,7 +3844,7 @@ Subroutines fvsGetRestartCode, getAmStopping, fvsGetRtnCode, and fvsStopPoint (t
 
 Trees are considered “large” trees for FVS modeling purposes when they are larger than some species and variant dependent threshold diameter. These threshold diameters and detailed descriptions of equations used to grow large trees and small trees can be found in the variant overview documents. A general description of the FVS large and small tree models as they are used in model calibration can be found in section 7.2 of the EFVS Guide.
 
-FVS mortality models are one of three types: 1) the Prognosis mortality model; 2) the SDI based mortality model; or 3) the ORGANON mortality model. A fourth type, the TWIGS based mortality model, has now been replaced with SDI based mortality models in the Lake States (LS), Central States (CS), and Northeast (NE) variants. A general description of the Prognosis, SDI, and TWIGS mortality models can be found in section 7.3 of the EFVS Guide. A description of the ORGANON mortality model can be found in the overview documents for the two ORGANON-FVS variants (OC and OP). Structural differences of the ORGANON-FVS variants will be further discussed in [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants).
+FVS mortality models are of four kinds: 1) the Prognosis-type mortality model; 2) the SDI-based mortality model; 3) individual tree survival models, which are used in the AK variant and in the HI, PN, WC and OP variants; and 4) the ORGANON mortality model. Some variants combine two models by species (EM and TT). A fifth type, the TWIGS based mortality model, has been replaced with the SDI-based mortality model in the Lake States (LS), Central States (CS), and Northeast (NE) variants. A general description of the Prognosis, SDI, and TWIGS mortality models can be found in section 7.3 of the EFVS Guide (Dixon 2002). A description of the ORGANON mortality model can be found in the overview documents for the two ORGANON-FVS variants (OC and OP). Structural differences of the ORGANON-FVS variants will be further discussed in [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants).
 
 ### Subroutines involved and their function
 
@@ -4087,53 +4087,526 @@ The small-tree diameter increment depends on the height increment of the same cy
 
 YR is the period length of the growth models and is set in subroutine BLKDAT: 10 years in all variants except NC, OC, OP and SN, where it is 5 years. FINT is the cycle length.
 
-#### Mortality
+#### Mortality {#sec-mortality-models}
 
-Mortality is estimated using either the Prognosis-type mortality model or SDI-based mortality model in all variants except the ORGANON-FVS variants (OC and OP). Both of these mortality model types are described in the EFVS guide and a detailed discussion of the equations used for a particular variant can be found in the variant overview document.
+Subroutine GRINCR calls subroutine MORTS once in each projection cycle to estimate mortality, after the diameter and height increments of the cycle have been estimated. Subroutine MORTS and the subroutines it calls store the trees per acre that die in the work array WK2(i) for each tree record i. They do not change the trees per acre of the record, PROB(i). Subroutine UPDATE subtracts WK2(i) from PROB(i) at the end of the cycle. The mortality models are described in Dixon (2002), section 7.3. The variables named in this section are defined in the next table.
 
-In the two ORGANON-FVS variants, mortality for all tree records will be estimated using the ORGANON mortality equations or the SDI-based mortality model depending on whether there are valid ORGANON trees in the input data or not. The ORGANON mortality model is described in the OC and OP variant overview documents. Structural differences in the two ORGANON-FVS variants are discussed in more detail in [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants).
+```{r mort-variables, echo=FALSE}
+mort_variables <- tibble::tribble(
+  ~Variable, ~Definition,
+  "PROB", "Trees per acre represented by a tree record",
+  "WK2", "Trees per acre of a tree record that die in the cycle",
+  "WKI", "Trees per acre of the current tree record that die in the cycle, stored in WK2",
+  "FINT", "Length of the projection cycle, in years",
+  "D", "Tree diameter at breast height, in inches",
+  "DG", "Diameter increment of the cycle predicted for the tree, outside bark, in inches",
+  "G", "Diameter increment of the tree in the units stated in the text, in inches",
+  "BARK", "Bark ratio of the tree",
+  "BA", "Stand basal area at the start of the cycle, in square feet per acre",
+  "BAMAX", "Maximum stand basal area, in square feet per acre",
+  "T", "Stand trees per acre at the start of the cycle",
+  "DQ10", "Quadratic mean diameter of the stand 10 years hence, in inches",
+  "D10", "Quadratic mean diameter of the stand at the end of the cycle, in inches",
+  "SDIMAX", "Maximum stand density index of the stand, the basal area weighted mean of the species maxima",
+  "PMSDIL", "Lower limit of density related mortality, as a proportion of the maximum SDI, 0.55 by default",
+  "PMSDIU", "Upper limit of density related mortality, as a proportion of the maximum SDI, 0.85 by default",
+  "RELDBH", "Diameter of the tree divided by the average diameter of the stand",
+  "Rb", "Annual stand mortality rate for the approach to the maximum basal area (RZ in the code)",
+  "Ra", "Annual mortality rate of an individual tree record (RIP in the code)",
+  "RIPP", "Annual mortality rate of an individual tree record after Ra and Rb are combined",
+  "RI", "Annual background mortality rate of an individual tree record in the SDI-based model",
+  "RN", "Annual density related mortality rate of the stand in the SDI-based model",
+  "X", "Mortality multiplier of the tree record, from keyword MORTMULT",
+  "MORTEXP", "Trees per acre that ORGANON predicts to die for a tree record"
+)
 
-Subroutine GRINCR calls subroutine MORTS to estimate mortality. Subroutine MORTS may call another subroutine which distributes mortality using variant-specific methods (subroutine VARMRT for the CA, CR, CS, EC, LS, NE, SN, and WS variants; subroutine SEAMRT for the AK variant; subroutine BMTMRT for the BM variant; subroutine NWCMRT for the NC variant; subroutine SCOMRT for the SO variant; subroutine TTMRT for the TT variant; subroutine UTMRT for the UT variant). Mortality subroutines estimate the number of trees to kill and distribute that mortality across tree records by reducing the trees per acre representation, PROB(j), for each tree record j.
+kable(mort_variables,
+      col.names = c("Variable", "Definition"),
+      caption = "Variables used in the mortality models",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
 
-Subroutine MORTS calls subroutine DBCHK to see if debug output is called for and then calls subroutine OPFIND, OPGET (an entry point in subroutine OPFIND), and OPDONE (another entry point in subroutine OPFIND) to process any mortality multipliers scheduled for the projection cycle.
+**Mortality models by variant.** Four kinds of mortality models are in the compiled code: the Prognosis-type model, the SDI-based model, an individual tree survival model that is applied to every tree record (AK, and the HI, PN, WC and OP variants), and the ORGANON model. Some variants combine models by species. The models are listed by variant in the next table. Subroutine MORTS calls a distribution subroutine in the variants that have one, which distributes the number of trees to kill over the tree records. In the other variants, MORTS calculates the trees per acre that die of every tree record directly. Subroutine SEAMRT is compiled in AK but is not called.
 
-Maximum basal area and maximum stand density index are two measures of the maximum capacity of an area to grow trees. Maximum basal area can be entered directly using the BAMAX keyword record. Individual species’ stand density index maximums can be entered using the SDIMAX keyword record. Maximum stand density index for a stand is a weighted average of the individual species’ stand density index maximums, weighted by the proportion of basal area for a species to the total stand basal area. If a basal area maximum has not been entered, subroutine MORTS calls subroutine SDICAL to assign a basal area maximum that corresponds to the maximum stand density index for the stand. This step is needed by the climate change extension.
+```{r mort-models, echo=FALSE}
+mort_models <- tibble::tribble(
+  ~Variant, ~Model, ~Distribution_Subroutine, ~CLMORTS_Called,
+  "AK", "Individual tree survival", "None", "Yes",
+  "BC", "Prognosis-type, with a BC-specific individual rate Ra", "None", "Yes",
+  "BM", "SDI-based", "BMTMRT", "Yes",
+  "CA", "SDI-based", "VARMRT", "Yes",
+  "CI", "Prognosis-type", "None", "Yes",
+  "CR", "SDI-based", "VARMRT", "Yes",
+  "CS", "SDI-based", "VARMRT", "No",
+  "EC", "SDI-based", "VARMRT", "Yes",
+  "EM", "SDI-based for WB, WL, DF, LP, ES, AF, PP and OS; Prognosis-type for the other species", "None", "Yes",
+  "HI", "Individual tree survival", "None", "Yes",
+  "IE", "Prognosis-type", "None", "Yes",
+  "KT", "Prognosis-type", "None", "Yes",
+  "LS", "SDI-based", "VARMRT", "No",
+  "NC", "SDI-based", "NWCMRT", "Yes",
+  "NE", "SDI-based", "VARMRT", "No",
+  "OC", "ORGANON, or SDI-based when ORGANON gives no mortality", "VARMRT", "Yes",
+  "ON", "SDI-based", "VARMRT", "No",
+  "OP", "ORGANON, or individual tree survival when ORGANON gives no mortality", "None", "Yes",
+  "PN", "Individual tree survival", "None", "Yes",
+  "SN", "SDI-based", "VARMRT", "No",
+  "SO", "SDI-based", "SCOMRT", "Yes",
+  "TT", "SDI-based, and Prognosis-type for PP", "TTMRT", "Yes",
+  "UT", "SDI-based", "UTMRT", "Yes",
+  "WC", "Individual tree survival", "None", "Yes",
+  "WS", "SDI-based", "VARMRT", "Yes"
+)
 
-Subroutine MORTS estimates the quadratic mean diameter (QMD) at the end of the projection cycle. It is at this point that the two types of FVS mortality models begin to diverge in terms of logic.
+kable(mort_models,
+      col.names = c("Variant", "Mortality Model", "Distribution Subroutine", "CLMORTS Called"),
+      caption = "Mortality models by variant",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
+
+The OC variant uses the VARMRT source file of the CA variant. In the ON variant, VARMRT has a fourth argument and uses metric equations. The variants that call CLMORTS compile the climate version when the climate extension is part of the executable, and an entry point in subroutine EXCLIM otherwise.
+
+**Steps common to the models.** Subroutine MORTS calls subroutine DBCHK to see if debug output is called for. It calls subroutines OPFIND, OPGET (an entry point in OPFIND) and OPDONE (another entry point in OPFIND) to process any mortality multipliers scheduled for the projection cycle with keyword MORTMULT. The multipliers are stored by species in XMMULT, with the lower and upper diameter limits XMDIA1 and XMDIA2, and the multiplier of a tree record is X.
+
+Maximum basal area and maximum stand density index are two measures of the maximum capacity of an area to grow trees. Maximum basal area can be entered with keyword BAMAX. Maximum SDI of the species can be entered with keyword SDIMAX, whose fields 5 and 6 also change the limits PMSDIL and PMSDIU. The maximum SDI of the stand, SDIMAX, is the average of the species values weighted by the basal area of the species. When a maximum basal area has not been entered, subroutine MORTS calls subroutine SDICAL, which sets BAMAX to SDIMAX x 0.5454154 x PMSDIU. This step also serves the climate extension.
 
 ##### Prognosis-type mortality model
 
-In variants that use the Prognosis-type mortality model, the change in basal area increment is computed from diameter growth that was estimated previously in the projection cycle. This estimate of basal area increment does not account for mortality. So basal area increment is recalculated by taking the basal area at the beginning of the cycle and projecting it forward 10 years, assuming that a proportion of the predicted basal area increment will be lost to mortality. This proportion is the stand basal area divided by the basal area maximum for the stand. So when stand basal area is equal to the maximum stand basal area, all of the predicted basal area increment will be absorbed by mortality. The mortality rate calculated in this manner is converted to an annual estimate and later used to calculate the annual approach to maximum basal area mortality rate, Rb, discussed in the EFVS guide.
+The Prognosis-type model combines two annual mortality rates: a stand rate for the approach to the maximum basal area, Rb, and an individual rate for each tree record, Ra (Dixon 2002, section 7.3.1). The rates, the combination and the trees that die are calculated for every tree record. The model is used in CI, IE and KT, in BC, in EM for the species that are not SDI-based, and for PP in TT.
 
-A mortality rate for each individual tree record is then computed based on habitat type (or plant association), species, tree diameter, diameter increment, estimated potential diameter increment, stand basal area, and relative diameter. This annual mortality rate is called Ra in the EFVS guide.
+*The approach to the maximum basal area.* The quadratic mean diameter 10 years hence, DQ10, is calculated from the diameter increment of the cycle. The basal area increment that results does not account for mortality. The basal area is projected forward 10 years assuming that the proportion BA/BAMAX of the predicted basal area increment is lost to mortality, so when the stand basal area is equal to BAMAX all of the predicted increment is absorbed by mortality. The trees per acre that correspond to the projected basal area are converted to an annual rate Rb with equation {4.2.1.4.1}.
 
-The two mortality rates are then combined are then combined as discussed in the EFVS guide.
+$$
+\begin{aligned}
+DQ10 &= \sqrt{\frac{\sum P\left(D^2 + 2\,D\,G + G^2\right)}{T}}, \quad G = \frac{DG}{BARK}\\
+\Delta BA &= 0.005454154\, DQ10^2\, T - BA\\
+BA10 &= BA + \frac{BAMAX - BA}{BAMAX}\,\Delta BA\\
+TB &= \frac{BA10}{0.005454154\, DQ10^2}\\
+TTB &= \min\left(\frac{T - TB}{T},\; 0.9999\right)\\
+R_b &= 1 - \left(1 - TTB\right)^{0.1}
+\end{aligned}
+\tag{4.2.1.4.1}
+$$
+
+Where:
+
+- DQ10: Quadratic mean diameter 10 years hence (inches)
+- P: PROB, trees per acre of a tree record
+- D: Diameter at breast height (inches)
+- DG: Diameter increment of the cycle, outside bark (inches)
+- G: Inside bark diameter increment (inches)
+- BARK: Bark ratio of the tree
+- BA: Stand basal area (square feet per acre)
+- BAMAX: Maximum stand basal area (square feet per acre)
+- BA10: Basal area 10 years hence (square feet per acre)
+- T: Stand trees per acre
+- TB: Trees per acre that correspond to BA10 and DQ10
+- Rb: Annual stand mortality rate for the approach to the maximum basal area
+
+*The individual rate.* The annual mortality rate of each tree record, Ra, is calculated with equation {4.2.1.4.2} from the tree diameter, the diameter increment of the tree, the relative diameter, the stand basal area, a species constant, and a habitat or national forest effect.
+
+$$
+\begin{aligned}
+z &= 2.76253 + 0.222310\sqrt{D} - 0.0460508\sqrt{BA} + 11.2007\,G - \frac{0.554421}{D} + B_5 + 0.246301\,RELDBH + 6.07129\,\frac{G}{D}\\
+R_a &= \frac{REIN}{1 + \exp(z)}
+\end{aligned}
+\tag{4.2.1.4.2}
+$$
+
+Where:
+
+- z: Logit of the annual survival rate, limited to -70 to 70 for the species WB, PY, AS, WJ, MC, LM, CW and OH of CI and in BC, and to -88.5 to 88.5 for the other species of CI and for PP in TT (the limits of the other variants are in the source file `morts.f` of the variant)
+- D: Diameter at breast height (inches), with a minimum of 0.5
+- BA: Stand basal area (square feet per acre)
+- G: Diameter increment multiplied by GMULT, described below (inches per year)
+- B5: Species constant PMSC (equal to B0 in TT)
+- RELDBH: Diameter of the tree divided by the average diameter of the stand
+- REIN: Potential factor, described below
+- Ra: Annual mortality rate of the tree record
+
+The increment G is the diameter increment of the previous cycle, WK1, divided by the length of the previous cycle, OLDFNT, and by the bark ratio. In the first cycle, and when the previous increment is 0, and the predicted increment is more than 0.5 inch, G is the predicted increment divided by the bark ratio and 10. The previous increment is not less than 0.05 inch per year for a tree of 1.0 inch or less, and not less than 0.05(5 - D)/4 for a tree between 1.0 and 5.0 inches. The increment is multiplied by GMULT(1) for a tree larger than 5.0 inches and by GMULT(2) for a tree of 5.0 inches or less. GMULT and REIN are calculated once by subroutine MORCON with equation {4.2.1.4.3}.
+
+$$
+\begin{aligned}
+GMULT_1 &= \frac{0.90}{POTEN_1}, \qquad REIN_1 = \frac{1 - \left(POTEN_1/20 + 1\right)^{-1.605}}{0.06821}\\
+GMULT_2 &= \frac{2.50}{POTEN_2}, \qquad REIN_2 = \frac{1 - \left(POTEN_2 + 1\right)^{-1.605}}{0.86610}
+\end{aligned}
+\tag{4.2.1.4.3}
+$$
+
+Where:
+
+- POTEN1, POTEN2: Value of the potential array POT for the habitat type or plant association of the stand, for trees larger than 5.0 inches and for trees of 5.0 inches or less
+- POT(k): 0.25 + 0.05(k - 1), for k from 1 to 54, so POT is 0.25 to 2.90
+
+The index of POT for each habitat type is the array IPDG (larger trees) or IPDG2 (smaller trees), by habitat type (30 values) and national forest (11 values in CI, IE and KT, 6 in EM, 15 in BC). These arrays are data statements of subroutine MORTS of the variant, and are not listed here. In TT the indexes are single values. The national forest is mapped to one of the IE national forests in CI by the array MAPFOR. The species constants PMSC of the Prognosis-type species are listed in the next table; the other species of the variant have a constant of 0.0.
+
+```{r mort-pmsc, echo=FALSE}
+mort_pmsc <- tibble::tribble(
+  ~Variant, ~Species, ~PMSC,
+  "BC", "PW", "0.0",
+  "BC", "LW", "-0.17603",
+  "BC", "FD", "0.317888",
+  "BC", "BG", "0.317888",
+  "BC", "HW", "0.607725",
+  "BC", "CW", "1.57976",
+  "BC", "PL", "-0.12057",
+  "BC", "SE", "0.94019",
+  "BC", "BL", "0.21180",
+  "BC", "PY", "0.21180",
+  "BC", "OC", "0.317888",
+  "CI", "WL", "-0.17603",
+  "CI", "DF", "0.317888",
+  "CI", "GF", "0.317888",
+  "CI", "WH", "0.607725",
+  "CI", "RC", "1.57976",
+  "CI", "LP", "-0.12057",
+  "CI", "ES", "0.94019",
+  "CI", "AF", "0.21180",
+  "CI", "PP", "0.21180",
+  "EM", "LL", "0.21180",
+  "EM", "LM, RM, GA, AS, CW, BA, PW, NC, PB and OH", "0.0",
+  "IE", "WL", "-0.17603",
+  "IE", "DF", "0.317888",
+  "IE", "GF", "0.317888",
+  "IE", "WH", "0.607725",
+  "IE", "RC", "1.57976",
+  "IE", "LP", "-0.12057",
+  "IE", "ES", "0.94019",
+  "IE", "AF", "0.21180",
+  "IE", "PP", "0.21180",
+  "IE", "WB", "-0.17603",
+  "IE", "LL", "0.21180",
+  "KT", "WL", "-0.17603",
+  "KT", "DF", "0.317888",
+  "KT", "GF", "0.317888",
+  "KT", "WH", "0.607725",
+  "KT", "RC", "1.57976",
+  "KT", "LP", "-0.12057",
+  "KT", "ES", "0.94019",
+  "KT", "AF", "0.21180",
+  "KT", "PP", "0.21180",
+  "TT", "PP", "0.2118"
+)
+
+kable(mort_pmsc,
+      col.names = c("Variant", "Species", "PMSC"),
+      caption = "Species constants of the Prognosis-type individual mortality rate that are not 0.0",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
+
+*The combination of the two rates.* The two rates are combined with equation {4.2.1.4.4}, which is the weighted average of Rb and Ra, with the weight BA/BAMAX on Rb (Dixon 2002, section 7.3.1). The combined rate is not less than Ra and is not more than 1.
+
+$$
+RIPP = \begin{cases}
+\dfrac{BA\cdot R_b + \left(BAMAX - BA\right) R_a}{BAMAX} & BA \le BAMAX\\[8pt]
+\dfrac{BA\cdot R_b}{BAMAX} & BA > BAMAX
+\end{cases},
+\qquad R_a \le RIPP \le 1
+\tag{4.2.1.4.4}
+$$
+
+Where:
+
+- RIPP: Combined annual mortality rate of the tree record
+- BA: Stand basal area (square feet per acre)
+- BAMAX: Maximum stand basal area (square feet per acre)
+- Rb: Annual stand rate from equation {4.2.1.4.1}
+- Ra: Annual rate of the tree record from equation {4.2.1.4.2}
+
+*Trees that die.* The trees per acre that die are calculated with equation {4.2.1.4.5}. In BC, equation {4.2.1.4.2} gives Ra in the V2 zones (the zones that do not contain ICH, IDF, SBS or SBPS); in the other zones Ra comes from a BC-specific model of the diameter, the basal area in larger trees and the stand density.
+
+$$
+WKI = P\left[1 - \left(1 - RIPP\right)^{FINT}\right] X\, M
+\tag{4.2.1.4.5}
+$$
+
+Where:
+
+- WKI: Trees per acre of the tree record that die in the cycle
+- P: PROB, trees per acre of the tree record
+- RIPP: Combined annual rate from equation {4.2.1.4.4}
+- FINT: Length of the cycle (years)
+- X: Multiplier from keyword MORTMULT when the diameter is within its limits, otherwise 1.0, multiplied by the factor that protects the best trees of the regeneration establishment model, as described below
+- M: Species multiplier of the variant, as listed in the next table
+
+The mortality multiplier of keyword MORTMULT therefore multiplies the whole combined rate in the Prognosis-type model. The establishment model protects the trees that it has marked as best trees for 20 years after the disturbance date: X is multiplied by $1 - XCHECK$, where XCHECK is the number of years to the end of the protection divided by FINT, limited to 0 to 1. The species multiplier M applies a proportion of the rate of the northern Idaho model (the NI rate in the code comments) to the species that are listed in the next table.
+
+```{r mort-species-mult, echo=FALSE}
+mort_species_mult <- tibble::tribble(
+  ~Variant, ~Species, ~M,
+  "CI", "WB, PY, AS, MC, LM, CW and OH", "0.6",
+  "CI", "WJ", "0.2",
+  "CI", "The other species", "1.0",
+  "EM", "LL", "1.0",
+  "EM", "RM", "0.2",
+  "EM", "The other species that use the Prognosis-type model", "0.6",
+  "IE", "WP, WL, DF, GF, WH, RC, LP, ES, AF, PP, MH, WB, LL and OS", "1.0",
+  "IE", "PM and RM", "0.2",
+  "IE", "LM, PY, AS, CO, MM, PB and OH", "0.6"
+)
+
+kable(mort_species_mult,
+      col.names = c("Variant", "Species", "M"),
+      caption = "Species multiplier of the Prognosis-type mortality rate",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
+
+KT and TT (species PP) have no species multiplier, and BC does not apply one.
 
 ##### SDI-based mortality model
 
-For variants using the SDI-based mortality model, mortality is implemented in two steps; first the number of mortality trees is estimated based on the change in QMD during the projection cycle and SDI relationships, and then mortality gets distributed to individual tree records. Since estimated change in QMD is a function of which trees get killed, this is an iterative procedure.
+In the SDI-based model, subroutine MORTS first estimates the number of trees that die in the stand from the trajectory of the stand density, and then distributes it to the tree records. Because the quadratic mean diameter at the end of the cycle depends on which trees die, the calculation is repeated until it converges (Dixon 2002, section 7.3.2). Two kinds of mortality are estimated: background mortality, which is not attributable to competition, and density related mortality, which is a function of stand density, tree vigor, social position and shade tolerance.
 
-Two types of mortality are estimated: (1) background mortality which accounts for occasional mortality not attributable to stand density (i.e. competition), and (2) density related mortality which is a function of stand density, tree vigor, a trees’ social position and shade tolerance, and other factors. A detailed discussion of the logic used in the SDI-based mortality model is presented in section 7.3.2 of the EFVS guide.
+*Stand trajectory.* The quadratic mean diameter at the end of the cycle, D10, is calculated from the diameter increment of the cycle, $G = (DG/BARK)(FINT/10)$ (FINT/5 in NC). The maximum number of trees per acre for a quadratic mean diameter is the maximum SDI line of equation {4.2.1.4.6}, limited to 35000. The lower and upper limits of density related mortality are the proportions PMSDIL and PMSDIU of the line.
 
-Subroutine MORTS computes the stand trajectory using equations for maximum SDI. Using the estimated change in QMD, the number of mortality trees is estimated. A determination is made whether density related mortality is in effect using the relationship between current stand SDI and the lower threshold of the maximum SDI (default 55% of maximum SDI). A density related mortality rate, RN, is computed which is a rate when applied to each tree record would meet the desired mortality level.
+$$
+CONST = \frac{SDIMAX}{0.02483133}, \qquad TMD(d) = \min\left(CONST\cdot d^{-1.605},\; 35000\right)
+\tag{4.2.1.4.6}
+$$
 
-##### Both mortality models
+Where:
 
-A double nested species and trees-within-species DO loop structure is entered. A background mortality rate, RI, is calculated for each tree record. Mortality multipliers entered with the MORTMULT keyword record are applied to the background mortality rate. The mortality rate applied to each tree record is the background rate, RI, if density related mortality is not in effect, or the density related rate, RN, if density related mortality is in effect.
+- CONST: Constant of the maximum SDI line, with 0.02483133 equal to $10^{-1.605}$
+- SDIMAX: Maximum SDI of the stand
+- TMD(d): Maximum trees per acre for a quadratic mean diameter d
+- d: Quadratic mean diameter (inches), DIA0 at the start of the cycle and D10 at the end
 
-For SDI-based mortality models, subroutine MORTS then calls one of the subroutines listed above to redistribute mortality to individual tree records according to variant-specific equations. A new QMD is calculated based on this estimate of mortality. If the difference between the initial estimate of QMD and this new estimate of QMD is greater than 0.1”, mortality is recalculated based on the new estimate of QMD. The iteration terminates when the difference in QMD values is less than or equal to 0.1” or a maximum number of iterations has been reached (currently set at 10).
+The trees per acre remaining at the end of the cycle, TN10, are then calculated with the rules of the next table. All trees die when SDIMAX is less than 5. TN10 is not more than T, and is set to 0 when it is less than 0.1.
 
-For SDI-based mortality, the breakup of an over mature stand can be simulated using parameters entered with the MORTMSB keyword record. Subroutine MORTS checks to see if this is in effect. If so, it computes the additional mortality in trees per acre that needs to be accounted for and calls subroutine MSBMRT to distribute the additional mortality across the tree records as specified by the keyword record parameters.
+```{r mort-sdi-zones, echo=FALSE}
+mort_sdi_zones <- tibble::tribble(
+  ~Condition, ~TN10,
+  "T above the upper limit at DIA0, PMSDIU x TMD(DIA0)", "The upper limit at D10, PMSDIU x TMD(D10)",
+  "T between the lower and the upper limit at DIA0, and within 5 trees per acre of the upper limit", "The upper limit at D10",
+  "T between the lower and the upper limit at DIA0, and more than 5 trees per acre from the upper limit", "exp(CEPMRT + SLPMRT ln D10), not more than the upper limit at D10",
+  "T below the lower limit at DIA0 and above the lower limit at D10", "exp(CEPMRT + SLPMRT ln D10), with the line determined by a direct calculation from T",
+  "T below the lower limit at DIA0 and at D10", "T (no density related mortality)"
+)
 
-In all variants, a check is then made for additional mortality due to trees reaching a morphological diameter limit entered with the TREESZCP keyword record. This is a user-controlled surrogate for simulating senescence mortality.
+kable(mort_sdi_zones,
+      col.names = c("Condition", "Trees per Acre Remaining, TN10"),
+      caption = "Trees per acre remaining after density related mortality in the SDI-based model",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
 
-When holding SDI to a maximum value, basal area can creep upward. In the SDI-based mortality models a check is made to make sure maximum basal area is still within its’ bound. If stand basal area at this point in subroutine MORTS (i.e. after simulating the mortality thus far) is more than 1 square foot above the maximum basal area specified for the site, the trees per acre attributed to mortality for each tree record is proportionately adjusted upward to bring the maximum basal area back within bounds.
+The line between the lower and the upper limit is a straight line in the logarithms, $\ln TN = CEPMRT + SLPMRT \ln d$. It passes through the point of the stand, $(DIA0, T)$, and is determined iteratively. The point at the lower limit is $d_{55}$, found from $\ln(TEM) = \ln(PMSDIL \cdot CONST) - 1.605\,d_{55}$ where TEM starts at $1.1\,T$ and is changed by half of the difference between T and the trees on the line at DIA0 until the difference is 5 trees per acre or less (or 100 steps). The point at the upper limit is $d_{85} = 1.25\,d_{55}$, limited to 0.125 to 5.0 and increased in steps of 0.1 while the slope is greater than -0.5. CEPMRT and SLPMRT are kept for the following cycles, and are calculated again when T differs by more than 1 tree per acre from the trees per acre stored at the end of the previous cycle, or when the stand has no trees.
 
-In all variants, subroutine MORTS then calls CLMORTS. CLMORTS determines if any modifications to mortality are needed to account for change in climate. CLMORTS will exist as a subroutine if the climate extension is part of the executable program; it will exist as an entry point in subroutine EXCLIM if the climate extension is not included.
+The annual density related rate RN follows from the trees that die, as shown in equation {4.2.1.4.7}.
 
-In all variants, subroutine MORTS then utilizes subroutine OPFIND, OPGET (an entry point in subroutine OPFIND), and OPDONE (another entry point in subroutine OPFIND) to find and process any activities scheduled for the projection cycle with the FIXMORT keyword record.
+$$
+R_N = 1 - \left[1 - \frac{T - TN10}{T}\right]^{1/FINT}
+\tag{4.2.1.4.7}
+$$
+
+Where:
+
+- RN: Annual density related mortality rate of the stand
+- T: Stand trees per acre at the start of the cycle
+- TN10: Trees per acre remaining at the end of the cycle
+- FINT: Length of the cycle (years)
+
+*Background mortality.* A background rate RI is calculated for each tree record with equation {4.2.1.4.8}, and then multiplied by 0.5 (except in SN). RI is not less than 0.0001 for some species of CA, NC, OC and WS (see the source file of the variant). The coefficients B0 (PMSC) and B1 (PMD) are arrays by species, or by species group in some variants (see the source file `morts.f` of the variant). EM adds the term $B_2 D^2$.
+
+$$
+RI = \frac{1}{1 + \exp\left(B_0 + B_1\,D\right)}
+\tag{4.2.1.4.8}
+$$
+
+Where:
+
+- RI: Annual background mortality rate of the tree record
+- B0, B1: Coefficients by species
+- D: Diameter at breast height (inches)
+
+*Mortality rate of the tree record.* The rate applied to each tree record is the background rate RI when density related mortality is not in effect, and the density related rate RN when it is. Density related mortality is in effect for a tree record when T is more than the lower limit at D10, $PMSDIL\cdot TMD(D10)$, and RN is more than 0. The trees that die are $WKI = P\,[1 - (1 - RIP)^{FINT}]\,X$, where RIP is RI or RN. The multiplier X of keyword MORTMULT, within its diameter limits, is applied only when the background rate is used; it is 1.0 when density related mortality is in effect.
+
+*Distribution and iteration.* Subroutine MORTS then calls the distribution subroutine of the variant when the trees to kill, TN10, are 0.1 per acre or more. The distribution subroutine (for example VARMRT) distributes the trees to kill over the tree records. It calculates an efficiency for each tree record, EFFTR, from the percentile of the tree in the basal area distribution, PCT, as shown in equation {4.2.1.4.9}, and scales the mortality so that the total matches. A new quadratic mean diameter is calculated from the result. When it differs from the previous estimate by more than 0.1 inch (0.2 inch in ON), the calculation is repeated with the new value, up to 10 passes. The number of trees to kill is taken from the stand total when the last tree processed has the density related rate, and from the sum of the background mortality otherwise.
+
+$$
+PEFF = 0.84525 - 0.01074\,PCT + 0.0000002\,PCT^3, \qquad 0.01 \le PEFF \le 1.0
+\tag{4.2.1.4.9}
+$$
+
+Where:
+
+- PEFF: Relative efficiency of mortality as a function of the percentile of the tree
+- PCT: Percentile of the tree in the basal area distribution of the stand
+
+In the version of VARMRT of CA, EFFTR is PEFF multiplied by an adjustment by species, VARADJ, and by 0.1. The constant, the use of PCT, and the other factors in EFFTR differ among the distribution subroutines; they are in the source file of each subroutine.
+
+##### Individual tree survival models
+
+In the AK variant, an annual survival probability of each tree record is calculated with equation {4.2.1.4.10}, and the trees that die are $WKI = P\,[1 - RIP^{FINT}]\,X$ with RIP limited to 0.99999 (RIP is set to 0 when it is less than 0.001). The diameter is not less than the species value DSURV, to avoid mass mortality of seedlings. When the stand density at the end of the cycle is above SDIMAX x PMSDIU, or the basal area above BAMAX, the mortality of every record is multiplied by the number of the pass, in repeated passes (up to 100), until the density and the basal area are within the limits.
+
+$$
+RIP = \frac{\exp(x)}{1 + \exp(x)}, \qquad x = BM_1 + BM_2\,D_t + BM_3\,D_t^2 + BM_4\,PTBAL + BM_5\,\frac{PTBAL}{D_t}
+\tag{4.2.1.4.10}
+$$
+
+Where:
+
+- RIP: Annual survival probability of the tree record
+- BM1 to BM5: Coefficients by species
+- Dt: Diameter of the tree, not less than DSURV for the species (inches)
+- PTBAL: Basal area in trees larger than the tree, on the inventory point (square feet per acre)
+
+In the HI, PN, WC and OP variants, the annual mortality rate of each tree record is calculated with survival equations that were derived from the ORGANON equations (the WC and PN equations replaced earlier equations that applied mortality too evenly by size). The form of the equation of a species is selected by the array MORTMAP among six forms, as shown in equation {4.2.1.4.11}, with coefficients BM0 to BM5 by species. WC and PN compile the same source file, and OP uses the same forms and coefficients, with a different treatment of DF described below.
+
+$$
+\begin{aligned}
+\text{Form 1: } p_5 &= \frac{1}{1+\exp\left(-\left[BM_0 + BM_1\sqrt{D} + BM_3\,CR^{0.25} + BM_4\left(SI_1 + 4.5\right) + BM_5\,BAL\right]\right)}\\
+\text{Form 2: } p_5 &= \frac{1}{1+\exp\left(-\left[BM_0 + BM_1\,D + BM_4\left(SI_1 + 4.5\right) + BM_5\,BAL/D\right]\right)}\\
+\text{Form 3: } p_5 &= \frac{1}{1+\exp\left(-\left[BM_0 + BM_1\,D + BM_2\,D^2 + BM_3\,CR + BM_4\left(SI_2 + 4.5\right) + BM_5\,BAL\right]\right)}\\
+\text{Form 4: } p_5 &= \frac{1}{1+\exp\left(-\left[BM_0 + BM_1\,D + BM_2\,D^2 + BM_3\,CR + BM_4\left(SI_1 + 4.5\right) + BM_5\,BAL\right]\right)}\\
+&\qquad\qquad RIP = 1 - \left(1 - p_5\right)^{0.2} CRADJ \quad \text{(forms 1 to 4)}\\
+\text{Form 5: } RIP &= 1 - \frac{1}{1+\exp\left(-6.6707 + 0.5105\ln\left(5 + BA\right) - 1.3183\,RELHT\right)}\\
+\text{Form 6: } RIP &= \frac{1}{1+\exp\left(2.901447 + 0.578694\,D - 0.001793\,PTBAL\right)}
+\end{aligned}
+\tag{4.2.1.4.11}
+$$
+
+Where:
+
+- p5: Probability of mortality in 5 years
+- RIP: Annual mortality rate of the tree record
+- D: Diameter at breast height (inches), with a minimum of 0.5
+- CR: Crown ratio of the tree, as a proportion
+- BAL: Basal area in trees larger than the tree, $(1 - PCT/100)\,BA$ (square feet per acre)
+- PTBAL: Basal area in trees larger than the tree, on the inventory point (square feet per acre)
+- SI1: Site index of species 16 (DF), SITEAR(16); in WC it is converted from the Curtis to the King site index, $5.21486 + 0.66486\,SITEAR(16)$ (feet)
+- SI2: Site index of species 19 (WH), SITEAR(19) (feet)
+- CRADJ: Crown ratio adjustment, $1 - \exp\left(-(25\,CR)^2\right)$ when CR is 0.17 or less, otherwise 1.0
+- RELHT: Height of the tree divided by the average height of the 40 largest trees, with a maximum of 1.5
+- BA: Stand basal area (square feet per acre)
+- BM0 to BM5: Coefficients by species, in the next table
+
+For a tree of less than 3.0 inches, except the species RW (species index 17), the small-tree equation of Gould and Harrington replaces the form above, as shown in equation {4.2.1.4.12}.
+
+$$
+RIP = 1 - \frac{1}{1 + \exp\left(a_1 + a_2\,\dfrac{PTBAL\cdot A}{\sqrt{DBHA + 1}} + a_3\,RELHT\right)}, \qquad DBHA = D + BETA\cdot HBH
+\tag{4.2.1.4.12}
+$$
+
+Where:
+
+- RIP: Annual mortality rate of the tree record
+- a1, a2, a3: -4.4384, 0.0053 and -0.6001
+- PTBAL: Basal area in trees larger than the tree, on the inventory point (square feet per acre)
+- A: Value of the array MVALUES (1.0, 1.5, 2.25, 3.375 and 5.062) for the class of the species, from the array MCLASS
+- BETA: Coefficient by species (0.216823 for most species)
+- HBH: Height of the tree, with a maximum of 4.5 feet
+- RELHT: Height of the tree divided by the average height of the 40 largest trees, with a maximum of 1.5
+
+The rate RIP is not less than 0.001 (and, in WC and PN, not more than 0.999). The trees that die are $WKI = P\,[1 - (1 - RIP)^{FINT}]\,X$. The mortality of every record is then multiplied by the number of the pass, in repeated passes (up to 100), until the SDI is less than SDIMAX and the basal area is less than 550 square feet per acre. The form and the coefficients of each species are listed in the next table. The species of the WC, PN and OP variants differ only in the species of index 6 (blank in WC and SS in PN and OP), 23 and 24 (WA and PB in WC and PN, and MA and TO in OP).
+
+```{r mort-surv-coef, echo=FALSE}
+mort_surv_coef <- tibble::tribble(
+  ~Index, ~Species, ~MORTMAP, ~BM0, ~BM1, ~BM2, ~BM3, ~BM4, ~BM5,
+  "1", "SF", "2", "-7.60159", "-0.200523", "0.0", "0.0", "0.0441333", "0.00063849",
+  "2", "WF", "2", "-7.60159", "-0.200523", "0.0", "0.0", "0.0441333", "0.00063849",
+  "3", "GF", "2", "-7.60159", "-0.200523", "0.0", "0.0", "0.0441333", "0.00063849",
+  "4", "AF", "2", "-7.60159", "-0.200523", "0.0", "0.0", "0.0441333", "0.00063849",
+  "5", "RF", "2", "-7.60159", "-0.200523", "0.0", "0.0", "0.0441333", "0.00063849",
+  "6", "(none) (WC); SS (PN, OP)", "2", "-7.60159", "-0.200523", "0.0", "0.0", "0.0441333", "0.00063849",
+  "7", "NF", "2", "-7.60159", "-0.200523", "0.0", "0.0", "0.0441333", "0.00063849",
+  "8", "YC", "4", "-1.922689902", "-0.136081990", "0.002479863", "-3.178123293", "0.0", "0.004684133",
+  "9", "IC", "4", "-1.922689902", "-0.136081990", "0.002479863", "-3.178123293", "0.0", "0.004684133",
+  "10", "ES", "2", "-7.60159", "-0.200523", "0.0", "0.0", "0.0441333", "0.00063849",
+  "11", "LP", "4", "-1.050000682", "-.194363402", "0.003803100", "-3.557300286", "0.003971638", "0.005573601",
+  "12", "JP", "4", "-1.050000682", "-.194363402", "0.003803100", "-3.557300286", "0.003971638", "0.005573601",
+  "13", "SP", "4", "-1.050000682", "-.194363402", "0.003803100", "-3.557300286", "0.003971638", "0.005573601",
+  "14", "WP", "4", "-1.050000682", "-.194363402", "0.003803100", "-3.557300286", "0.003971638", "0.005573601",
+  "15", "PP", "4", "-1.050000682", "-.194363402", "0.003803100", "-3.557300286", "0.003971638", "0.005573601",
+  "16", "DF", "1", "-4.13142", "-1.13736", "0.0", "-0.823305", "0.0307749", "0.00991005",
+  "17", "RW", "6", "-4.13142", "-1.13736", "0.0", "-0.823305", "0.0307749", "0.00991005",
+  "18", "RC", "3", "-0.761609", "-0.529366", "0.0", "-4.74019", "0.0119587", "0.00756365",
+  "19", "WH", "3", "-0.761609", "-0.529366", "0.0", "-4.74019", "0.0119587", "0.00756365",
+  "20", "MH", "3", "-0.761609", "-0.529366", "0.0", "-4.74019", "0.0119587", "0.00756365",
+  "21", "BM", "4", "-2.976822456", "0.0", "0.0", "-6.223250962", "0.0", "0.0",
+  "22", "RA", "4", "-2.0", "-0.5", "0.015", "-3.0", "0.015", "0.01",
+  "23", "WA (WC, PN); MA (OP)", "4", "-2.0", "-0.5", "0.015", "-3.0", "0.015", "0.01",
+  "24", "PB (WC, PN); TO (OP)", "4", "-2.0", "-0.5", "0.015", "-3.0", "0.015", "0.01",
+  "25", "GC", "4", "-4.317549852", "-0.057696253", "0.0", "0.0", "0.004861355", "0.00998129",
+  "26", "AS", "4", "-2.0", "-0.5", "0.015", "-3.0", "0.015", "0.01",
+  "27", "CW", "4", "-2.0", "-0.5", "0.015", "-3.0", "0.015", "0.01",
+  "28", "WO", "5", "-0.0", "-0.0", "0.0", "0.0", "0.0", "0.0",
+  "29", "WJ", "4", "-1.050000682", "-.194363402", "0.003803100", "-3.557300286", "0.003971638", "0.005573601",
+  "30", "LL", "4", "-1.050000682", "-.194363402", "0.003803100", "-3.557300286", "0.003971638", "0.005573601",
+  "31", "WB", "4", "-1.050000682", "-.194363402", "0.003803100", "-3.557300286", "0.003971638", "0.005573601",
+  "32", "KP", "4", "-1.050000682", "-.194363402", "0.003803100", "-3.557300286", "0.003971638", "0.005573601",
+  "33", "PY", "4", "-4.072781265", "-0.176433475", "0.0", "-1.729453975", "0.0", "0.012525642",
+  "34", "DG", "4", "-3.020345211", "0.0", "0.0", "-8.467882343", "0.013966388", "0.009461545",
+  "35", "HT", "4", "-3.020345211", "0.0", "0.0", "-8.467882343", "0.013966388", "0.009461545",
+  "36", "CH", "4", "-3.020345211", "0.0", "0.0", "-8.467882343", "0.013966388", "0.009461545",
+  "37", "WI", "4", "-2.0", "-0.5", "0.015", "-3.0", "0.015", "0.01",
+  "38", "(none)", "1", "-4.13142", "-1.13736", "0.0", "-0.823305", "0.0307749", "0.00991005",
+  "39", "OT", "1", "-4.13412", "-1.13736", "0.0", "-0.823305", "0.0307749", "0.00991005"
+)
+
+kable(mort_surv_coef,
+      col.names = c("Species Index", "Species", "MORTMAP", "BM0", "BM1", "BM2", "BM3", "BM4", "BM5"),
+      caption = "Form and coefficients of the individual tree survival equations in WC, PN and OP",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 8) %>%
+  column_spec(1, bold = TRUE)
+```
+
+The HI variant has the same equations and 45 species. Its coefficients are the same as those of the table above for the species that are not listed in the next table.
+
+```{r mort-surv-coef-hi, echo=FALSE}
+mort_surv_coef_hi <- tibble::tribble(
+  ~Index, ~Species, ~MORTMAP, ~BM0, ~BM1, ~BM2, ~BM3, ~BM4, ~BM5,
+  "38", "AK", "1", "-4.13412", "-1.13736", "0.0", "-0.823305", "0.0307749", "0.00991005",
+  "39", "LE", "1", "-4.13412", "-1.13736", "0.0", "-0.823305", "0.0307749", "0.00991005",
+  "40", "IF", "1", "-4.13412", "-1.13736", "0.0", "-0.823305", "0.0307749", "0.00991005",
+  "41", "IM", "1", "-4.13412", "-1.13736", "0.0", "-0.823305", "0.0307749", "0.00991005",
+  "42", "IH", "1", "-4.13412", "-1.13736", "0.0", "-0.823305", "0.0307749", "0.00991005",
+  "43", "IK", "1", "-4.13412", "-1.13736", "0.0", "-0.823305", "0.0307749", "0.00991005",
+  "44", "(none)", "1", "-4.13142", "-1.13736", "0.0", "-0.823305", "0.0307749", "0.00991005",
+  "45", "OT", "1", "-4.13412", "-1.13736", "0.0", "-0.823305", "0.0307749", "0.00991005"
+)
+
+kable(mort_surv_coef_hi,
+      col.names = c("Species Index", "Species", "MORTMAP", "BM0", "BM1", "BM2", "BM3", "BM4", "BM5"),
+      caption = "Form and coefficients of the individual tree survival equations in HI that differ from those of WC, PN and OP",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 8) %>%
+  column_spec(1, bold = TRUE)
+```
+
+In OP, when the model type is 3 (SMC) the DF (species 16) uses form 4 with $BM_0 = -3.12161659$, $BM_1 = -0.44724396$, $BM_3 = -2.48387172$, $BM_4 = 0.01843137$ and $BM_5 = 0.01353918$ ($BM_2$ is unchanged), in place of the values of the table.
+
+##### Steps after the mortality of the tree records
+
+*Mature stand boundary (SDI-based variants).* The breakup of an overmature stand can be simulated with the parameters of keyword MORTMSB. When the quadratic mean diameter is above the boundary diameter QMDMSB (999 by default, so the boundary is off), MORTS calculates the additional mortality in trees per acre that is needed, and calls subroutine MSBMRT to distribute it over the tree records within the diameter limits of the keyword.
+
+*Morphological diameter limit.* In all variants, a check is made for additional mortality of the trees that reach the diameter limit entered with keyword TREESZCP. For a tree whose end of cycle diameter, D + G, is at least the limit SIZCAP(1), and for which the flag SIZCAP(3) is not 1, the trees that die are set to the larger of WKI and $P\cdot SIZCAP(2)\cdot FINT/10$ (FINT/5 in NC). This is a user-controlled surrogate for senescence mortality.
+
+*Basal area check (SDI-based variants).* When holding the SDI to a maximum, the basal area can increase. After the mortality above, the basal area at the end of the cycle is calculated. If it is more than 1 square foot per acre above BAMAX, the trees per acre that die are adjusted upward in proportion, for each tree record, to bring the basal area back to BAMAX. The check is not made in the Prognosis-type and individual tree survival variants.
+
+*Climate and user mortality.* In the variants that call it, subroutine MORTS calls CLMORTS, which modifies the mortality to account for a change in climate. It exists as a subroutine if the climate extension is part of the executable program and as an entry point in subroutine EXCLIM otherwise. Subroutine MORTS then uses OPFIND, OPGET and OPDONE to process the activities scheduled for the cycle with keyword FIXMORT. The keyword replaces the mortality, adds to it, sets a minimum, or multiplies it, depending on the option of the keyword (the values are $WK2 = PROB \cdot m$, $WK2 + \max(0, PROB - WK2)\,m$, $\max(WK2, PROB\cdot m)$ and $\min(PROB, WK2\cdot m)$, where m is field 2), within the diameter limits of the keyword.
 
 FVS is now done simulating mortality not related to insects, disease, or fire; program control returns to subroutine GRINCR.
+
+*ORGANON variants.* In the OC and OP variants, subroutine MORTS adds the ORGANON mortality estimates, MORTEXP, over all tree records. These were calculated by subroutine EXECUTE, called from DGDRIV. When the sum is greater than 0 and ORGANON is on (LORGANON is true), the trees that die are MORTEXP x FINT/5 for all tree records. The multiplier of keyword MORTMULT is not applied to these values. When the sum is 0, which includes the case where no "big 6" species is present and EXECUTE was skipped, OC calculates mortality with the SDI-based model described above (with VARMRT) and OP calculates it with the individual tree survival model described above. In OC, ORGANON mortality skips the distribution subroutine and the basal area check. Structural differences in the two ORGANON-FVS variants are discussed in more detail in [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants).
 
 ### Auxiliary subroutines
 
@@ -6032,7 +6505,7 @@ As discussed in [Growing the small trees](#sec-growing-the-small-trees), subrout
 
 #### Mortality
 
-Subroutine GRINCR calls subroutine MORTS to estimate mortality. In the two ORGANON-FVS variants, mortality for all tree records will be estimated using either the ORGANON mortality equations or the SDI-based mortality model depending on whether ORGANON produced mortality estimates, or not. Subroutine MORTS sums the ORGANON mortality estimates (MORTEXP) over all tree records. If the sum is greater than zero, then subroutine MORTS uses the ORGANON mortality estimates for all tree records. ORGANON mortality estimates were calculated during the call to subroutine EXECUTE from subroutine DGDRIV. If the sum is zero, which includes the case where no "big 6" species is present and EXECUTE was skipped, then subroutine MORTS calculates mortality estimates using the FVS SDI-based mortality logic. Both the ORGANON mortality model and the FVS mortality model are detailed in the OC and OP variant overview documents.
+Subroutine GRINCR calls subroutine MORTS to estimate mortality. In the two ORGANON-FVS variants, mortality for all tree records will be estimated using either the ORGANON mortality equations or the SDI-based mortality model depending on whether ORGANON produced mortality estimates, or not. Subroutine MORTS sums the ORGANON mortality estimates (MORTEXP) over all tree records. If the sum is greater than zero, then subroutine MORTS uses the ORGANON mortality estimates for all tree records. ORGANON mortality estimates were calculated during the call to subroutine EXECUTE from subroutine DGDRIV. If the sum is zero, which includes the case where no "big 6" species is present and EXECUTE was skipped, then subroutine MORTS calculates mortality estimates using the FVS mortality logic of the variant, which is the SDI-based mortality model in OC and the individual tree survival model in OP (see [Mortality](#sec-mortality-models)). Both the ORGANON mortality model and the FVS mortality model are detailed in the OC and OP variant overview documents.
 
 #### Crown ratio change
 
