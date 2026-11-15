@@ -299,3 +299,30 @@ Not documented (the text states only what was read):
 - Whether a CRNMULT keyword for cycle 1 is applied at the dubbing was not traced through OPFIND (`ICYC` is 1 during CRATET).
 - The density variables (BA, RELDEN, PCT) at the time of dubbing depend on the DENSE call and the back-dating setting; they were not traced for each variant.
 - The IE and EM crown models by species use the flags set in `ie/crown.f` and `em/crown.f`; the Weibull species of EM and IE were not tabulated.
+
+## Growth calibration (DGDRIV, REGENT), randomization and multipliers
+
+Text revised: "Calibrate growth equations". Facts in `facts.json` have ids beginning `calib-`.
+
+Existing text and manual statements that differ from the code:
+- The Rmd and Dixon (2002) section 7.2 describe the scale factor as a weighted average between the median ratio of observed to predicted values and 1.0. The code uses no median. The diameter factor is a PROB-weighted regression and ratio estimator of the mean ln residual blended by DIST, shrunk with an empirical Bayes weight; the small-tree height factor is a ratio of PROB-weighted means with no weight.
+- Dixon (2002) section 6.4.1 gives the attenuation goal as half the difference between the factor and one. The code attenuates the ln term toward half its initial value, so the factor goal is its square root (2.0 gives 1.41, not 1.5).
+- Dixon (2002) section 4.2.1 gives a diameter threshold of 3.0 inches for all variants. The code uses 5.0 in CS and LS, species values in CR and UT, and 1.0 for some species in CI, EM and IE.
+- Dixon (2002) section 6.4.2 describes a Marsaglia-Bray generator with three seeds. `base/rann.f` is a one-seed multiplicative congruential generator.
+- Dixon (2002) section 6.5.2.2 lists READCORH as applied before calibration; in the code it changes only the large-tree height constant, which is not calibrated.
+- The old Rmd text on the order of FINDAG and AVHT40 in CRATET held only for some variants.
+
+Code observations (not changed):
+- The height calibration term HCOR attenuates toward half of the diameter calibration term; when the species has no diameter calibration the goal is 0. HCOR is attenuated only when LDGCAL is true.
+- In `ci/regent.f` and `tt/regent.f` SCALE3 is selected with `SELECT CASE (ISPC)` before the species loop, where ISPC is not defined.
+- `COR2` is used with `LOG(COR2)` unguarded in some DGF routines (ie, ci, em, tt, ut, ws, ec, so, hi); a value of 0 was not tested.
+- NC has YR of 5 in `nc/blkdat.f` and FINT of 10 in `nc/grinit.f`.
+- DGBND results are overwritten in the last loop of `wc/dgdriv.f` and `hi/dgdriv.f`.
+
+Not documented (the text states only what was read):
+- The DGSCOR error computation and its taper at large predicted DDS were not described in the text.
+- The Climate-FVS multiplier WK4 and the mistletoe factor on diameter growth; FIXDG and FIXHTG were taken from the manual.
+- How ORGANON calibrates diameter growth in OC and OP.
+- The PSIGSQ and SIGMAR arrays and the equations of the small-tree height models by variant.
+- How a RANNSEED seed carries across several stands in one run.
+- The meaning of the IDG and IHTG codes beyond the conversion in CRATET.

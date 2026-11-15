@@ -1258,5 +1258,194 @@
   "doc": "Crown ratio dubbing: BC V3 zones",
   "file": "canada/bc/becset.f",
   "regex": "INDEX\\(BEC%Zone,'SBPS'\\) \\.GT\\. 0"
+ },
+ {
+  "id": "calib-dg-scale",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: DGDRIV SCALE is YR/FINT",
+  "file": "ne/dgdriv.f",
+  "regex": "SCALE=YR/FINT"
+ },
+ {
+  "id": "calib-dg-term",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: DGDRIV observed term",
+  "file": "ne/dgdriv.f",
+  "regex": "TERM=DG\\(I\\)\\*\\(2\\.0\\*BARK\\*WK3\\(I\\)\\+DG\\(I\\)\\)\\*SCALE"
+ },
+ {
+  "id": "calib-dg-thresh-ne",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: NE large-tree sample requires DBH of 3.0",
+  "file": "ne/dgdriv.f",
+  "regex": "IF\\(WK3\\(I\\)\\.LT\\.3\\.0 \\.OR\\.DG\\(I\\)\\.LE\\.0\\.0\\) GO TO 155"
+ },
+ {
+  "id": "calib-dg-thresh-cs",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: CS threshold 5.0",
+  "file": "cs/dgdriv.f",
+  "regex": "IF\\(WK3\\(I\\)\\.LT\\.5\\.0 \\.OR\\.DG\\(I\\)\\.LE\\.0\\.0\\) GO TO 155"
+ },
+ {
+  "id": "calib-dg-thresh-ls",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: LS threshold 5.0",
+  "file": "ls/dgdriv.f",
+  "regex": "IF\\(WK3\\(I\\)\\.LT\\.5\\.0 \\.OR\\.DG\\(I\\)\\.LE\\.0\\.0\\) GO TO 155"
+ },
+ {
+  "id": "calib-dg-ie-bkpt",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: IE breakpoint 1.0 for species 19 and 22",
+  "file": "ie/dgdriv.f",
+  "regex": "IF\\(ISPC\\.EQ\\.19\\.OR\\.ISPC\\.EQ\\.22\\)BKPT=1\\.0"
+ },
+ {
+  "id": "calib-dg-regcor",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: DGDRIV regression estimator",
+  "file": "ne/dgdriv.f",
+  "regex": "REGCOR=BNY\\+\\(BPOPX-BNX\\)\\*SLOP"
+ },
+ {
+  "id": "calib-dg-weight",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: DGDRIV empirical Bayes weight",
+  "file": "ne/dgdriv.f",
+  "regex": "WC=1\\.0/\\(1\\.0\\+EXP\\(-0\\.5\\*TEMP\\)\\*SQRT\\(SVAR/PVAR\\)\\)"
+ },
+ {
+  "id": "calib-dg-cor",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: DGDRIV COR equals WC times CORI",
+  "file": "ne/dgdriv.f",
+  "regex": "COR\\(ISPC\\)= WC \\* CORI"
+ },
+ {
+  "id": "calib-dg-sigma",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: DGDRIV pooled SIGMA",
+  "file": "ne/dgdriv.f",
+  "regex": "SIGMA\\(ISPC\\)=SQRT\\(\\(SVAR\\+XNOB\\*SIGMR1\\)/\\(FN\\+XNOB\\)\\)"
+ },
+ {
+  "id": "calib-dg-range",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: DGDRIV range 0.0821 to 12.1825",
+  "file": "ne/dgdriv.f",
+  "regex": "CORTEM\\(IREFI\\)\\.LT\\.0\\.0821 \\.OR\\. CORTEM\\(IREFI\\)\\.GT\\.12\\.1825"
+ },
+ {
+  "id": "calib-dg-atten",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: DGDRIV attenuation factor",
+  "file": "ne/dgdriv.f",
+  "regex": "CORMLT=EXP\\(-0\\.02773\\*SFINT\\)"
+ },
+ {
+  "id": "calib-dg-wci",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: DGDRIV attenuation goal",
+  "file": "ne/dgdriv.f",
+  "regex": "WCI\\(ISPC\\)=0\\.5\\*COR\\(ISPC\\)"
+ },
+ {
+  "id": "calib-dg-hcor-atten",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: DGDRIV attenuates HCOR toward WCI",
+  "file": "ne/dgdriv.f",
+  "regex": "HCOR\\(ISPC\\)=WCI\\(ISPC\\)\\+CORMLT\\*DIFH\\(ISPC\\)"
+ },
+ {
+  "id": "calib-dg-bc-cap",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: BC caps COR at ln 4",
+  "file": "canada/bc/dgdriv.f",
+  "regex": "IF \\(COR\\(ISPC\\) \\.GT\\. 1\\.38629\\)"
+ },
+ {
+  "id": "calib-ht-ratio",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: REGENT height scale factor is a ratio of means",
+  "file": "sn/regent.f",
+  "regex": "CORNEW = SNY/SNX"
+ },
+ {
+  "id": "calib-ht-hcor",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: REGENT HCOR is the log of the ratio",
+  "file": "sn/regent.f",
+  "regex": "HCOR\\(ISPC\\)=ALOG\\(CORNEW\\)"
+ },
+ {
+  "id": "calib-ht-dbh",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: REGENT sample requires DBH below 5.0",
+  "file": "sn/regent.f",
+  "regex": "IF\\(DBH\\(I\\)\\.GE\\.5\\.0\\.OR\\.H\\.LT\\.0\\.01\\) GO TO 60"
+ },
+ {
+  "id": "calib-ht-ak",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: AK REGENT sample requires DBH below 3.0",
+  "file": "ak/regent.f",
+  "regex": "IF\\(DBH\\(I\\)\\.GE\\.3\\.0\\.OR\\.H\\.LT\\.0\\.01\\) GO TO 60"
+ },
+ {
+  "id": "calib-calbstat",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: CALBSTAT minimum of 3",
+  "file": "vbase/initre.f",
+  "regex": "IF \\(FNMIN\\.LT\\.3\\.\\)FNMIN=3\\."
+ },
+ {
+  "id": "calib-readcord",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: READCORD adds ln COR2",
+  "file": "sn/dgf.f",
+  "regex": "DGCON\\(ISPC\\)=DGCON\\(ISPC\\)\\s*\\n\\s*&\\s*\\+ ALOG\\(COR2\\(ISPC\\)\\)"
+ },
+ {
+  "id": "calib-readcorr",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: READCORR sets RHCON",
+  "file": "sn/regent.f",
+  "regex": "RHCON\\(ISPC\\) = RCOR2\\(ISPC\\)"
+ },
+ {
+  "id": "calib-readcorh",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: READCORH adds ln HCOR2 to HTCON",
+  "file": "sn/htgf.f",
+  "regex": "HTCON\\(ISPC\\)\\+ALOG\\(HCOR2\\(ISPC\\)\\)"
+ },
+ {
+  "id": "calib-trip-weight",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: TRIPLE record weights",
+  "file": "base/triple.f",
+  "regex": "PROB\\(I\\)=PROB\\(I\\)\\*0\\.60"
+ },
+ {
+  "id": "calib-trip-cond",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: Tripling condition",
+  "file": "base/grincr.f",
+  "regex": "LTRIP=\\(ICYC\\.LE\\.ICL4\\.AND\\.ITRN\\.LE\\.\\(MAXTRE/3\\)\\.AND\\.\\.NOT\\.NOTRIP\\)"
+ },
+ {
+  "id": "calib-rann",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: RANN generator",
+  "file": "base/rann.f",
+  "regex": "S1=DMOD\\(16807D0\\*S0,2147483647D0\\)"
+ },
+ {
+  "id": "calib-mults",
+  "type": "regex_in_file",
+  "doc": "Growth calibration: MULTS kinds",
+  "file": "base/mults.f",
+  "regex": "3 IS REGHMULT"
  }
 ]

@@ -2855,13 +2855,314 @@ Where:
 
 #### Calibrate growth equations
 
-In FVS, trees are considered “large” trees for modeling purposes if they are above some threshold diameter that is both variant- and species-specific; otherwise they are considered “small” trees. The FVS large-tree model is diameter growth driven while the small tree model is height growth driven. When periodic increment data is provided as part of the tree record input, FVS attempts to calibrate both of these functions to the input data. The calibration factor, or scale factor, for both of these functions is a multiplier that is a weighted average between the median ratio of observed to predicted values and 1.0. The weight is dependent on how closely the variation in the residuals for the stand being calibrated matches the variation in the residuals for the overall data used to build the model.
+In FVS, trees are considered "large" trees for modeling purposes if they are above some threshold diameter that is both variant- and species-specific; otherwise they are considered "small" trees. The FVS large-tree model is diameter growth driven, and the small-tree model is height growth driven. When periodic increment data are provided with the tree records, FVS calibrates the large-tree diameter growth model and the small-tree height growth model to those data, separately for each species. The calibration is done by subroutine DGDRIV for the large-tree diameter growth model, and by subroutine REGENT for the small-tree height growth model, both called from subroutine CRATET. The calibration logic is introduced in Dixon (2002), sections 6.4 and 7.2. The variables named in this section are defined in the next table.
 
-If top height, which is the average height of the 40 largest diameter trees, is needed in either of these relationships, subroutine CRATET calls subroutine AVHT40 to compute this value.
+```{r calib-variables, echo=FALSE}
+calib_variables <- tibble::tribble(
+  ~Variable, ~Definition,
+  "DG", "Periodic diameter increment of a tree, inside bark, in inches",
+  "DBH0", "Diameter at breast height at the start of the growth measurement period, in inches (WK3)",
+  "BARK", "Bark ratio of the tree, the inside bark diameter divided by the outside bark diameter",
+  "dds", "Change in squared inside bark diameter over the period",
+  "DDS", "Change in squared inside bark diameter predicted by subroutine DGF",
+  "YR", "Length of the period on which the increments of the model are based, in years",
+  "FINT", "Length of the growth measurement period of the diameter growth data, in years",
+  "SCALE", "Conversion of the observed change in squared diameter, measured over FINT years, to the YR-year basis of the model, YR divided by FINT",
+  "PROB", "Trees per acre represented by a tree record",
+  "r", "Residual of a tree on the logarithmic scale, the observed minus the predicted ln(dds)",
+  "FN", "Number of trees in the calibration sample of a species",
+  "FNMIN", "Minimum number of trees in the calibration sample, 5 by default",
+  "BNY", "Mean of the residuals r of the sample, weighted by PROB",
+  "BNX", "Mean of the predicted dds of the sample trees, weighted by PROB",
+  "BPOPX", "Mean of the predicted dds of the trees of the species within the diameter range of the sample, weighted by PROB",
+  "SLOP", "Slope of the regression of the residual on the predicted dds of the sample trees",
+  "SDPRED", "Standard deviation of the predicted dds of the sample trees",
+  "DIST", "Distance between the mean predicted dds of the population and of the sample, in units of SDPRED",
+  "COR", "Calibration term of the diameter growth model, added to ln(dds)",
+  "CORI", "Calibration term before the empirical Bayes weight is applied",
+  "WC", "Weight given to the growth sample in the calibration, from 0 to 1",
+  "PVAR", "Prior variance of the calibration term (PSIGSQ), set by species in subroutine DGF",
+  "SVAR", "Variance of the mean residual of the sample",
+  "SIGMAR", "Standard error of the diameter growth model on the logarithmic scale, by species",
+  "XNOB", "Number of observations in the data used to fit the model, by species (ATTEN)",
+  "HTG", "Periodic height increment of a tree, in feet",
+  "EDH", "Height increment predicted by the small-tree height growth model, in feet",
+  "NCALHT", "Minimum number of trees in the calibration sample of the small-tree height growth model, 5 by default",
+  "HCOR", "Calibration term of the small-tree height growth model, the natural logarithm of the scale factor",
+  "RHCON", "User multiplier of the small-tree height growth model, 1.0 unless changed with keyword READCORR",
+  "SCALE3", "Conversion of the observed height increment, measured over FINTH years, to the REGYR-year basis of the small-tree model, REGYR divided by FINTH",
+  "SFINT", "Years from the start of the projection to the end of the projection cycle",
+  "LDGCAL", "Logical variable by species; false when calibration is suppressed with keyword NOCALIB",
+  "LHTCAL", "Logical variable by species; false when calibration is suppressed with keyword NOCALIB"
+)
 
-Subroutine CRATET calls subroutine DGDRIV to compute initial scale factors for the large-tree diameter growth model. DGDRIV calls subroutine DGF that contains the variant and species dependent growth functions for the individual trees. Starting with the backdated stand condition, diameter growth is predicted for all tree records. However, only trees larger than the threshold diameter are used to calibrate the large-tree diameter growth model.
+kable(calib_variables,
+      col.names = c("Variable", "Definition"),
+      caption = "Variables used in the calibration of the growth equations",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
 
-After subroutine CRATET is done with calibration of the large-tree diameter growth model, it attempts to calibrate the small-tree height growth model. CRATET calls subroutine FINDAG to estimate total tree age for each tree record. This value is used in estimating height growth in some variants and not needed in others. For those variants that do use tree age, this value is computed from site index curves, which are variant- and species-specific, and tree height; for those variants that do not use tree age in the small tree height growth logic, subroutine FINDAG is a “dummy” subroutine that simply returns control to subroutine CRATET without computing tree age. Subroutine REGENT is then called to compute initial scale factors for the small-tree height growth model.
+**Diameter growth model.** In most variants, FVS does not predict diameter increment directly. It predicts the change in squared inside bark diameter, dds, from which the diameter increment is derived with equation {3.6.2.6.1} (Dixon 2002, section 7.2.1; Stage 1973; Cole and Stage 1972). The model for ln(dds) is a regression in the site, stand and tree variables of the variant, which subroutine DGF evaluates.
+
+$$
+dds = (dib + DG)^2 - dib^2, \qquad DG = \sqrt{dib^2 + dds} - dib
+\tag{3.6.2.6.1}
+$$
+
+Where:
+
+- dds: Change in squared inside bark diameter over the period (square inches)
+- DG: Periodic diameter increment, inside bark (inches)
+- dib: Inside bark diameter at the beginning of the period (inches), the bark ratio BARK times DBH
+
+**Calibration sample of the diameter growth model.** A tree record is used in the calibration of a species when it has a diameter increment greater than 0, and when its diameter at the start of the growth period, DBH0, is at least the breakpoint diameter of the species. The records that do not meet the two conditions are not used. When the increment was entered as a second diameter measurement, it is converted to an inside bark increment before the calibration (the increment is multiplied by BARK). The breakpoint diameter is the diameter above which a tree is a large tree, and is listed in the next table. The calibration is done for the species when the sample has FN of FNMIN or more trees, and calibration is not suppressed for the species (LDGCAL is true). By default, FNMIN is 5. Keyword CALBSTAT changes it, with a minimum of 3.
+
+```{r calib-dg-breakpoint, echo=FALSE}
+calib_dg_breakpoint <- tibble::tribble(
+  ~Variant, ~Species, ~Minimum_DBH,
+  "AK", "All", "3.0",
+  "BC", "All", "3.0",
+  "BM", "All", "3.0",
+  "CA", "All", "3.0",
+  "CI", "CW and OH", "1.0",
+  "CI", "The other species", "3.0",
+  "CR", "AF, CB, DF, WF, LP, PP, SW, BS, ES, WS, AS, NC, PW, PB, CI, OS and OH", "1.0",
+  "CR", "LM", "2.0",
+  "CR", "GF, MH, RC, WL and WB", "3.0",
+  "CR", "BC, PI, UJ, GO, AW, EM, BK, SO, AJ, RM, OJ, ER, PM, PD and AZ", "99.0",
+  "CS", "All", "5.0",
+  "EC", "All", "3.0",
+  "EM", "GA, CW, BA, PW, NC and OH", "1.0",
+  "EM", "The other species", "3.0",
+  "HI", "All", "3.0",
+  "IE", "CO and OH", "1.0",
+  "IE", "The other species", "3.0",
+  "KT", "All", "3.0",
+  "LS", "All", "5.0",
+  "NC", "All", "3.0",
+  "NE", "All", "3.0",
+  "OC", "All", "3.0",
+  "ON", "All", "3.0",
+  "OP", "All", "3.0",
+  "PN", "All", "3.0",
+  "SN", "All", "3.0",
+  "SO", "All", "3.0",
+  "TT", "All", "3.0",
+  "UT", "NC, FC and BE", "1.0",
+  "UT", "WB, LM, DF, WF, BS, AS, LP, ES, AF, PP and OS", "3.0",
+  "UT", "PI, WJ, GO, PM, RM, UJ, GB, MC, BI and OH", "99.0",
+  "WC", "All", "3.0",
+  "WS", "All", "3.0"
+)
+
+kable(calib_dg_breakpoint,
+      col.names = c("Variant", "Species", "Minimum DBH (inches)"),
+      caption = "Minimum diameter of the trees used to calibrate the diameter growth model",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
+
+A minimum diameter of 99.0 inches means that no tree of the species is a large tree in the calibration, and the diameter growth model of the species is not calibrated. The value in CR and UT is set by species in the array BREAK. In OC and OP, the diameter growth of the trees that are valid for ORGANON is calculated by ORGANON, and this section does not describe the calibration of those trees.
+
+**Steps of the diameter growth calibration.**
+
+1. Subroutine DGF is called to predict ln(DDS) for every tree record, with the diameter at the start of the growth period, DBH0.
+2. The observed increment is converted to a change in squared inside bark diameter, which is scaled from the FINT-year measurement period to the YR-year basis of the model, and the residual of the tree on the logarithmic scale is calculated with equation {3.6.2.6.2}. A tree with an observed change in squared diameter of 0 is not used.
+3. The sums of the sample trees, weighted by PROB, give BNY, BNX, SLOP and SDPRED. BPOPX is the mean predicted DDS of all the trees of the species that are within the diameter range of the sample.
+4. The calibration term, CORI, is calculated with equation {3.6.2.6.3}. It is a weighted average of a ratio estimator and a regression estimator.
+5. The weight WC is calculated and CORI is multiplied by it, as shown in equation {3.6.2.6.4}.
+6. The scale factor is tested, as described below.
+
+$$
+r = \ln\left[DG\left(2\,BARK\cdot DBH0 + DG\right) SCALE\right] - \ln\left(DDS\right)
+\tag{3.6.2.6.2}
+$$
+
+Where:
+
+- r: Residual of the tree on the logarithmic scale
+- DG: Observed periodic diameter increment, inside bark (inches)
+- BARK: Bark ratio of the tree
+- DBH0: Diameter at breast height at the start of the growth measurement period (inches)
+- SCALE: YR divided by FINT, which scales the observed change from the measurement period to the YR-year basis of the model
+- DDS: Change in squared inside bark diameter predicted by subroutine DGF (square inches)
+
+$$
+CORI = \begin{cases}
+BNY + (BPOPX - BNX)\,SLOP & DIST \le 1 \\[4pt]
+BNY\,\dfrac{DIST}{2} + \left[BNY + (BPOPX - BNX)\,SLOP\right]\left(1 - \dfrac{DIST}{2}\right) & 1 < DIST \le 3 \\[4pt]
+BNY & DIST > 3
+\end{cases},
+\qquad DIST = \frac{|BPOPX - BNX|}{SDPRED}
+\tag{3.6.2.6.3}
+$$
+
+Where:
+
+- CORI: Calibration term before the weight is applied
+- BNY: Weighted mean of the residuals r (the ratio estimator)
+- BNX: Weighted mean of the predicted DDS of the sample trees
+- BPOPX: Weighted mean of the predicted DDS of the trees of the species within the diameter range of the sample
+- SLOP: Slope of the regression of r on the predicted DDS of the sample trees
+- DIST: Distance between BPOPX and BNX in units of the standard deviation of the predicted DDS of the sample trees, SDPRED
+
+The regression estimator is used when the sample is similar to the population of the species in terms of the predicted growth (DIST of 1 or less), and the ratio estimator is used when it is not (DIST above 3).
+
+$$
+WC = \frac{1}{1 + \exp\left(-0.5\,TEMP\right)\sqrt{SVAR/PVAR}}, \quad TEMP = \min\left(\frac{CORI^2}{PVAR},\, 72\right), \quad COR = WC \cdot CORI
+\tag{3.6.2.6.4}
+$$
+
+Where:
+
+- WC: Weight given to the growth sample, from 0 to 1
+- CORI: Calibration term from equation {3.6.2.6.3}
+- PVAR: Prior variance of the calibration term, set by species in subroutine DGF
+- SVAR: Variance of the mean of the residuals r of the sample, which is the sample variance of r divided by FN
+- COR: Calibration term of the diameter growth model
+
+The weight is part of an empirical Bayes estimation (Dixon 2002, section 4.3.1.1.3). A weight near 0 means that the model is not adjusted, and a weight near 1 means that the model is adjusted to the sample. The calibration term is added to ln(DDS) in subroutine DGF, so the scale factor of the model is the exponential of COR, as shown in equation {3.6.2.6.5}. The scale factor multiplies the change in squared diameter, and it is in effect a multiplier of the basal area increment.
+
+$$
+SF = \exp\left(COR\right), \qquad 0.0821 \le SF \le 12.1825
+\tag{3.6.2.6.5}
+$$
+
+Where:
+
+- SF: Scale factor of the diameter growth model (reported as "initial scale factors for the DBH increment model")
+- COR: Calibration term from equation {3.6.2.6.4}
+
+When SF is outside the range of equation {3.6.2.6.5}, an error message is written to the main output file with the species and the calculated value, SF is set to 1.0 and COR is set to 0.0. This range is $\pm 2.5$ on the logarithmic scale, and a value outside of it is usually the result of a problem with the growth measurements (Dixon 2002, section 7.2). When the sample has fewer than FNMIN trees, when keyword NOCALIB is used, or when the regression of the sample cannot be calculated (the sum of squares of the predicted DDS is negative, in which case a message "POOR SELECTION OF GROWTH SAMPLE TREES DETECTED" is written), the scale factor is 1.0 for the species.
+
+**Variance of the diameter growth model.** The standard error of the model on the logarithmic scale of the species, SIGMA, is also calibrated, as shown in equation {3.6.2.6.6}. The result is used for the random component of the diameter growth described below.
+
+$$
+SIGMA = \sqrt{\frac{SSQ + XNOB \cdot SIGMAR^2}{FN + XNOB}}
+\tag{3.6.2.6.6}
+$$
+
+Where:
+
+- SIGMA: Calibrated standard error of the model on the logarithmic scale
+- SSQ: Sum of the squared deviations of the residuals r from their mean
+- XNOB: Number of observations in the data used to fit the model of the species
+- SIGMAR: Standard error of the model of the species
+- FN: Number of trees in the calibration sample
+
+The ratio of the standard deviation of the sample residuals to SIGMAR is reported as the "ratio of standard errors" in the calibration statistics table. A ratio that is consistently above 1.0 indicates that the growth sample varies more than the data used to fit the model (Dixon 2002, section 4.3.1.1.3).
+
+**Small-tree height growth model.** The small-tree model is calibrated with a scale factor that is a ratio of the observed and the predicted height increments. A tree record is used when it has a height increment of at least 0.001 foot, a height at the start of the growth period of at least 0.01 foot, and a diameter below 5.0 inches (3.0 inches in AK). The calibration is done for a species when the sample has NCALHT or more trees (5 by default, changed with keyword CALBSTAT, with a minimum of 3), and LHTCAL is true. The increment predicted for each sample tree is calculated with the small-tree height growth model of the variant, EDH, including the user multiplier RHCON. The scale factor is the ratio of the means of the sample, weighted by PROB, as shown in equation {3.6.2.6.7}, and the calibration term HCOR is its natural logarithm. In subroutine REGENT, the height increment of a small tree is multiplied by RHCON and by the exponential of HCOR. The same range as in equation {3.6.2.6.5} is tested, with the message "SMALL TREE HTG", and the scale factor is set to 1.0 and HCOR to 0.0 when the value is outside the range.
+
+$$
+SF_h = \frac{\sum_i PROB_i \cdot HTG_i \cdot SCALE3}{\sum_i PROB_i \cdot EDH_i}, \qquad HCOR = \ln\left(SF_h\right)
+\tag{3.6.2.6.7}
+$$
+
+Where:
+
+- SF_h: Scale factor of the small-tree height growth model
+- PROB: Trees per acre represented by the tree record
+- HTG: Observed periodic height increment (feet)
+- SCALE3: REGYR divided by FINTH, which scales the observed increment from the measurement period to the REGYR-year basis of the small-tree model
+- EDH: Height increment predicted by the small-tree height growth model (feet)
+- HCOR: Calibration term of the small-tree height growth model
+
+The height scale factor is a direct multiplier of the predicted height increment. It does not have a weight. The calculation is the same in every variant. In the variants that use more than one small-tree model for different species, the equation for EDH differs by species.
+
+**Attenuation of the scale factors.** The scale factors are attenuated over the projection, because the base model is assumed to be a more stable estimate of long-term growth than the scale factor (Dixon 2002, section 6.4.1). In the first cycle, the attenuation goal, WCI, is set to one half of the initial diameter growth calibration term. At the end of each cycle, the calibration terms for the next cycle are calculated with equation {3.6.2.6.8}. The attenuation applies to the diameter growth calibration term, COR, and to the height growth calibration term, HCOR, of a species when calibration is not suppressed for the species with keyword NOCALIB (LDGCAL is true).
+
+$$
+WCI = \frac{COR_0}{2}, \qquad CORMLT = \exp\left(-0.02773\,SFINT\right)
+$$
+
+$$
+COR = WCI\left(1 + CORMLT\right), \qquad HCOR = WCI + CORMLT\left(HCOR_0 - WCI\right)
+\tag{3.6.2.6.8}
+$$
+
+Where:
+
+- WCI: Attenuation goal, one half of the initial calibration term COR0 of the diameter growth model
+- COR0: Initial calibration term of the diameter growth model
+- HCOR0: Initial calibration term of the small-tree height growth model
+- SFINT: Years from the start of the projection to the end of the cycle just projected
+- CORMLT: Fraction of the initial departure from the goal that remains
+- COR, HCOR: Calibration terms used in the next cycle
+
+The factor CORMLT is 0.5 at 25 years, so half of the attenuation takes place in 25 years. The diameter growth term attenuates toward half of its initial value on the logarithmic scale. Because COR is a logarithm, the goal of the scale factor is the square root of its initial value. For an initial scale factor of 2.0 the goal is 1.41, and the values are 1.68, 1.54, 1.48 and 1.45 at 25, 50, 75 and 100 years. The manual (Dixon 2002, section 6.4.1 and figure 6-1) states the goal as one half of the difference between the initial scale factor and one, which is 1.5 in its example of 2.0; the two differ when the factor is not close to 1.0. The height growth term attenuates toward the same goal, WCI, which is one half of the diameter growth term and not one half of its own initial value. When the diameter growth model of a species was not calibrated, COR0 is 0, the goal is 0, and the height growth term attenuates to 0 (a scale factor of 1.0).
+
+**Calibration keywords.** The calibration is controlled with the keywords in the next table. The scale factors are reported in the Calibration Statistics section of the main output file, in the file written with keyword CALBSTAT (records "CAL: LD" for the diameter growth model and "CAL: SH" for the small-tree height growth model), and in the database table FVS_CalibStats.
+
+```{r calib-keywords, echo=FALSE}
+calib_keywords <- tibble::tribble(
+  ~Keyword, ~Effect,
+  "CALBSTAT", "Field 1 is the unit number of the file to which the calibration statistics are written. Field 2 is FNMIN, the minimum number of trees in the diameter growth calibration sample (minimum 3). Field 3 is NCALHT, the minimum number of trees in the height growth calibration sample (minimum 3)",
+  "NOCALIB", "Suppresses the calculation of the scale factors for the species or species group in field 1 (all species when blank); LDGCAL and LHTCAL are set to false",
+  "READCORD", "Adds the natural logarithm of the value read for each species to the constant of the large-tree diameter growth model, before the calibration (in NE and ON the value multiplies the diameter increment); the values are on the record that follows the keyword",
+  "REUSCORD", "Uses the READCORD values of an earlier stand",
+  "READCORH", "Adds the natural logarithm of the value read for each species to the constant of the large-tree height growth model, before the calibration",
+  "REUSCORH", "Uses the READCORH values of an earlier stand",
+  "READCORR", "Sets the multiplier of the small-tree height growth model, RHCON, to the value read for each species (1.0 when not read); for the species of the NI-type model in IE, EM and BC the natural logarithm of the value is added instead"
+)
+
+kable(calib_keywords,
+      col.names = c("Keyword", "Effect"),
+      caption = "Keywords that control the calibration of the growth equations",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
+
+**Variant differences in the diameter growth calibration.** The calibration of the other variants has the same steps as described above, with the following differences.
+
+- NC, ON and BC calculate the variance SIGMA of equation {3.6.2.6.6} even for a species for which calibration is suppressed with NOCALIB. The other variants use SIGMAR for such a species.
+- BC limits the diameter growth calibration term to 1.38629 (a scale factor of 4) in addition to the range of equation {3.6.2.6.5}.
+- SO limits TEMP in equation {3.6.2.6.4} to 176 instead of 72, does not test for a negative sum of squares, and for the Warm Springs forest (forest code 10) changes PVAR for some species.
+- The prior variance PVAR is set by species in each variant (a data statement in the DGDRIV source file of the variant; 0.0898 or 0.089827273 in most of the variants that have a single value).
+- DBSCALIB, which writes the calibration statistics to the database, is not called in ON.
+- In OC and OP, the diameter growth of the trees that are valid for ORGANON is not calibrated by DGDRIV; this section does not describe how ORGANON calibrates those trees.
+
+**Randomization.** The random effects of FVS are assigned to the error in the prediction of ln(dds) (Dixon 2002, section 6.4.2; Stage 1973). The error is normally distributed with a mean of 0. Its variance is the variance of the calibrated model, SIGMA, of equation {3.6.2.6.6}, which is a weighted average of the variance of the model and the variance of the growth sample. The error is carried from one cycle to the next with a serial correlation that depends on the cycle length (subroutine AUTCOR). The error is bounded to plus or minus DGSD standard deviations, and DGSD is 2.0 by default (1.7 in CA, CI, EC, HI, PN and WC; 1.5 in BM; 0 in OC and OP), which keyword DGSTDEV changes. When DGSD is less than 1.0, no random variation is added to the diameter growth. The random numbers come from a multiplicative congruential generator (the multiplier is 16807 and the modulus is 2147483647) with one seed, which is reset at the start of each run, and keyword RANNSEED replaces the seed. A normal deviate is made from three uniform numbers. The manual (Dixon 2002, section 6.4.2) describes a Marsaglia-Bray generator with three seeds, which does not match the code.
+
+When the number of tree records is small, the record of each tree is tripled. Each tree record is divided into three records that have the same attributes, with 60, 25 and 15 percent of the trees per acre of the original record, and each of the three records is given a diameter growth that corresponds to one portion of the error distribution, so that the weighted average of the three equals the prediction. The number of times that records are tripled is set with keyword NUMTRIP (the default is 2, and 0 in OC and OP), the tripling is done only when the number of tree records is no more than one third of the maximum number of records (MAXTRE), and keyword NOTRIPLE suppresses it. In subroutine DGDRIV, the three growth errors are the constants FU (1.271), FM (-0.14228) and FL (-1.549), multiplied by the standard error SSIGMA and the serial correlation term, and added to the serial correlation of the previous error.
+
+**Multipliers.** The user can also change the model with multipliers. They are of four types (Dixon 2002, section 6.5.2), and each acts at a different point in relation to the calibration.
+
+```{r calib-multipliers, echo=FALSE}
+calib_multipliers <- tibble::tribble(
+  ~Type, ~Keywords, ~Applied,
+  "Computed by the model", "None (the scale factors of this section)", "Calibration; attenuated over the projection",
+  "Before calibration", "READCORD, READCORH, READCORR", "Before the calibration; permanent, not attenuated",
+  "Regeneration", "HTADJ, STOCKADJ, SPECMULT", "Inside the ESTAB sequence",
+  "After calibration", "BAIMULT", "Large-tree diameter growth (DGDRIV, change in squared diameter)",
+  "After calibration", "HTGMULT", "Large-tree height growth (HTGF)",
+  "After calibration", "REGHMULT", "Small-tree height growth (REGENT)",
+  "After calibration", "REGDMULT", "Small-tree diameter growth (REGENT)",
+  "After calibration", "MORTMULT", "Mortality",
+  "After calibration", "CRNMULT", "Crown ratio change and dubbing (CROWN)",
+  "After calibration", "FIXDG, FIXHTG", "Diameter and height growth, at the end of the cycle after the other growth calculations",
+  "After calibration", "FIXMORT, FIXCW", "Mortality and crown width"
+)
+
+kable(calib_multipliers,
+      col.names = c("Type", "Keywords", "Applied To"),
+      caption = "Types of multipliers in relation to the calibration",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
+
+The multipliers that are applied after the calibration are not attenuated, and their values can be changed from cycle to cycle. Subroutine MULTS returns the species multipliers of a cycle for BAIMULT (DGDRIV), HTGMULT (HTGF), REGHMULT and REGDMULT (REGENT), MORTMULT, and the managed-stand flag. The BAIMULT multiplier enters the prediction of ln(dds) as an additional term, ln(XDMULT). Because of the processing sequence (large-tree diameter growth, large-tree height growth, small-tree height growth, small-tree diameter growth, mortality, crown change), REGHMULT affects the height and the diameter growth of small trees, REGDMULT only the diameter growth of small trees, BAIMULT the diameter and the height growth of large trees, and HTGMULT only the height growth of large trees (Dixon 2002, section 6.5.2.4).
+
+The remaining tasks of the calibration in subroutine CRATET are as follows. If top height, which is the average height of the 40 largest diameter trees, is needed in either of the growth relationships, subroutine CRATET calls subroutine AVHT40 to compute it before DGDRIV; AVHT40 is not called in the IE, CI, CR, EM, KT and BC variants. Subroutine FINDAG estimates total tree age for each tree record. This value is used in estimating height growth in some variants and not needed in others; for those variants that do not use tree age in the small-tree height growth logic, subroutine FINDAG is a "dummy" subroutine that returns control to CRATET without computing tree age. In the IE, CI, CR, EM, TT, UT and BC variants FINDAG is called before DGDRIV, in the other variants it is called after DGDRIV and before REGENT, and AK does not call it.
 
 At this point subroutine CRATET is done with the backdated stand, so it calls subroutines PCTILE, DIST, COMP, and DENSE to compute values related to the initial stand inventory which are needed for output. It then counts and prints the number of tree records with dwarf mistletoe.
 
