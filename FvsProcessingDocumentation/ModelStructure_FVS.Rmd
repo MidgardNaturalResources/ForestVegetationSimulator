@@ -5690,19 +5690,531 @@ Subroutine SPESRT is used to reset the species order sort of tree records.
 
 ## Computing crown ratio change and crown width {#sec-computing-crown-ratio-change-and-crown-width}
 
-Change in a trees’ crown ratio and a trees’ crown width are the last tree attributes to be estimated during a growth projection cycle. A tree’s crown ratio may decrease, stay the same, or increase. In all variants except IE, and for species in the IE variant that are not one of the original 11 NI variant species, the increase in crown ratio is explicitly bounded to either 1% per year of the growth projection cycle (i.e. 10% for a 10-year cycle), or the amount of change possible if all height growth contributes to crown ratio, whichever is less. For the original 11 NI species in the IE variant the increase is bounded only to 1% per year of the growth projection cycle but the height growth bound is implicit in the logic. In the AK variant, the increase is bounded to 3% per year of the growth projection cycle and the decrease to 1% per year.
+Change in a tree’s crown ratio and a tree’s crown width are the last tree attributes to be estimated during a growth projection cycle. A tree’s crown ratio may decrease, stay the same, or increase. The change of a cycle is limited to 1 percent of the tree’s crown ratio per year of the cycle in all variants except AK, where the limit on an increase is 3 percent per year, and the new crown ratio is also limited to the value that the height growth of the cycle allows in most variants, as described below.
 
 ### Subroutines involved and their function
 
-Subroutine GRADD calls subroutine CROWN to estimate the change in a trees’ crown ratio. In some variants, crown ratio is held constant for trees smaller than a threshold diameter; this is not the case in other variants. Also, this threshold diameter may be species dependent in some of the variants that use it. The three general types of crown ratio models used in FVS are discussed in section 7.4 of the EFVS guide. The logic used in a specific variant is given in each of the variant overview documents. A fourth type, the ORGANON crown ratio model is used in the two ORGANON-FVS variants and discussed in the OC and OP variant overviews. Structural differences in the two ORGANON-FVS variants are further discussed in [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants).
+**Crown ratio change.** Subroutine CROWN estimates the crown ratio of each tree at the end of the cycle. Subroutine GRADD calls CROWN after subroutine UPDATE, so DBH(i) and HT(i) are already the end-of-cycle values when CROWN is called, and DG(i) and HTG(i) still hold the increments of the cycle. Crown ratio is carried as the integer percent ICR(i). The steps are the same in every variant, except as noted; the variables are defined in the next table.
 
-Subroutine CROWN uses a nested DO loop structure with the outer loop being over species and the inner loop over tree records of a given species. The coding of subroutine CROWN is straight forward and easy to understand.
+```{r crown-change-variables, echo=FALSE}
+crown_change_variables <- tibble::tribble(
+  ~Variable, ~Definition, ~Units,
+  "ICR", "Crown ratio of the tree at the start of the cycle, as an integer percent", "percent",
+  "CRNEW", "Crown ratio of the tree from the crown ratio model", "percent",
+  "CHG", "Change in crown ratio of the cycle", "percent",
+  "FINT", "Length of the projection cycle", "years",
+  "PDIFPY", "Relative change per year, CHG / ICR / FINT", "per year",
+  "CRNMLT", "Crown ratio multiplier of the species from the CRNMULT keyword (1.0 when no multiplier is given)", "ratio",
+  "DLOW, DHI", "Lower and upper limits of DBH of the CRNMULT keyword (defaults 0 and 99.0)", "inches",
+  "HT, HTG", "Total height after the update, and height increment of the cycle", "feet",
+  "CRMAX", "Largest crown ratio that the height growth allows", "percent",
+  "HF", "Height at the end of the cycle used by the crown length equations, HT + HTG", "feet",
+  "DF", "Diameter at the end of the cycle used by the CR variant, DBH + DG / BARK", "inches",
+  "BA", "Stand basal area", "square feet per acre",
+  "RELDEN", "Stand crown competition factor", "percent",
+  "SDIAC, SDIDEF", "Stand SDI, and the maximum SDI of the species", "trees per acre",
+  "RELSDI", "Relative density, SDIAC / SDIDEF (1.0 when SDIDEF is not positive), with a maximum of 1.5", "ratio",
+  "ISORT", "Rank of the tree in the diameter distribution of the stand, 1 for the smallest and ITRN for the largest", "rank",
+  "PCT", "Percentile of the tree in the basal area distribution of the stand", "percent"
+)
+
+kable(crown_change_variables,
+      col.names = c("Variable", "Definition", "Units"),
+      caption = "Variables used in the crown ratio change equations",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "6em") %>%
+  column_spec(2, width = "34em")
+```
+
+For each tree record, CROWN does the following.
+
+1. If ICR(i) is negative, the crown ratio change was calculated by an extension that kills or damages crown (the top-kill option HTGSTOP of subroutine HTGSTP, the fire and fuels extension, the western spruce budworm and tussock moth extensions). CROWN changes the sign of ICR(i) and makes no other change. (KT, EM species LL and IE species of the NI form test for ICR(i) greater than 0, so a record with a crown ratio of 0 is also left unchanged in those variants.)
+2. The crown ratio of the model, CRNEW, is calculated with the equation of the species and variant (see the table that follows the equations).
+3. The change, CHG = CRNEW - ICR, is limited to 1 percent of ICR per year of the cycle, as shown in equation {4.8.1.1}. The limit applies to a decrease as well as to an increase. In AK the limit on an increase is 3 percent per year.
+4. If DLOW is not more than DBH(i) and DBH(i) is not more than DHI, the new value is ICR + CHG x CRNMLT; otherwise it is ICR + CHG. ICRI is this value rounded to an integer.
+5. ICRI is limited by CRMAX, calculated with equation {4.8.1.2}. If ICRI is less than 10 and CRNMLT is 1.0, ICRI is set to CRMAX.
+6. ICRI is limited to a maximum of 95 and, when CRNMLT is 1.0, to a minimum of 10, and to a minimum of 1.
+
+$$
+\begin{aligned}
+CHG &= \begin{cases} 0.01 \cdot ICR \cdot FINT & \text{if } PDIFPY > 0.01 \\ -0.01 \cdot ICR \cdot FINT & \text{if } PDIFPY < -0.01 \\ CRNEW - ICR & \text{otherwise} \end{cases} \\
+PDIFPY &= \frac{CRNEW - ICR}{ICR \cdot FINT}
+\end{aligned}
+\tag{4.8.1.1}
+$$
+
+$$
+CRMAX = \frac{CRLN + HTG}{HT + HTG} \times 100, \qquad CRLN = \frac{HT \cdot ICR}{100}
+\tag{4.8.1.2}
+$$
+
+Where:
+
+- CHG: Change in crown ratio of the cycle (percent); the limit is a fraction of the crown ratio at the start of the cycle (for example, ICR of 50 and FINT of 10 years allow a change of 5 percentage points)
+- PDIFPY: Relative change per year (per year)
+- CRMAX: Largest crown ratio that the height growth allows (percent)
+- CRLN: Crown length (feet)
+- HT: Total height of the tree (feet); the value is the height after the update
+- HTG: Height increment of the cycle (feet)
+
+The height growth limit of equation {4.8.1.2} is not applied in the NI-type model of KT, BC, EM species LL and the NI-type species of IE, where the height of the tree enters the equation. In OC and OP it is applied to the ORGANON trees. HT in equation {4.8.1.2} is the height after the update, so the equation adds HTG to a height that already includes it. The same applies to HF in the crown length equations, where HF = HT + HTG.
+
+**Variants and models.** Six model forms are used in the code. The variant and species that use each form are given in the table that follows the equations.
+
+$$
+\begin{aligned}
+ACRNEW &= C0 + C1 \cdot RELSDI \cdot 100 \\
+A &= WEIBA, \qquad B = WEIBB0 + WEIBB1 \cdot ACRNEW, \qquad C = WEIBC0 + WEIBC1 \cdot ACRNEW \\
+X &= \min\left[0.95, \; \max\left(0.05, \; SCALE \cdot \frac{ISORT}{ITRN}\right)\right] \\
+CRNEW &= 10\left[A + B\left(-\ln(1 - X)\right)^{1/C}\right]
+\end{aligned}
+\tag{4.8.1.3}
+$$
+
+Where:
+
+- ACRNEW: Mean crown ratio of the stand for the species, from relative density (percent)
+- C0, C1, WEIBA, WEIBB0, WEIBB1, WEIBC0, WEIBC1: Coefficients of the species (arrays of the same names in subroutine CROWN)
+- B: At least 1.0 or 3.0, as stated in the table
+- C: At least 2.0
+- X: Quantile of the tree, from its rank in the diameter distribution; the smallest tree has the smallest X
+- SCALE: Density scale, with the forms of equation {4.8.1.4}
+- CRNEW: Crown ratio of the model (percent); the factor 10 converts the Weibull value in tenths to percent
+
+$$
+\begin{aligned}
+SCALE_1 &= 1 - 0.00167\,(RELDEN - 100) \\
+SCALE_2 &= 1.5 - RELSDI \\
+SCALE_3 &= 1 - 0.00333\,(RELDEN - 50)
+\end{aligned}
+\qquad (0.30 \le SCALE \le 1.0)
+\tag{4.8.1.4}
+$$
+
+SCALE form 1 is used in the variants shown with that form in the table, and SCALE form 2 in CA, NC and OC. In WS, SCALE_2 is used for species LP, WB, PM, KP, FP, CP, LM, GP, WE, WJ, UJ, CJ, SCALE_3 for species SP, DF, WF, GS, IC, JP, RF, PP, WP, SF, MP, BD, RW, MH, LO, CY, BL, BO, VO, IO, TO, GC, AS, CL, MA, DG, BM, OS, OH, and SCALE_1 for species MC. The same Weibull form is used for dubbing missing crown ratios, as described in [Dub missing crown ratios](#sec-model-calibration-and-other-setup-tasks).
+
+In SN, the Weibull parameters are WEIBUL(1) for A, WEIBUL(2) + WEIBUL(3) x ACRNEW for B, and WEIBUL(4) for C, and the Weibull value is already in percent, so CRNEW = A + B x (-ln(1 - X))^(1/C), without the factor 10. RELSDI = SDIAC / SDIDEF x 10 with a value of 6.0 when SDIDEF is not positive, bounded to 1 to 12. The mean crown ratio of the species is calculated with one of five forms, selected by the first element of the array MCREQN of the species, as shown in equation {4.8.1.5}; the coefficients a, b and c of the equation are elements of the array MCREQN of the species, as listed below.
+
+$$
+ACRNEW =
+\begin{cases}
+\exp\left(a + b \ln(RELSDI) + c \cdot RELSDI\right) & \text{form 1 (Hoerl)} \\
+\exp\left(a + b \ln(RELSDI)\right) & \text{form 2 (power)} \\
+a + c \cdot RELSDI & \text{form 3 (linear)} \\
+a + b \log_{10}(RELSDI) & \text{form 4 (logarithmic)} \\
+\dfrac{RELSDI}{a \cdot RELSDI + b} & \text{form 5 (inverse)}
+\end{cases}
+\tag{4.8.1.5}
+$$
+
+Where:
+
+- a: MCREQN(2); b: MCREQN(4) in forms 1 and 2, MCREQN(5) in form 4, MCREQN(6) in form 5; c: MCREQN(3) in forms 1 and 3 (the coefficients in the source are named AMCR, BMCR and CMCR)
+- RELSDI: Relative density, bounded 1 to 12
+
+$$
+CRNEW = 100 \cdot \frac{CL}{HF}, \qquad CL = \min\left[HF, \; \max\left(1, \; CL_0\right)\right], \qquad CL_0 =
+\begin{cases}
+5.17281 + 0.32552 \cdot HF - 0.01675 \cdot BA & \text{CR-type} \\
+-0.59373 + 0.67703 \cdot HF & \text{PI/JU-type}
+\end{cases}
+\tag{4.8.1.6}
+$$
+
+Where:
+
+- CL: Crown length of the tree at the end of the cycle (feet)
+- HF: HT + HTG (feet)
+- BA: Stand basal area (square feet per acre)
+
+In equation {4.8.1.6} the crown ratio does not depend on the previous crown ratio of the tree except through the limits of equation {4.8.1.1}.
+
+$$
+\begin{aligned}
+X &= B_1 + B_2 \ln\left(\frac{12\, HT}{DBH}\right) + B_3 \cdot PRD + B_4 \,\frac{DBH}{QMDPLT} \\
+CRNEW &= 100 \cdot \min\left[0.95, \; \max\left(0.05, \; \frac{1}{1 + e^{X}}\right)\right]
+\end{aligned}
+\tag{4.8.1.7}
+$$
+
+Where:
+
+- B1 to B4: Coefficients of the species (the arrays CRINT, CRHDR, CRRD and CRDQMD in AK); in the redwood equations of the other variants, B1 is -1.021064, B2 is 0.309296, B3 is 0.869720 and B4 is -0.116274
+- PRD: Relative density of the point where the tree is located: the Zeide relative density of the point divided by the maximum SDI of the point, and 0 when the maximum SDI of the point is not positive
+- QMDPLT: Quadratic mean diameter of the point, sqrt(PTBAA / PTPA / 0.005454) (inches), with a minimum of 1.0
+- HT: Total height of the tree after the update (feet); 12 x HT / DBH is the height-diameter ratio, HDR
+
+$$
+\begin{aligned}
+CRNEW &= 10\left[\frac{BCR1}{1 + BCR2 \cdot BA} + BCR3\left(1 - \exp(-BCR4 \cdot DBH)\right)\right]
+\end{aligned}
+\tag{4.8.1.8}
+$$
+
+Where:
+
+- BCR1 to BCR4: Coefficients of the species (arrays of the same names); in LS, NE and ON the equation is written with exp(BCR4 x DBH) and the coefficient BCR4 has the opposite sign
+
+$$
+\begin{aligned}
+PCR &= CRCON + P_1 BA + P_2 BA^{2} + P_3 \ln(BA) + P_4 RELDEN + P_5 RELDEN^{2} + P_6 \ln(RELDEN) \\
+&\quad + B_7 DBH + B_8 DBH^{2} + B_9 \ln(DBH) + B_{10} HT + B_{11} HT^{2} + B_{12} \ln(HT) + B_{13}\, PCT + B_{14} \ln(PCT) \\
+CHG &= \exp(PCR_{end}) - \exp(PCR_{start}), \qquad ICRI = ICR + CRNMLT \cdot CHG \cdot 100 + 0.50005
+\end{aligned}
+\tag{4.8.1.9}
+$$
+
+Where:
+
+- CRCON: Constant of the species and habitat type (array CRCON)
+- P1 to P6, B7 to B14: Coefficients of the species (the array PARM; B7 to B14 are PARM(ISPC,7) to PARM(ISPC,14))
+- PCR(end): PCR with the attributes at the end of the cycle
+- PCR(start): PCR with the attributes at the start of the cycle: DBH - DG / BARK, HT - HTG, PCT of the previous cycle (OLDPCT, or the present PCT when the stand was thinned), and the stand BA and RELDEN of the previous cycle (when the CCF of the previous cycle was less than 100, the present BA and RELDEN)
+- PCT: Percentile of the tree in the basal area distribution, with a minimum of 0.01
+
+In the NI-type model CHG is a proportion; it is limited to 1 percent of ICR per year (equation {4.8.1.1}, with CHG and ICR in the same units). In KT the minimum crown ratio is 5 (when CRNMLT is 1.0), and there is no minimum of 10 and no height growth limit (CRMAX). A random draw, BACHLO(CR, CRSD) with CRSD of 6.35, replaces the value only when missing crown ratios are dubbed with DGSD of 1.0 or more; it is not used in the cycles. A tree smaller than 3.0 inches at the start of the cycle (DBH - DG / BARK) in KT, EM (species LL) and IE (NI-type species) keeps its crown ratio; subroutine REGENT dubs the crown ratio when the tree reaches 3.0 inches.
+
+```{r crown-by-variant, echo=FALSE}
+crown_by_variant <- tibble::tribble(
+  ~Variant, ~Species, ~Model, ~Arrays_And_Source,
+  "AK", "All species", "Logistic (equation {4.8.1.7})", "CRINT, CRHDR, CRRD, CRDQMD; ak/crown.f lines 486 to 515; increase limited to 3 percent per year",
+  "BC", "All species", "When LV2ATV is true, NI-type, new minus old (equation {4.8.1.9}); otherwise a logistic equation of metric variables (see the paragraph that follows the table)", "canada/bc/crown.f",
+  "BM", "All species", "Weibull (equations {4.8.1.3} and {4.8.1.4}); SCALE form 1; B is at least 1.0 for WJ, LM and AS and at least 3.0 for the others", "WEIBA, WEIBB0, WEIBB1, WEIBC0, WEIBC1, C0, C1; bm/crown.f lines 402 to 451",
+  "CA", "PC, IC, RC, WF, RF, SH, DF, WH, MH, WB, KP, LP, CP, LM, JP, SP, WP, PP, MP, GP, WJ, BR, PY, OS, LO, CY, BL, EO, WO, BO, VO, IO, BM, BU, RA, MA, GC, DG, FL, WN, TO, SY, AS, CW, WI, CN, CL, OH", "Weibull (equations {4.8.1.3} and {4.8.1.4}); SCALE form 2", "ca/crown.f lines 479 to 515",
+  "CA", "GS, RW", "Logistic (equation {4.8.1.7}), with the coefficients of the redwood equation", "ca/crown.f lines 281 to 285",
+  "CI", "WP, WL, DF, GF, WH, RC, LP, ES, AF, PP, WB, PY, AS, MC, LM, OS", "Weibull (equations {4.8.1.3} and {4.8.1.4}); RELSDI is SDIAC / SDIDEF for WB, PY, AS, WJ, MC and LM, and BA / BAMAX for the others; SCALE form 1; B is at least 1.0 for species WB, PY, AS, WJ, MC, LM, CW and OH, and at least 3.0 for the others", "ci/crown.f lines 501 to 552",
+  "CI", "CW, OH", "Crown length, CR-type (equation {4.8.1.6})", "ci/crown.f lines 277 to 284",
+  "CI", "WJ", "Crown length, PI/JU-type (equation {4.8.1.6})", "ci/crown.f lines 294 to 301",
+  "CR", "All species", "Crown length by species and model type (subroutine GEMCR, table below)", "cr/crown.f, cr/gemcr.f",
+  "CS", "All species", "TWIGS (equation {4.8.1.8})", "BCR1 to BCR4; cs/crown.f lines 59 to 84",
+  "EC", "All species", "Weibull (equations {4.8.1.3} and {4.8.1.4}); SCALE form 1; B is at least 3.0", "ec/crown.f lines 411 to 487",
+  "EM", "LL", "NI-type, new minus old (equation {4.8.1.9})", "em/crown.f lines 255 to 266 and 382 to 436",
+  "EM", "GA, CW, BA, PW, NC, OH", "Crown length, CR-type (equation {4.8.1.6})", "em/crown.f lines 322 to 332",
+  "EM", "RM", "Crown length, PI/JU-type (equation {4.8.1.6})", "em/crown.f lines 322 to 332",
+  "EM", "WB, WL, DF, LM, LP, ES, AF, PP, AS, PB, OS", "Weibull (equations {4.8.1.3} and {4.8.1.4}); SCALE form 1; B is at least 1.0", "em/crown.f lines 626 to 671",
+  "HI, PN, WC and OP", "RW", "Logistic (equation {4.8.1.7}), with the coefficients of the redwood equation", "pn/crown.f line 295; wc/crown.f line 285; hi/crown.f line 296; op/crown.f line 297",
+  "HI, PN, WC and OP", "All except RW", "Weibull (equations {4.8.1.3} and {4.8.1.4}); SCALE form 1; B is at least 3.0", "hi/crown.f lines 492 to 532; pn/crown.f lines 491 to 531; wc/crown.f lines 477 to 517; op/crown.f lines 513 to 553",
+  "IE", "WP, WL, DF, GF, WH, RC, LP, ES, AF, PP, MH, WB, LL, OS", "NI-type, new minus old (equation {4.8.1.9})", "ie/crown.f lines 311 to 324 and 463 to 515",
+  "IE", "CO, OH", "Crown length, CR-type (equation {4.8.1.6})", "ie/crown.f lines 390 to 404",
+  "IE", "PM, RM", "Crown length, PI/JU-type (equation {4.8.1.6})", "ie/crown.f lines 390 to 404",
+  "IE", "LM, PY, AS, MM, PB", "Weibull (equations {4.8.1.3} and {4.8.1.4}); SCALE form 1; B is at least 1.0", "ie/crown.f lines 717 to 749",
+  "KT", "All species", "NI-type, new minus old (equation {4.8.1.9})", "PARM, CRCON; kt/crown.f lines 74 to 124",
+  "LS, NE and ON", "All species", "TWIGS (equation {4.8.1.8})", "BCR1 to BCR4; ls/crown.f lines 61 to 80, ne/crown.f lines 59 to 77, canada/on/crown.f lines 55 to 75",
+  "NC", "OS, SP, DF, WF, MA, IC, BO, TO, RF, PP, OH", "Weibull (equations {4.8.1.3} and {4.8.1.4}); SCALE form 2; B is at least 3.0", "nc/crown.f lines 471 to 509",
+  "NC", "RW", "Logistic (equation {4.8.1.7}), with the coefficients of the redwood equation", "nc/crown.f line 275",
+  "OC", "PC, IC, RC, GF, RF, SH, DF, WH, MH, WB, KP, LP, CP, LM, JP, SP, WP, PP, MP, GP, WJ, BR, PY, OS, LO, CY, BL, EO, WO, BO, VO, IO, BM, BU, RA, MA, GC, DG, FL, WN, TO, SY, AS, CW, WI, CN, CL, OH", "Weibull (equations {4.8.1.3} and {4.8.1.4}); SCALE form 2 (equation {4.8.1.4})", "oc/crown.f lines 517 to 556",
+  "OC", "GS, RW", "Logistic (equation {4.8.1.7}), with the coefficients of the redwood equation", "oc/crown.f line 301",
+  "SN", "All species", "Weibull with the SN forms of the mean crown ratio (equations {4.8.1.5} and {4.8.1.6}); SCALE form 1; no threshold diameter", "MCREQN, WEIBUL; sn/crown.f lines 421 to 621",
+  "SO", "All species", "Weibull (equations {4.8.1.3} and {4.8.1.4}); SCALE form 1; B is at least 3.0", "so/crown.f lines 362 to 424",
+  "TT", "PM, UJ, RM", "Crown length, PI/JU-type (equation {4.8.1.6})", "tt/crown.f lines 244 to 258",
+  "TT", "NC, OH", "Crown length, CR-type (equation {4.8.1.6})", "tt/crown.f lines 244 to 258",
+  "TT", "WB, LM, DF, BS, AS, LP, ES, AF, PP, BI, MM, MC, OS", "Weibull (equations {4.8.1.3} and {4.8.1.4}); SCALE form 1; RELSDI is BA / BAMAX for PP when BAMAX is positive, and is limited to 1.0 for OS; B is at least 3.0 for PP and at least 1.0 for the others", "tt/crown.f lines 455 to 510",
+  "UT", "PI, WJ, GO, PM, RM, UJ, GB, NC, FC, BE, OH", "Crown length: CR-type for species NC, FC and BE (species 18, 19 and 22 of the variant), and PI/JU-type for the others (equation {4.8.1.6})", "ut/crown.f lines 226 to 237",
+  "UT", "WB, LM, DF, WF, BS, AS, LP, ES, AF, PP, MC, BI, OS", "Weibull (equations {4.8.1.3} and {4.8.1.4}); SCALE form 1; RELSDI is limited to 1.0 for BS and OS; B is at least 1.0", "ut/crown.f lines 441 to 496",
+  "WS", "GB", "Crown length, PI/JU-type (equation {4.8.1.6})", "ws/crown.f",
+  "WS", "GS, RW", "Logistic (equation {4.8.1.7}), with the coefficients of the redwood equation (CRNEW is X x 100)", "ws/crown.f",
+  "WS", "SP, DF, WF, IC, JP, RF, PP, LP, WB, WP, PM, SF, KP, FP, CP, LM, MP, GP, WE, BD, MH, WJ, UJ, CJ, LO, CY, BL, BO, VO, IO, TO, GC, AS, CL, MA, DG, BM, MC, OS, OH", "Weibull (equations {4.8.1.3} and {4.8.1.4}); SCALE form 3; B is at least 3.0", "ws/crown.f lines 608 to 701"
+)
+
+kable(crown_by_variant,
+      col.names = c("Variant", "Species", "Model", "Arrays and source"),
+      caption = "Crown ratio change model by variant and species",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "5em") %>%
+  column_spec(3, width = "26em")
+```
+
+In the variants that use a diameter rank (equation {4.8.1.3}), a tree with a diameter of zero would use a random number for X; this branch is not reached for trees with a diameter. The threshold diameter of 1.0 inch in the source applies only when missing crown ratios are dubbed. In the variants other than KT, BC, EM (species LL) and IE (NI-type species) the change is calculated for every tree during the cycles, and in SN, CR, CS, LS, NE and ON there is no threshold diameter in the source at all.
+
+**Crown ratio change in the BC variant when LV2ATV is false.** Subroutine CRNMD evaluates, at the start and at the end of the cycle, YCR = CON + CRHTDBH x (H / D) + CRHT x H + CRDBH2 x D^2 + CRBAL x BAL, where H is the height in meters, D is the diameter in centimeters (a diameter below 2 cm is replaced by 2 cm, with the height of a tree of that diameter), BAL is the basal area in larger trees in square meters per hectare, and CON is the constant of the species built from the biogeoclimatic zone, elevation, slope and aspect. YCR is limited to the range -9.21 to 9.21, and the crown ratio is 1 / (1 + exp(YCR)). The change is the difference of the two crown ratios, and it is limited as in equation {4.8.1.1} (`canada/bc/crown.f` lines 730 to 779).
+
+**Crown ratio change in the CR variant.** CROWN calls subroutine GEMCR with the end-of-cycle height, HF = HT + HTG, and diameter, DF = DBH + DG / BARK (at least DBH). GEMCR returns the crown length, CL, with an equation of the species and model type of the stand (1, southwest mixed conifer; 2, southwest ponderosa pine; 3, Black Hills ponderosa pine; 4, spruce-fir; 5, lodgepole pine), and CRNEW = 100 x CL / HF with the bounds of equation {4.8.1.6}, except for species MH, RC and WL, for which GEMCR returns the crown ratio directly. The equations are given in the next table, where BA is the stand basal area, BAU is the basal area in the diameter classes larger than the class of the tree, PCTI is PCT, and DF and HF are as above.
+
+```{r crown-gemcr, echo=FALSE}
+crown_gemcr <- tibble::tribble(
+  ~Species, ~Model_Type, ~Equation,
+  "AF, CB", "1, 2", "CL = 0.50706 + 0.73070 x HF",
+  "AF, CB", "3, 4, 5", "CL = 0.36135 + 0.57085 x HF",
+  "DF", "All", "CL = 6.47479 + 0.54482 x DF + 0.50703 x HF - 0.03326 x BA",
+  "GF, WF", "All", "CL = 6.22959 + 0.67587 x HF - 0.03098 x BA",
+  "MH", "All", "CR = 0.3450 - 0.00264 x BA + 0.00000512 x RELDEN^2 - 0.25138 x ln(H) + 0.05140 x ln(PCTI) (crown ratio directly)",
+  "RC", "All", "CR = -1.6053 + 0.17479 x ln(BA) - 0.00183 x RELDEN - 0.00560 x DF + 0.11050 x ln(PCTI) (crown ratio directly)",
+  "WL", "All", "CR = 0.03441 - 0.00204 x BA + 0.30066 x ln(DF) - 0.59302 x ln(H) (crown ratio directly)",
+  "LP", "All", "CL = 5.00215 + 0.06334 x HF + 0.88236 x DF - 0.03821 x BAU",
+  "BC, LM, PI, WB, UJ, GO, AW, EM, BK, SO, AJ, RM, OJ, ER, PM, PD, AZ, OS", "All", "CL = -0.59373 + 0.67703 x HF (equation {4.8.1.6}, PI/JU-type)",
+  "PP, CI", "1", "CL = 5.63367 + 0.56252 x HF - 0.06411 x BA",
+  "PP, CI", "2", "CL = 4.35671 + 0.84714 x DF + 0.32549 x HF - 0.03802 x BA",
+  "PP, CI", "3, 4, 5", "CL = 3.49178 + 0.80767 x DF + 0.17421 x HF - 0.03272 x BA",
+  "SW", "All", "CL = 3.03832 + 0.65587 x HF - 0.01792 x BA",
+  "BS", "All", "CL = 3.61635 + 0.93639 x DF + 0.61547 x HF - 0.02360 x BA",
+  "ES", "1, 2", "CL = 1.05857 + 0.68442 x HF",
+  "ES", "3, 4, 5", "CL = 3.22244 + 0.44315 x HF + 0.44755 x DF",
+  "WS", "All", "CL = 0.15768 + 0.74697 x HF",
+  "AS, NC, PW, PB, OH", "All", "CL = 5.17281 + 0.32552 x HF - 0.01675 x BA (equation {4.8.1.6}, CR-type)"
+)
+
+kable(crown_gemcr,
+      col.names = c("Species", "Model type", "Equation of subroutine GEMCR"),
+      caption = "Crown length and crown ratio equations of the CR variant",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "7em") %>%
+  column_spec(3, width = "34em")
+```
+
+**ORGANON trees in OC and OP.** For a valid ORGANON tree (LORGANON is true and IORG(i) is 1), CRNEW is the end-of-cycle crown ratio of ORGANON, ANINT(100 x CR2(i)), from subroutine EXECUTE, which is called from subroutine DGDRIV. The limit of equation {4.8.1.1} is not applied to these trees; CHG = CRNEW - ICR is multiplied by CRNMLT in the DBH range of the CRNMULT keyword, and CRMAX of equation {4.8.1.2} still applies. All other trees use the models of the table.
+
+**The CRNMULT keyword.** The fields of the keyword are the date, the species (or species group or ALL), the multiplier (default 1.0), the lower DBH limit (default 0), the upper DBH limit (default 99.0), and a flag that applies the multiplier to the dubbed crown ratios only when it is greater than 0. When missing crown ratios are dubbed, or when a tree has no crown ratio, the dubbed value is multiplied by the multiplier, ICRI = INT(ICRI x CRNMLT), for trees in the DBH range. Because the minimum of 10 and the replacement of a crown ratio below 10 by CRMAX apply only when CRNMLT is 1.0, a multiplier other than 1.0 removes those two rules.
 
 Once the end-of-cycle crown ratios have been estimated for all trees, program control returns to subroutine GRADD.
 
-Subroutine GRADD calls subroutine CWIDTH to update crown width values for each tree record. Since subroutine CWIDTH doesn’t assign any species-specific constants, a single DO loop is used which loops over all tree records. If a user entered their own crown width equation coefficients using the CWEQN keyword record, subroutine CWIDTH uses these coefficients to estimate crown width. These coefficients are carried in the CWDCOM labeled COMMON block. If the default crown width equations are being used, subroutine CWIDTH calls subroutine CWCALC for each tree record to estimate crown width using individual tree parameters such as species, diameter, height, and crown ratio.
+**Crown width.** Subroutine CWIDTH sets the crown width, CRWDTH(i) in feet, of every tree record. Subroutine GRADD calls it after subroutine CROWN, using the updated crown ratios, and subroutine FVS calls it once at the start of the projection (after subroutine CRATET) to give the initial crown widths. Regeneration and sprout records get their crown width from direct calls to subroutine CWCALC in the establishment and sprouting routines. CWIDTH has two loops of the same logic, one over the live tree records and one over the dead tree records of the first cycle (the records IREC2 to MAXTRE). Tripled records receive the crown width of the original record (subroutine TRIPLE). For each record, CWIDTH does the following.
 
-Subroutine CWCALC contains the actual crown width equations. There are two versions of this subroutine: the version used in western variants is stored in the VIE source directory (the HI variant has its own version in the HI directory); the version used in eastern variants is stored in the LS variant source directory. Each crown width equation is numbered. The western version of subroutine CWCALC maps to an equation number based on the variant and species numerical sequence number for that variant; the eastern version of subroutine CWCALC maps to an equation number based on the FVS alpha code for the species.
+1. If the user supplied crown width coefficients for the species (keyword CWEQN), CW = CWDS0 + CWDS1 x DBH + CWDS2 x DBH^CWDS3 when DBH is less than the transition diameter CWTDBH of the species, and CW = CWDL0 + CWDL1 x DBH + CWDL2 x DBH^CWDL3 otherwise (equation {4.8.1.10}).
+2. Otherwise, CWIDTH calls subroutine CWCALC with the species, the tree diameter, height and crown ratio, and IWHO of 0 (forest-grown crown width).
+3. CRWDTH(i) = CW. CWIDTH applies no bounds to the user-supplied equation; the default equations are bounded in CWCALC.
+4. After the loops, each FIXCW activity of the cycle multiplies CRWDTH(i) by its multiplier for the records of the species (or species group, or all species) with a DBH that is at least the lower limit and less than the upper limit, and limits CRWDTH(i) to 99.9 feet. Because CWIDTH calculates the crown width again at each call, the multiplier is not cumulative.
+
+$$
+CW =
+\begin{cases}
+C0_S + C1_S \cdot DBH + C2_S \cdot DBH^{C3_S} & DBH < TC \\
+C0_L + C1_L \cdot DBH + C2_L \cdot DBH^{C3_L} & DBH \ge TC
+\end{cases}
+\tag{4.8.1.10}
+$$
+
+Where:
+
+- CW: Crown width (feet)
+- DBH: Diameter at breast height (inches)
+- TC: Transition diameter, CWTDBH, the second field of the CWEQN keyword record (inches)
+- C0_S to C3_S: Coefficients CWDS0 to CWDS3, the first four values of the supplemental record of the keyword
+- C0_L to C3_L: Coefficients CWDL0 to CWDL3, the last four values of the supplemental record of the keyword
+
+The fields of the CWEQN keyword record are the species (or species group, or ALL) and TC; the supplemental record holds the eight coefficients (format 8F10.0). The fields of the FIXCW keyword record are the date or cycle, the species, the multiplier (default 1.0), the lower DBH limit (default 0, inclusive) and the upper DBH limit (default 999, exclusive). In the metric variants (BC and ON) CWIDTH is in `metric/base/cwidth.f`; user equations are evaluated in centimeters and meters and CRWDTH is converted to feet, and the FIXCW diameter limits are in centimeters.
+
+**Crown width equations (subroutine CWCALC).** CWCALC is compiled from four files. The argument list is the same in all of them (species, trees per acre, diameter, height, crown ratio, integer crown ratio, crown width, IWHO).
+
+```{r cwcalc-files, echo=FALSE}
+cwcalc_files <- tibble::tribble(
+  ~Source_File, ~Variants,
+  "vie/cwcalc.f", "AK, BC, BM, CA, CI, CR, EC, EM, IE, KT, NC, OC, OP, PN, SO, TT, UT, WC, WS",
+  "hi/cwcalc.f", "HI",
+  "ls/cwcalc.f", "CS, LS, NE, SN",
+  "canada/on/cwcalc.f", "ON"
+)
+
+kable(cwcalc_files,
+      col.names = c("Source file", "Variants"),
+      caption = "Source files of subroutine CWCALC",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9)
+```
+
+In every file the crown width is bounded to at least 0.5 feet and at most 99.9 feet, and the equations carry a species-specific upper bound (examples are 16, 29, 33, 40 and 50 feet). For diameters below a minimum diameter the equations are scaled linearly: CW(D) = CW(D_min) x (D / D_min), where D_min is MIND (5.0 inches) for the Bechtold equations and OMIND for the others (1.0 inch in the western file and 3.0 inches in the eastern file). The equation of a species is identified by a five-character code: the three-digit FIA species code, and the two-digit equation number. The western file maps the species sequence number of the variant to this code (a DATA array for each variant); the eastern file maps the first two characters of the alpha species code to the code, and chooses the equation for open-grown crown width (IWHO = 1) where one exists. The equation numbers have different meanings in the two files. HI sets the variant code to PN and uses the PN map extended to its 45 species.
+
+*Western equations (`vie/cwcalc.f` and `hi/cwcalc.f`).* The variables are DBH (inches), H (feet), CR (percent), CL = CR x H / 100 (crown length, feet), BAREA (stand basal area, with a minimum of 1.0), EL (elevation in hundreds of feet, limited to a range by species), HI (the Hopkins index = ((100 x ELEV - 5449) / 100) + (LAT - 42.16) x 4.0 + (-116.39 - LONG) x 1.25, limited to a range by species), and BF (a multiplier of the Crookston R6 model 2 equations for the national forest, and 1.0 for the other forests). The equation forms are written once in equation {4.8.1.11}.
+
+$$
+\begin{aligned}
+\text{01 (Bechtold model 1):} \quad & CW = a + b\, D + c\, D^{2} \\
+\text{02 (Bechtold model 2):} \quad & CW = a + b\, D \;[+\, c\, D^{2}] \;[+\, d\, CR] \;[+\, e\, HI] \\
+\text{03 (Crookston, R1):} \quad & CW = k \exp\left(a + b \ln(CL) + c \ln(D)\right) \\
+\text{04 (Crookston, R6, model 1):} \quad & CW = a\, D^{b} \\
+\text{05 (Crookston, R6, model 2):} \quad & CW = a \cdot BF \cdot D^{b} H^{c} CL^{d} (BAREA + 1)^{e} \left(e^{EL}\right)^{f} \\
+\text{06 (Donnelly, R6):} \quad & CW = a\, D^{b} \\
+\text{08 (Castle, AK):} \quad & CW = a\, D^{b} H^{c} CL^{d} \;[(BAREA + 1)^{e} \left(e^{EL}\right)^{f}]
+\end{aligned}
+\tag{4.8.1.11}
+$$
+
+Where:
+
+- a to f, k: Coefficients of the species and equation (constants in the CASE of the equation code in the source file)
+- Terms in brackets are included only for some species; model 05 has the terms of BAREA and EL, H, or CL omitted for some species (the 5-character case shows the terms)
+- D: Diameter at breast height (inches); equations 01 and 02 use MIND (5.0 inches) as the minimum diameter, equations 04, 05 and 06 use OMIND (1.0 inch), equation 03 uses 1.0 inch, and equation 08 gives 0.5 foot below 0.1 inch
+- Equation 07 (Moeur) is coded but is not assigned to any species
+
+For example, equation 01 of species 066 is CW = 2.1431 + 1.3447 x D - 0.0228 x D^2 (cap 29 feet), and equation 05 of species 122 is CW = 4.7762 x BF x D^0.74126 x H^-0.28734 x CL^0.17137 x (BAREA + 1)^-0.00602 x (e^EL)^-0.00209 (cap 50 feet; `vie/cwcalc.f` lines 1215 and 1773).
+
+Some forests use other equations. In SO (forests 4 to 9), WS, NC (forests 1 to 3 and 5), and CA and OC (forests 1 to 5), CWCALC calls subroutine R5CRWD (`vws/r5crwd.f`, the Region 5 equations of Warbington and Levitan) instead of the equation of the map. In R5CRWD, the equations for trees larger than a threshold diameter are those of Warbington and Levitan (Region 5 FIA users guide), the equations for trees from 4.5 feet in height up to the threshold diameter were developed by Dixon, and for trees less than 4.5 feet in height the crown width is a straight line from 0 to the generic intercept (3.5 feet for conifers and 2.5 feet for hardwoods) (`vws/r5crwd.f`).
+
+The map of each variant is shown in the next table: the equation number is the last two digits of the code, and each species is shown with its FIA species code.
+
+```{r cwcalc-west, echo=FALSE}
+cwcalc_west <- tibble::tribble(
+  ~Variant, ~Equation, ~Species_and_FIA_Code,
+  "AK", "05", "SF 011, AF 019, YC 042, SS 098, LP 108, RC 242, WH 263, MH 264",
+  "AK", "06", "RA 351",
+  "AK", "08", "TA 095, WS 094, LS 094, BE 095, OS 094, AD 747, PB 375, AB 375, BA 747, AS 746, CW 747, WI 747, SU 747, OH 747",
+  "BM", "01", "LM 113",
+  "BM", "03", "WL 073, GF 017, MH 264",
+  "BM", "04", "PY 231",
+  "BM", "05", "WP 119, DF 202, WJ 064, LP 108, ES 093, AF 019, PP 122, WB 101, YC 042, AS 746, CW 747, OS 122",
+  "BM", "06", "OH 312",
+  "CA", "01", "LM 113",
+  "CA", "02", "MP 127, GP 127, LO 801, CY 805, BL 807, EO 807, BO 818, VO 821, IO 839, MA 361, GC 631, TO 631, SY 631, CN 981, CL 981",
+  "CA", "03", "MH 264",
+  "CA", "04", "BR 092, GS 211, PY 231, RW 211",
+  "CA", "05", "PC 041, IC 081, RC 242, WF 015, SH 021, DF 202, WH 263, WB 101, KP 103, LP 108, CP 108, JP 116, SP 117, WP 119, PP 122, WJ 064, OS 116, WO 815, AS 746, CW 747",
+  "CA", "06", "RF 020, BM 312, BU 312, RA 351, DG 351, FL 312, WN 312, WI 312, OH 312",
+  "CI", "01", "LM 113",
+  "CI", "02", "MC 475, CW 749, OH 749",
+  "CI", "03", "WP 119, WL 073, DF 202, GF 017, RC 242, LP 108, ES 093, PP 122",
+  "CI", "04", "PY 231",
+  "CI", "05", "WH 263, AF 019, WB 101, AS 746, WJ 064, OS 122",
+  "CR", "01", "CB 018, BC 102, LM 113",
+  "CR", "02", "PI 106, UJ 066, NC 749, PW 749, GO 814, AW 814, EM 814, BK 814, SO 814, AJ 066, RM 066, OJ 066, ER 066, PM 106, PD 106, AZ 106, OH 749",
+  "CR", "03", "GF 017, MH 264, WL 073",
+  "CR", "05", "AF 019, DF 202, WF 015, RC 242, LP 108, PP 122, WB 101, SW 119, BS 093, ES 093, WS 093, AS 746, PB 746, CI 122, OS 122",
+  "EC", "02", "VN 321, GC 631",
+  "EC", "03", "WL 073, GF 017, MH 264, OS 264",
+  "EC", "04", "PY 231, LL 072",
+  "EC", "05", "WP 119, DF 202, SF 011, RC 242, LP 108, ES 093, AF 019, PP 122, WH 263, WB 101, WF 015, YC 042, WJ 064, AS 746, CW 747, WO 815, OH 746",
+  "EC", "06", "NF 022, BM 312, RA 351, PB 375, DG 351, PL 351, WI 312",
+  "EM", "01", "LM 113",
+  "EM", "02", "RM 066, GA 749, BA 749, PW 749, NC 749, OH 749",
+  "EM", "03", "WL 073, DF 202, LP 108, ES 093, AF 019, PP 122",
+  "EM", "04", "LL 072",
+  "EM", "05", "WB 101, AS 746, CW 747, OS 264",
+  "EM", "06", "PB 375",
+  "BC", "02", "AC 749",
+  "BC", "03", "PW 119, LW 073, FD 202, BG 017, SE 093, PY 122, OC 202",
+  "BC", "05", "HW 263, CW 242, PL 108, BL 019, AT 746",
+  "BC", "06", "EP 375, OH 375",
+  "IE", "01", "LM 113",
+  "IE", "02", "PM 106, RM 066, CO 749, MM 321, OH 749",
+  "IE", "03", "WP 119, WL 073, DF 202, GF 017, WH 263, RC 242, LP 108, ES 093, AF 019, PP 122",
+  "IE", "04", "LL 072, PY 231",
+  "IE", "05", "MH 264, WB 101, AS 746, OS 122",
+  "IE", "06", "PB 375",
+  "KT", "03", "WP 119, WL 073, DF 202, GF 017, WH 263, RC 242, LP 108, ES 093, AF 019, PP 122",
+  "KT", "05", "OT 264",
+  "NC", "02", "MA 361, BO 818, TO 631, OH 818",
+  "NC", "04", "RW 211",
+  "NC", "05", "OS 122, SP 117, DF 202, WF 015, IC 081, PP 122",
+  "NC", "06", "RF 020",
+  "OC", "01", "LM 113",
+  "OC", "02", "MP 127, GP 127, LO 801, CY 805, BL 807, EO 807, BO 818, VO 821, IO 839, MA 361, GC 631, TO 631, SY 631, CN 981, CL 981",
+  "OC", "03", "GF 017, MH 264",
+  "OC", "04", "BR 092, GS 211, PY 231, RW 211",
+  "OC", "05", "PC 041, IC 081, RC 242, SH 021, DF 202, WH 263, WB 101, KP 103, LP 108, CP 108, JP 116, SP 117, WP 119, PP 122, WJ 064, OS 116, WO 815, AS 746, CW 747",
+  "OC", "06", "RF 020, BM 312, BU 312, RA 351, DG 351, FL 312, WN 312, WI 312, OH 312",
+  "OP", "02", "MA 361, TO 631, GC 631",
+  "OP", "03", "GF 017, MH 264",
+  "OP", "04", "RW 211, LL 072, PY 231",
+  "OP", "05", "SF 011, WF 015, AF 019, SS 098, YC 042, IC 081, ES 093, LP 108, JP 116, SP 117, WP 119, PP 122, DF 202, RC 242, WH 263, AS 746, CW 747, WO 815, WJ 064, WB 101, KP 103, (species 38) 122, OT 122",
+  "OP", "06", "RF 020, NF 022, BM 312, RA 351, DG 351, HT 351, CH 351, WI 312",
+  "PN", "02", "GC 631",
+  "PN", "03", "GF 017, MH 264",
+  "PN", "04", "RW 211, LL 072, PY 231",
+  "PN", "05", "SF 011, WF 015, AF 019, SS 098, YC 042, IC 081, ES 093, LP 108, JP 116, SP 117, WP 119, PP 122, DF 202, RC 242, WH 263, AS 746, CW 747, WO 815, WJ 064, WB 101, KP 103, (species 38) 122, OT 122",
+  "PN", "06", "RF 020, NF 022, BM 312, RA 351, WA 312, PB 375, DG 351, HT 351, CH 351, WI 312",
+  "SO", "02", "GC 631, MC 475, MB 475",
+  "SO", "03", "MH 264, GF 017, WL 073",
+  "SO", "04", "PY 231",
+  "SO", "05", "WP 119, SP 117, DF 202, WF 015, IC 081, LP 108, ES 093, SH 021, PP 122, WJ 064, AF 019, SF 011, WB 101, RC 242, WH 263, AS 746, CW 747, WO 815, OS 122",
+  "SO", "06", "NF 022, WA 312, RA 351, BM 312, CH 351, WI 312, OH 312",
+  "TT", "01", "LM 113",
+  "TT", "02", "PM 106, MM 321, NC 749, MC 475, OH 749",
+  "TT", "03", "PP 122",
+  "TT", "05", "WB 101, DF 202, BS 093, AS 746, LP 108, ES 093, AF 019, UJ 064, RM 064, OS 122",
+  "TT", "06", "BI 312",
+  "UT", "01", "LM 113, GB 102",
+  "UT", "02", "PI 106, GO 814, PM 106, NC 749, FC 749, MC 475, BE 749, OH 814",
+  "UT", "05", "WB 101, DF 202, WF 015, BS 093, AS 746, LP 108, ES 093, AF 019, PP 122, WJ 064, RM 064, UJ 064, OS 122",
+  "UT", "06", "BI 312",
+  "WC", "02", "GC 631",
+  "WC", "03", "GF 017, MH 264",
+  "WC", "04", "RW 211, LL 072, PY 231",
+  "WC", "05", "SF 011, WF 015, AF 019, (species 6) 098, YC 042, IC 081, ES 093, LP 108, JP 116, SP 117, WP 119, PP 122, DF 202, RC 242, WH 263, AS 746, CW 747, WO 815, WJ 064, WB 101, KP 103, (species 38) 122, OT 122",
+  "WC", "06", "RF 020, NF 022, BM 312, RA 351, WA 312, PB 375, DG 351, HT 351, CH 351, WI 312",
+  "WS", "01", "LM 113, GB 102",
+  "WS", "02", "PM 106, GP 127, LO 801, CY 805, BL 807, BO 818, VO 821, IO 839, TO 631, GC 631, CL 981, MA 361, MC 475, OH 818",
+  "WS", "03", "MH 264",
+  "WS", "04", "GS 211, RW 211",
+  "WS", "05", "SP 117, DF 202, WF 015, IC 081, JP 116, PP 122, LP 108, WB 101, WP 119, SF 011, KP 103, FP 103, CP 108, MP 122, WE 103, BD 202, WJ 064, UJ 064, CJ 064, AS 746, OS 122",
+  "WS", "06", "RF 020, DG 351, BM 312",
+  "HI", "02", "GC 631",
+  "HI", "03", "GF 017, MH 264",
+  "HI", "04", "RW 211, LL 072, PY 231",
+  "HI", "05", "SF 011, WF 015, AF 019, SS 098, YC 042, IC 081, ES 093, LP 108, JP 116, SP 117, WP 119, PP 122, DF 202, RC 242, WH 263, AS 746, CW 747, WO 815, WJ 064, WB 101, KP 103, AK 122, LE 122, IF 122, IM 122, IH 122, IK 122, (species 44) 122, OT 122",
+  "HI", "06", "RF 020, NF 022, BM 312, RA 351, WA 312, PB 375, DG 351, HT 351, CH 351, WI 312"
+)
+
+kable(cwcalc_west,
+      col.names = c("Variant", "Equation", "Species and FIA code"),
+      caption = "Crown width equation of the species, western CWCALC",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "4em") %>%
+  column_spec(3, width = "36em")
+```
+
+*Eastern equations (`ls/cwcalc.f` and `canada/on/cwcalc.f`).* The variables are D, CR and HI, where the Hopkins index is HI = ((100 x ELEV - 887) / 100) + (LAT - 39.54) x 4.0 + (-82.52 - LONG) x 1.25 (the western HI is not used). H and the trees per acre are not used. The forms are shown in equation {4.8.1.12}; every equation is scaled linearly below MIND (5.0 inches) or OMIND (3.0 inches), and has a species cap.
+
+$$
+\begin{aligned}
+\text{01 (Bechtold):} \quad & CW = a + b\, D \;[+\, c\, D^{2}] \;[+\, d\, CR] \;[+\, e\, HI] \\
+\text{02 (Bragg):} \quad & CW = a + b\, D^{c} \\
+\text{03 (Ek):} \quad & CW = a + b\, D^{c} \\
+\text{04 (Krajicek):} \quad & CW = a + b\, D \\
+\text{05 (Smith):} \quad & CW = 3.28084\,\left(a + b \cdot 2.54\, D + c\,(2.54\, D)^{2}\right)
+\end{aligned}
+\tag{4.8.1.12}
+$$
+
+Where:
+
+- a, b, c, d, e: Coefficients of the species and equation (constants in the CASE of the equation code in the source file); equation 01 has three forms, with the terms for D alone, D and CR, or D, CR and HI
+- D: Diameter at breast height (inches)
+- CR: Crown ratio (percent)
+- Equation 05 (Smith) is coded in metric units and converted to feet
+
+The forest-grown equation of the species (IWHO = 0) is used by CWIDTH. The open-grown equation (IWHO = 1) is used only by subroutine CCFCAL of the eastern variants to calculate the crown competition factor. The equations of each variant are shown in the next table, where each species is shown with its FIA species code of the forest-grown equation. Species that have no code in the species list of the variant are not shown.
+
+```{r cwcalc-east, echo=FALSE}
+cwcalc_east <- tibble::tribble(
+  ~Variant, ~Forest_Grown_Equation, ~Open_Grown_Equation, ~Species_and_FIA_Code,
+  "CS", "01", "01", "RC 068, JU 068, VP 132, OS 068, WN 602, BN 602, TL 693, TS 694, WT 691, BG 693, MH 409, PH 403, WH 402, BH 402, PE 402, BI 408, AB 531, BA 543, PA 541, UA 541, BE 313, SV 317, SG 462, HK 462, WE 971, RL 975, YP 621, BW 951, WA 541, SK 812, SO 806, BJ 824, CK 826, SN 832, PO 835, DO 835, CO 832, PN 830, CB 812, QI 817, WK 827, NK 812, WL 831, QS 812, SS 931, CA 931, PS 521, HL 552, BP 741, BT 743, BK 901, SY 731, BY 221, RB 373, SU 611, OH 931, AH 391, RD 491, DW 491, HT 491, KC 901, OO 931, CT 651, MV 653, MB 682, HH 701, SD 711",
+  "CS", "01", "03", "WP 129, SH 407, SL 407, HI 407, EC 742, RM 316, BC 762, AE 972, EL 972, SI 972, RE 972, SM 318, AS 544, GA 544, RO 833, BR 823, OV 823, OB 407, QA 746, WI 972, BL 972",
+  "CS", "01", "04", "WO 802, BO 837, SW 802",
+  "CS", "01", "05", "SP 110, LP 131",
+  "LS", "01", "01", "SC 130, WC 241, EH 261, OS 068, RC 068, BA 543, SV 317, RL 975, YB 371, BW 951, AB 531, WA 541, CK 826, NP 809, BH 402, PH 403, BT 743, BP 741, BN 602, WN 602, HH 701, BK 901, OH 931, BE 313, ST 313, MM 313, AH 391, HK 462, DW 491, HT 491, BG 693, SY 731, SS 931, MA 552",
+  "LS", "01", "03", "JP 105, RN 125, RP 125, WP 129, WS 094, BF 012, BS 095, TA 071, GA 544, EC 742, RM 316, BC 762, AE 972, RE 972, SM 318, BM 318, BR 823, RO 833, SH 407, QA 746, PB 375, AC 407, WI 972, BL 972, DM 972",
+  "LS", "01", "04", "NS 091, WO 802, SW 802, BO 837",
+  "LS", "02", "02", "AP 761, PR 761, CC 761, PL 761",
+  "NE", "01", "01", "RS 097, VP 132, WC 241, AW 241, RC 068, JU 068, EH 261, HM 261, TM 126, PP 126, PD 128, SC 130, OS 068, SV 317, YB 371, SB 372, RB 373, PH 403, MH 409, AB 531, WA 541, BA 543, PA 541, YP 621, SU 611, CT 651, BP 741, BT 743, CK 826, PO 835, SO 806, QI 817, WK 827, PN 830, CO 832, SN 832, SK 812, CB 812, WR 373, HK 462, PS 521, HY 591, BN 602, WN 602, OO 931, MG 653, MV 653, WT 691, BG 693, SD 711, PW 931, SY 731, WL 831, BK 901, SS 931, BW 951, WB 951, RL 975, OH 931, BE 313, ST 313, AI 491, SE 356, AH 391, DW 491, HT 491, HH 701",
+  "NE", "01", "03", "BF 012, TA 071, WS 094, BS 095, PI 094, RN 125, WP 129, OP 129, JP 105, RM 316, SM 318, BM 318, PB 375, GB 375, HI 407, SL 407, SH 407, AS 544, GA 544, QA 746, EC 742, PY 742, BC 762, BR 823, RO 833, BU 407, YY 407, BL 972, EL 972, AE 972",
+  "NE", "01", "04", "NS 091, WO 802, OK 802, SW 802, BO 837",
+  "NE", "01", "05", "LP 131, SP 110",
+  "NE", "02", "02", "AP 761, PL 761, PR 761",
+  "SN", "01", "01", "JU 068, PU 132, SA 111, TM 126, PP 126, PD 128, VP 132, BY 221, PC 221, HM 261, BE 313, SV 317, BB 373, SB 372, AH 391, CA 931, HB 462, RD 491, DW 491, PS 521, AB 531, WA 541, BA 543, HL 552, LB 653, HA 491, HY 591, BN 602, WN 602, SU 611, YP 621, MG 653, CT 651, MS 653, MV 653, ML 653, MB 682, WT 691, BG 693, TS 694, HH 701, SD 711, RA 721, SY 731, BT 743, SO 806, SK 812, CB 812, TO 819, LK 820, BJ 824, SN 832, CK 826, WK 827, CO 832, QS 812, PO 835, LO 838, BK 901, SS 931, BD 951, WE 971, RL 975, OS 068, OH 931",
+  "SN", "01", "03", "FR 012, PI 094, WP 129, FM 318, RM 316, SM 318, BU 407, HI 407, AS 544, GA 544, CW 742, BC 762, OV 823, RO 833, WI 972, EL 972, AE 972, OT 316",
+  "SN", "01", "04", "WO 802, BO 837",
+  "SN", "01", "05", "SP 110, SR 110, LL 121, LP 131",
+  "SN", "02", "02", "AP 761"
+)
+
+kable(cwcalc_east,
+      col.names = c("Variant", "Forest-grown equation", "Open-grown equation", "Species and FIA code"),
+      caption = "Crown width equation of the species, eastern CWCALC",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "4em") %>%
+  column_spec(4, width = "34em")
+```
+
+The ON variant has its own copy of the eastern routine, which maps the species through its own table of two-character codes. The crown width of the cover model (subroutine CVCW) is CRWDTH(i), and subroutine CCFCAL of the eastern variants uses the open-grown crown width of subroutine CWCALC with CR of 90 and IWHO of 1 to calculate the crown competition factor, CCFT = 0.001803 x CW^2 x P.
 
 When crown widths have been updated for all tree records, subroutine CWIDTH returns program control to subroutine GRADD. If the cover extension is active, subroutine GRADD next calls CVCNOP to compute new crown area and foliage biomass estimates. CVCNOP will exist as a subroutine if the cover extension is part of the program executable or as an entry point in subroutine EXCOV if the extension is not included in the program executable. And finally, subroutine GRADD calls subroutines PCTILE, DIST, and COMP to update distributions and percentile points for various attributes that have changed during the projection cycle. Subroutine GRADD returns program control back to subroutine TREGRO.
 
@@ -5718,7 +6230,7 @@ Subroutine OPFIND is used to find any CRNMULT or FIXCW activities scheduled for 
 
 OPGET, an entry point in subroutine OPFIND, is used to retrieve any CRNMULT or FIXCW activities scheduled for the projection cycle.
 
-Subroutine RANN is used to return a random number in some versions of subroutine CROWN.
+Subroutine RANN is used to return a random number in subroutine CROWN: in the Weibull equation for a tree with a diameter of zero, and, through function BACHLO, when missing crown ratios are dubbed in the KT, EM, IE and BC variants.
 
 ## End-Of-Cycle Updating of stand and output information
 

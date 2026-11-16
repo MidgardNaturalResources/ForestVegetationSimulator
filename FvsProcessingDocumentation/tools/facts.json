@@ -2721,5 +2721,439 @@
   "doc": "FINDAG SITAGE above HTMAX",
   "file": "wc/findag.f",
   "regex": "SITAGE = AGMAX1 \\+ \\(H - HTMAX\\)/0\\.10"
+ },
+ {
+  "id": "crown-order-gradd",
+  "type": "regex_in_file",
+  "doc": "GRADD calls UPDATE, then CROWN, then CWIDTH",
+  "file": "base/gradd.f",
+  "regex": "CALL UPDATE[\\s\\S]*CALL CROWN[\\s\\S]*CALL CWIDTH"
+ },
+ {
+  "id": "crown-update-ht",
+  "type": "regex_in_file",
+  "doc": "UPDATE adds HTG to HT",
+  "file": "base/update.f",
+  "regex": "HT\\(I\\) = HT\\(I\\)\\+HTG\\(I\\)"
+ },
+ {
+  "id": "crown-clamp-up",
+  "type": "regex_in_file",
+  "doc": "CROWN: 1 percent per year limit on an increase",
+  "file": "so/crown.f",
+  "regex": "IF\\(PDIFPY\\.GT\\.0\\.01\\)CHG=REAL\\(ICR\\(I\\)\\)\\*\\(0\\.01\\)\\*FINT"
+ },
+ {
+  "id": "crown-clamp-down",
+  "type": "regex_in_file",
+  "doc": "CROWN: 1 percent per year limit on a decrease",
+  "file": "so/crown.f",
+  "regex": "IF\\(PDIFPY\\.LT\\.-0\\.01\\)CHG=REAL\\(ICR\\(I\\)\\)\\*\\(-0\\.01\\)\\*FINT"
+ },
+ {
+  "id": "crown-chg-ak-3pct",
+  "type": "regex_in_file",
+  "doc": "AK CROWN: 3 percent per year on an increase",
+  "file": "ak/crown.f",
+  "regex": "IF\\(PDIFPY\\.GT\\.0\\.03\\)CHG=REAL\\(ICR\\(I\\)\\)\\*\\(0\\.03\\)\\*FINT"
+ },
+ {
+  "id": "crown-crmax",
+  "type": "regex_in_file",
+  "doc": "CROWN: CRMAX formula",
+  "file": "so/crown.f",
+  "regex": "CRMAX=\\(CRLN\\+HTG\\(I\\)\\)/\\(HT\\(I\\)\\+HTG\\(I\\)\\)\\*100\\.0"
+ },
+ {
+  "id": "crown-floor10",
+  "type": "regex_in_file",
+  "doc": "CROWN: CRMAX replaces CR below 10 when CRNMLT is 1",
+  "file": "so/crown.f",
+  "regex": "IF\\(ICRI\\.LT\\.10 \\.AND\\. CRNMLT\\(ISPC\\)\\.EQ\\.1\\.0\\)ICRI=INT\\(CRMAX\\+0\\.5\\)"
+ },
+ {
+  "id": "crown-cap95",
+  "type": "regex_in_file",
+  "doc": "CROWN: cap of 95",
+  "file": "so/crown.f",
+  "regex": "IF\\(ICRI\\.GT\\.95\\) ICRI=95"
+ },
+ {
+  "id": "crown-weibull",
+  "type": "regex_in_file",
+  "doc": "CROWN: Weibull equation",
+  "file": "so/crown.f",
+  "regex": "CRNEW\\(I\\) = A \\+ B\\*\\(\\(-1\\.0\\*ALOG\\(1-X\\)\\)\\*\\*\\(1\\.0/C\\)\\)"
+ },
+ {
+  "id": "crown-weibull-x10",
+  "type": "regex_in_file",
+  "doc": "CROWN: Weibull value multiplied by 10",
+  "file": "so/crown.f",
+  "regex": "CRNEW\\(I\\) = CRNEW\\(I\\)\\*10\\.0"
+ },
+ {
+  "id": "crown-acrnew",
+  "type": "regex_in_file",
+  "doc": "CROWN: mean crown ratio from RELSDI",
+  "file": "so/crown.f",
+  "regex": "ACRNEW = C0\\(ISPC\\) \\+ C1\\(ISPC\\) \\* RELSDI\\*100\\.0"
+ },
+ {
+  "id": "crown-scale1",
+  "type": "regex_in_file",
+  "doc": "CROWN: SCALE form 1",
+  "file": "so/crown.f",
+  "regex": "SCALE = \\(1\\.0 - \\.00167 \\* \\(RELDEN-100\\.0\\)\\)"
+ },
+ {
+  "id": "crown-scale2",
+  "type": "regex_in_file",
+  "doc": "CROWN: SCALE form 2 in NC",
+  "file": "nc/crown.f",
+  "regex": "SCALE=1\\.5-RELSDI"
+ },
+ {
+  "id": "crown-scale3",
+  "type": "regex_in_file",
+  "doc": "CROWN: SCALE form 3 in WS",
+  "file": "ws/crown.f",
+  "regex": "SCALE = \\(1\\.0 - \\.00333 \\* \\(RELDEN-50\\.0\\)\\)"
+ },
+ {
+  "id": "crown-sn-relsdi",
+  "type": "regex_in_file",
+  "doc": "SN CROWN: RELSDI times 10",
+  "file": "sn/crown.f",
+  "regex": "RELSDI = SDIAC / SDIDEF\\(ISPC\\)\\*10\\.0"
+ },
+ {
+  "id": "crown-sn-hoerl",
+  "type": "regex_in_file",
+  "doc": "SN CROWN: Hoerl equation",
+  "file": "sn/crown.f",
+  "regex": "ACRNEW= EXP\\(AMCR\\+BMCR\\*ALOG\\(RELSDI\\)\\+CMCR\\*RELSDI\\)"
+ },
+ {
+  "id": "crown-sn-hyper",
+  "type": "regex_in_file",
+  "doc": "SN CROWN: hyperbolic equation",
+  "file": "sn/crown.f",
+  "regex": "ACRNEW= RELSDI/\\(AMCR\\*RELSDI \\+ BMCR\\)"
+ },
+ {
+  "id": "crown-sn-weibull-chg",
+  "type": "regex_in_file",
+  "doc": "SN CROWN: Weibull parameters",
+  "file": "sn/crown.f",
+  "regex": "B = WEIBUL\\(2,ISPC\\) \\+ WEIBUL\\(3,ISPC\\)\\*ACRNEW"
+ },
+ {
+  "id": "crown-bfloor-bm",
+  "type": "regex_in_file",
+  "doc": "BM CROWN: B floor of 1.0 for species 6, 12, 15",
+  "file": "bm/crown.f",
+  "regex": "IF\\(ISPC\\.EQ\\.6 \\.OR\\. ISPC\\.EQ\\.12 \\.OR\\. ISPC\\.EQ\\.15\\)THEN"
+ },
+ {
+  "id": "crown-bfloor-so",
+  "type": "regex_in_file",
+  "doc": "SO CROWN: B floor of 3.0",
+  "file": "so/crown.f",
+  "regex": "IF\\(B \\.LT\\. 3\\.0\\) B=3\\.0"
+ },
+ {
+  "id": "crown-bfloor-ut",
+  "type": "regex_in_file",
+  "doc": "UT CROWN: B floor of 1.0",
+  "file": "ut/crown.f",
+  "regex": "IF\\(B \\.LT\\. 1\\.0\\) B=1\\.0"
+ },
+ {
+  "id": "crown-ci-relsdi",
+  "type": "regex_in_file",
+  "doc": "CI CROWN: BA/BAMAX for species outside 11 to 16",
+  "file": "ci/crown.f",
+  "regex": "RELSDI = BA / BAMAX"
+ },
+ {
+  "id": "crown-tt-relsdi",
+  "type": "regex_in_file",
+  "doc": "TT CROWN: BA/BAMAX for PP",
+  "file": "tt/crown.f",
+  "regex": "RELSDI = BA / BAMAX"
+ },
+ {
+  "id": "crown-cl-cr",
+  "type": "regex_in_file",
+  "doc": "CROWN: crown length equation of the CR type",
+  "file": "ut/crown.f",
+  "regex": "CL = 5\\.17281 \\+ 0\\.32552 \\* HF - 0\\.01675 \\* BA"
+ },
+ {
+  "id": "crown-cl-piju",
+  "type": "regex_in_file",
+  "doc": "CROWN: crown length equation of the PI/JU type",
+  "file": "ut/crown.f",
+  "regex": "CL = -0\\.59373 \\+ 0\\.67703 \\* HF"
+ },
+ {
+  "id": "crown-ak-logistic-chg",
+  "type": "regex_in_file",
+  "doc": "AK CROWN: logistic equation",
+  "file": "ak/crown.f",
+  "regex": "\\+ B2 \\* LOG\\(H\\*12/D\\)"
+ },
+ {
+  "id": "crown-rw-logistic",
+  "type": "regex_in_file",
+  "doc": "CA CROWN: redwood logistic",
+  "file": "ca/crown.f",
+  "regex": "X = -1\\.021064 \\+ 0\\.309296\\*LOG\\(HDR\\)"
+ },
+ {
+  "id": "crown-twigs-cs",
+  "type": "regex_in_file",
+  "doc": "CS CROWN: TWIGS equation",
+  "file": "cs/crown.f",
+  "regex": "CRNEW\\(I\\)=10\\*\\(BCR1\\(ISPC\\)/DEN\\+BCR3\\(ISPC\\)\\*\\(1-EXP\\(-1\\.\\*BCR4\\(ISPC\\)\\*D\\)\\)\\)"
+ },
+ {
+  "id": "crown-twigs-ls",
+  "type": "regex_in_file",
+  "doc": "LS CROWN: TWIGS equation",
+  "file": "ls/crown.f",
+  "regex": "CRNEW\\(I\\)=10\\*\\(BCR1\\(ISPC\\)/DEN\\+BCR3\\(ISPC\\)\\*\\(1-EXP\\(BCR4\\(ISPC\\)\\*D\\)\\)\\)"
+ },
+ {
+  "id": "crown-ni-pcr",
+  "type": "regex_in_file",
+  "doc": "KT CROWN: NI-type equation",
+  "file": "kt/crown.f",
+  "regex": "PCR = XCRCON \\+ B7\\*D \\+ B8\\*D\\*D \\+ B9\\*ALOG\\(D\\)"
+ },
+ {
+  "id": "crown-ni-floor5",
+  "type": "regex_in_file",
+  "doc": "KT CROWN: minimum of 5",
+  "file": "kt/crown.f",
+  "regex": "IF \\(\\(ICRI\\.LT\\.5\\)\\.AND\\.\\(CRNMLT\\(ISPC\\)\\.EQ\\.1\\)\\) ICRI=5"
+ },
+ {
+  "id": "crown-ni-crsd",
+  "type": "regex_in_file",
+  "doc": "KT CROWN: CRSD 6.35",
+  "file": "kt/crown.f",
+  "regex": "DATA CRSD/6\\.35/"
+ },
+ {
+  "id": "crown-ni-small",
+  "type": "regex_in_file",
+  "doc": "KT CROWN: trees below 3 inches are not changed",
+  "file": "kt/crown.f",
+  "regex": "IF\\(D\\.LT\\.3\\.0\\) GO TO 58"
+ },
+ {
+  "id": "crown-bc-crnmd",
+  "type": "regex_in_file",
+  "doc": "BC CROWN: logistic of metric variables",
+  "file": "canada/bc/crown.f",
+  "regex": "YCR = 1\\./\\(1\\.0 \\+ EXP\\(YCR\\)\\)"
+ },
+ {
+  "id": "crown-gemcr-ps",
+  "type": "regex_in_file",
+  "doc": "GEMCR: ponderosa pine of the southwest mixed conifer type",
+  "file": "cr/gemcr.f",
+  "regex": "CL = 5\\.63367 \\+ 0\\.56252 \\* HF - 0\\.06411 \\* BAT"
+ },
+ {
+  "id": "crown-gemcr-mh",
+  "type": "regex_in_file",
+  "doc": "GEMCR: mountain hemlock crown ratio",
+  "file": "cr/gemcr.f",
+  "regex": "CR = 0\\.3450 - 0\\.00264\\*BAT"
+ },
+ {
+  "id": "crown-organon",
+  "type": "regex_in_file",
+  "doc": "OC CROWN: ORGANON crown ratio",
+  "file": "oc/crown.f",
+  "regex": "CRNEW\\(I\\) =   ANINT\\( CR2\\(I\\) \\* 100\\.0 \\)"
+ },
+ {
+  "id": "crown-organon-floor",
+  "type": "regex_in_file",
+  "doc": "OC CROWN: floor of 10 skipped in ORGANON runs",
+  "file": "oc/crown.f",
+  "regex": "IF\\(\\(\\.NOT\\. LORGANON\\) \\.AND\\. \\(IORG\\(I\\) \\.NE\\. 1\\)\\) THEN"
+ },
+ {
+  "id": "crown-crnmult-defaults",
+  "type": "regex_in_file",
+  "doc": "CROWN: DHI default 99",
+  "file": "so/crown.f",
+  "regex": "DATA DHI/MAXSP\\*99\\.0/"
+ },
+ {
+  "id": "crown-crnmult-keyword",
+  "type": "regex_in_file",
+  "doc": "CRNMULT keyword activity 81",
+  "file": "vbase/initre.f",
+  "regex": "CALL OPNEW \\(KODE,IDT,81,5,ARRAY\\(2\\)\\)"
+ },
+ {
+  "id": "crown-flag-htgstp",
+  "type": "regex_in_file",
+  "doc": "HTGSTP flags crown ratio with a negative value",
+  "file": "base/htgstp.f",
+  "regex": "ICR\\(I\\)=-NEW"
+ },
+ {
+  "id": "crown-flag-fire",
+  "type": "regex_in_file",
+  "doc": "FFE flags crown ratio with a negative value",
+  "file": "fire/base/fmkill.f",
+  "regex": "ICR\\(I\\) = -FMICR\\(I\\)"
+ },
+ {
+  "id": "cwidth-eq",
+  "type": "regex_in_file",
+  "doc": "CWIDTH: user equation",
+  "file": "base/cwidth.f",
+  "regex": "CW=CWDS0\\(ISPC\\)\\+CWDS1\\(ISPC\\)\\*DBH\\(I\\)\\+"
+ },
+ {
+  "id": "cwidth-call",
+  "type": "regex_in_file",
+  "doc": "CWIDTH: call to CWCALC with IWHO 0",
+  "file": "base/cwidth.f",
+  "regex": "CALL CWCALC\\(ISPC,P,D,H,CR,IICR,CW,IWHO,JOSTND\\)"
+ },
+ {
+  "id": "cwidth-fixcw",
+  "type": "regex_in_file",
+  "doc": "CWIDTH: FIXCW multiplier",
+  "file": "base/cwidth.f",
+  "regex": "CRWDTH\\(I\\)=CRWDTH\\(I\\)\\*PRM\\(2\\)"
+ },
+ {
+  "id": "cwidth-fixcw-cap",
+  "type": "regex_in_file",
+  "doc": "CWIDTH: FIXCW cap of 99.9",
+  "file": "base/cwidth.f",
+  "regex": "IF\\(CRWDTH\\(I\\)\\.GT\\. 99\\.9\\)CRWDTH\\(I\\)=99\\.9"
+ },
+ {
+  "id": "cwidth-fixcw-kw",
+  "type": "regex_in_file",
+  "doc": "FIXCW keyword activity 90",
+  "file": "vbase/initre.f",
+  "regex": "CALL OPNEW \\(KODE,IDT,90,4,ARRAY\\(2\\)\\)"
+ },
+ {
+  "id": "cwidth-cweqn-kw",
+  "type": "regex_in_file",
+  "doc": "CWEQN keyword transition diameter",
+  "file": "vbase/initre.f",
+  "regex": "TC=ARRAY\\(2\\)"
+ },
+ {
+  "id": "cwidth-west-mind",
+  "type": "regex_in_file",
+  "doc": "Western CWCALC minimum diameters",
+  "file": "vie/cwcalc.f",
+  "regex": "DATA MIND/5\\./,OMIND/1\\./"
+ },
+ {
+  "id": "cwidth-east-mind",
+  "type": "regex_in_file",
+  "doc": "Eastern CWCALC minimum diameters",
+  "file": "ls/cwcalc.f",
+  "regex": "DATA MIND/5\\./,OMIND/3\\./"
+ },
+ {
+  "id": "cwidth-west-hi",
+  "type": "regex_in_file",
+  "doc": "Western Hopkins index",
+  "file": "vie/cwcalc.f",
+  "regex": "HI = \\(\\(HIELEV-5449\\.\\)/100\\.\\)\\*1\\.0 \\+ \\(HILAT-42\\.16\\)\\*4\\.0"
+ },
+ {
+  "id": "cwidth-east-hi",
+  "type": "regex_in_file",
+  "doc": "Eastern Hopkins index",
+  "file": "ls/cwcalc.f",
+  "regex": "HI = \\(\\(HIELEV-887\\.\\)/100\\.\\)\\*1\\.0 \\+ \\(HILAT-39\\.54\\)\\*4\\.0"
+ },
+ {
+  "id": "cwidth-r5",
+  "type": "regex_in_file",
+  "doc": "R5CRWD branch for WS",
+  "file": "vie/cwcalc.f",
+  "regex": "ELSEIF \\(VARACD\\.EQ\\.'WS'\\)THEN\\s*\\n\\s*CALL R5CRWD"
+ },
+ {
+  "id": "cwidth-bf",
+  "type": "regex_in_file",
+  "doc": "Forest multiplier BF",
+  "file": "vie/cwcalc.f",
+  "regex": "BF=1\\.0"
+ },
+ {
+  "id": "cwidth-west-01",
+  "type": "regex_in_file",
+  "doc": "Western CWCALC: Bechtold model 1",
+  "file": "vie/cwcalc.f",
+  "regex": "CW= 2\\.1431 \\+ \\(1\\.3447\\*D\\) \\+ \\(-0\\.0228\\*D\\*D\\)"
+ },
+ {
+  "id": "cwidth-west-05",
+  "type": "regex_in_file",
+  "doc": "Western CWCALC: R6 model 2",
+  "file": "vie/cwcalc.f",
+  "regex": "CW= 4\\.7762\\*BF\\*\\(D\\*\\*0\\.74126\\)"
+ },
+ {
+  "id": "cwidth-west-08",
+  "type": "regex_in_file",
+  "doc": "Western CWCALC: Castle AK",
+  "file": "vie/cwcalc.f",
+  "regex": "CW= 3\\.391358 \\* \\(D\\*\\*0\\.638945\\)"
+ },
+ {
+  "id": "cwidth-west-hi-map",
+  "type": "regex_in_file",
+  "doc": "HI PNMAP has 45 entries",
+  "file": "hi/cwcalc.f",
+  "regex": "PNMAP\\(45\\)"
+ },
+ {
+  "id": "cwidth-east-01-3",
+  "type": "regex_in_file",
+  "doc": "Eastern CWCALC: Bechtold model 3",
+  "file": "ls/cwcalc.f",
+  "regex": "CW = 4\\.9399 \\+ 1\\.0727\\*D \\+ 0\\.1096\\*CR - 0\\.0493\\*HI"
+ },
+ {
+  "id": "cwidth-east-05",
+  "type": "regex_in_file",
+  "doc": "Eastern CWCALC: Smith",
+  "file": "ls/cwcalc.f",
+  "regex": "CW = \\(0\\.5830 \\+ 0\\.2450\\*\\(D\\*2\\.54\\)"
+ },
+ {
+  "id": "cwidth-east-limit",
+  "type": "regex_in_file",
+  "doc": "CWCALC: limits",
+  "file": "ls/cwcalc.f",
+  "regex": "IF \\(CW \\.LT\\. 0\\.5\\) CW=0\\.5"
+ },
+ {
+  "id": "cwidth-ccfcal",
+  "type": "regex_in_file",
+  "doc": "LS CCFCAL: open-grown crown competition factor",
+  "file": "ls/ccfcal.f",
+  "regex": "0\\.001803"
  }
 ]

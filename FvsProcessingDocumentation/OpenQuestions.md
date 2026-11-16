@@ -390,3 +390,32 @@ Not documented (the text states only what was read):
 - The BC coefficient tables (ST_COEF, LTHG, LTSP), the SEISTHG entry, and the SN, LS, NE and CS curve coefficients (LTBHEC and the SN B1 to B5 values).
 - Species that exceed the cases listed for WC in `wc/htgf.f` (the species equations of WO and RW were read; the rest follow the site index form).
 - Large-tree height growth of the ORGANON trees in OC and OP, and dwarf mistletoe, fire and insect effects on DG and HTG.
+
+## Crown ratio change and crown width (CROWN, GEMCR, CWIDTH, CWCALC)
+
+Corrections to the old text (applied in ModelStructure_FVS.Rmd):
+- The limit of 1 percent per year is a fraction of the crown ratio at the start of the cycle (ICR x 0.01 x FINT), not a percentage point, and it applies to a decrease as well as an increase. AK limits an increase to 3 percent and a decrease to 1 percent.
+- The height growth limit CRMAX is not applied in KT, in EM species LL, or in the NI-type species of IE (14 species: the species with index 12 or less, 14 and 23). It is applied in all other variants, including to the ORGANON trees of OC and OP.
+- Crown ratio is held constant for trees smaller than 3.0 inches during the cycles only in KT, EM species LL and IE NI-type species; no other variant has a threshold in the cycles (the 1.0 inch test applies only when missing crown ratios are dubbed).
+- The NI-type species of IE are 14, not 11.
+- RANN is used in CROWN only for a tree with a diameter of zero (Weibull branch); BACHLO with RANN appears in KT, EM, IE and BC only when missing crown ratios are dubbed with DGSD of 1.0 or more.
+- The code has more than three model forms: Weibull, NI-type new minus old, TWIGS, crown length regressions (CR and species of CI, EM, IE, TT, UT, WS), logistic (AK and the redwood equations), and ORGANON.
+- CWIDTH has a second loop for the dead tree records of the first cycle, processes FIXCW, and CWCALC is compiled from four files (the VIE file for 19 variants, HI, the LS file for CS, LS, NE and SN, and the ON file).
+
+Code observations (not changed):
+- UPDATE runs before CROWN, so HT is already the end-of-cycle height in CROWN. CRMAX (HT + HTG in numerator and denominator) and the crown length equations (HF = HT + HTG) add HTG to a height that already includes it. KT backdates with H = H - HTG, which is consistent with the updated height.
+- `oc/crown.f` and `op/crown.f`: the minimum of 10 and the replacement by CRMAX are inside IF((.NOT. LORGANON) .AND. (IORG(I) .NE. 1)), which is false for every tree when LORGANON is true, so non-ORGANON trees also lose the minimum of 10 in an ORGANON run.
+- `canada/on/crown.f` reads the CRNMULT activity without assigning ISPCC = INT(PRM(1)).
+- CRNMLT, DLOW, DHI and ICFLG are local arrays set by DATA statements; they are not reset between stands in a multi-stand run (not tested).
+- The Weibull branch comments in several files say 3 inches ("DBH LESS THAN 3.0 IN ARE DUBBED HERE"), but the test is DBH less than 1.0 at the start of the projection only.
+- `vie/cwcalc.f`: in the Bechtold model 2 equations with a D squared term (for example 01702), the branch for D below MIND uses D*D, not MIND*MIND.
+- `vie/cwcalc.f`: equation 07 (Moeur) is coded but is not assigned to any species.
+- `common/CWDCOM.F77`: the comment for the user equation omits the multiplication of the second term.
+- The EFVS guide section 7.4 (the "three general types") was not compared.
+
+Not documented (the text states only what was read):
+- The Weibull coefficient arrays (C0, C1, WEIBA, WEIBB0, WEIBB1, WEIBC0, WEIBC1), the SN arrays MCREQN and WEIBUL, the NI-type arrays CRCON and PARM, the TWIGS arrays BCR1 to BCR4, and the AK arrays are cited by name and line only.
+- The species groups of the IMAP arrays of CA, HI, PN, OC and OP, and the BC CRCONS data (CRKONST).
+- The coefficients of the Bechtold, Crookston, Donnelly and Castle equations of the western CWCALC, of the equations of the eastern CWCALC, and of R5CRWD; the species caps; the forest values of BF (forests 601 to 999).
+- The ON species map (JSP2) and the ON crown ratio and crown width differences beyond the shared forms.
+- Crown width and crown competition factor equations in the CCFCAL routines of the western variants.
