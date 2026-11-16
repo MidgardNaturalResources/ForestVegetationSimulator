@@ -355,3 +355,38 @@ Not documented (the text states only what was read):
 - The BC non-V2 individual rate and the ON mortality equations were not read.
 - Mortality interactions with dwarf mistletoe, the fire and fuels extension, and snag creation were not in scope.
 - Whether XMMULT is reset between cycles: no reset was found in MORTS.
+
+## Large-tree diameter and height increment, small-tree height increment (DGF, AUTCOR, DGSCOR, HTGF, REGENT, SMHTGF, SMHGDG)
+
+Corrections to the old text (applied in ModelStructure_FVS.Rmd):
+- WK2 is ln(DDS), the natural logarithm of the change in squared inside bark diameter, not the logarithm of basal area increment.
+- The ARMA(1,1) model applies to the annual increments in AUTCOR only. Between cycles DGSCOR applies an AR(1)-type carry-over with the correlation RHO.
+- CLGMULT is called in BC, BM, CA, CI, CR, EC, EM, HI, IE, KT, NC, OC, OP, SO, TT, UT, WC, WS and PN (through the WC file). It is not called in AK, CS, LS, NE, SN and ON.
+- The record tripling branch of DGDRIV does not call DGSCOR.
+- SN DGBND sets DG to 0.048 above the upper diameter, not only a minimum of 0.048.
+- The keyword is TREESZCP (not TRESZCP); its fifth field defaults to 999 feet.
+- HTGF adds 5 years, not 10, to the age in NC, OC and OP.
+- The small-tree equation period (REGYR) is 5 years in CA, NC, OC, OP and SN, and for some species of SO and WS.
+- The period sub-cycles are split evenly (7 years gives 3 and 4), not as 5 and 2.
+- The mid-cycle CCF and top height interpolation is made only in the regeneration establishment call (BM, CR, EC, HI, OP, PN, SO, UT, WC, WS).
+- The survival factor of the sub-cycles is 0.985 per year (1.5 percent), not 1 percent.
+- The FIXHTG diameter limits are not normalized as they are for FIXDG.
+
+Code observations (not changed):
+- WC, PN and OP (species RW): `wc/regent.f` applies the large and small tree weight twice (the weight inside the RW block, and again in the statement after it), so the large-tree weight of RW is XWT squared. `ca/regent.f`, `oc/regent.f` and `ws/regent.f` apply it once for the same species.
+- `ws/dgf.f`: the DDSMAX bound is coded after WK2(I) is assigned, so it has no effect.
+- IE, CI, EM and UT tripling branches of DGDRIV test DG(I) (the original record) for the 1.33 limit and assign the result to the tripled record.
+- `ec/htgf.f`: for the species of the WC case, when HT is above HTMAX and below HTMAX2 the code branches to label 161 with HTG of zero. The source comment says that the normal calculation should follow.
+- `cr/gemdg.f`: DFSWPP of the southwest mixed conifer ponderosa pine branch uses DP, not DPP, in the squared logarithm term. The default case of the species select (ln(DDS) of -9.21) is not reachable because all 38 species have a case.
+- The DGDRIV comment "covariance is zero in the first cycle" disagrees with AUTCOR, which is called with the previous cycle length and gives a nonzero covariance.
+- `hi/blkdat.f` has a species list of 45 entries that starts with the same codes as the PN list.
+- The year basis of the redwood and giant sequoia diameter equation (DGLT) is not stated in the code; it is not scaled by YR.
+- In CI the HTGF equation of species MC is computed, but the source comment says that MC and WJ get their height growth from REGENT.
+
+Not documented (the text states only what was read):
+- DGCON for the variants other than IE, WC, PN, HI and OP (entry point DGCONS of each file).
+- The coefficients of the diameter and height arrays (DGLD, DGCR, HGLD, COFLM, COFAS, COF1 to COF11, SMLD and the others) are listed by array name and file only.
+- The species equations of GEMHT (`cr/gemht.f` lines 200 to 421), the inline GEMHT of TT, UT and WS, the PP and OS curves in `em/pothtg.f`, the AK arrays (NOPERMH1 to NOPERMH6, PERMH1 to PERMH6) and the ON function HTONT.
+- The BC coefficient tables (ST_COEF, LTHG, LTSP), the SEISTHG entry, and the SN, LS, NE and CS curve coefficients (LTBHEC and the SN B1 to B5 values).
+- Species that exceed the cases listed for WC in `wc/htgf.f` (the species equations of WO and RW were read; the rest follow the site index form).
+- Large-tree height growth of the ORGANON trees in OC and OP, and dwarf mistletoe, fire and insect effects on DG and HTG.

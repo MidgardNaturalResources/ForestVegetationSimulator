@@ -3874,27 +3874,526 @@ Subroutine GRINCR calls subroutine DGDRIV to calculate a large-tree diameter gro
 
 Subroutine DGDRIV retrieves any multipliers or management flags scheduled for the current projection cycle with calls to subroutine MULTS.
 
-Large tree diameter growth (or the logarithm of basal area increment in most variants) is estimated using a regression equation with independent variables being individual tree attributes and current stand conditions. An error term is added to the estimate. Error terms are correlated from cycle-to-cycle so the relative magnitude of an individual trees’ estimate is correlated from one projection cycle to the next. In effect, a tree growing well one cycle is likely to grow well the next cycle, and a tree growing poorly is likely to continue growing poorly, to some extent. Periodic increment in large tree diameter growth is considered as an autoregressive moving average time series model (ARMA(1,1)). DGDRIV calls subroutine AUTCOR to compute the variance and covariance multipliers for the current projection cycle.
+Large tree diameter growth, expressed as ln(DDS), the natural logarithm of the change in squared inside bark diameter over YR years, is estimated using a regression equation (or, for some species, another form of equation, as described below) with independent variables being individual tree attributes and current stand conditions. An error term is added to the estimate. Error terms are correlated from cycle-to-cycle so the relative magnitude of an individual trees’ estimate is correlated from one projection cycle to the next. In effect, a tree growing well one cycle is likely to grow well the next cycle, and a tree growing poorly is likely to continue growing poorly, to some extent. The correlation of the errors between cycles is calculated from the autocorrelation function of an autoregressive moving average model, ARMA(1,1), of the annual increments, as described under Serial correlation and random error of the diameter increment. DGDRIV calls subroutine AUTCOR to compute the variance and covariance multipliers for the current projection cycle.
 
-Subroutine DGDRIV calls subroutine DGF to obtain large tree diameter growth estimates for all the tree records. Subroutine DGF contains regression equations for each species. It is structured as nested DO loops with the outside loop controlling species and the inside loop controlling tree records within species. The argument list for subroutine DGF consists of the array of tree diameters to be used. So in the calibration phase of projection initialization subroutine DGF is called with the array of backdated diameters, and in the growth estimation phase of projection cycling it is called with the tree diameters at the beginning of the projection cycle. Subroutine DGF stores estimated diameter growth for each tree record in terms of natural logarithm of basal area increment in work array WK2(i).
+Subroutine DGDRIV calls subroutine DGF to obtain large tree diameter growth estimates for all the tree records. Subroutine DGF contains regression equations for each species. It is structured as nested DO loops with the outside loop controlling species and the inside loop controlling tree records within species. The argument list for subroutine DGF consists of the array of tree diameters to be used. So in the calibration phase of projection initialization subroutine DGF is called with the array of backdated diameters, and in the growth estimation phase of projection cycling it is called with the tree diameters at the beginning of the projection cycle. Subroutine DGF stores estimated diameter growth for each tree record in terms of ln(DDS), the natural logarithm of the change in squared inside bark diameter, in work array WK2(i).
+
+**Equation for the large-tree diameter increment.** Subroutine DGF stores in WK2(i) the natural logarithm of the change in squared inside bark diameter over YR years, ln(DDS), for each tree record i. WK2(i) is not the logarithm of the basal area increment; the two differ by a constant factor, but DGF does not apply the factor. The variables used in this section are defined in the next table.
+
+```{r growth-variables, echo=FALSE}
+growth_variables <- tibble::tribble(
+  ~Variable, ~Definition, ~Units,
+  "DBH", "Diameter at breast height outside bark at the start of the cycle (the backdated diameter during calibration)", "inches",
+  "DG", "Diameter increment inside bark over YR years", "inches",
+  "DDS", "Change in squared inside bark diameter over YR years", "square inches",
+  "BARK", "Bark ratio, BRATIO(species, DBH, HT), inside bark diameter divided by outside bark diameter", "ratio",
+  "CR", "Crown ratio as a proportion (ICR/100); in the CS and LS variants, as a percent; in the NC species 2, 6 and 9, CRID, the product of the crown ratio and the diameter", "proportion",
+  "BA", "Stand basal area", "square feet per acre",
+  "BAL", "Basal area in trees larger than the subject tree, (1 - PCT/100) x BA, where PCT is the percentile of the tree in the diameter distribution; in the variants listed in the equation notes, BA is first divided by 100", "square feet per acre",
+  "PBAL", "Basal area in larger trees on the point where the tree is located", "square feet per acre",
+  "PCCF", "Crown competition factor of the point where the tree is located", "percent",
+  "RELDEN", "Stand crown competition factor (CCF)", "percent",
+  "RELHT", "Relative height, HT divided by AVH, with a maximum of 1.5 in the variants that use it", "ratio",
+  "AVH", "Average height of the 40 largest diameter trees per acre", "feet",
+  "SI", "Site index of the species", "feet",
+  "ELEV", "Stand elevation (hundreds of feet in most variants)", "feet / 100",
+  "SLOPE", "Stand slope as a proportion", "proportion",
+  "ASP", "Stand aspect", "radians",
+  "COR", "Calibration term of the species, set in subroutine DGDRIV (ln scale; see Calibrate growth equations)", "ln units",
+  "COR2", "User-supplied diameter increment multiplier of the species (READCORD), applied as ln(COR2) in DGCON, or as a multiplier of DG in the NE and ON variants", "ratio",
+  "DGCON", "Site-specific constant of the ln(DDS) equation, calculated once in the entry point DGCONS", "ln units",
+  "YR", "Period length of the growth equations: 10 years, except NC, OC, OP and SN, 5 years", "years",
+  "FINT", "Length of the projection cycle", "years"
+)
+
+kable(growth_variables,
+      col.names = c("Variable", "Definition", "Units"),
+      caption = "Variables used in the large-tree diameter increment equations",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "6em") %>%
+  column_spec(2, width = "34em")
+```
+
+Most species use the form of equation {4.2.1.1.1}, with coefficients that are arrays subscripted by species. The terms that are included differ by variant and species. The table that follows the equations lists the terms of each variant and species group, and the other forms are given after the table.
+
+$$
+\ln(DDS) = CONSPP + DGLD \cdot \ln(DBH) + DGDSQ \cdot DBH^{2} + CR\,(DGCR + DGCRSQ \cdot CR) + DGBAL \cdot BAL + DGDBAL\,\frac{BAL}{\ln(DBH + 1)} + \text{other terms}
+\tag{4.2.1.1.1}
+$$
+
+Where:
+
+- ln(DDS): Natural logarithm of the change in squared inside bark diameter over YR years (square inches); the value is bounded below at -9.21
+- CONSPP: Constant of the species; it is DGCON + COR, plus a density term in most variants (see the table)
+- DGCON: Site-specific constant of the species, calculated once in the entry point DGCONS (ln units)
+- COR: Calibration term of the species (ln units); it is zero when no calibration is done
+- DGLD, DGDSQ, DGCR, DGCRSQ, DGBAL, DGDBAL: Coefficients of the species (arrays of the same names in subroutine DGF)
+- DBH: Diameter at breast height (inches)
+- CR: Crown ratio (proportion)
+- BAL: Basal area in larger trees (square feet per acre); the scale of BAL differs by variant and species and is shown in the table
+- Other terms: PCCF, RELDEN, RELHT, ln(BA), BA and others, as listed in the table; a term is part of the equation of a species only when the table lists it
+
+In IE, DGCON is given by equation {4.2.1.1.2}. In WC, PN, HI and OP, DGCON = DGFOR + DGEL x ELEV + DGEL2 x ELEV^2 + DGSITE x ln(SI) + (DGSASP x sin(ASP) + DGCASP x cos(ASP) + DGSLOP) x SLOPE + DGSLSQ x SLOPE^2, where the coefficients are those of the species mapped by MAPSPC, ELEV is limited to 30 for the mapped species 14, SI of the mapped species 10 is multiplied by 3.281, and SI of the mapped species 18 (WC) or 19 (PN, HI and OP) is replaced by -37.60812 x ln[1 - (SI / 114.24569)^0.4444]. DGCON of the other variants is calculated in the entry point DGCONS of each file and is not reproduced here.
+
+$$
+DGCON = DGHAB + DGFOR + DGEL \cdot ELEV + DGEL2 \cdot ELEV^{2} + \left(DGSASP \cdot \sin ASP + DGCASP \cdot \cos ASP + DGSLOP\right) SLOPE + DGSLSQ \cdot SLOPE^{2}
+\tag{4.2.1.1.2}
+$$
+
+Where:
+
+- DGCON: Constant of the species in IE; for species LM and PY, 0.001766 x SI is added, and for species AS, MM and PB, 0.00646 x SI is added
+- DGHAB: Coefficient for the habitat type of the species
+- DGFOR: Coefficient for the national forest or location of the species
+- DGEL, DGEL2: Coefficients for elevation and for elevation squared
+- ELEV: Elevation (hundreds of feet)
+- DGSASP, DGCASP, DGSLOP, DGSLSQ: Coefficients for aspect and slope
+- ASP: Aspect (radians); 0.7854 radians is subtracted from the aspect for species LM, PM, RM, PY, AS, MM and PB
+- SLOPE: Slope (proportion)
+
+**Equations of the species that grow by a future diameter.** Many species of the IE, EM, CI, BM, SO, TT and UT variants use an equation that predicts the diameter at the end of the period, DF, in place of equation {4.2.1.1.1}. Three forms are used, shown in equations {4.2.1.1.3} to {4.2.1.1.5}. The increment is calculated from the difference of the predicted and current diameters, and is converted to ln(DDS). A fourth form is used for aspen, shown in equation {4.2.1.1.6}. Each row of the next table names the form that each species uses.
+
+$$
+\begin{aligned}
+DF &= 0.25897 + 1.03129 \cdot DPP - 0.0002025464 \cdot BATEM + 0.00177 \cdot SI, \quad DF \le DPP + 1.0, \quad DF \ge DPP \\
+DIAGR &= (DF - DPP) \cdot BARK \\
+\ln(DDS) &= \ln\left[DIAGR\,(2 \cdot DPP \cdot BARK + DIAGR)\right] + CONSPP
+\end{aligned}
+\tag{4.2.1.1.3}
+$$
+
+$$
+\begin{aligned}
+DF &= 0.24506 + 1.01291 \cdot DPP - 0.00084659 \cdot BA + 0.00631 \cdot SI, \quad DF \le 36.0, \quad DF \ge DPP \\
+DIAGR &= (DF - DPP) \cdot BARK \\
+\ln(DDS) &= \ln\left[DIAGR\,(2 \cdot DPP \cdot BARK + DIAGR)\right] + COR + DGCON
+\end{aligned}
+\tag{4.2.1.1.4}
+$$
+
+$$
+\begin{aligned}
+DF &= 1.05\left[1.55986 + 1.01825 \cdot DPP - 0.29342 \ln(BATEM) + 0.00672 \cdot SI - 0.00073 \cdot \frac{BAU}{BA}\right], \quad DF \ge DPP \\
+DIAGR &= (DF - DPP) \cdot BARK \cdot DSTAG \\
+\ln(DDS) &= \ln\left[DIAGR\,(2 \cdot DPP \cdot BARK + DIAGR)\right] + COR + DGCON
+\end{aligned}
+\tag{4.2.1.1.5}
+$$
+
+Where:
+
+- DF: Predicted diameter at the end of the period (inches)
+- DPP: Diameter at breast height, with a minimum of 1.0 inch (inches)
+- BATEM: Stand basal area, with a minimum of 1.0 square foot per acre in equation {4.2.1.1.3} and a minimum of 5.0 square feet per acre in equation {4.2.1.1.5} (square feet per acre)
+- BA: Stand basal area (square feet per acre)
+- SI: Site index of the species (feet)
+- BAU: Basal area in the diameter classes that are larger than the class of the tree (square feet per acre); the classes are 1-inch classes numbered INT(DBH + 1), with a maximum of 41, and the basal area of the stand is calculated by subroutine BADIST
+- DIAGR: Diameter increment (inches); if it is zero or less, ln(DDS) is set to -9.21
+- BARK: Bark ratio
+- DSTAG: Stagnation multiplier; 1.0 unless the SDIMAX keyword activates the stagnation option (ISTAGF is not 0) for the species, in which case DSTAG = 3.33333 x (1 - RELSDI) when RELSDI is greater than 0.7, where RELSDI is the stand SDI divided by the maximum SDI, with a maximum of 0.85
+- CONSPP: Constant of the species, shown in the table
+- COR: Calibration term of the species (ln units)
+- DGCON: Constant of the species from equation {4.2.1.1.2} (ln units)
+- ln(DDS): Natural logarithm of the change in squared inside bark diameter (square inches), with a minimum of -9.21
+
+Equation {4.2.1.1.3} is the juniper and pinyon form, equation {4.2.1.1.4} is the form of the CR variant for Douglas-fir-type hardwood and other species, and equation {4.2.1.1.5} is the form of the CR variant for spruce and fir. In species GB of the UT variant the DF of equation {4.2.1.1.3} is used with the minimum BATEM of 5.0 and the DSTAG factor of equation {4.2.1.1.5}.
+
+$$
+\begin{aligned}
+POT &= \left(0.4755 - 3.8336 \times 10^{-6} \, DBH^{4.1488}\right) + 0.04510 \cdot \frac{CR}{10} \cdot DBH^{0.67266}, \quad POT \ge 0.01 \\
+FOFR &= 1.07528\left[1 - \exp\left(-1.89022 \cdot \frac{DBH}{RMSQD}\right)\right] \\
+GOFAD &= 0.21963 \,(RMSQD + 1.0)^{0.73355} \\
+VALMOD &= 1 - \exp\left[-FOFR \cdot GOFAD \sqrt{\frac{310 - BA^{*}}{310}}\right] \\
+PREDGR &= POT \cdot VALMOD \cdot (0.48630 + 0.01258 \cdot SI) \\
+ASPDG &= \ln\left(2 \cdot DBH \cdot BARK \cdot PREDGR + PREDGR^{2}\right)
+\end{aligned}
+\tag{4.2.1.1.6}
+$$
+
+Where:
+
+- POT: Potential diameter increment (inches)
+- CR: Crown ratio (percent)
+- RMSQD: Quadratic mean diameter of the stand (inches)
+- BA*: Stand basal area (square feet per acre), set to 305 when it is 310 or more
+- FOFR, GOFAD, VALMOD: Intermediate terms (dimensionless)
+- PREDGR: Predicted diameter increment (inches)
+- ASPDG: ln(DDS) of the aspen equation (ln square inches); the ln(DDS) of the tree is ASPDG + ln(COR2) + COR
+
+The next table lists, by variant and species, the equation that DGF uses. CONSPP is the constant of the species. BAL is shown in each row because the scale differs among rows: BAL is (1 - PCT/100) x BA, and in some rows it is divided by 100 as noted. PCCF is the crown competition factor of the point of the tree. The species are listed in the order of the variants.
+
+```{r dgf-forms, echo=FALSE}
+dgf_forms <- tibble::tribble(
+  ~Variant, ~Species, ~CONSPP, ~Equation, ~Source,
+  "IE", "WP, WL, DF, GF, WH, RC, LP, ES, AF, PP, MH, WB, LM, LL, PY, OS", "DGCON + COR + 0.01 x DGCCF x RELDEN", "Equation {4.2.1.1.1}: DGLD x ln(DBH) + DGBAL x BAL + CR x (DGCR + DGCRSQ x CR) + DGDSQ x DBH^2 + DGDBAL x BAL / ln(DBH + 1); BAL is (1 - PCT/100) x BA/100", "ie/dgf.f",
+  "IE", "PM, RM", "DGCON + COR + 0.01 x DGCCF x RELDEN", "Equation {4.2.1.1.3}", "ie/dgf.f",
+  "IE", "AS, MM, PB", "Not used", "Equation {4.2.1.1.6}", "ie/dgf.f",
+  "IE", "CO, OH", "Not used", "Equation {4.2.1.1.4}", "ie/dgf.f",
+  "BM", "WP, WL, DF, GF, MH, LP, ES, AF, PP, OS", "DGCON + COR + 0.01 x DGCCF x RELDEN", "DGLD x ln(DBH) + DGLBA x ln(BA) + CR x (DGCR + DGCRSQ x CR) + DGDSQ x DBH^2 + DGDBAL x BAL / ln(DBH + 1) + DGPCCF x PCCF; BAL is (1 - PCT/100) x BA; for trees smaller than 10.0 inches the value is blended with equation {4.2.1.1.7}", "bm/dgf.f",
+  "BM", "WP", "As above", "Terms added to the row above: 0.00121 x BAL + 0.00001 x 0.01 x RMAI x RELDEN - 0.0000016 x RELDEN, where RMAI is the mean annual increment of the stand", "bm/dgf.f",
+  "BM", "WL", "As above", "Term added to the row above: -0.000695 x BA", "bm/dgf.f",
+  "BM", "WJ", "As above", "Equation {4.2.1.1.3}", "bm/dgf.f",
+  "BM", "AS", "Not used", "Equation {4.2.1.1.6}", "bm/dgf.f",
+  "BM", "WB, LM", "As above", "DGLD x ln(DBH) + DGBAL x BAL + DGCR x CR + DGCRSQ x CR^2 + DGDSQ x DBH^2 + DGPCCF x PCCF; BAL is (1 - PCT/100) x BA/100", "bm/dgf.f",
+  "BM", "PY, YC, CW, OH", "As above", "DGLD x ln(DBH) + CR x (DGCR + DGCRSQ x CR) + DGDSQ x DBH^2 + DGDBAL x BAL / ln(DBH + 1) + DGPCCF x PCCF + DGLBA x ln(BA) + DGBAL x BAL + DGBA x BA; BAL is (1 - PCT/100) x BA", "bm/dgf.f",
+  "CI", "WP, WL, DF, GF, WH, RC, LP, ES, AF, PP, OS", "DGCON + COR + 0.01 x DGCCFA x RELDEN", "DGLD x ln(DBH) + DGLBA x ln(BA) + DGDSQ x DBH^2 + DGDBAL x PBAL / ln(DBH + 1) + DGBA x BAL / ln(DBH + 1) + DGPCCF x PCCF + CR x (DGCR + DGCRSQ x CR) + DGBAL x BAL; BAL is (1 - PCT/100) x BA; PBAL is (1 - PCT/100) x the basal area of the point", "ci/dgf.f",
+  "CI", "WB, PY, LM", "As above", "The same terms as the row above, with BAL = (1 - PCT/100) x BA/100", "ci/dgf.f",
+  "CI", "AS", "Not used", "Equation {4.2.1.1.6}", "ci/dgf.f",
+  "CI", "WJ", "As above", "Equation {4.2.1.1.3}", "ci/dgf.f",
+  "CI", "MC", "As above", "DGLD x ln(DBH) + DGBAL x BAL + CR x (DGCR + DGCRSQ x CR) + DGDSQ x DBH^2 + DGBA x BAL / ln(DBH + 1) - 0.000981 x BA; BAL is (1 - PCT/100) x BA", "ci/dgf.f",
+  "CI", "CW, OH", "Not used", "Equation {4.2.1.1.4}", "ci/dgf.f",
+  "EC", "WP, WL, DF, SF, RC, GF, LP, ES, AF, PP, MH, WF, OS", "DGCON + COR; for MH and OS, - 0.000021 x RMAI x RELDEN is added", "DGLD x ln(DBH) + DGDUM x DUMMY + CR x (DGCR + DGCRSQ x CR) + DGDSQ x DBH^2 + DGDBAL x BAL / ln(DBH + 1) + DGPCCF x PCCF + DGHCCF x RELHT x PCCF / 100 + DGCCFA x PCCF^2 / 1000; BAL is (1 - PCT/100) x BA; DUMMY is 1.0 for SF, GF and WF and 0 for the other species", "ec/dgf.f",
+  "EC", "WP", "As above", "Term added to the row above: 0.49649 x RELHT", "ec/dgf.f",
+  "EC", "WH, PY, WB, NF, LL, YC, WJ, BM, VN, PB, GC, DG, AS, CW, WO, PL, WI, OH", "DGCON + COR", "DGLD x ln(DBH) + CR x (DGCR + DGCRSQ x CR) + DGDSQ x DBH^2 + DGDBAL x BAL / ln(DBH + 1) + DGPCCF x PCCF + DGBA x BA; BAL is (1 - PCT/100) x BA", "ec/dgf.f",
+  "EC", "WH", "As above", "Term added to the row above: -0.000358 x RELHT", "ec/dgf.f",
+  "EC", "WO", "As above", "Term added to the row above: -0.00326 x BAL", "ec/dgf.f",
+  "EC", "RA", "Not used", "Red alder equation (see the list after this table)", "ec/dgf.f",
+  "EM", "LM", "DGCON + COR + 0.01 x DGCCF x RELDEN - 0.00199592 x RELDEN", "DGLD x ln(DBH) + DGBAL x BAL + CR x (DGCR + DGCRSQ x CR) + DGDSQ x DBH^2 + DGDBAL x BAL / ln(DBH + 1); BAL is (1 - PCT/100) x BA/100", "em/dgf.f",
+  "EM", "LL", "DGCON + COR + 0.01 x DGCCF x RELDEN", "The same terms as for LM", "em/dgf.f",
+  "EM", "RM", "As for LL", "Equation {4.2.1.1.3}", "em/dgf.f",
+  "EM", "AS, PB", "Not used", "Equation {4.2.1.1.6}", "em/dgf.f",
+  "EM", "GA, CW, BA, PW, NC, OH", "Not used", "Equation {4.2.1.1.4}", "em/dgf.f",
+  "EM", "WB, WL, DF, LP, ES, AF, PP, OS", "DGCON + COR + 0.01 x DGCCF x RELDEN", "DGLD x ln(DBH) + DGBAL x BAL + CR x (DGCR + DGCRSQ x CR) + DGDSQ x DBH^2 + DGDBAL x BAL / ln(DBH + 1) + DGPCCF x RELDEN^2 + DGLCCF x ln(RELDEN) + DGPCC1 x DUM1 x PCCF + DGPCC2 x DUM2 x PCCF; BAL is (1 - PCT/100) x BA; DUM1 is 1 and DUM2 is 0 when the MANAGED flag is 1, otherwise DUM1 is 0 and DUM2 is 1", "em/dgf.f",
+  "SO", "WJ", "DGCON + COR + 0.01 x DGCCF x RELDEN + 0.01 x DGMACC x RMAI x RELDEN", "Equation {4.2.1.1.3}", "so/dgf.f",
+  "SO", "AS", "Not used", "Equation {4.2.1.1.6}", "so/dgf.f",
+  "SO", "RA", "Not used", "Red alder equation (see the list after this table)", "so/dgf.f",
+  "SO", "WP, SP (Warm Springs, IFOR = 10)", "DGCON + COR", "0.844690 x ln(DBH) + 1.597250 x CR - 0.0000596 x DBH^2 - 0.003726 x BAL / ln(DBH + 1) - 0.000257 x PCCF; BAL is (1 - PCT/100) x BA", "so/dgf.f",
+  "SO", "IC (Warm Springs)", "DGCON + COR", "0.879338 x ln(DBH) + 1.970052 x CR - 0.0001323 x DBH^2 - 0.004215 x BAL / ln(DBH + 1) - 0.000173 x BA; BAL is (1 - PCT/100) x BA", "so/dgf.f",
+  "SO", "LP (Warm Springs)", "DGCON + COR", "0.554261 x ln(DBH) + 1.423849 x CR - 0.004803 x BAL / ln(DBH + 1) - 0.000627 x PCCF; BAL is (1 - PCT/100) x BA", "so/dgf.f",
+  "SO", "RC (Warm Springs)", "DGCON + COR", "0.843013 x ln(DBH) + CR x (2.878032 - 1.631418 x CR) - 0.0000644 x DBH^2 - 0.003923 x BAL / ln(DBH + 1) - 0.000552 x PCCF; BAL is (1 - PCT/100) x BA", "so/dgf.f",
+  "SO", "OS (Warm Springs)", "DGCON + COR", "0.816880 x ln(DBH) + 2.471226 x CR - 0.0002536 x DBH^2 - 0.005950 x BAL / ln(DBH + 1) - 0.000147 x BA; BAL is (1 - PCT/100) x BA", "so/dgf.f",
+  "SO", "All other species (and all species outside Warm Springs)", "DGCON + COR + 0.01 x DGCCF x RELDEN + 0.01 x DGMACC x RMAI x RELDEN", "DGLD x ln(DBH) + DGBAL x BAL + CR x (DGCR + DGCRSQ x CR) + DGDSQ x DBH^2 + DGDBAL x BAL / ln(DBH + 1) + DGPCCF x PCCF + DGLCCF x ln(RELDEN) + DGPCF2 x PCCF^2 + DGHAH x RELHT + DGLBA x ln(BA) + DGBA x BA + DUMMY; BAL is (1 - PCT/100) x BA, divided by 100 for WB", "so/dgf.f",
+  "SO", "PP", "As above", "DGLCCF is -0.20488 and DGPCF2 is 0.000001 (0 when PCCF is more than 400); for the other species both are 0", "so/dgf.f",
+  "SO", "SF", "As above", "DUMMY is -0.799079; for the other species DUMMY is 0", "so/dgf.f",
+  "SO", "ES", "As above", "Term added: 0.49649 x HOAVH, where HOAVH is HT / AVH with a maximum of 1.5", "so/dgf.f",
+  "TT", "WB, LM, DF, BS, LP, ES, AF, OS", "DGCON + COR + 0.01 x DGCCF x RELDEN", "DGLD x ln(DBH) + DGBAL x BAL + DGCR x CR + DGCRSQ x CR^2 + DGDSQ x DBH^2; BAL is (1 - PCT/100) x BA/100", "tt/dgf.f",
+  "TT", "PP", "DGCON + COR + 0.01 x DGCCF x RELDEN - 0.257322 x ln(BA)", "DGLD x ln(DBH) + CR x (DGCR + DGCRSQ x CR) + DGDSQ x DBH^2 + DGDBAL x PBAL / ln(DBH + 1); PBAL is (1 - PCT/100) x the basal area of the point", "tt/dgf.f",
+  "TT", "AS, MM", "Not used", "Equation {4.2.1.1.6}", "tt/dgf.f",
+  "TT", "PM, UJ, RM", "DGCON + COR + 0.01 x DGCCF x RELDEN", "Equation {4.2.1.1.3}; the source states that the equations of REGENT are used at all diameters for these species, so the DGF value is not used", "tt/dgf.f",
+  "TT", "BI, MC", "DGCON + COR + 0.01 x DGCCF x RELDEN", "DGLD x ln(DBH) + DGBAL x BAL + CR x (DGCR + DGCRSQ x CR) + DGDSQ x DBH^2 + DGDBAL x BAL / ln(DBH + 1) + DGPCCF x PCCF + DGBA x BA; BAL is (1 - PCT/100) x BA; the source states that REGENT is used at all diameters for these species, so the DGF value is not used", "tt/dgf.f",
+  "TT", "NC, OH", "Not used", "Equation {4.2.1.1.5}", "tt/dgf.f",
+  "UT", "PI, WJ, GO, PM, RM, UJ, OH", "DGCON + COR + 0.01 x DGCCF x RELDEN", "Equation {4.2.1.1.3}", "ut/dgf.f",
+  "UT", "AS", "Not used", "Equation {4.2.1.1.6}", "ut/dgf.f",
+  "UT", "WB, LM, DF, WF, BS, LP, ES, AF, PP, OS", "DGCON + COR + 0.01 x DGCCF x RELDEN; for ES, DGCCF is -0.154870 when the site index class ISC is 4 or more", "DGLD x ln(DBH) + DGBAL x BAL + DGCR x CR + DGCRSQ x CR^2 + DGDSQ x DBH^2 + DGPCCF x PCCF; BAL is (1 - PCT/100) x BA/100", "ut/dgf.f",
+  "UT", "BS", "As above", "The ln(DDS) of the row above is multiplied by 0.95", "ut/dgf.f",
+  "UT", "MC, BI", "DGCON + COR + 0.01 x DGCCF x RELDEN", "DGLD x ln(DBH) + DGBAL x BAL + CR x (DGCR + DGCRSQ x CR) + DGDSQ x DBH^2 + DGDBAL x BAL / ln(DBH + 1) + DGPCCF x PCCF + DGBA x BA; BAL is (1 - PCT/100) x BA", "ut/dgf.f",
+  "UT", "GB", "Not used", "Equation {4.2.1.1.3} with BATEM of 5.0 or more and DSTAG, as described above", "ut/dgf.f",
+  "UT", "NC, FC, BE", "Not used", "Equation {4.2.1.1.5}", "ut/dgf.f",
+  "WC, PN, HI and OP", "All except RW and RA", "DGCON + COR", "DGLD x ln(DBH) + CR x (DGCR + DGCRSQ x CR) + DGDSQ x DBH^2 + DGDBAL x BAL / ln(DBH + 1) + DGPCCF x PCCF + DGHAH x RELHT + DGLBA x ln(BA) + DGBAL x BAL + DGBA x BA; BAL is (1 - PCT/100) x BA", "wc/dgf.f, pn/dgf.f, hi/dgf.f, op/dgf.f",
+  "CA and OC", "All except GS, RW and TO", "DGCON + COR", "DGLD x ln(DBH) + CR x (DGCR + DGCRSQ x CR) + DGDSQ x DBH^2 + DGDBAL x BAL / ln(DBH + 1) + DGPCCF x PCCF + DGHAH x RELHT + DGLBA x ln(BA) + DGBAL x BAL", "ca/dgf.f, oc/dgf.f",
+  "KT", "All", "DGCON + COR + DGCCF x RELDEN (0.01 x DGCCF x RELDEN for species 11)", "DGLD x ln(DBH) + CR x (DGCR + DGCRSQ x CR) + DGDBAL x BAL / ln(DBH + 1) + DGCCF2 x CCF^2 + DGD2 x DBH^2 + DGLBA x ln(BA) + DGPC1 x PCCF1 + DGPC2 x PCCF1", "kt/dgf.f",
+  "NC", "All except RW, SP, IC and RF", "DGCON + COR + DGCCFA x ln(RELDEN) + DGBA x ln(BA)", "DGLD x ln(DBH) + CR x (DGCR + DGCRSQ x CR) + DGDSQ x DBH^2 + DGDBAL x BAL / ln(DBH + 1) + DGPCCF x PCCF + DGHAH x HOAVH; for WF, -0.15032 is added", "nc/dgf.f",
+  "WS", "Species of the default equation", "DGCON + COR", "DGLD x ln(DBH) + DGCR x CR + DGCRSQ x CR^2 + DGDSQ x DBH^2 + DGDBAL x BAL / ln(DBH + 1) + DGPCCF x PCCF + DGHAH x HOAVH + DGBA x ln(BA) + DGBAL x BAL; for WF and SF, -0.15032 is added", "ws/dgf.f"
+)
+
+kable(dgf_forms,
+      col.names = c("Variant", "Species", "CONSPP", "Equation", "Source"),
+      caption = "Large-tree diameter increment equation, by variant and species",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "5em") %>%
+  column_spec(4, width = "32em")
+```
+
+The BM equation for trees smaller than 10.0 inches, which was fit to 5-year increments, is shown in equation {4.2.1.1.7}. For trees of 3.0 inches and larger, and smaller than 10.0 inches, the large-tree value of the table, DDSL, and the small-tree value, DDSS, are combined with the weight XWT = (10.0 - DBH) / 7.0; XWT is 1.0 for trees smaller than 3.0 inches and 0 for trees of 10.0 inches or larger.
+
+$$
+\begin{aligned}
+DDSS_{5} &= SMCONS + SMLD \ln(DBH) + SMLBA \ln(BA) + CR\,(SMCR + SMCRSQ \cdot CR) + SMDS \cdot DBH^{2} + SMDBAL \frac{BAL}{\ln(DBH + 1)} + SMPCCF \cdot PCCF \\
+TEMDG &= 2\left(\sqrt{DBH^{2} + \exp(DDSS_{5})} - DBH\right), \qquad DDSS = \ln\left[(TEMDG + DBH)^{2} - DBH^{2}\right] \\
+\ln(DDS) &= XWT \cdot DDSS + (1 - XWT)\,DDSL
+\end{aligned}
+\tag{4.2.1.1.7}
+$$
+
+Where:
+
+- DDSS5: ln of the 5-year change in squared diameter of the small-tree equation (ln square inches)
+- SMCONS: SMCON + COR; SMCON and the coefficients SMLD, SMLBA, SMCR, SMCRSQ, SMDS, SMDBAL and SMPCCF are arrays of the species group (index SMMAPS) in subroutine DGF
+- DDSS: ln(DDS) of the small-tree equation changed to 10 years; it is 0 when the argument of the logarithm is zero or less
+- DDSL: ln(DDS) of the large-tree row of the table
+- XWT: Weight of the small-tree value, defined above
+
+**Other forms of the equation.** The remaining variants, and some species in the variants above, use other forms. In each form the result is stored in WK2(i) as ln(DDS).
+
+1. **SN.** The equation is ln(DDS) = DGCON + COR + INTERC + LDBH x ln(DBH) + DBH2 x DBH² + LCRWN x ln(ICR) + HREL x RELHT + PLTB x BA + PNTBL x PBAL, plus a forest type term (the coefficient of the forest type group of the stand times a 0 or 1 indicator), and a plantation term (PLANT, with the indicator equal to 1 when the MANAGED keyword is used). RELHT has a maximum of 1.5, and PBAL is replaced by BAL when it is not positive. DGCON contains the site index, slope, slope times cosine and sine of the aspect, and the dummy variables of the ecological unit. ICR is the crown ratio as a percent.
+2. **AK.** The annual increment is BASEDG = exp(DGCONB1 + DGDISQ x DBH² + DGLD x ln(DBH) + DGDBAL x PBAL + DGRD x PRD + DGLNCR x ln(CR) + DGEL x ELEV + DGSLOP x SLOPE + DGSASP x SLOPE x cos(ASP) + DGLNSI x ln(SI)), where PRD is the relative density of the point, the Zeide relative density of the point divided by its maximum, and PBAL is the point basal area in larger trees. BASEDG is multiplied by YR and by the permafrost modifier, PFMOD (species TA, WS, LS, BE, OS, PB, AB, BA, AS, CW, WI, SU and OH; PFMOD is 1.0 for the other species), and by 0.45 for species AD, WI and OH, and by 0.65 for species SU. PFMOD is limited to 1.0 or less when permafrost is present and to 1.0 or more when it is absent. The result, DGPRED, is the outside bark increment. It is converted to the inside bark change in squared diameter: ln(DDS) = ln[(DBH + DGPRED)² x BARK² - (DBH x BARK)²] + COR + DGCON.
+3. **CS and LS.** The equation is ln(DDS) = DGCON + COR + INTERC + VDBHC / DBH + DBHC x DBH + DBH2C x DBH² + RDBHC x RELDBH + RDBHSQC x RELDBH² + CRWNC x CR + CRSQC x CR² + SBAC x BAGE5 + BALC x BAL + SITEC x SI. RELDBH is DBH divided by the quadratic mean diameter of the trees that are 5.0 inches or larger, BAGE5 is the basal area of the trees that are 5.0 inches or larger, and CR is the crown ratio as a percent. The result is a change in squared diameter outside bark. It is converted to the inside bark scale in the code: DIAGRO = sqrt(DBH² + exp(lnDDS)) - DBH; DIAGRI = DIAGRO x BARK; ln(DDS) = ln[(DBH x BARK + DIAGRI)² - (DBH x BARK)²].
+4. **NE.** The potential basal area increment is POTBAG = 0.7 x DGB1 x SI x (1 - exp(-DGB2 x DBH)). The BAL modifier, BAGMOD, is returned by subroutine BALMOD. The squared diameter grows by DELD = POTBAG x BAGMOD (in units of basal area) in each of 10 annual iterations: DBH is replaced by the diameter that has a basal area of 0.0054542 x DBH² + DELD. After the 10 iterations DIAGR = (DBH_end - DBH_start) x BARK, which is multiplied by COR2 when READCORD is used and has a lower bound of 0.0001. Then ln(DDS) = ln[DIAGR x (2 x DBH x BARK + DIAGR)] + COR.
+5. **CR.** Subroutine GEMDG selects one equation for each of the 38 species of the variant and for the model type of the stand (IMODTY: 1, southwest mixed conifer; 2, southwest ponderosa pine; 3, Black Hills ponderosa pine; 4, spruce-fir; 5, lodgepole pine). The equations are shown in the table that follows this list. The variables are DPP (diameter, minimum 1.0 inch), BAT (stand basal area), BATEM (BAT with a minimum that depends on the model type: 1.0 for type 1, 21.0 for type 2, 5.0 for types 3 and 4, and 14.0 for type 5), BGTTBA (BAU / BA, the proportion of the stand basal area in diameter classes larger than the class of the tree; it is 0 for model type 1 when BAT is less than 65), SI, CR (proportion), SLOPE, ASP, RELDEN, BAL100 (BAL / 100), PBAL and PCCFI. Equations of the type "DF" predict the future diameter; DF is limited to the maximum diameter of the species, DBHMAX, and to DPP or more, and DIAGR = (DF - DPP) x BARK. Equations of the type "DDS" predict ln(DDS) directly, and DIAGR = sqrt(exp(DDS) + (DPP x BARK)^2) - DPP x BARK. DIAGR is multiplied by DSTAG when ISTAGF of the species is not 0, and by 0.80 for species PP and CI in model type 3. The result is ln(DDS) = ln[DIAGR x (2 x DPP x BARK + DIAGR)], with -9.21 when DIAGR is zero or less, and then WK2(i) = ln(DDS) + COR + DGCON. All 38 species are in a case, so the default case (ln(DDS) = -9.21) is not used.
+
+```{r cr-gemdg, echo=FALSE}
+cr_gemdg <- tibble::tribble(
+  ~Species, ~Model_Type, ~Type, ~Equation,
+  "AF, CB", "1, 2", "DF", "0.50283 + 0.93999 x DPP - 0.0016822 x BAT + 0.00791 x SI + 0.16235 x [ln(DPP)]^2",
+  "AF, CB", "3, 4, 5", "DF", "2.19459 + 0.94659 x DPP - 0.20410 x BGTTBA - 0.35970 x ln(BATEM) + 0.11326 x [ln(DPP)]^2 + 0.00615 x SI",
+  "DF", "All", "DF", "0.58234 + 0.94542 x DPP - 0.0025092 x BAT + 0.0070474 x SI - 0.14044 x BGTTBA + 0.15738 x [ln(DPP)]^2",
+  "WF", "All", "DF", "0.46172 + 1.04089 x DPP - 0.0019984 x BAT + 0.0065947 x SI - 0.09197 x BGTTBA - 0.0011355 x DPP^2",
+  "LP", "All", "DF", "1.32652 + 0.96279 x DPP - 0.17138 x BGTTBA - 0.21827 x ln(BATEM) + 0.06298 x [ln(DPP)]^2 + 0.00590 x SI",
+  "BC, PI, UJ, GO, AW, EM, BK, SO, AJ, RM, OJ, ER, PM, PD, AZ, OS", "All", "DF", "0.25897 + 1.03129 x DPP - 0.0002025464 x BATEM + 0.00177 x SI, with DF no more than DPP + 1.0 (equation {4.2.1.1.3})",
+  "PP, CI", "2", "DF", "4.10552 + 0.88872 x DPP - 0.83531 x ln(BATEM) + 0.013781 x SI - 0.52784 x BGTTBA + 0.23834 x [ln(DPP)]^2",
+  "PP, CI", "3", "DF", "2.50428 + 0.94573 x DPP - 0.45765 x ln(BATEM) + 0.01354 x SI - 0.46350 x BGTTBA + 0.05940 x [ln(DPP)]^2, and then, when the range of ages is more than 40 years and BGTTBA is more than 0.3, DF is compared with DFSWPP, the equation of model type 2 evaluated with SIMINR = 0.57593 + 0.92561 x SI in place of SI and with BATEM of 21 or more: when DF is more than DFSWPP, DF is DFSWPP if BGTTBA is 0.5 or more (with a minimum of DPP + 0.1), and otherwise (2.5 - 5.0 x BGTTBA) x DF + (-1.5 + 5.0 x BGTTBA) x DFSWPP",
+  "PP, CI", "4, 5", "DF", "2.50428 + 0.94573 x DPP - 0.45765 x ln(BATEM) + 0.01354 x SI - 0.46350 x BGTTBA + 0.05940 x [ln(DPP)]^2",
+  "PP, CI", "1", "DF", "(1 - ADJ) x DFMCPP + ADJ x DFSWPP, where DFMCPP = 0.26265 + 0.94001 x DPP - 0.0016405 x BAT + 0.0060074 x SI + 0.16328 x [ln(DPP)]^2, DFSWPP is the equation of model type 2 with BATEM of 21 or more and BGTTBA = BAU / BA (the source uses the diameter DP and not DPP in the squared logarithm term of DFSWPP), ADJ is the larger of ADJB and ADJR, ADJB is 1.0 when BAT is less than 60.1, -0.025 x BAT + 2.5 when BAT is between 60.0 and 100.0, and 0 otherwise, and ADJR is 5.0 x BARAT - 1.5 when BARAT is between 0.3 and 0.5, 1.0 when BARAT is more than 0.499, and 0 otherwise, with BARAT = the basal area of the species / BAT",
+  "SW", "All", "DF", "0.89451 + 0.95435 x DPP - 0.0012183 x BAT + 0.00159 x SI - 0.20815 x BGTTBA + 0.09987 x [ln(DPP)]^2",
+  "BS", "All", "DF", "0.50941 + 1.02697 x DPP - 0.0035783 x BAT + 0.01022 x SI - 0.00098825 x DPP^2",
+  "ES", "1, 2", "DF", "0.67074 + 1.03068 x DPP - 0.0020055 x BAT + 0.00633 x SI - 0.0010875 x DPP^2",
+  "ES", "3, 4, 5", "DF", "2.28652 + 0.94475 x DPP - 0.48056 x BGTTBA - 0.41632 x ln(BATEM) + 0.10778 x [ln(DPP)]^2 + 0.01295 x SI",
+  "WS", "All", "DF", "2.94734 + 0.88423 x DPP - 0.64449 x ln(BATEM) + 0.01207 x SI + 0.25363 x [ln(DPP)]^2",
+  "AS, NC, PW, PB, OH", "1, 2", "DF", "1.05 x [0.24506 + 1.01291 x DPP - 0.00084659 x BAT + 0.00631 x SI] (equation {4.2.1.1.4} with the factor 1.05)",
+  "AS, NC, PW, PB, OH", "3, 4, 5", "DF", "1.05 x [1.55986 + 1.01825 x DPP - 0.29342 x ln(BATEM) + 0.00672 x SI - 0.00073 x BGTTBA]",
+  "GF", "All", "DDS", "-0.057982 + 0.977362 + 0.005045 x 60 - 0.000093 x 60^2 + 0.009335 x sin(ASP) x SLOPE - 0.004469 x cos(ASP) x SLOPE - 0.033374 x SLOPE - 0.418343 x SLOPE^2 + 1.286963 x ln(DPP) - 0.217923 x ln(BAT) + 1.175105 x CR + 0.219013 x CR^2 - 0.0004408 x DPP^2 - 0.000578 x PBAL / ln(DPP + 1) - 0.000512 x PCCFI",
+  "MH", "All", "DDS", "-1.52111 + 0.08518 x 60 - 0.000943 x 60^2 + 0.13363 x sin(ASP) x SLOPE + 0.17935 x cos(ASP) x SLOPE + 0.07628 x SLOPE + 0.89778 x ln(DPP) - 0.10744 x 0.01 x RELDEN + 1.28403 x CR - 0.000484 x DPP^2 - 0.66110 x BAL100 / ln(DPP + 1)",
+  "RC", "All", "DDS", "1.61452 - 0.00175 x 60 - 0.000067 x 60^2 + 0.05534 x sin(ASP) x SLOPE - 0.06625 x cos(ASP) x SLOPE + 0.11931 x SLOPE + 0.58705 x ln(DPP) - 0.15356 x 0.01 x RELDEN + 0.74596 x BAL100 + 1.29360 x CR - 2.28375 x BAL100 / ln(DPP + 1)",
+  "WL", "All", "DDS", "0.51291 + 0.20004 + 0.03730 x 60 - 0.000433 x 60^2 + 0.03430 x sin(ASP) x SLOPE - 0.21337 x cos(ASP) x SLOPE + 0.33523 x SLOPE - 0.70216 x SLOPE^2 - 0.05438 x 0.01 x RELDEN + 0.54140 x ln(DPP) + 0.43637 x BAL100 + 1.03478 x CR + 0.07509 x CR^2 - 0.000310 x DPP^2 - 2.03256 x BAL100 / ln(DPP + 1)",
+  "LM", "All", "DDS", "1.911884 + 0.001766 x SI - 0.01752 x sin(ASP - 0.7854) x SLOPE - 0.609774 x cos(ASP - 0.7854) x SLOPE - 2.05706 x SLOPE + 2.113263 x SLOPE^2 - 0.199592 x 0.01 x RELDEN + 0.213947 x ln(DPP) - 0.358634 x BAL100 + 1.523464 x CR - 0.0006538 x DPP^2",
+  "WB", "All", "DDS", "0.01545 + 1.5675 - 0.00565 x 80 - 0.01606 x sin(ASP) x XSLOPE + 0.00270 x cos(ASP) x XSLOPE - 0.20011 x XSLOPE + 0.80110 x ln(DPP) + 0.00064 x BAL + 1.02878 x CR - 0.45448 x CR^2 - 0.00328 x BAL / ln(DPP + 1) - 0.25717 x ln(RELDEN), where XSLOPE = SLOPE / 10"
+)
+
+kable(cr_gemdg,
+      col.names = c("Species", "Model type", "Type", "Equation of subroutine GEMDG"),
+      caption = "Diameter increment equations of the CR variant",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "7em") %>%
+  column_spec(4, width = "36em")
+```
+
+The constants 60 and 80 in the equations of GF, MH, RC, WL and WB are elevations (in hundreds of feet) fixed in the source; the equations were taken from other variants for a fixed habitat type and elevation, as the source comments state. DGCON for the CR variant is added after GEMDG returns.
+
+6. **ON.** The equation is annual and is in metric units. X1 = -B0 - BBAL x BALM - BHT x HTM - BSI x SIM - BBA x BAM - BDBHQ x QMDM - BAGS x AGS is constant over 10 iterations. In each iteration, ln(DG) = X1 + B1 x ln(DBHM) - B2 x DBHM, which is limited to the range -5 to 5, then exponentiated, limited to the range 0.0001 to B95 (the 95th percentile of the annual growth of the species), and added to DBHM (the diameter in centimeters). The increment in inches, converted to inside bark, is multiplied by COR2 when READCORD is used, and bounded below by 0.0001. Then ln(DDS) = ln[DIAGR x (2 x DBH x BARK + DIAGR)] + COR.
+7. **BC.** BC has two equations. When the logical LV2ATV is true, the equation has the form of equation {4.2.1.1.1} with 0.01 x (DGCCF + SEICCF) x RELDEN in the constant. In the other biogeoclimatic zones (ICH, IDF, SBS, SBPS) the annual diameter increment in centimeters is exp(CONSPP + DGLD1 x DBH + DGDSQ1 x DBH² + DGBAL1 x BAL + DGDBAL1 x BAL / DBH + DGDBAL2 x BAL / ln(DBH + 1) + DGCR1 x CR) with a lower bound of exp(-9.21); it is converted to ln(DDS) in square inches.
+
+**Special equations in the variants that use equation {4.2.1.1.1}.** The species in the next list use equations of another form.
+
+- **Red alder.** For species RA in WC, PN, HI, OP, SO and EC, the diameter increment is DG = CONST - 0.166496 x DBH + 0.004618 x DBH² for DBH of 18.0 inches or less, and DG = CONST - (CONST / 10) x (DBH - 18) above 18.0, with CONST = 3.250531 - 0.003029 x BA and a lower bound of 0.1. In WC, PN, HI, OP and SO the bark ratio is evaluated as BRATIO(22, DBH, HT). Then ln(DDS) = ln[DG x (2 x DBH x BARK + DG)] + COR + ln(COR2).
+- **Redwood and giant sequoia.** For species RW in WC, PN, HI, OP and NC, RW and GS in CA and OC, and species GS and RW (species 4 and 23) in WS, the outside bark increment is DGLT = exp(CONSPP + 0.185911 x ln(DBH) - 0.000073 x DBH² - 0.001796 x PBAL - 0.42078 x PRD + 0.589318 x ln(100 x CR) - 0.000926 x 100 x SLOPE - 0.002203 x 100 x SLOPE x cos(ASP)). CONSPP does not contain COR for these species. In WC the constant of the species is -3.502444 + 0.415435 x ln(SI), and the coefficient of DBH squared is zero. DGLT is converted to ln(DDS) = ln[((DBH + DGLT) x BARK)² - (DBH x BARK)²] + COR + ln(COR2). PRD is the relative density of the point, the Zeide relative density of the point divided by its maximum. The year basis of DGLT is not stated in the code.
+- **Tanoak.** For species TO in CA and OC, DDS is multiplied by 2 (the equation is a 5-year estimate, changed to 10 years, as the source comment states).
+- **Oaks in WS.** For species 28 to 40 and 43 of WS, which are 5-year equations, DDS is multiplied by 2.
+- **OC and OP.** The equations of the FVS species predict a 10-year increment. After the ln(DDS) is computed, DDS is divided by 2 to give a 5-year estimate.
+- **WS, smaller trees.** For trees smaller than 10.0 inches, species JP uses its own equation, and species DF, WF, RF, SF and BD use another. A bound on the maximum ln(DDS), DDSMAX, is coded for some species after WK2(i) is assigned, so it has no effect.
+
+In all variants the lower bound of ln(DDS) is -9.21.
+
+**Where the calibration and user multipliers enter.** COR is included in the equation of the species, as shown above. COR2 is added in DGCON as ln(COR2) when the READCORD or REUSCORD keyword is used. The BAIMULT multiplier, XDMULT, is applied in subroutine DGDRIV, as shown in the steps for the projection cycle, and not in subroutine DGF.
 
 Subroutine DGDRIV has an extra task in the two ORGANON-FVS variants (OC and OP). That is to direct estimation of large tree diameter and height growth, crown ratio change, and mortality using ORGANON equations for valid ORGANON trees. This step is done by calling the ORGANON subroutine EXECUTE and does not occur in any of the other FVS variants. Processing then continues somewhat as described below, with structural differences as discussed in [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants).
 
-Subroutine DGDRIV then enters its own nested species and trees-within-species DO loops. Before the loops, DGDRIV copies the diameter increment of the previous cycle, DG(i), to work array WK1(i), where the mortality routines use it. In 17 variants (BM, CA, CI, CR, EC, EM, HI, IE, KT, NC, OC, OP, SO, TT, UT, WC and WS) and in PN, which compiles the WC version of DGDRIV, DGDRIV also calls subroutine CLGMULT to load a tree-level growth multiplier from the climate extension into work array WK4(i). For each species, the serial correlation of diameter growth estimates from one cycle to the next is adjusted for the cycle length and diameter growth errors are calculated. The scale factors are attenuated and then the tree loop within species is entered. For each tree record the following steps are made.
+Subroutine DGDRIV then enters its own nested species and trees-within-species DO loops. Before the loops, DGDRIV copies the diameter increment of the previous cycle, DG(i), to work array WK1(i), where the mortality routines use it. In 18 variants (BC, BM, CA, CI, CR, EC, EM, HI, IE, KT, NC, OC, OP, SO, TT, UT, WC and WS) and in PN, which compiles the WC version of DGDRIV, DGDRIV also calls subroutine CLGMULT to load a tree-level growth multiplier from the climate extension into work array WK4(i). For each species, the serial correlation of diameter growth estimates from one cycle to the next is adjusted for the cycle length and diameter growth errors are calculated. The scale factors are attenuated and then the tree loop within species is entered. For each tree record the following steps are made.
 
 1. The diameter inside bark is computed as D = DBH(i) × BRATIO(species, DBH(i), HT(i)). The array DBH(i) is always the diameter outside bark; FVS does not keep an inside bark diameter array.
 2. The expected change in squared inside bark diameter is DDS = exp(WK2(i) + ln(XDMULT)). WK2(i) is the ln(DDS) estimate from subroutine DGF, and XDMULT is the species multiplier from the BAIMULT keyword record (1.0 if none). In the variants listed above, DDS is also multiplied by WK4(i).
 3. Subroutine DGSCOR returns the error term as a multiplier, FRM. DGSCOR draws an error from a normal distribution about the predicted ln(DDS), combines it with the error of the previous cycle (OLDRN) through the serial correlation, and draws again when the result is more than DGSD standard deviations from zero. The error is zero when DGSD is less than 1.0. It is also set to zero when the predicted ln(DDS) is greater than 5.0, and it is multiplied by (ln(DDS) − 4.0) when the predicted ln(DDS) is between 4.0 and 5.0. FRM is the exponential of the error.
-4. The diameter increment is DG(i) = sqrt(D² + DDS × FRM) − D. When record tripling is in effect, each of the three records receives its own error term.
+4. The diameter increment is DG(i) = sqrt(D² + DDS × FRM) − D. When record tripling is in effect, the errors of the three records do not come from DGSCOR; see Serial correlation and random error of the diameter increment.
 5. In the CI, CR, EM, IE and UT variants, DG(i) is limited so that it does not exceed 1.33 times the expected increment, sqrt(D² + DDS) − D. The limit applies to all species in the CR variant and to selected species in the other four (species 17 and 19 in CI; 11, 13 to 16 and 19 in EM; 19 and 22 in IE; 17 to 19 and 22 in UT).
 6. DG(i) is multiplied by the dwarf mistletoe factor, MISDGF(i, species).
-7. Subroutine DGBND bounds DG(i). Five versions are compiled. The IE version, which most variants compile, applies only the size limit: when DBH(i) + DG(i) is greater than SIZCAP(species,1) and SIZCAP(species,3) is less than 1.5, DG(i) is set to SIZCAP(species,1) − DBH(i), with a minimum of 0.01. The HI and WC versions (also compiled by OP and PN) first limit DG(i) to 7.92 × exp(−0.03 × DBH(i)), with DBH(i) taken as no more than 150, for all species except species 17, and then apply the size limit. The WS version first limits DG(i) to a species-specific function of DBH(i) (a × DBH^b × exp(c × DBH)) for the species and diameters it lists (DBH of 3.0 or more), and then applies the size limit. The SN version reduces DG(i) between two species-specific diameters (DLODHI), with a minimum of 0.048, and then applies the size limit. The ON version limits DG(i) to 6.0 × exp(−0.03 × DBH(i)) and has no size limit.
+7. Subroutine DGBND bounds DG(i). Five versions are compiled. The IE version, which most variants compile, applies only the size limit: when DBH(i) + DG(i) is greater than SIZCAP(species,1) and SIZCAP(species,3) is less than 1.5, DG(i) is set to SIZCAP(species,1) − DBH(i), with a minimum of 0.01. The HI and WC versions (also compiled by OP and PN) first limit DG(i) to 7.92 × exp(−0.03 × DBH(i)), with DBH(i) taken as no more than 150, for all species except species 17, and then apply the size limit. The WS version first limits DG(i) to a species-specific function of DBH(i) (a × DBH^b × exp(c × DBH)) for the species and diameters it lists (DBH of 3.0 or more), and then applies the size limit. The SN version leaves DG(i) unchanged when DBH(i) is at or below the lower species-specific diameter DLODHI(species,1), sets DG(i) to 0.048 when DBH(i) is above the upper diameter DLODHI(species,2), and between the two diameters multiplies DG(i) by 1 + 0.90 x (DBH(i) - DLODHI(species,1)) / (DLODHI(species,1) - DLODHI(species,2)), with a minimum of 0.048, and then applies the size limit. The ON version limits DG(i) to 6.0 × exp(−0.03 × DBH(i)) and has no size limit.
 
 Diameter growth is similarly assigned to tree record triples if record tripling is in effect and control returns to subroutine GRINCR. After subroutine DGDRIV, DG(i) is an inside bark increment on a YR-year basis. YR is 10 years in all variants except NC, OC, OP and SN, where it is 5 years. The source comment in subroutine GRINCR states that DG is returned on the YR basis, and the diameter increment is scaled to the cycle length by subroutine GRADD (see [Diameter increment through the projection cycle](#sec-diameter-increment-through-the-projection-cycle)).
 
-Subroutine HTGF has a similar construction as subroutine DGF does. It has nested species and trees-within-species DO loops controlling subroutine execution. Subroutine MULTS is called to retrieve large-tree height growth multipliers. Each trees’ height growth is bounded so current height plus height growth does not exceed a morphological maximum height for the species as entered with the TRESZCP keyword record. Height growth estimates are assigned to record triples if record tripling is in effect and control returns to subroutine GRINCR. Height growth estimates at the end of subroutine HTGF are on a cycle-length basis.
+**Serial correlation and random error of the diameter increment.** Subroutine DGDRIV calls subroutine AUTCOR at the start of each cycle (and once at the start of the projection, for the calibration). AUTCOR computes, for the cycle length, the variance multiplier, VMLT, and the covariance multiplier, COVMLT, of the ln(DDS) errors, from the autocorrelation function of an ARMA(1,1) process for the annual increments, as shown in equations {4.2.1.1.8} to {4.2.1.1.10}.
 
-For variants using site index curves to estimate height growth, two other subroutines play a major role in large tree height growth estimation. Subroutine HTCALC contains equations for the site index curves being used for each species. Subroutine HTGF calls subroutine FINDAG to estimate a trees’ age based on a trees’ height and species using the equations in subroutine HTCALC. Subroutine HTGF then adds 10 years to this age and calls HTCALC to obtain an estimate of tree height at the end of the projection cycle based on tree age and species. Potential height growth is then the difference between the estimated beginning- and end-of cycle heights.
+$$
+BJRHO_1 = \frac{(1 - \phi\theta)(\phi - \theta)}{1 + \theta(\theta - 2\phi)}, \qquad BJRHO_i = \phi \cdot BJRHO_{i-1}, \quad i = 2, \ldots, 40
+\tag{4.2.1.1.8}
+$$
+
+$$
+VMLT = N + 2 \sum_{i=1}^{N-1} BJRHO_i \,(N - i)
+\tag{4.2.1.1.9}
+$$
+
+$$
+COVMLT = \sum_{i=1}^{L} BJRHO_i \, T_i
+\tag{4.2.1.1.10}
+$$
+
+Where:
+
+- BJRHO(i): Autocorrelation of the annual errors at a lag of i years (dimensionless)
+- φ: Autoregressive parameter, BJPHI; the default is 0.74 in all variants
+- θ: Moving average parameter, BJTHET; the default is 0.42 in all variants
+- N: Length of the current cycle (years); N is INT(YR) at the start of the projection and FINT in the cycles
+- VMLT: Variance multiplier of the current cycle (dimensionless)
+- COVMLT: Covariance multiplier between the current cycle and the preceding cycle (dimensionless)
+- L: Smaller of N plus the length of the preceding cycle, minus 1, and 40
+- $T_i$: Number of pairs of years that are i years apart in the two cycles; T increases by 1 for each lag up to the smaller of the two cycle lengths, stays constant up to the larger of the two cycle lengths, and decreases by 1 for each lag after that
+
+The keyword SERLCORR changes φ and θ. DGDRIV uses VMLT and COVMLT as follows. The correlation of the errors of two successive cycles is CORR = COVMLT / sqrt(VMLT x PVMLT), where PVMLT is VMLT of the preceding cycle. For each species, the standard deviation of the ln(DDS) error is SSIGMA = sqrt(ln[(sqrt(1 + 4 x VARDG x VMLT) + 1) / 2]), and SIG1 is calculated in the same way with PVMLT. The serial correlation of the species is RHO = ln[1 + CORR x sqrt((EVARP1 - 1)(EVARP2 - 1))] / (SIG1 x SSIGMA), where EVARP1 and EVARP2 are the values inside the logarithms of SIG1 and SSIGMA. RHOCP = sqrt(1 - RHO²). VARDG is the variance of the diameter growth error of the species and is calculated from the calibration (SIGMA). Subroutine DGSCOR then computes the error of tree i as FRM = BACHLO(0, SSIGMA) x RHOCP + RHO x OLDRN(i), where BACHLO returns a draw from a normal distribution with a mean of 0 and a standard deviation of SSIGMA. A new draw is made until |FRM| is no larger than DGSD x SSIGMA. The error is zero when DGSD is less than 1.0. It is also set to zero when the predicted ln(DDS) is greater than 5.0, and it is multiplied by (ln(DDS) - 4.0) when the predicted ln(DDS) is between 4.0 and 5.0. OLDRN(i) is then replaced by FRM, which is stored on the ln scale, and the multiplier of DDS is exp(FRM).
+
+The default value of the keyword DGSTDEV (DGSD) is 2.0 in the AK, BC, CR, CS, EM, IE, KT, LS, NC, NE, ON, SN, SO, TT, UT and WS variants, 1.7 in the CA, CI, EC, HI, PN and WC variants, 1.5 in the BM variant, and 0 in the OC and OP variants. A DGSD of less than 1.0 means that no random error is added. OLDRN is also used in the height growth equation of the CS, LS and NE variants.
+
+When the calibration is done, OLDRN(i) is initialized to the residual of ln(DDS) for the trees in the calibration sample, and, when the calibration conditions are met, to the value of the residual regression at the predicted ln(DDS) of the tree for the other trees. When the calibration is not done, OLDRN(i) is a random draw with a standard deviation of SIGMA, truncated at DGSD x SIGMA. OLDRN is set to zero for new trees from the regeneration establishment model. When record tripling is in effect, the errors of the tripled records do not come from DGSCOR; they are DGDRIV values FRM + CORR x OLDRN(i) for the original record, and FRU + CORR x OLDRN(i) and FRL + CORR x OLDRN(i), with FRU = 1.271 x SSIGMA x RHOCP and FRL = -1.549 x SSIGMA x RHOCP, for the two new records.
+
+Subroutine HTGF has a similar construction as subroutine DGF does. It has nested species and trees-within-species DO loops controlling subroutine execution. Subroutine MULTS is called to retrieve large-tree height growth multipliers. Each trees’ height growth is bounded so current height plus height growth does not exceed a morphological maximum height for the species as entered in the fifth field of the TREESZCP keyword record (999 feet when the field is blank). Height growth estimates are assigned to record triples if record tripling is in effect and control returns to subroutine GRINCR. Height growth estimates at the end of subroutine HTGF are on a cycle-length basis.
+
+For variants using site index curves to estimate height growth, two other subroutines play a major role in large tree height growth estimation. Subroutine HTCALC contains equations for the site index curves being used for each species. Subroutine HTGF calls subroutine FINDAG to estimate a trees’ age based on a trees’ height and species using the equations in subroutine HTCALC. Subroutine HTGF then adds 10 years to this age (5 years in the NC, OC and OP variants) and calls HTCALC to obtain an estimate of tree height at the end of the projection cycle based on tree age and species. Potential height growth is then the difference between the estimated beginning- and end-of cycle heights.
+
+**Large-tree height increment.** Subroutine HTGF estimates the height increment for the cycle for each tree record. The potential height growth, the modifier, and the scaling are described in the following paragraphs for the variants that use the equations; the forms differ by variant, as shown in the table that follows them.
+
+*Potential height growth from the site index curve.* BM, CA, CI (species MC), EC, HI, NC, OC, OP, PN, SO, TT, UT, WC and WS estimate the age of the tree from its height with subroutine FINDAG, and then calculate the height of the tree at the age plus 10 years (plus 5 years in NC, OC and OP) with subroutine HTCALC. FINDAG tries ages from 2 years in steps of 2 years until the site index curve height is within 2.0 feet of the height of the tree, or exceeds it. It returns the age, SITAGE, and the height of the curve at that age, SITHT; SITHT is not the height of the tree. The potential height growth is shown in equation {4.2.1.1.11}.
+
+$$
+POTHTG = HTCALC(SITAGE + A) - SITHT
+\tag{4.2.1.1.11}
+$$
+
+Where:
+
+- POTHTG: Potential height growth over A years (feet)
+- HTCALC: Site index curve height of the species at a given age (feet)
+- SITAGE: Age of the tree estimated by FINDAG (years)
+- A: Age increment, 10 years in BM, CA, CI, EC, HI, PN, SO, TT, UT, WC and WS; 5 years in NC, OC and OP
+- SITHT: Height of the site index curve at SITAGE (feet)
+
+If SITAGE exceeds the maximum age of the curve, POTHTG is 0.1 foot. In SN the equation is a closed-form Chapman-Richards curve, H = B1 x SI^B2 x (1 - exp(B3 x AGE))^(B4 x SI^B5), HTCALC inverts it for the age, and the potential growth is the difference between the heights at the age plus 5 years and at the age. When the maximum height, B1 x SI^B2, exceeds the tree height by 1.0 foot or less, the height increment is 0.1 foot. LS, NE and CS use equations of the same kind, with 10 years, and with coefficients of the species taken from the array LTBHEC.
+
+*Modifier of the potential height growth (WC, PN, HI, OP, BM, EC, SO, TT, UT, WS, CI and SN).* For the species that use the site index curve in these variants (the species are listed by case in the file of each variant), the potential height growth is multiplied by a modifier that is a weighted sum of a crown ratio function and a relative height function, as shown in equations {4.2.1.1.12} to {4.2.1.1.14}. The crown ratio function is Hoerl's special function, and the relative height function is a generalized Chapman-Richards function (Donnelly et al. 1992).
+
+$$
+HGMDCR = \min\left[1.0,\; CRA \left(\frac{ICR}{100}\right)^{CRB} \exp\left(CRC \cdot \frac{ICR}{100}\right)\right]
+\tag{4.2.1.1.12}
+$$
+
+$$
+HGMDRH = RHK \left[1 + FCTRKX \cdot \exp\left(FCTRRB \cdot FCTRXB\right)\right]^{FCTRM}
+\tag{4.2.1.1.13}
+$$
+
+$$
+HTGMOD = 0.25 \cdot HGMDCR + 0.75 \cdot HGMDRH
+\tag{4.2.1.1.14}
+$$
+
+Where:
+
+- HGMDCR: Crown ratio contribution (dimensionless), bounded above by 1.0
+- ICR: Crown ratio (percent)
+- CRA, CRB, CRC: Coefficients of the species; CRA is 100, CRB is 3.0 and CRC is -5.0 in CI
+- HGMDRH: Relative height contribution (dimensionless)
+- RHK: Coefficient, 1.0
+- FCTRKX: (RHK / RHYXS)^(RHM - 1) - 1, where RHYXS is a coefficient of the species and RHM is a coefficient of the species (1.10 in WC)
+- FCTRRB: -RHR / (1 - RHB), where RHR and RHB are coefficients of the species
+- FCTRXB: RELHT^(1 - RHB) - RHXS^(1 - RHB), where RHXS is 0
+- FCTRM: -1 / (RHM - 1)
+- RELHT: HT / AVH, with a maximum of 1.5
+- HTGMOD: Height growth modifier (dimensionless), bounded between 0.1 and 2.0; a value of zero or less is replaced by 0.1
+
+The height increment for the cycle is HTG = POTHTG x HTGMOD, with a lower bound of 0.1 foot. The coefficients RHR, RHYXS and RHB are arrays of the species in subroutine HTGF (the values of the WC variant are in wc/htgf.f). In SN the lower bound is applied when HTGMOD is 0.1 or less.
+
+*Other forms of the height increment equation.* The forms in the next list are written once. The table that follows lists the variant and species that use each form, with the arrays of coefficients and their lines in the source.
+
+1. **Height from the diameter increment (HDG form).** HTG = exp(CON + HDGCOF x ln(DG)) + BIAS, where CON = HTCON + H2COF x HT^2 + HGLD x ln(DBH) + HGLH x ln(HT). HDGCOF, H2COF and HGLD are arrays of habitat group and species, BIAS is 0.4809 and HGLH is 0.23315 (EM species LL has HGLH written as the term 0.23315 x ln(HT) and a coefficient of -0.1997 on ln(DBH); TT species PP has CON = 2.03035 + 0.7316 - 0.00013358 x HT^2 - 0.5657 x ln(DBH) + 0.23315 x ln(HT) and a coefficient of 0.62144 on ln(DG)). DG is the diameter increment of the cycle from DGDRIV. HTG has a lower bound of 0.1 foot.
+2. **Johnson SB form.** The height at the end of the period is predicted from the diameter at the end of the period. The coefficients COF(1) to COF(9) depend on the species group and on the crown ratio group K (K is 1 for crown ratio classes 1 and 2, 2 for classes 3 to 7, and 3 for classes 8 and 9, where the class is INT(ICR/10 + 0.5), with a maximum of 9). The calculation is shown in equation {4.2.1.1.15}.
+
+$$
+\begin{aligned}
+Y_1 &= \frac{DBH - 0.1}{COF_1}, \qquad Y_2 = \frac{HT - 4.5}{COF_2}, \qquad F_i = \ln\frac{Y_i}{1 - Y_i} \\
+Z &= \frac{COF_4 + COF_6 F_2 - COF_7 \left(COF_3 + COF_5 F_1\right)}{\sqrt{1 - COF_7^{2}}} - ZBIAS + ZADJ + ZACC \\
+DIA &= DBH + \frac{DG}{BARK} \\
+PSI &= COF_8 \left(\frac{DIA - 0.1}{0.1 + COF_1 - DIA}\right)^{COF_9} \exp\left(\frac{Z \sqrt{1 - COF_7^{2}}}{COF_6}\right) \\
+H &= \frac{PSI}{1 + PSI}\, COF_2 + 4.5, \qquad HTG = \max(H, HT) - HT, \quad HTG \ge 0.1
+\end{aligned}
+\tag{4.2.1.1.15}
+$$
+
+Where:
+
+- COF(1) to COF(9): Coefficients of the Johnson SB distribution of the species group and crown ratio group (arrays named in the table)
+- DBH: Diameter at breast height at the start of the cycle (inches); a minimum of 0.2 inch is used in IE, CI and EM
+- HT: Total height at the start of the cycle (feet)
+- ZBIAS: Bias correction (BM, SO and TT): AZBIAS + BZBIAS x ELEV, with ELEV - 20 for BM species AS, SO species AS, and TT species AS and MM; ZBIAS is 0 when ELEV is less than 55 or more than 80, and 0 when Z - ZBIAS is 2.0 or more and ZBIAS is negative (the arrays AZBIAS and BZBIAS are zero in BM and SO)
+- ZADJ: Adjustment for the bias of the height-diameter model, ZADJ = 0.1 - 0.10273 x Z + 0.00273 x Z^2 with a minimum of 0, added to Z for the species marked in the table
+- ZACC: Accelerator for young lodgepole pine, calculated only in the first cycle when the stand age (IAGE) is given: when the age at the start, IXAGE = IAGE + IY(ICYC) - IY(1), is from 11 to 39 years, DBH is less than 9.0 inches, and Z is 2.0 or less, ZACC = 0.3564 x DG x FINT/YR x CLOSUR, with CLOSUR = PCT/100 (1.0 when RELDEN is less than 100), multiplied by 1.1 when the crown ratio class is 8 or 9; Z is then limited to 2.0
+- DG: Diameter increment of the cycle from DGDRIV (inches)
+- BARK: Bark ratio
+- HTG: Height increment (feet); HTG is 0.1 foot when HT is 4.5 feet or less, when DBH is 0.1 + COF(1) or more, when HT is 4.5 + COF(2) or more, or when DIA is 0.1 + COF(1) or more (the distribution is undefined)
+
+3. **Potential height growth of the EM variant (subroutine POTHTG).** For species WB, WL, DF, LP, ES, AF, PP and OS in EM, subroutine POTHTG returns the 10-year potential height growth PHTG. It is then adjusted: PHTG = PHTG x 0.706 x [1 - exp(-10.19 x CR)] x [1 - exp(-0.1 x 18.158 x DG)]^0.944 + 0.0265 x HT, and HTG = PHTG x HTMOD, where HTMOD = min[1.0, exp(2.54119 x ((HT/AVH)^0.250537 - 1))], with a lower bound of 0.1 foot. CR is the crown ratio as a proportion. POTHTG calculates an effective age from the height and site index and returns the difference between the heights at the effective age plus 10 years and at the effective age. Species WB, LP, WL and OS use the curve of Alexander, Tackle and Dahms, with CCF of 125 (A = 9.72443 - 0.00091 x SI100 x CCF - HT, B = -0.23733 + 0.0149 x SI100, C = 0.00160 - 0.00005 x SI100; EFAGE = (-B + sqrt(B^2 - 4AC)) / (2C); PHTG = -2.3733 + 0.00160 x (EFAG10^2 - EFAGE^2) + 0.1490 x SI100 - 0.00005 x SI100 x (EFAG10^2 - EFAGE^2)); species DF uses the height-age curve of Monserud (1985) with SI50; species ES and AF use a curve with asymptote SI100, B = 0.931764, C = 0.01679 and D = 0.302381, H10 = A x (1 - B x exp(-C x EFAG10))^(1/(1 - D)); species PP uses a curve with the constants P1 = 3.635794, P2 = 0.916307, P3 = 6.09478, P4 = 0.96483 and P5 = 0.277025 (see `em/pothtg.f`). EFAG10 is EFAGE + 10.
+4. **Height-age curve with the GEMHT model (CR variant).** Subroutine GEMHT computes, for the tree at the start and at the end of the cycle (the age is AP + 10 and the diameter is DBH + DG/BARK), an even-aged height HHE and an uneven-aged height HHU. HHE comes from a site index curve that depends on the model type of the stand (`cr/gemht.f` lines 38 to 199: southwest mixed conifer, southwest ponderosa pine, Black Hills ponderosa pine, spruce-fir and lodgepole pine), multiplied by a ratio with a model-type minimum (0.768, 0.768, 0.793, 0.728, 0.742) of 1 - BAU/BA; the species equations that give HHU are in `cr/gemht.f` lines 200 to 421. The age of the tree, AP, is the age in the tree record, adjusted for the breast-height curves. The TT, UT and WS variants contain an inline version of the same logic for the species listed in the table. HTG = (HHE2 - HHE1) x ADJUST, where ADJUST is the value of the array HTOSI for the model type and the species. If the range of ages in the stand is more than 40 years and BA is 70 or more, trees with PCT of 10 or less get HHU2 - HHU1, and trees with PCT between 10 and 40 get XWT x (HHE2 - HHE1) x ADJUST + (1 - XWT) x (HHU2 - HHU1), with XWT = (PCT - 10) x (10/3) / 100. Species AS and PB are multiplied by 0.6253 + 0.00583 x SI (SI between 30 and 90). A random increment, ZZRAN x 0.1, is added, where ZZRAN is a normal draw truncated at DGSD standard deviations. When the stagnation option is on for the species (ISTAGF not 0), HTG is multiplied by (DSTAG + 1) / 2. HTG has a lower bound of 0.1 foot, and is then multiplied by exp(HTCON) x SCALE x XHMULT. In lodgepole pine (model type 5) trees with a breast-height age of 31 or less are brought to the height H30 = 5.25621 + 0.37515 x SI - 0.00082 x TCCF x SI times the age/31 when this exceeds the growth from the curve, where TCCF is the point CCF (0 when 125 or less).
+5. **WS default equation.** HTG = HTCON + HGDG2 x DG + HGRDG2 x sqrt(DG) + HGBA2 x BA + HGBAI2 x [(DBH + DG)^2 - DBH^2] + HGLBA2 x ln(BA) + HGBLT2 x BAL + HGBAD2 x BAL / DBH + HGCR2 x ICR + HGDSQ x DBH^2, where BAL = (1 - PCT/100) x BA with a minimum of 0.001. The result is multiplied by 1.5 for species OS, WF, SF and JP, 1.25 for species DF and BD, 1.2 for species IC and RF, 1.15 for species PP and MP, and 0.75 for species TO, GC, AS, CL, MA and DG.
+
+6. **Redwood and giant sequoia (LTHTG equation).** LTHTG = exp(1.412947 - 0.000204 x DBH^2 + 0.31971 x ln(DBH) + 0.394005 x ln(SI) + 0.399888 x ln(DG10) - 0.451708 x ln(HT)), and HTG = LTHTG x HGBND, where HGBND is 1.0 when HT is less than 217 feet, 1 - (HT - 217) / (380 - 217) with a minimum of 0.1 when HT is from 217 to 380 feet, and 0.1 when HT is 380 feet or more. DG10 is the 10-year outside bark diameter increment calculated in HTGF (0.1 when HT is less than 4.5 feet). In NC, LTHTG is multiplied by 0.5.
+7. **CA modifier (CA, OC, and SO species SH and WO).** HTG = POTHTG x XMOD, with POTHTG from equation {4.2.1.1.11} (A is 10 years in CA and SO and 5 years in OC), and XMOD = 1.016605 x [1 - exp(-4.26558 x CR)] x exp[2.54119 x (RELHT^0.250537 - 1)], where CR is the crown ratio as a proportion and RELHT = HT/AVH with a maximum of 1.0 (RELHT is 1.0 when the PCCF of the point is less than 100).
+8. **NC modifier.** HTG = POTHTG x XMOD, with POTHTG from equation {4.2.1.1.11} (A is 5 years), and XMOD = -0.02647 + 0.71338 x RELHT^2 + 0.06851 x CR/10 when the PCCF of the point is 50 or more, where CR is the crown ratio as a percent; XMOD is 1.0 otherwise. RELHT = HT/AVH, replaced by (RELHT + 1)/2 when PCCF is less than 100, with a maximum of 1.0.
+9. **Chapman-Richards curve with a basal area modifier (LS, NE and CS).** HTCALC inverts the Chapman-Richards curve of the species (the array LTBHEC) for the age, and HTG1 is the difference between the heights at the age plus 10 years and at the age. HTG = HTG1 x (1 + OLDRN) x GMOD, where GMOD = 0.8 x [1 - (1 - GMODB)(1 - RELHTA)], GMODB is the value returned by subroutine BALMOD (the arguments differ among the variants: LS passes BA and RMSQD, CS passes BAL and BA, and NE passes only the species and diameter), RELHTA = min(HT/AVH, 1.0), and OLDRN is the diameter growth error of the tree (see Serial correlation and random error). IVAR is 1 in LS, 2 in CS and 3 in NE.
+
+```{r htgf-forms, echo=FALSE}
+htgf_forms <- tibble::tribble(
+  ~Variant, ~Species, ~Form, ~Arrays_And_Source,
+  "WC, PN, HI and OP", "All except RW and WO", "Site index curve with the modifier of equations {4.2.1.1.11} to {4.2.1.1.14}", "RHR, RHYXS, RHB, RHM, CRA, CRB, CRC; wc/htgf.f, pn/htgf.f, hi/htgf.f, op/htgf.f",
+  "WC, PN, HI and OP", "RW", "LTHTG equation", "wc/htgf.f (redwood block)",
+  "WC, PN, HI and OP", "WO", "Potential growth POTHTG = HGUESS2 - HGUESS1, where HGUESS = 4.5 + MAXGUESS x (1 - exp(-0.137428 x D))^1.38994 evaluated at the diameter at the start and at the end of the cycle (see the source for MAXGUESS)", "wc/htgf.f lines 300 to 318",
+  "SN", "All", "Closed-form curve and the modifier of equations {4.2.1.1.12} to {4.2.1.1.14}", "B1 to B5 in sn/htcalc.f; RHR, RHYXS, RHB in sn/htgf.f",
+  "CA and OC", "All except GS and RW", "Site index curve with the CA modifier (XMOD)", "ca/htgf.f, oc/htgf.f",
+  "CA and OC", "GS and RW", "LTHTG equation", "ca/htgf.f, oc/htgf.f",
+  "NC", "All except RW", "Site index curve with the NC modifier (XMOD)", "nc/htgf.f",
+  "NC", "RW", "LTHTG equation, with LTHTG multiplied by 0.5 (a 5-year basis)", "nc/htgf.f lines 161 to 175",
+  "LS, NE and CS", "All", "Chapman-Richards curve with BALMOD and OLDRN", "LTBHEC in ls/htcalc.f, ne/htcalc.f, cs/htcalc.f; BALMOD in ls/balmod.f, ne/balmod.f, cs/balmod.f",
+  "KT", "All", "HDG form", "HGLD, H2COF, HDGCOF, HTCON; kt/htgf.f",
+  "IE", "WP, WL, DF, GF, WH, RC, LP, ES, AF, PP, MH, WB, LL, OS", "HDG form", "ie/htgf.f lines 148 to 155",
+  "IE", "LM, PY", "Johnson SB form, with ZADJ not applied", "COFLM, ie/htgf.f lines 87 to 95",
+  "IE", "AS, CO, MM, PB, OH", "Johnson SB form, with ZADJ", "COFAS, ie/htgf.f lines 97 to 105",
+  "IE", "PM, RM", "Height growth from REGENT", "ie/htgf.f line 156",
+  "CI", "WP, WL, DF, GF, WH, RC, LP, ES, AF, PP, OS", "HDG form", "ci/htgf.f",
+  "CI", "WB, PY, LM", "Johnson SB form, with ZADJ not applied", "COFLM, ci/htgf.f lines 119 to 127",
+  "CI", "AS, CW, OH", "Johnson SB form, with ZADJ", "COFAS, ci/htgf.f lines 129 to 137",
+  "CI", "WJ", "Height growth is 0.1 foot, and the height growth is from REGENT", "ci/htgf.f",
+  "CI", "MC", "Curve H = (SI - 4.5) / (0.6192 - 5.3394 / (SI - 4.5) + 240.29 x AGE^(-1.4) + (3368.9 / (SI - 4.5)) x AGE^(-1.4)) + 4.5 with the modifier of equations {4.2.1.1.12} to {4.2.1.1.14}", "ci/htgf.f",
+  "EM", "WB, WL, DF, LP, ES, AF, PP, OS", "POTHTG form", "em/pothtg.f",
+  "EM", "LL", "HDG form", "em/htgf.f",
+  "EM", "RM", "Height growth from REGENT", "em/htgf.f",
+  "EM", "LM", "Johnson SB form, with ZADJ not applied", "COFLM, em/htgf.f lines 87 to 95",
+  "EM", "GA, AS, CW, BA, PW, NC, PB, OH", "Johnson SB form, with ZADJ", "COFAS, em/htgf.f lines 97 to 105",
+  "BM", "WB, LM", "Johnson SB form; ZADJ for LM", "COF1, bm/htgf.f line 152; AZBIAS and BZBIAS, lines 145 and 147",
+  "BM", "AS", "Johnson SB form, with ZADJ", "COF6, bm/htgf.f line 162",
+  "BM", "WJ", "Height growth from REGENT", "bm/htgf.f line 253",
+  "BM", "All other species", "Site index curve with the modifier of equations {4.2.1.1.12} to {4.2.1.1.14}", "RHR, RHYXS, RHB, RHM; bm/htgf.f",
+  "SO", "WB", "Johnson SB form", "COF1, so/htgf.f line 117; AZBIAS and BZBIAS, lines 112 and 113",
+  "SO", "AS", "Johnson SB form, with ZADJ", "COF6, so/htgf.f line 127",
+  "SO", "WJ", "Height growth from REGENT", "so/htgf.f line 226",
+  "SO", "SH, WO", "Site index curve with the CA modifier (XMOD)", "so/htgf.f lines 187 to 211 and 237 to 272",
+  "SO", "PP", "Site index curve with the modifier of equations {4.2.1.1.12} to {4.2.1.1.14}; when the age is above the maximum age, POTHTG = -1.31 + 0.05 x SI with a lower bound of 0.1", "so/htgf.f line 211",
+  "SO", "All other species", "Site index curve with the modifier of equations {4.2.1.1.12} to {4.2.1.1.14}", "so/htgf.f lines 198 to 210 and 436 to 523",
+  "TT", "WB, LM, DF, BS, AS, LP, ES, AF, MM, OS", "Johnson SB form (the row of COF is (JSPC - 1) x 3 + K, with JSPC = 6 for MM and 11 for OS); ZBIAS for all of these species; ZADJ for AS and MM", "COF1 to COF11, tt/htgf.f lines 115 to 225",
+  "TT", "PP", "HDG form", "tt/htgf.f line 309",
+  "TT", "PM, UJ, RM", "Height growth from REGENT", "tt/htgf.f line 320",
+  "TT", "BI, MC", "Site index curve with the modifier of equations {4.2.1.1.12} to {4.2.1.1.14}", "tt/htgf.f lines 447 to 590",
+  "TT", "NC, OH", "GEMHT form", "tt/htgf.f lines 332 to 445",
+  "UT", "WB, LM, DF, WF, BS, AS, LP, ES, AF, PP, OS", "Johnson SB form (the row of COF is (JSPC - 1) x 5 + K, with JSPC = 8 for BS and 11 for OS; or the SI class of the site index when MPCRSI is 1)", "COF1 to COF11, ut/htgf.f lines 86 to 195",
+  "UT", "PI, WJ, GO, PM, RM, UJ, OH", "Height growth from REGENT (HTG = 0)", "ut/htgf.f line 296",
+  "UT", "GB, NC, FC, BE", "GEMHT form", "ut/htgf.f lines 308 to 438",
+  "UT", "MC, BI", "Site index curve with the modifier of equations {4.2.1.1.12} to {4.2.1.1.14}", "ut/htgf.f lines 439 to 584",
+  "WS", "GB", "GEMHT form", "ws/htgf.f lines 341 to 470",
+  "WS", "MC", "Site index curve", "ws/htgf.f lines 503 to 624",
+  "WS", "GS, LP, WB, PM, KP, FP, CP, LM, GP, WE, RW, WJ, UJ, CJ", "Site index curve with the modifier of equations {4.2.1.1.12} to {4.2.1.1.14}; for GS and RW the LTHTG equation", "ws/htgf.f lines 635 to 792",
+  "WS", "All other species", "WS default equation", "ws/htgf.f lines 822 to 860",
+  "AK", "All", "Exponential equation of the AK variant, with a permafrost modifier", "ak/htgf.f lines 97 to 380",
+  "ON", "All", "HTONT height equation", "canada/on/htgf.f; HTONT in canada/on/htont.f",
+  "BC", "All", "V3HTG equation, or the HDG form when LV2ATV is true", "canada/bc/htgf.f lines 1613 to 1636"
+)
+
+kable(htgf_forms,
+      col.names = c("Variant", "Species", "Form", "Arrays and source"),
+      caption = "Large-tree height increment equation, by variant and species",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "6em") %>%
+  column_spec(3, width = "28em")
+```
+
+In AK the annual increment is BASEHG = exp(B1 + B2 x DBH^2 + B3 x ln(DBH) + B4 x ELEV + B5 x ln(SI) + B6 x ln(DG10)), where the coefficients are the arrays NOPERMH1 to NOPERMH6 (lines 97 to 137 of `ak/htgf.f`), ELEV is in feet, DG10 = DG / BARK (0.1 when HT is less than 4.5 feet), and the permafrost modifier PFHMOD uses the arrays PERMH1 to PERMH6 for species TA, WS, LS, BE, OS, PB, AB, BA, AS, CW, WI, SU and OH (the species in the cases of `ak/htgf.f`). POTHTG = YR x BASEHG x PFHMOD, multiplied by 0.45 for species AD, WI and OH and by 0.65 for species SU, and then by a bound HGBND that is 1.0 below HTLO, 1 - (HT - HTLO) / (HTHI - HTLO) with a minimum of 0.1 between HTLO and HTHI, and 0.1 above HTHI. HTG is 0.1 when DG is 0.04 inch or less. In ON the increment is HTONT(DBH + DG/BARK, QMD10, BA10) - HTONT(DBH, QMD, BA), multiplied by the BAL modifier from BALMOD, with a lower bound of 0.1 foot.
+
+*Scaling and limits.* After the equation of the variant is evaluated, HTG is multiplied by SCALE = FINT / YR, by the user-supplied height growth multiplier XHT (HTGMULT keyword), and by exp(HTCON), where HTCON is the natural logarithm of the READCORH multiplier (zero when no multiplier is given). In ON the READCORH multiplier (XHT2) is used in place of exp(HTCON). HTG is then multiplied by the dwarf mistletoe factor MISHGF, and is limited so that HT plus HTG is no greater than SIZCAP(species, 4), which is the fifth field of the TREESZCP keyword (999 feet when the field is blank). When the limit is applied, the minimum HTG is 0.1 foot. Large-tree height growth is not calibrated automatically; READCORH is the only way to change it (see Calibrate growth equations).
+
+**Maximum height and maximum age in FINDAG.** Subroutine FINDAG returns the age of the tree on the site index curve, SITAGE, the height of the curve at that age, SITHT, the maximum age of the curve, AGMAX, and the maximum heights HTMAX (at the start of the cycle) and HTMAX2 (at the end of the cycle). When the height of the tree is HTMAX or more, SITAGE is AGMAX + (H - HTMAX) / 0.10. The values of HTMAX and AGMAX differ by variant: in WC, PN, HI and OP, AGMAX is 200 years and HTMAX = HDRAT1 x DBH + HDRAT2 (and HTMAX2 uses the diameter at the end of the cycle), where the coefficients are by height-diameter group (MAPHD, `wc/findag.f` lines 43 to 48 and `hi/findag.f` lines 43 to 48); in BM, HTMAX = AHMAX + BHMAX x SI (`bm/findag.f` lines 73 to 95; for species MH the value is multiplied by 3.281); in EC, HTMAX = AHMAX + BHMAX x SI for species WP, WL, DF, SF, RC, GF, LP, ES, AF, PP and WF, HTMAX = AHMAX + BHMAX x SI x 3.281 for species MH and OS, and HTMAX = AHMAX x DBH + BHMAX (and HTMAX2 with the diameter at the end of the cycle) for the species that use the logic of WC (`ec/findag.f` lines 106 to 163); in SO, TT, UT and WS, HTMAX is the array HTMAX of the species (`so/findag.f` line 70, `tt/findag.f` line 84, `ut/findag.f` line 86, `ws/findag.f` line 138); in NC, HTMAX is 300 feet and AGMAX is 200 years (`nc/findag.f` lines 43 and 57); in CA and OC, AGMAX is the array AGEMAX of the species, and 400 years for forests with IFOR of 5 or less (`ca/findag.f` lines 57 and 58).
+
+**Exceptions in the large-tree height increment of BM and EC.** In BM, when the height of the tree is HTMAX or more, HTG = AASM + BASM x RELSI (with a minimum of 0.1 foot) x XHT x SCALE x exp(HTCON), where RELSI = (SI - SLO) / (SHI - SLO), SI is limited to the range SLO to SHI (the range from subroutine SITERANGE) and the arrays AASM and BASM are in `bm/htgf.f` lines 84 to 91. When SITAGE is more than AGMAX, POTHTG is 0.1 foot, and for species PP and OS in BM, POTHTG = -1.31 + 0.05 x SI with a minimum of 0.1 foot; species WJ gets its height growth from REGENT. In EC, for species WH, PY, WB, NF, LL, YC, WJ, BM, VN, RA, PB, GC, DG, AS, CW, WO, PL, WI and OH (the species of the WC case), when HT is more than HTMAX, HTG is 0.5 x DG, with a minimum of 0.1 foot, if HT is also HTMAX2 or more, and is zero otherwise (the code skips the rest of the calculation, although the source comment states that the normal calculation should follow); for the other species, when HT is HTMAX or more, HTG is 0.1 foot. In EC when SITAGE is AGMAX or more, POTHTG is 0.1 foot, and for species PP it is -1.31 + 0.05 x SI with a minimum of 0.1 foot. At the end of the calculation, EC limits HTG so that HT plus HTG is not more than HTMAX2 (the species of the WC case) or HTMAX (the other species), with a minimum of 0.1 foot.
 
 #### Growing the small trees {#sec-growing-the-small-trees}
 
@@ -3945,9 +4444,9 @@ For a few species in some variants, equations contained in subroutine REGENT are
 
 Subroutine REGENT is another one of those subroutines containing two sections; the top section is used for growth estimation in projection cycling; the bottom section is used for calibration in projection initialization. The structure of each section is similar, and understanding the top section will lead to understanding the bottom section. First, the overall structure of subroutine REGENT will be described and then this structure will be broken down into more detail.
 
-For most variants, a single pair of nested species and trees-within-species DO loops control subroutine execution. In these variants, height growth is estimated for the period length for which the small tree equations were fit (10-years, except for the Klamath Mountain variant (NC) which is 5-years), scaled to the cycle length, and then weighted with height growth estimates previously calculated using the large tree equations. Diameter growth is then estimated for the cycle length and converted to the YR basis used by subroutine DGDRIV. The conversion is made on the DDS scale: DDS = G × (2 × BARK × D + G) × YR/L, then DG(i) = sqrt((D × BARK)² + DDS) − BARK × D, where G is the small-tree increment for the cycle length of L years converted to inside bark, D is DBH(i) and BARK is BRATIO(species, DBH(i), HT(i)). Where the small-tree and large-tree increments are averaged, the small-tree increment is converted before it is averaged with the large-tree increment, which is already on the YR basis. (Species 41 in the WS variant is the exception: its increment is not converted.) Diameter growth is scaled back to the cycle length in subroutine GRADD, not in subroutine UPDATE (see [Diameter increment through the projection cycle](#sec-diameter-increment-through-the-projection-cycle)).
+For most variants, a single pair of nested species and trees-within-species DO loops control subroutine execution. In these variants, height growth is estimated for the period length for which the small tree equations were fit (REGYR: 10 years in the AK, BM, CR, CS, EC, HI, LS, NE, ON, PN, UT and WC variants; 5 years in the CA, NC, OC, OP and SN variants; in SO, 5 years for species SH and WO and 10 years for the others; in WS, 10 years for species GB and MC and 5 years for the others), scaled to the cycle length, and then weighted with height growth estimates previously calculated using the large tree equations. Diameter growth is then estimated for the cycle length and converted to the YR basis used by subroutine DGDRIV. The conversion is made on the DDS scale: DDS = G × (2 × BARK × D + G) × YR/L, then DG(i) = sqrt((D × BARK)² + DDS) − BARK × D, where G is the small-tree increment for the cycle length of L years converted to inside bark, D is DBH(i) and BARK is BRATIO(species, DBH(i), HT(i)). Where the small-tree and large-tree increments are averaged, the small-tree increment is converted before it is averaged with the large-tree increment, which is already on the YR basis. (Species 41 in the WS variant is the exception: its increment is not converted.) Diameter growth is scaled back to the cycle length in subroutine GRADD, not in subroutine UPDATE (see [Diameter increment through the projection cycle](#sec-diameter-increment-through-the-projection-cycle)).
 
-Some variants use a slightly different logic because the small tree height growth equations were fit to 5-year data. To avoid bias associated with projection cycles longer than the period to which the equation was fit, the projection cycle is first divided into periods that are no longer than 5-years in length (i.e. a 10-year projection cycle would have 2 periods of 5-years; a 7-year projection cycle would have 2 periods with the first being 5-years and the second being 2-years; a 13-year projection cycle would have 3 periods with the first two being 5-years and the third being 3 years, etc.). A triple-nested DO loop structure is used to estimate end of cycle tree height for each tree record which gets stored in work array WK3(j), where j is the tree index. The outside loop is over periods, the middle loop is over species, and the inner loop is over tree records within species. Stand density statistics and tree attributes are updated each period. The height estimate for the last period is scaled to the length of the last period. Double nested species and trees-within-species DO loops are then entered. Height growth for the projection cycle is obtained by subtracting the start-of-cycle tree height from the end-of-cycle tree height. This estimate gets weighted with height growth estimates previously calculated using the large tree equations as discussed above. Diameter growth is estimated and then scaled to a 10-year basis for rescaling in subroutine UPDATE.
+Some variants use a slightly different logic because the small tree height growth equations were fit to 5-year data. To avoid bias associated with projection cycles longer than the period to which the equation was fit, the projection cycle is first divided into periods that are no longer than 5-years in length (the CI, EM, IE, KT, TT and BC variants). The cycle is divided as evenly as possible: the number of periods is the number of whole 5-year periods in the cycle, plus 1 when a remainder exists, the length of each period is the integer quotient of the years that remain and the periods that remain, and the last period receives the remainder (a 10-year cycle has 2 periods of 5 years, a 7-year cycle has periods of 3 and 4 years, and a 13-year cycle has periods of 4, 4 and 5 years). A triple-nested DO loop structure is used to estimate end of cycle tree height for each tree record which gets stored in work array WK3(j), where j is the tree index. The outside loop is over periods, the middle loop is over species, and the inner loop is over tree records within species. Stand density statistics and tree attributes are updated each period. The height estimate for the last period is scaled to the length of the last period. Double nested species and trees-within-species DO loops are then entered. Height growth for the projection cycle is obtained by subtracting the start-of-cycle tree height from the end-of-cycle tree height. This estimate gets weighted with height growth estimates previously calculated using the large tree equations as discussed above. Diameter growth is estimated and then scaled to a 10-year basis for rescaling in subroutine UPDATE.
 
 ###### A closer look at the logic
 
@@ -3961,9 +4460,9 @@ Subroutine REGENT then retrieves any multipliers or management flags scheduled f
 
 Mid-cycle measures of stand density are needed by subroutine REGENT in all variants. Trees coming out of the regeneration establishment model (see [Disturbance effects and dynamics](#sec-disturbance-effects-and-dynamics)) use equations in subroutine REGENT to grow trees in height from the time they are age 5 to the end of the projection cycle in which they become established. So estimates of stand density are needed 5 years into a projection cycle. Also, in variants using period sub-cycling, estimates of stand density are needed at the beginning of each period. The methods by which estimates of stand density are computed are completely different depending on whether period sub-cycling is being used.
 
-For variants that do not use period sub-cycling, mid-period crown competition factor and average height of the 40 largest diameter trees is calculated by interpolation of these values at the start and end of the projection cycle. Remember that values of these variables are needed to estimate growth on trees in the regeneration establishment model which is being called near the end of the projection cycle, after growth has been estimated on all trees previously in the inventory. So values of these variables for the end of the projection cycle, prior to regeneration establishment, can be calculated.
+In the BM, CR, EC, HI, OP, PN, SO, UT, WC and WS variants, when subroutine REGENT is called from the regeneration establishment model, the crown competition factor and the average height of the 40 largest diameter trees are interpolated: each is (5 / FINT) times the value at the end of the projection cycle plus ((FINT - 5) / FINT) times the value at the start of the cycle (after any thinning). In the other calls, and in the other variants, the values at the start of the cycle are used. Remember that values of these variables are needed to estimate growth on trees in the regeneration establishment model which is being called near the end of the projection cycle, after growth has been estimated on all trees previously in the inventory. So values of these variables for the end of the projection cycle, prior to regeneration establishment, can be calculated.
 
-For variants using period sub-cycling, the process is much more complicated since estimates of stand crown competition factor and basal area are needed for the start of each period for normal processing. Note that if the projection cycle is more than 5 years in length, then start of period estimates can be used for calculating the values needed for estimating growth on regeneration establishment trees; if the projection cycle length is less than 5 years in length then all growth on regeneration establishment trees will be estimated in the regeneration establishment subroutines. The contribution of large trees to stand basal area and crown competition factor is computed from 10-year predicted diameter increment. This value is annualized and then multiplied by the period sub-cycle length to determine the contribution of each tree for the sub-cycle. A 1% annual rate of mortality is assumed in this calculation. The contribution of small trees is based on growth predictions made for the preceding period sub-cycle. Subroutine CCFCAL is called to estimate the crown competition factor for each tree record in this calculation. If necessary, the height-diameter function used in diameter growth estimation is then adjusted based on stand crown competition factor and average height of the 40 largest diameter trees; this is only needed in some variants using sub-cycling logic.
+For variants using period sub-cycling, the process is much more complicated since estimates of stand crown competition factor and basal area are needed for the start of each period for normal processing. Note that if the projection cycle is more than 5 years in length, then start of period estimates can be used for calculating the values needed for estimating growth on regeneration establishment trees; if the projection cycle length is less than 5 years in length then all growth on regeneration establishment trees will be estimated in the regeneration establishment subroutines. The contribution of large trees to stand basal area and crown competition factor is computed from 10-year predicted diameter increment. This value is annualized and then multiplied by the period sub-cycle length to determine the contribution of each tree for the sub-cycle. A 1.5% annual rate of mortality is assumed in this calculation (the number of trees is multiplied by 0.985 raised to the number of years). The contribution of small trees is based on growth predictions made for the preceding period sub-cycle. Subroutine CCFCAL is called to estimate the crown competition factor for each tree record in this calculation. If necessary, the height-diameter function used in diameter growth estimation is then adjusted based on stand crown competition factor and average height of the 40 largest diameter trees; this is only needed in some variants using sub-cycling logic.
 
 In variants using period sub-cycling, the triple nested DO loops to estimate tree height at the end of the projection cycle is next. Subroutine CCFCAL is called at several places in the looping structure to estimate the crown competition factor for individual trees for the period sub-cycle.
 
@@ -3971,9 +4470,252 @@ In all variants, the double nested DO loop structure to estimate diameter and he
 
 Subroutine GRINCR calls subroutine OPFIND to check for any FIXDG or FIXHTG keyword records scheduled for the projection cycle. If any are found, OPGET, an entry point in subroutine OPFIND, is called to retrieve parameters associated with each of these keyword records. OPDONE, another entry point in subroutine OPFIND, is called to mark the activities’ disposition.
 
-For a FIXDG activity, a tree record is included when its species matches the species or species group in the record (0 includes all species) and its diameter at the start of the cycle, DBH(i), is at least the lower diameter limit and less than the upper diameter limit. A negative multiplier is set to 0, a negative lower limit is set to 0, and an upper limit that is 0 or less is set to 999. For each included record, DG(i) is multiplied by the multiplier; the tripled records of the tree receive the same multiplier. Because FIXDG is applied after subroutines DGDRIV and REGENT, it multiplies the small-tree increments as well as the large-tree increments, and it multiplies the increment itself (an inside bark increment on the YR basis), not the change in squared diameter. FIXHTG applies a multiplier to HTG(i) with the same species and diameter test; a negative multiplier is set to 0.
+For a FIXDG activity, a tree record is included when its species matches the species or species group in the record (0 includes all species) and its diameter at the start of the cycle, DBH(i), is at least the lower diameter limit and less than the upper diameter limit. A negative multiplier is set to 0, a negative lower limit is set to 0, and an upper limit that is 0 or less is set to 999. For each included record, DG(i) is multiplied by the multiplier; the tripled records of the tree receive the same multiplier. Because FIXDG is applied after subroutines DGDRIV and REGENT, it multiplies the small-tree increments as well as the large-tree increments, and it multiplies the increment itself (an inside bark increment on the YR basis), not the change in squared diameter. FIXHTG applies a multiplier to HTG(i) with the same species and diameter test; a negative multiplier is set to 0. Unlike FIXDG, the lower and upper diameter limits are not changed when they are negative or zero.
 
 FVS is now done with basic growth estimates. However, growth estimates may be modified later in the projection cycle to account for fertilization or insect and disease effects on growth.
+
+###### Small-tree height equations
+
+**Equations of the small-tree height increment.** The equation of the species and variant is evaluated by subroutine REGENT for trees smaller than XMAX. The following variants use the equations listed. HI, OP, PN and WC use subroutine SMHGDG, which returns the 5-year height and diameter increments from the equation in {4.2.1.2.3} to {4.2.1.2.5}.
+
+$$
+DGS = \frac{DMAX}{1 + \exp\left[\alpha_0 + \alpha_1 PTBA + \alpha_2 \ln(PTBA + 2.71) + \alpha_3 PTBAL + \alpha_4 \ln(PTBAL + 2.71) + \alpha_5 BOOST + \alpha_6 CR + \alpha_7 RELHT + \alpha_8 \sqrt{RELHT} + \alpha_9 SI\right]}
+\tag{4.2.1.2.3}
+$$
+
+$$
+BOOST =
+\begin{cases}
+\dfrac{1}{1 + \exp(-3.1 + 0.18 \cdot PTBA)} & PTBA < 100 \\
+0 & PTBA \ge 100
+\end{cases}
+\tag{4.2.1.2.4}
+$$
+
+$$
+HG5 = \frac{DGS}{BETA}, \qquad DG5 =
+\begin{cases}
+DGS & HT \ge 4.5 \\
+BETA\,(HT + HG5 - 4.5) & HT < 4.5 \text{ and } HT + HG5 \ge 4.5 \\
+0 & \text{otherwise}
+\end{cases}
+\tag{4.2.1.2.5}
+$$
+
+Where:
+
+- DGS: Five-year diameter increment (inches)
+- DMAX, BETA: Coefficients of the species (arrays in subroutine SMHGDG)
+- α0 to α9: Coefficients of the species (the array ALPHA in subroutine SMHGDG)
+- PTBA: Basal area of the point where the tree is located (square feet per acre)
+- PTBAL: Basal area in larger trees on the point (square feet per acre)
+- CR: Crown ratio (proportion)
+- RELHT: HT / AVHT, with a maximum of 1.5; AVHT is AVH, and for the regular call in the first 5 years AVHT is (5 / FINT) x AVH + ((FINT - 5) / FINT) x ATAVH
+- SI: Site index (feet); for species DF in WC, 5.21486 + 0.66486 x SI is used
+- HG5: Five-year height increment (feet)
+- DG5: Five-year diameter increment (inches)
+- HT: Tree height (feet)
+
+In WC, PN and HI the equation is evaluated twice in each cycle to build a 10-year increment, because REGYR is 10 years in those variants; in OP it is evaluated once, with REGYR of 5 years. REGENT then forms HTGR = (HTGR + ZZRAN x 0.1) x XRHGRO x SCALE x CON x WK4(i), where ZZRAN is a normal draw redrawn when it is above 0.5 or below -2.0, XRHGRO is the user-supplied small-tree height growth multiplier (REGHMULT), CON is the calibration multiplier of the species, and WK4(i) is the climate multiplier. HTGR has a lower bound of 0.1 foot.
+
+*Small-tree height increment of the CR variant.* REGYR is 10 years. For species other than AS and PB, the 10-year increment is the product of the potential growth, a density modifier and a vigor modifier, as shown in equations {4.2.1.2.6} to {4.2.1.2.8}.
+
+$$
+HTGR = POTHTG \cdot PCTRED \cdot VIGOR \cdot CON, \qquad POTHTG = \frac{SITEAR}{15 - 4 \cdot RELSI} \cdot HTADJ
+\tag{4.2.1.2.6}
+$$
+
+$$
+PCTRED = AB_1 + X\left(AB_2 + X\left(AB_3 + X\left(AB_4 + X\left(AB_5 + X \cdot AB_6\right)\right)\right)\right), \qquad X = \min\left[300, \; AVHT \cdot \frac{CCF}{100}\right]
+\tag{4.2.1.2.7}
+$$
+
+$$
+VIGOR = \min\left[1.0, \; 150\, CR^{3} \exp(-6\, CR) + 0.3\right]
+\tag{4.2.1.2.8}
+$$
+
+Where:
+
+- HTGR: Height increment before the weighting with the large-tree estimate (feet)
+- POTHTG: Potential height growth (feet)
+- SITEAR: Site index of the species (feet); RELSI = (SI - SITELO) / (SITEHI - SITELO), where SI is bounded by the arrays SITELO and SITEHI of the species
+- HTADJ: Adjustment of the species (array in subroutine REGENT; 1.10 for species RC and WL, and 1.00 for the others)
+- PCTRED: Density modifier, between 0.01 and 1.0
+- AB(1) to AB(6): 1.11436, -0.011493, 0.43012E-4, -0.72221E-7, 0.5607E-10 and -0.1641E-13
+- AVHT: Average height of the 40 largest trees per acre (feet); in the establishment call, interpolated: (5 / FINT) x AVH + ((FINT - 5) / FINT) x ATAVH, and likewise for CCF
+- CCF: Stand crown competition factor (percent)
+- VIGOR: Vigor modifier; for species BC, PI, UJ, GO, AW, EM, BK, SO, AJ, RM, OJ, ER, PM, PD and AZ, it is replaced by 1 - (1 - VIGOR) / 3
+- CR: Crown ratio (proportion)
+- CON: RHCON x exp(HCOR), the calibrated multiplier of the species
+
+For species AS and PB, HTGR = [26.9825 x (AGE + 10)^1.1752 - 26.9825 x AGE^1.1752] / (2.54 x 12) x RSIMOD x CON x 0.75, with RSIMOD = 0.5 x (1 + RELSI) and AGE the age of the tree (minimum 5 years). Then HTGR = (HTGR + ZZRAN x 0.2) x XRHGRO x SCALE x WK4(i), where ZZRAN is a normal draw redrawn when it is above 0.5 or below -2.0 (zero when DGSD is below 1.0), and the weighting of the next paragraph is applied. For trees that are not established by the establishment model, SCALE is FNT / REGYR, where FNT is FINT, or FINT - 5 in the establishment call.
+
+*Small-tree height increment of the KT variant.* In the period sub-cycles, the height at the end of the period of a tree of species other than species 11 is H2 = H1 + HTGRL x (KPER / REGYR) x XRHGRO x CON, where HTGRL = RHCONS + BH x H1 + HTHS2 x H1^2 + BBAL x BAL + BBA x ln(BA) + HTPC1 x PCCF1 + (HTCRS + HTCRS2 x CR) x CR, with a lower bound of 0. For species OT (species 11), HTGRL = exp(RHCONS + BH x ln(H1) + BCCF x RDJ + BBALMH x BALMH + HCOR) and H2 = H1 + HTGRL x (KPER / REGYR) x XRHGRO. H1 is the height at the start of the period, KPER is the length of the period, and the coefficients are arrays of the species and habitat group in subroutine REGENT (see `kt/regent.f`).
+
+*Weighting with the large-tree estimate.* The weight, XWT, is shown in equation {4.2.1.2.1}, with XWT = 0 when the call comes from the regeneration establishment model. For species RW in WC, PN and OP, the code averages the small-tree and large-tree estimates when the call is not from the regeneration establishment model, and then applies the weights of equation {4.2.1.2.2} twice.
+
+**Small-tree height growth in the variants with a 5-year sub-cycle.** The CI, EM, IE, KT, TT and BC variants divide the cycle into periods that are no longer than 5 years. The number of periods is the number of whole 5-year periods in the cycle, plus 1 when a remainder exists. The cycle is divided as evenly as possible; the length of each period is the integer quotient of the years that remain and the periods that remain, and the last period receives the remainder. A 7-year cycle has periods of 3 and 4 years, a 10-year cycle has two periods of 5 years, a 12-year cycle has three periods of 4 years, and a 13-year cycle has periods of 4, 4 and 5 years. The height at the end of each period is calculated with the stand density at the beginning of the period. For the trees that are 3.0 inches or larger, the contribution to the basal area and to the crown competition factor at the beginning of the next period is the annualized 10-year increment multiplied by the years of the period, with the number of trees per acre multiplied by 0.985^K, where K is the number of years since the start of the cycle (a mortality rate of 1.5 percent per year).
+
+**Other equations of the small-tree height increment.** The next paragraphs give each form once. In the variants with 5-year sub-cycles (CI, EM, IE, KT, TT and BC), the equations are evaluated for each period of the cycle; the height at the end of the period is H2 and the height at the start is H1.
+
+*SMHTGF of BM, EC and SO.* Subroutine SMHTGF returns the height growth over DTIME years, HHT, as a function of the site index. The Chapman-Richards form is shown in equation {4.2.1.2.9}; the other forms are in the table that follows.
+
+$$
+\begin{aligned}
+EFFAGE &= 0 \;\; (MODE = 0), \qquad EFFAGE = \frac{\ln\left[\left(1 - \left(\frac{C_1 H}{SI}\right)^{1/C_4}\right) / C_2\right]}{C_3} \;\; (MODE = 1) \\
+HHT &= \frac{SI}{C_1}\left[1 - C_2 \exp\left(C_3 \,(EFFAGE + DTIME)\right)\right]^{C_4} - \frac{SI}{C_1}\left[1 - C_2 \exp\left(C_3 \cdot EFFAGE\right)\right]^{C_4}
+\end{aligned}
+\tag{4.2.1.2.9}
+$$
+
+Where:
+
+- HHT: Height growth over DTIME years (feet)
+- SI: Site index of the species (feet)
+- H: Height of the tree (feet)
+- DTIME: Length of the period (years)
+- EFFAGE: Effective age of the tree on the curve (years); in EC species RC, EFFAGE is 100 when the argument of the logarithm is zero or less
+- C1 to C4: Constants given in the table
+- MODE: Argument of the subroutine, 0 or 1 (EFFAGE is 0 when MODE is 0, and is calculated from H when MODE is 1)
+
+SO species AF uses equation {4.2.1.2.10}.
+
+$$
+DOMHTGR = \frac{5\,(2.2227 + 0.4314 \cdot SI)}{29.0 - 0.05 \cdot SI}, \qquad HHT = DOMHTGR \cdot 1.016605\,\left[1 - \exp(-4.26558\, CR)\right]\exp\left[2.54119\left(RELHT^{0.250537} - 1\right)\right]
+\tag{4.2.1.2.10}
+$$
+
+Where:
+
+- DOMHTGR: Dominant height growth (feet)
+- CR: Crown ratio as a proportion (the percent divided by 100 in SO; the percent divided by 10 in CA and OC, as coded)
+- RELHT: HT / AVH
+
+```{r smhtgf-forms, echo=FALSE}
+smhtgf_forms <- tibble::tribble(
+  ~Variant, ~Species, ~Equation, ~Source,
+  "BM", "WP", "Chapman-Richards form with C1 = 0.375045, C2 = 0.92503, C3 = -0.020796 and C4 = 2.48811 (equation {4.2.1.2.9})", "bm/smhtgf.f",
+  "BM", "WL", "HHT = ((-3.9725 + 0.50995 x SI) / (28.1168 - 0.05661 x SI)) x DTIME", "bm/smhtgf.f",
+  "BM", "DF", "HHT = ((2.0 + 0.420 x SI) / (28.5 - 0.05 x SI)) x DTIME", "bm/smhtgf.f",
+  "BM", "GF", "HHT = ((4.2435 + 0.1510 x SI) / (19.0184 - 0.0570 x SI)) x DTIME", "bm/smhtgf.f",
+  "BM", "MH", "HHT = ((0.965758 + 0.082969 x SI) / (55.249612 - 1.288852 x SI)) x DTIME x 3.280833", "bm/smhtgf.f",
+  "BM", "WJ", "HHT = (SI / 5.0) x (1.5 x SI - H) / (1.5 x SI), with SI limited to 5 to 75 (no DTIME factor)", "bm/smhtgf.f",
+  "BM", "LP", "HHT = 0.02008805 x SI x DTIME", "bm/smhtgf.f",
+  "BM", "ES", "HHT = ((0.09211 + 0.208517 x SI) / (43.358 - 0.168166 x SI)) x DTIME", "bm/smhtgf.f",
+  "BM", "AF", "HHT = ((6.0 + 0.14 x SI) / (33.882 - 0.06588 x SI)) x DTIME", "bm/smhtgf.f",
+  "BM", "PP, OS", "HHT = ((-1.0 + 0.32857 x SI) / (28.0 - 0.042857 x SI)) x DTIME", "bm/smhtgf.f",
+  "BM", "WB", "HHT = 0.02008805 x SI x DTIME x 1.6", "bm/smhtgf.f",
+  "BM", "LM", "HHT = 0.5", "bm/smhtgf.f",
+  "BM", "PY, YC, CW, OH", "HHT = ((1.47043 + 0.23317 x SI) / (31.56252 - 0.05586 x SI)) x DTIME", "bm/smhtgf.f",
+  "BM", "AS", "HHT = 5.0", "bm/smhtgf.f",
+  "EC", "WP", "Chapman-Richards form with C1 = 0.375045, C2 = 0.92503, C3 = -0.020796 and C4 = 2.48811 (equation {4.2.1.2.9})", "ec/smhtgf.f",
+  "EC", "WL, LL", "HHT = ((-3.97245 + 0.50995 x SI) / (28.11668 - 0.05661 x SI)) x DTIME", "ec/smhtgf.f",
+  "EC", "DF", "HHT = ((2.0 + 0.420 x SI) / (28.5 - 0.05 x SI)) x DTIME", "ec/smhtgf.f",
+  "EC", "SF", "HHT = ((-0.6667 + 0.4333 x SI) / (28.5 - 0.05 x SI)) x DTIME", "ec/smhtgf.f",
+  "EC", "RC", "Chapman-Richards form with C1 = 0.752842, C2 = 1.0, C3 = -0.0174 and C4 = 1.4711 (equation {4.2.1.2.9})", "ec/smhtgf.f",
+  "EC", "GF, WF", "HHT = ((-1.0470 + 0.4220 x SI) / (28.7739 - 0.0597 x SI)) x DTIME", "ec/smhtgf.f",
+  "EC", "LP", "HHT = (0.3277 + 0.01296 x SI) x DTIME", "ec/smhtgf.f",
+  "EC", "ES", "HHT = ((-8.0 + 0.35 x SI) / (53.72545 - 0.274509 x SI)) x DTIME", "ec/smhtgf.f",
+  "EC", "AF", "HHT = ((6.0 + 0.14 x SI) / (33.882 - 0.06588 x SI)) x DTIME", "ec/smhtgf.f",
+  "EC", "PP", "HHT = ((-1.0 + 0.32857 x SI) / (28.0 - 0.042857 x SI)) x DTIME", "ec/smhtgf.f",
+  "EC", "WH", "HHT = ((-5.74874 + 0.54576 x SI) / (26.15767 - 0.03596 x SI)) x DTIME", "ec/smhtgf.f",
+  "EC", "MH, OS", "HHT = ((0.965758 + 0.082969 x SI) / (55.249612 - 1.288852 x SI)) x DTIME x 3.280833", "ec/smhtgf.f",
+  "EC", "PY, WB, YC, WJ, BM, VN, PB, GC, DG, AS, CW, PL, WI, OH", "HHT = ((1.47043 + 0.23317 x SI) / (31.56252 - 0.05586 x SI)) x DTIME", "ec/smhtgf.f",
+  "EC", "NF", "HHT = ((11.26677 + 0.12027 x SI) / (27.93806 - 0.02873 x SI)) x DTIME", "ec/smhtgf.f",
+  "EC", "RA", "HHT = (-0.007025 + 0.056794 x SI) x DTIME", "ec/smhtgf.f",
+  "EC", "WO", "HHT = (-37.60812 x ln(1 - (SI / 114.24569)^0.44444) x 0.01 - 0.1) x DTIME", "ec/smhtgf.f",
+  "SO", "WP", "Chapman-Richards form with C1 = 0.375045, C2 = 0.92503, C3 = -0.020796 and C4 = 2.48811 (equation {4.2.1.2.9})", "so/smhtgf.f",
+  "SO", "SP", "HHT = ((-1.0 + 0.32857 x SI) / (28.0 - 0.042857 x SI)) x DTIME", "so/smhtgf.f",
+  "SO", "DF, OS", "HHT = ((2.0 + 0.420 x SI) / (28.5 - 0.05 x SI)) x DTIME x 1.1", "so/smhtgf.f",
+  "SO", "WF, GF", "HHT = ((4.2435 + 0.1510 x SI) / (19.0184 - 0.0570 x SI)) x DTIME x 1.2", "so/smhtgf.f",
+  "SO", "MH", "HHT = ((0.965758 + 0.082969 x SI) / (55.249612 - 1.288852 x SI)) x DTIME x 3.280833 x 1.60", "so/smhtgf.f",
+  "SO", "IC", "HHT = ((4.2435 + 0.1510 x SI) / (19.0184 - 0.0570 x SI)) x DTIME x 1.3", "so/smhtgf.f",
+  "SO", "LP", "HHT = 0.02008805 x SI x DTIME", "so/smhtgf.f",
+  "SO", "WB", "HHT = 0.02008805 x SI x DTIME x 1.6", "so/smhtgf.f",
+  "SO", "ES", "HHT = ((0.09211 + 0.208517 x SI) / (43.358 - 0.168166 x SI)) x DTIME x 1.35", "so/smhtgf.f",
+  "SO", "SH", "HHT = DOMHTGR x SMHMOD (equation {4.2.1.2.10}), with RELHT limited to 1.05", "so/smhtgf.f",
+  "SO", "PP", "HHT = ((-1.0 + 0.32857 x SI) / (28.0 - 0.042857 x SI)) x DTIME", "so/smhtgf.f",
+  "SO", "WJ", "HHT = (SI / 5.0) x (1.5 x SI - H) / (1.5 x SI), with SI limited to 5 to 75 (no DTIME factor)", "so/smhtgf.f",
+  "SO", "AF", "HHT = ((6.0 + 0.14 x SI) / (33.882 - 0.06588 x SI)) x DTIME", "so/smhtgf.f",
+  "SO", "SF", "HHT = ((-0.6667 + 0.4333 x SI) / (28.5 - 0.05 x SI)) x DTIME", "so/smhtgf.f",
+  "SO", "NF", "HHT = ((11.26677 + 0.12027 x SI) / (27.93806 - 0.02873 x SI)) x DTIME", "so/smhtgf.f",
+  "SO", "WL", "HHT = ((-3.9725 + 0.50995 x SI) / (28.1168 - 0.05661 x SI)) x DTIME", "so/smhtgf.f",
+  "SO", "RC", "Chapman-Richards form with C1 = 0.752842, C2 = 1.0, C3 = -0.0174 and C4 = 1.4711 (equation {4.2.1.2.9})", "so/smhtgf.f",
+  "SO", "WH", "HHT = ((-5.74874 + 0.54576 x SI) / (26.15767 - 0.03596 x SI)) x DTIME", "so/smhtgf.f",
+  "SO", "PY, WA, BM, CW, CH, WI, GC, MC, MB, OH", "HHT = ((1.47043 + 0.23317 x SI) / (31.56252 - 0.05586 x SI)) x DTIME", "so/smhtgf.f",
+  "SO", "RA", "HHT = (-0.007025 + 0.056794 x SI) x DTIME x 1.20", "so/smhtgf.f",
+  "SO", "WO", "HHT = exp(3.817 - 0.7829 x ln(BALT)) x FACTOR, with FACTOR = 0.80 + 0.004 x (SI - 50) (BALT is BAL with a minimum of 5.0)", "so/smhtgf.f"
+)
+
+kable(smhtgf_forms,
+      col.names = c("Variant", "Species", "Equation of subroutine SMHTGF", "Source"),
+      caption = "Small-tree height growth, subroutine SMHTGF of BM, EC and SO",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "4em") %>%
+  column_spec(3, width = "32em")
+```
+
+*SMHTGF of CA, OC and WS.* The subroutine returns the height growth over 5 years of each species group. FACTOR = SPADJF x (0.80 + 0.004 x (SI - 50)) in CA and OC (SPADJF is an array of the species, `ca/smhtgf.f`), BALT is BAL with a minimum of 5.0, and HTGR has a minimum of 0.1 foot. The equations are listed in the next table.
+
+```{r smhtgf-ca-ws, echo=FALSE}
+smhtgf_ca_ws <- tibble::tribble(
+  ~Variant, ~Species, ~Equation,
+  "CA and OC", "WB, KP, LP, CP, LM, JP, SP, WP, PP, MP, GP, WJ, OS", "HTGR = exp(0.7452 - 0.003271 x BAL - 0.1632 x CR + 0.0217 x CR^2 + 0.00536 x SI) x FACTOR x 1.75",
+  "CA and OC", "PC, IC, RC, WF, RF, SH, DF, WH, MH, BR, PY, CN", "Equation {4.2.1.2.10}",
+  "CA and OC", "LO, CY, BL, EO, WO, BO, VO, IO, BU, RA, GC, FL, WN, SY, AS, CW, WI, OH", "HTGR = exp(3.817 - 0.7829 x ln(BALT)) x FACTOR",
+  "CA and OC", "BM, MA, DG, TO, CL", "HTGR = exp(3.385 - 0.5898 x ln(BALT)) x FACTOR",
+  "CA and OC", "GS, RW", "HTMAX = 2.242202 x SI; HTGR = 0 when HTMAX - H is 1.0 or less; otherwise AGE1 = (1 / -0.010742) x ln(1 - (H / 2.242202 / SI)^(1 / 0.919076)), AGE2 = AGE1 + 5, H1 and H2 = 2.242202 x SI x (1 - exp(-0.010742 x AGE))^0.919076 at AGE1 and AGE2, and HTGR = H2 - H1",
+  "WS", "SP, IC, JP, PP, WP, MP, MH, OS", "HTGR = exp(0.7452 - 0.003271 x BAL - 0.1632 x CR + 0.0217 x CR^2 + 0.00536 x SI) x (0.80 + 0.004 x (SI - 50)) x 1.75 for IC, SP, WP, MH, and x 1.50 for the others",
+  "WS", "DF, WF, RF, SF, BD", "HTGR = [exp(-0.2495 - 0.00111 x BAL + 0.0100 x CR^2) + 1.0] x 2.5 x (0.80 + 0.004 x (SI - 50)) for DF, BD, and [exp(...) + 0.75] x 2.0 x (0.80 + 0.004 x (SI - 50)) for the others",
+  "WS", "LO, CY, BL, BO, VO, IO, BM, OH", "HTGR = exp(3.817 - 0.7829 x ln(BALT))",
+  "WS", "TO, GC, AS, CL, MA, DG", "HTGR = exp(3.385 - 0.5898 x ln(BALT))",
+  "WS", "LP, WB, PM, KP, FP, CP, LM, GP, WE, WJ, UJ, CJ", "HTGR = exp(0.7452 - 0.003271 x BAL - 0.1632 x CR + 0.0217 x CR^2 + 0.00536 x SI) x (0.80 + 0.004 x (SI - 50)) x 1.75",
+  "WS", "GS, RW", "The equation of the redwood row of CA and OC"
+)
+
+kable(smhtgf_ca_ws,
+      col.names = c("Variant", "Species", "Equation"),
+      caption = "Small-tree height growth, subroutine SMHTGF of CA, OC and WS",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "5em") %>%
+  column_spec(3, width = "36em")
+```
+
+*Forms of REGENT in the variants with 5-year sub-cycles.* IE, EM, CI and TT assemble the small-tree equations from the variants where the equations of each species originated. The form is selected by species.
+
+1. **NI form (IE species WP, WL, DF, GF, WH, RC, LP, ES, AF, PP, MH, WB, LL and OS; EM species LL).** ln(HTGRL) = CON + BH x ln(H1) + BCCF x RDJ + BBAL x BAL, and H2 = H1 + exp(HTGRL) x (KPER / REGYR) x XRHGRO (x WK4(i) in IE), where KPER is the length of the period, RDJ is the relative density at the start of the period, BH is RHLH, BCCF is RHCCF and BBAL is RHBAL (arrays of the species), and CON is RHCON + HCOR in this form (RHCON x exp(HCOR) in the other forms; `ie/regent.f` lines 410 to 418). The diameter range of the weighting is XMIN to XMAX of the species (`ie/regent.f` lines 170 to 173).
+2. **TT form (IE species LM and PY; EM species LM; CI species WB, PY and LM; TT species WB, LM, DF, BS, AS, LP, ES, AF and OS).** BETA1 = exp(B0A + B1A x ln(TPCCF)), BETA2 = exp(B0B + B1B x ln(TPCCF)), HTG1 = BETA1 + BETA2 x CR, STDDEV = HTG1 x (S0 + S1 x CR), and HTGRL = HTG1 + ZRAND x STDDEV, with a lower bound of 0.1 foot, where CR is the crown ratio as a percent, TPCCF is the point CCF for the period (between 25 and 300), and ZRAND is a normal draw between -2.0 and 2.0 that is redrawn when the previous growth was 0.1 foot or less. In IE and CI the constants are B0A = 1.17527, B1A = -0.42124, B0B = -2.56002, B1B = -0.58642, S0 = 1.08720 and S1 = -0.00230; in EM and TT the constants are the arrays B0ACCF, B1ACCF, B0BCCF, B1BCCF, B0ASTD and B1BSTD (subroutine SMHTGF). H2 = H1 + HTGRL x (KPER / REGYR) x XRHGRO x CON (x WK4(i) in IE, CI and TT as coded).
+3. **CR and UT form (IE species PM, RM, AS, MM, PB, CO and OH; EM species RM, AS, PB, GA, CW, BA, PW, NC and OH; CI species AS, WJ, MC, CW and OH; TT species PM, UJ, RM, BI, MM, NC, MC and OH).** HTGRL = POTHTG x PCTRED x VIGOR x CON, with PCTRED and VIGOR as in equations {4.2.1.2.7} and {4.2.1.2.8}, and with POTHTG of the species: in IE, POTHTG = (SJ/5) x (1.5 x SJ - H) / (1.5 x SJ) x 0.83 for the species of the CR and UT form (SJ is the site index of the species); in EM, POTHTG = SI / (15 - 4 x RELSI) for species GA, CW, BA, PW, NC and OH, and (SI/10) x (1.5 x SI - H1) / (1.5 x SI) for species RM; in TT, POTHTG = (SJ/5) x (1.5 x SJ - H) / (1.5 x SJ) x 0.83 for the species other than MM. For the aspen species (IE species AS, MM and PB; EM species AS and PB; CI species AS; TT species MM), HTGRL = [26.9825 x (SITAGE + 10)^1.1752 - 26.9825 x SITAGE^1.1752] / (2.54 x 12) x RSIMOD x CON x 0.75, where SITAGE is the age from FINDAG (the age of the tree record, ABIRTH, in the establishment call) in IE, CI and TT, the age of the tree record, ABIRTH, in EM, and RSIMOD = 0.5 x (1 + RELSI). VIGOR is replaced by 1 - (1 - VIGOR) / 3 for species PM and RM in IE, species RM in EM, species WJ in CI, and species PM, UJ and RM in TT. H2 = H1 + HTGRL x SCALE in IE and in CR-type species, with SCALE = NTYR / YR (a 10-year estimate); in EM, H2 = H1 + HTGRL x FINT / 10.
+4. **CI form (CI species WP, WL, DF, GF, WH, RC, LP, ES, AF, PP and OS).** HTGRL = SCNST + SHTBA x RELHT x PTBAA + SPBAL x PTBALI + SBAL x TBAL + SHDM1 x RHDM1 + SHDM2 x RHDM2 + SPTBA x PTBAA, and H2 = H1 + HTGRL x SCALE x XRHGRO x CON, where PTBAA is the basal area of the point, PTBALI is the basal area in larger trees on the point, TBAL = (1 - PCT/100) x BA, RELHT is the relative height (maximum 1.5), and SCNST (the array CNST), SHTBA (HTBA), SPBAL (PBAL), SBAL (BAL), SHDM1 (HDM1), SHDM2 (HDM2) and SPTBA (PTBA) are arrays of the species in `ci/regent.f` lines 192 to 259; CON = RHCON x exp(HCOR); XMIN and XMAX are at lines 177 to 182. The potential growth of the CI-origin species of CI that use the CR and UT form is POTHTG = (SJ/5) x (1.5 x SJ - H) / (1.5 x SJ) x 0.83 (`ci/regent.f` line 602).
+5. **CI form in TT (TT species PP).** HTGRL = 2.764559 - 0.009643 x BA + 0.025303 x RCR^2, where RCR is the crown ratio class of the tree, ((ICR - 1) / 10) + 1, with a maximum of 9, and H2 = H1 + HTGRL x SCALE x XRHGRO x CON, with SCALE = NTYR / REGYR. In TT the TT form of item 2 uses SCALE = KPER / REGYR, and species AS has HTGRL multiplied by RSIMOD = 0.5 x (1 + RELSI), with RELSI = (SITEAR(AS) - 30) / 70 between 0 and 1.
+
+*Small-tree height increment of the UT variant.* REGYR is 10 years. POTHTG = SJ / 5 for species WB, LM, DF, WF, BS, LP, ES, AF, PP and OS; POTHTG = (SJ/5) x (1.5 x SJ - H) / (1.5 x SJ) x 0.83 for species PI, WJ, GO, PM, RM, UJ, OH, GB, NC, FC, BE, MC and BI; for species AS, HTGR = [26.9825 x (SITAGE + 10)^1.1752 - 26.9825 x SITAGE^1.1752] / (2.54 x 12) x RSIMOD x CON x 0.75. For the other species HTGR = POTHTG x PCTRED x VIGOR x CON, with VIGOR replaced by 1 - (1 - VIGOR) / 3 for species PI, WJ, GO, PM, RM, UJ, GB and OH. PCTRED is calculated as in equation {4.2.1.2.7}. The coefficients AB(1) to AB(6) are 1.11436, -0.011493, 0.43012E-4, -0.72221E-7, 0.5607E-10 and -0.1641E-13 in the CR, UT, BM, EC, SO, TT and WS variants (the DATA statement AB of each `regent.f`); the WC, PN, HI and OP variants have 0.43015E-4 for AB(3).
+
+**Small-tree height increment of CA and OC.** REGYR is 5 years. XMAX is 4.0 inches (10.0 for species GS and RW), XMIN is 2.0 inches, and the diameter threshold of the diameter increment, DGMIN, is 3.0 inches (7.0 for GS and RW). For each tree, CR = ICR/10, BAL = (1 - PCT/100) x BA, and RELHT = HT/AVH with a maximum of 1.05. Subroutine SMHTGF returns HTGRR (see the table above), and HTGR = (HTGRR x CON + ZZRAN x 0.1) x XRHGRO x SCALE, where CON = RHCON x exp(HCOR), ZZRAN is a normal draw redrawn when above 0.5 or below -2.0, and SCALE is FNT/REGYR. The weighting of equation {4.2.1.2.2} is applied once for all species; for species GS and RW, HTGR is first averaged with the large-tree increment, (HTGR + HTG)/2, unless the call is from the regeneration establishment model, and then weighted (`ca/regent.f` and `oc/regent.f`).
+
+**Small-tree height increment of BC.** REGYR is 5 years. XMAX and XMIN are 4.0 and 2.0 inches for all species when LV2ATV is false, and, when LV2ATV is true, XMAX is 10.0 inches (5.0 for species PL) and XMIN is 2.0 inches (1.0 for species PL) (`canada/bc/regent.f` lines 209 to 212). The height at the end of each period is as follows.
+
+- LV2ATV true, species flagged by subroutine SEISTHG (LSPPOK): HTGRL = STHG_CON + B1X + B3X + RAN, where STHG_CON = -0.00101 x ELEV (m), B1X = 0.518176 x ln(H1 in meters), B3X = -0.003254 x RDJ, and RAN is a draw from a normal distribution with a mean of 0 and a standard deviation of 0.62921; H2 = H1 + exp(max(-40, HTGRL)) x (KPER / REGYR) x XRHGRO x 3.28084.
+- LV2ATV true, other species: the NI form (item 1 above), H2 = H1 + exp(max(-40, HTGRL)) x (KPER / REGYR) x XRHGRO.
+- LV2ATV false, zone SBS: HTGRL = (STG%CON + STG%HT x H1m) / [1 + STG%EXPMLT x exp(STG%HCCFL x H1m / max(CCFL, 36) + STG%CCFSL x CCFS / max(CCFL, 36))] x 0.0328084 x exp(RHCON), where H1m is H1 in meters; H2 = H1 + HTGRL x (KPER / REGYR) x XRHGRO.
+- LV2ATV false, other zones: HTGRL = exp(max(-88, STG%CON + RHCON + STG%LNHT x ln(max(2, H1m)) + STG%HT x max(2, H1m) + STG%BAL x BAL x 0.2295643 x 0.01 + STG%CCF x RDJ)) x 3.28084; H2 = H1 + HTGRL x (KPER / REGYR) x XRHGRO.
+
+The random increment is drawn with ZZRAN between -1.5 and 1.0: HTGR = HTGR1 x exp(ZZRAN x HSIGMA) when LV2ATV is true, and HTGR = max(0, HTGR1 + ZZRAN x STG%SD) otherwise.
+
+**Small-tree height increment of WS.** REGYR is 10 years for species GB and MC and 5 years for the other species. XMAX and XMIN are arrays of the species (`ws/regent.f` lines 166 to 178; XMAX is 3.5 inches for most species, 4.0 or 10.0 for others, and XMIN is 2.0 inches for most species and 1.0 inch for several), and SMTMAP (line 180) assigns the species to the groups of subroutine SMHTGF. CR = ICR/10, BAL = (1 - PCT/100) x BA, and CON = RHCON x exp(HCOR). The species use the following equations.
+
+- Species MC (from the SO variant): VIGOR = min[1.0, 150 x X^3 x exp(-6 X) + 0.3], with X = ICR/100; POTHTG = ((1.47043 + 0.23317 x SI) / (31.56252 - 0.05586 x SI)) x 10; HTGRR = POTHTG x PCTRED x VIGOR, with PCTRED from equation {4.2.1.2.7}.
+- Species GB (from the CR variant, through UT): the same VIGOR, replaced by 1 - (1 - VIGOR) / 3, and POTHTG = ((SI / 5) x (1.5 x SI - H) / (1.5 x SI)) x 0.83; HTGRR = POTHTG x PCTRED x VIGOR.
+- All other species: HTGRR is returned by subroutine SMHTGF (see the table above).
+
+Then HTGR = HTGRR x CON, and HTGR = (HTGR + ZZRAN x 0.2) x XRHGRO x SCALE x WK4(i) for species GB and (HTGR + ZZRAN x 0.1) x XRHGRO x SCALE for the others, where ZZRAN is a normal draw redrawn when above 0.5 or below -2.0 and SCALE is FNT/REGYR. The weighting of equation {4.2.1.2.2} is applied once; for species GS and RW the small-tree value is first averaged with the large-tree value, (HTGR + HTG)/2, unless the call is from the regeneration establishment model.
+
+**Coefficients of BC.** In the BC variant the coefficients STG%CON, STG%LNHT, STG%HT, STG%CCF, STG%BAL, STG%EXPMLT, STG%HCCFL, STG%CCFSL and STG%SD are copied from the array ST_COEF for the species and the biogeoclimatic zone (`canada/bc/regent.f` lines 2050 to 2100), with STG%CON = ST_COEF%CON + (ST_COEF%SLP + ST_COEF%CASP x cos(ASP) + ST_COEF%SASP x sin(ASP)) x SLOPE; the coefficients LTH of the large-tree equation V3HTG are copied in the same way from the arrays LTSP and LTHG (`canada/bc/htgf.f` lines 1765 to 1790). The large-tree equation V3HTG, in meters, is HTGM = (CN + CNSI + DG1 x DGM + DG2 x DGM^2) x HTM^(DBH1 + DBH2 x D) x exp(HT2 x HTM^2) for species with the new V3 model (BC species PL, SE, EP, AT, AC and OH), and HTGM = (A1 + SI) x HTM^(B1 + B2 x D + B3 x DGM) x exp(C x HTM^2) for the other species, with D in centimeters, HTM the height in meters and DGM the diameter increment in centimeters; V3HTG = HTGM x 3.28084 x MLT, and V3HTG is 0 for species that were not fit.
 
 #### Diameter increment through the projection cycle {#sec-diameter-increment-through-the-projection-cycle}
 

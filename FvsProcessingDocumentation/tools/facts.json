@@ -1657,5 +1657,1069 @@
   "doc": "Mortality: AK pass multiplier",
   "file": "ak/morts.f",
   "regex": "WKI=WK2\\(I\\)\\*\\(PASS\\)"
+ },
+ {
+  "id": "diam-dgsd-ak",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 2.0 in AK",
+  "file": "ak/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*2\\.0\\s*$"
+ },
+ {
+  "id": "diam-dgsd-bc",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 2.0 in BC",
+  "file": "canada/bc/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*2\\.0\\s*$"
+ },
+ {
+  "id": "diam-dgsd-cr",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 2.0 in CR",
+  "file": "cr/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*2\\.0\\s*$"
+ },
+ {
+  "id": "diam-dgsd-cs",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 2.0 in CS",
+  "file": "cs/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*2\\.0\\s*$"
+ },
+ {
+  "id": "diam-dgsd-em",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 2.0 in EM",
+  "file": "em/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*2\\.0\\s*$"
+ },
+ {
+  "id": "diam-dgsd-ie",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 2.0 in IE",
+  "file": "ie/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*2\\.0\\s*$"
+ },
+ {
+  "id": "diam-dgsd-kt",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 2.0 in KT",
+  "file": "kt/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*2\\.0\\s*$"
+ },
+ {
+  "id": "diam-dgsd-ls",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 2.0 in LS",
+  "file": "ls/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*2\\.0\\s*$"
+ },
+ {
+  "id": "diam-dgsd-nc",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 2.0 in NC",
+  "file": "nc/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*2\\.0\\s*$"
+ },
+ {
+  "id": "diam-dgsd-ne",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 2.0 in NE",
+  "file": "ne/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*2\\.0\\s*$"
+ },
+ {
+  "id": "diam-dgsd-on",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 2.0 in ON",
+  "file": "canada/on/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*2\\.0\\s*$"
+ },
+ {
+  "id": "diam-dgsd-sn",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 2.0 in SN",
+  "file": "sn/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*2\\.0\\s*$"
+ },
+ {
+  "id": "diam-dgsd-so",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 2.0 in SO",
+  "file": "so/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*2\\.0\\s*$"
+ },
+ {
+  "id": "diam-dgsd-tt",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 2.0 in TT",
+  "file": "tt/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*2\\.0\\s*$"
+ },
+ {
+  "id": "diam-dgsd-ut",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 2.0 in UT",
+  "file": "ut/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*2\\.0\\s*$"
+ },
+ {
+  "id": "diam-dgsd-ws",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 2.0 in WS",
+  "file": "ws/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*2\\.0\\s*$"
+ },
+ {
+  "id": "diam-dgsd-ca",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 1.7 in CA",
+  "file": "ca/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*1\\.7\\s*$"
+ },
+ {
+  "id": "diam-dgsd-ci",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 1.7 in CI",
+  "file": "ci/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*1\\.7\\s*$"
+ },
+ {
+  "id": "diam-dgsd-ec",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 1.7 in EC",
+  "file": "ec/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*1\\.7\\s*$"
+ },
+ {
+  "id": "diam-dgsd-hi",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 1.7 in HI",
+  "file": "hi/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*1\\.7\\s*$"
+ },
+ {
+  "id": "diam-dgsd-pn",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 1.7 in PN",
+  "file": "pn/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*1\\.7\\s*$"
+ },
+ {
+  "id": "diam-dgsd-wc",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 1.7 in WC",
+  "file": "wc/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*1\\.7\\s*$"
+ },
+ {
+  "id": "diam-dgsd-bm",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 1.5 in BM",
+  "file": "bm/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*1\\.5\\s*$"
+ },
+ {
+  "id": "diam-dgsd-oc",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 0 in OC",
+  "file": "oc/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*0\\s*$"
+ },
+ {
+  "id": "diam-dgsd-op",
+  "type": "regex_in_file",
+  "doc": "Large-tree diameter increment: default DGSD is 0 in OP",
+  "file": "op/grinit.f",
+  "regex": "^\\s+DGSD\\s*=\\s*0\\s*$"
+ },
+ {
+  "id": "reg-regyr-ak",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 10.0 years in AK",
+  "file": "ak/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*10\\.0"
+ },
+ {
+  "id": "reg-regyr-bm",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 10.0 years in BM",
+  "file": "bm/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*10\\.0"
+ },
+ {
+  "id": "reg-regyr-cr",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 10.0 years in CR",
+  "file": "cr/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*10\\.0"
+ },
+ {
+  "id": "reg-regyr-cs",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 10.0 years in CS",
+  "file": "cs/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*10\\.0"
+ },
+ {
+  "id": "reg-regyr-ec",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 10.0 years in EC",
+  "file": "ec/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*10\\.0"
+ },
+ {
+  "id": "reg-regyr-hi",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 10.0 years in HI",
+  "file": "hi/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*10\\.0"
+ },
+ {
+  "id": "reg-regyr-ls",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 10.0 years in LS",
+  "file": "ls/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*10\\.0"
+ },
+ {
+  "id": "reg-regyr-ne",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 10.0 years in NE",
+  "file": "ne/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*10\\.0"
+ },
+ {
+  "id": "reg-regyr-ut",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 10.0 years in UT",
+  "file": "ut/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*10\\.0"
+ },
+ {
+  "id": "reg-regyr-wc",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 10.0 years in WC",
+  "file": "wc/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*10\\.0"
+ },
+ {
+  "id": "reg-regyr-ca",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 5.0 years in CA",
+  "file": "ca/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*5\\.0"
+ },
+ {
+  "id": "reg-regyr-nc",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 5.0 years in NC",
+  "file": "nc/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*5\\.0"
+ },
+ {
+  "id": "reg-regyr-oc",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 5.0 years in OC",
+  "file": "oc/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*5\\.0"
+ },
+ {
+  "id": "reg-regyr-op",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 5.0 years in OP",
+  "file": "op/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*5\\.0"
+ },
+ {
+  "id": "reg-regyr-sn",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 5.0 years in SN",
+  "file": "sn/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*5\\.0"
+ },
+ {
+  "id": "reg-regyr-ci",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 5.0 years in CI",
+  "file": "ci/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*5\\.0"
+ },
+ {
+  "id": "reg-regyr-em",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 5.0 years in EM",
+  "file": "em/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*5\\.0"
+ },
+ {
+  "id": "reg-regyr-ie",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 5.0 years in IE",
+  "file": "ie/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*5\\.0"
+ },
+ {
+  "id": "reg-regyr-kt",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 5.0 years in KT",
+  "file": "kt/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*5\\.0"
+ },
+ {
+  "id": "reg-regyr-tt",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 5.0 years in TT",
+  "file": "tt/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*5\\.0"
+ },
+ {
+  "id": "reg-regyr-on",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 10 years in ON",
+  "file": "canada/on/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*10\\.0"
+ },
+ {
+  "id": "reg-regyr-bc",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: REGYR is 5 years in BC",
+  "file": "canada/bc/regent.f",
+  "regex": "DATA\\s+REGYR\\s*/\\s*5\\.0"
+ },
+ {
+  "id": "reg-regyr-so",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: SO uses REGYR of 5 years for species SH and WO",
+  "file": "so/regent.f",
+  "regex": "IF\\(ISPC\\.EQ\\.9\\.OR\\.ISPC\\.EQ\\.27\\)THEN\\s*\\n\\s*REGYR=5\\."
+ },
+ {
+  "id": "reg-regyr-ws",
+  "type": "regex_in_file",
+  "doc": "Small-tree height: WS uses REGYR of 10 years for species GB and MC",
+  "file": "ws/regent.f",
+  "regex": "IF\\(ISPC\\.EQ\\.21 \\.OR\\. ISPC\\.EQ\\.41\\)THEN\\s*\\n\\s*REGYR=10\\."
+ },
+ {
+  "id": "diam-autcor-rho1",
+  "type": "regex_in_file",
+  "doc": "AUTCOR: BJRHO(1) from phi and theta",
+  "file": "base/autcor.f",
+  "regex": "BJRHO\\(1\\) = \\( 1\\.-BJPHI\\*BJTHET\\)\\*\\(BJPHI-BJTHET\\)/"
+ },
+ {
+  "id": "diam-autcor-phi",
+  "type": "regex_in_file",
+  "doc": "AUTCOR: default BJPHI 0.74",
+  "file": "ak/grinit.f",
+  "regex": "BJPHI = 0\\.74"
+ },
+ {
+  "id": "diam-autcor-theta",
+  "type": "regex_in_file",
+  "doc": "AUTCOR: default BJTHET 0.42",
+  "file": "ak/grinit.f",
+  "regex": "BJTHET = 0\\.42"
+ },
+ {
+  "id": "diam-dgscor-lnddsgt5",
+  "type": "regex_in_file",
+  "doc": "DGSCOR: error set to zero when ln(DDS) above 5.0",
+  "file": "base/dgscor.f",
+  "regex": "IF\\(DDS\\.GT\\.5\\.0\\) THEN"
+ },
+ {
+  "id": "diam-dgscor-attenuate",
+  "type": "regex_in_file",
+  "doc": "DGSCOR: error multiplied by (ln(DDS)-4) between 4 and 5",
+  "file": "base/dgscor.f",
+  "regex": "IF\\(DDS\\.GT\\.4\\.\\) FRM=\\(DDS-4\\.\\)\\*FRM"
+ },
+ {
+  "id": "diam-ak-pf-species",
+  "type": "regex_in_file",
+  "doc": "AK diameter: permafrost modifier species 4:7, 13, 16:23",
+  "file": "ak/dgf.f",
+  "regex": "CASE \\(4:7, 13, 16:23\\)"
+ },
+ {
+  "id": "diam-ak-mult-045",
+  "type": "regex_in_file",
+  "doc": "AK diameter: 0.45 for species 14, 21, 23",
+  "file": "ak/dgf.f",
+  "regex": "CASE\\(14,21,23\\)\\s*\\n\\s*DGPRED = DGPRED \\* 0\\.45"
+ },
+ {
+  "id": "diam-ak-mult-065",
+  "type": "regex_in_file",
+  "doc": "AK diameter: 0.65 for species 22",
+  "file": "ak/dgf.f",
+  "regex": "CASE\\(22\\)\\s*\\n\\s*DGPRED = DGPRED \\* 0\\.65"
+ },
+ {
+  "id": "diam-wc-redalder",
+  "type": "regex_in_file",
+  "doc": "WC red alder diameter constant",
+  "file": "wc/dgf.f",
+  "regex": "CONST=3\\.250531 - 0\\.003029\\*BA"
+ },
+ {
+  "id": "diam-ec-redalder",
+  "type": "regex_in_file",
+  "doc": "EC red alder diameter constant",
+  "file": "ec/dgf.f",
+  "regex": "CONST=3\\.250531 - 0\\.003029\\*BA"
+ },
+ {
+  "id": "diam-so-redalder",
+  "type": "regex_in_file",
+  "doc": "SO red alder diameter constant",
+  "file": "so/dgf.f",
+  "regex": "CONST=3\\.250531 - 0\\.003029\\*BA"
+ },
+ {
+  "id": "diam-wc-rw",
+  "type": "regex_in_file",
+  "doc": "WC redwood diameter coefficient",
+  "file": "wc/dgf.f",
+  "regex": "DGLT = EXP\\(CONSPP \\+ 0\\.185911\\*LOG\\(D\\)"
+ },
+ {
+  "id": "diam-ca-rw",
+  "type": "regex_in_file",
+  "doc": "CA redwood diameter coefficient",
+  "file": "ca/dgf.f",
+  "regex": "DGLT = EXP\\(CONSPP \\+ 0\\.185911\\*LOG\\(D\\)"
+ },
+ {
+  "id": "diam-nc-rw",
+  "type": "regex_in_file",
+  "doc": "NC redwood diameter coefficient",
+  "file": "nc/dgf.f",
+  "regex": "DGLT = EXP\\(CONSPP \\+ 0\\.185911\\*LOG\\(D\\)"
+ },
+ {
+  "id": "diam-ws-rw",
+  "type": "regex_in_file",
+  "doc": "WS redwood diameter coefficient",
+  "file": "ws/dgf.f",
+  "regex": "DGLT = EXP\\(CONSPP \\+ 0\\.185911\\*LOG\\(D\\)"
+ },
+ {
+  "id": "diam-oc-half",
+  "type": "regex_in_file",
+  "doc": "OC diameter: 10-year DDS converted to 5 years",
+  "file": "oc/dgf.f",
+  "regex": "DDS=ALOG\\(TDDS/2\\.0\\)"
+ },
+ {
+  "id": "diam-op-half",
+  "type": "regex_in_file",
+  "doc": "OP diameter: 10-year DDS converted to 5 years",
+  "file": "op/dgf.f",
+  "regex": "DDS=ALOG\\(TDDS/2\\.0\\)"
+ },
+ {
+  "id": "diam-ca-tanoak",
+  "type": "regex_in_file",
+  "doc": "CA diameter: tanoak DDS doubled",
+  "file": "ca/dgf.f",
+  "regex": "IF\\(ISPC \\.EQ\\. 42\\) THEN\\s*\\n\\s*TDDS=EXP\\(DDS\\)\\s*\\n\\s*DDS=ALOG\\(TDDS\\*2\\.\\)"
+ },
+ {
+  "id": "diam-ws-oaks",
+  "type": "regex_in_file",
+  "doc": "WS diameter: oaks doubled to 10 years",
+  "file": "ws/dgf.f",
+  "regex": "DDS=ALOG\\(TDDS\\*2\\.0\\)"
+ },
+ {
+  "id": "diam-sn-dgbnd-048",
+  "type": "regex_in_file",
+  "doc": "SN DGBND: DG is 0.048 above the upper diameter",
+  "file": "sn/dgbnd.f",
+  "regex": "DDG= 0\\.048"
+ },
+ {
+  "id": "diam-sn-dgbnd-factor",
+  "type": "regex_in_file",
+  "doc": "SN DGBND: linear factor between diameters",
+  "file": "sn/dgbnd.f",
+  "regex": "DDG= DDG\\*\\(1\\.0 \\+ 0\\.90\\*\\(\\(DBH - DLODHI\\(ISPC,1\\)\\)/"
+ },
+ {
+  "id": "diam-ne-iter",
+  "type": "regex_in_file",
+  "doc": "NE diameter: 10 annual iterations",
+  "file": "ne/dgf.f",
+  "regex": "DO 1000 ILOOP=1,10"
+ },
+ {
+  "id": "diam-ne-potbag",
+  "type": "regex_in_file",
+  "doc": "NE diameter: potential basal area increment",
+  "file": "ne/dgf.f",
+  "regex": "POTBAG = POTBAG \\*0\\.7"
+ },
+ {
+  "id": "diam-on-iter",
+  "type": "regex_in_file",
+  "doc": "ON diameter: 10 annual iterations",
+  "file": "canada/on/dgf.f",
+  "regex": "DO ILOOP = 1,10"
+ },
+ {
+  "id": "diam-cs-convert",
+  "type": "regex_in_file",
+  "doc": "CS diameter: outside bark ln(DDS) converted to inside bark",
+  "file": "cs/dgf.f",
+  "regex": "DIAGRO= SQRT\\(DBH\\(I\\)\\*DBH\\(I\\)\\+EXP\\(DDS\\)\\)-DBH\\(I\\)"
+ },
+ {
+  "id": "diam-cr-gemdg-sf",
+  "type": "regex_in_file",
+  "doc": "CR GEMDG: spruce-fir hardwood form",
+  "file": "cr/gemdg.f",
+  "regex": "DF = 1\\.55986 \\+ 1\\.01825 \\* DPP - 0\\.29342 \\* ALOG\\(BATEM\\)"
+ },
+ {
+  "id": "diam-cr-gemdg-bh",
+  "type": "regex_in_file",
+  "doc": "CR GEMDG: Black Hills pine 0.80 factor",
+  "file": "cr/gemdg.f",
+  "regex": "DIAGR=DIAGR\\*0\\.80"
+ },
+ {
+  "id": "diam-cr-gemdg-juniper",
+  "type": "regex_in_file",
+  "doc": "CR GEMDG: juniper and pinyon form",
+  "file": "cr/gemdg.f",
+  "regex": "DF = 0\\.25897 \\+ 1\\.03129 \\* DPP - 0\\.0002025464 \\* BATEM"
+ },
+ {
+  "id": "diam-dgfasp-pot",
+  "type": "regex_in_file",
+  "doc": "DGFASP: potential diameter increment",
+  "file": "ut/dgfasp.f",
+  "regex": "POT=\\(\\.4755 - 3\\.8336E-6 \\* D \\*\\*4\\.1488\\)"
+ },
+ {
+  "id": "diam-dgfasp-fofr",
+  "type": "regex_in_file",
+  "doc": "DGFASP: function of relative density",
+  "file": "ut/dgfasp.f",
+  "regex": "FOFR=1\\.07528 \\* \\(1\\.0 - EXP\\(-1\\.89022 \\* REL\\)\\)"
+ },
+ {
+  "id": "diam-ci-mc-eq",
+  "type": "regex_in_file",
+  "doc": "CI diameter: MC equation has -0.000981*BA",
+  "file": "ci/dgf.f",
+  "regex": "-0\\.000981\\*BA"
+ },
+ {
+  "id": "diam-bm-small-blend",
+  "type": "regex_in_file",
+  "doc": "BM diameter: weight for 3 to 10 inches",
+  "file": "bm/dgf.f",
+  "regex": "IF\\(D\\.GE\\.3\\)XWT=\\(10\\.-D\\)/7\\."
+ },
+ {
+  "id": "diam-so-pp-lccf",
+  "type": "regex_in_file",
+  "doc": "SO diameter: PP DGLCCF",
+  "file": "so/dgf.f",
+  "regex": "DGLCCF = \\(-0\\.20488\\)"
+ },
+ {
+  "id": "diam-so-sf-dummy",
+  "type": "regex_in_file",
+  "doc": "SO diameter: SF dummy",
+  "file": "so/dgf.f",
+  "regex": "DUMMY=-0\\.799079"
+ },
+ {
+  "id": "diam-em-lm-ccf",
+  "type": "regex_in_file",
+  "doc": "EM diameter: LM CONSPP term",
+  "file": "em/dgf.f",
+  "regex": "CONSPP= CONSPP \\+ \\.01\\*\\(-\\.199592\\)\\*RELDEN"
+ },
+ {
+  "id": "diam-tt-pp-lnba",
+  "type": "regex_in_file",
+  "doc": "TT diameter: PP CONSPP term",
+  "file": "tt/dgf.f",
+  "regex": "CONSPP = CONSPP - 0\\.257322\\*ALOG\\(BA\\)"
+ },
+ {
+  "id": "diam-ut-es-ccf",
+  "type": "regex_in_file",
+  "doc": "UT diameter: ES DGCCF",
+  "file": "ut/dgf.f",
+  "regex": "DGCCF\\(8\\) = -0\\.154870"
+ },
+ {
+  "id": "diam-ie-lm-si",
+  "type": "regex_in_file",
+  "doc": "IE diameter: SI term for LM and PY",
+  "file": "ie/dgf.f",
+  "regex": "DGCON\\(ISPC\\)=DGCON\\(ISPC\\)\\+\\.001766\\*XSITE"
+ },
+ {
+  "id": "diam-clgmult-bc",
+  "type": "regex_in_file",
+  "doc": "BC calls CLGMULT in DGDRIV",
+  "file": "canada/bc/dgdriv.f",
+  "regex": "CALL CLGMULT\\(WK4\\)"
+ },
+ {
+  "id": "htg-treeszcp",
+  "type": "regex_in_file",
+  "doc": "TREESZCP keyword name",
+  "file": "base/keywds.f",
+  "regex": "'TREESZCP'"
+ },
+ {
+  "id": "htg-cap",
+  "type": "regex_in_file",
+  "doc": "HTGF size cap uses SIZCAP(ISPC,4)",
+  "file": "sn/htgf.f",
+  "regex": "IF\\(\\(HT\\(I\\)\\+HTG\\(I\\)\\)\\.GT\\.SIZCAP\\(ISPC,4\\)\\)THEN"
+ },
+ {
+  "id": "htg-hgmdcr",
+  "type": "regex_in_file",
+  "doc": "HTGF crown ratio modifier",
+  "file": "wc/htgf.f",
+  "regex": "HGMDCR = \\(CRA \\* \\(ICR\\(I\\)/100\\.0\\)\\*\\*CRB\\) \\* EXP\\(CRC\\*\\(ICR\\(I\\)/100\\.0\\)\\)"
+ },
+ {
+  "id": "htg-hgmdrh",
+  "type": "regex_in_file",
+  "doc": "HTGF relative height modifier",
+  "file": "wc/htgf.f",
+  "regex": "HGMDRH= RHK \\* \\( 1\\.0 \\+ FCTRKX\\*EXP\\(FCTRRB\\*FCTRXB\\) \\) \\*\\* FCTRM"
+ },
+ {
+  "id": "htg-wtcr",
+  "type": "regex_in_file",
+  "doc": "HTGF crown ratio weight 0.25",
+  "file": "wc/htgf.f",
+  "regex": "WTCR = \\.25"
+ },
+ {
+  "id": "htg-ca-xmod",
+  "type": "regex_in_file",
+  "doc": "CA/OC/SO height modifier",
+  "file": "ca/htgf.f",
+  "regex": "XMOD= 1\\.016605\\*CRMOD\\*RHMOD"
+ },
+ {
+  "id": "htg-nc-xmod",
+  "type": "regex_in_file",
+  "doc": "NC height modifier",
+  "file": "nc/htgf.f",
+  "regex": "XMOD = -0\\.02647 \\+ 0\\.71338\\*RELHT\\*RELHT \\+ 0\\.06851\\*CR"
+ },
+ {
+  "id": "htg-nc-agp05",
+  "type": "regex_in_file",
+  "doc": "NC potential height growth uses 5 years",
+  "file": "nc/htgf.f",
+  "regex": "AGP05= SITAGE \\+ 5\\.0"
+ },
+ {
+  "id": "htg-oc-agp",
+  "type": "regex_in_file",
+  "doc": "OC potential height growth uses 5 years",
+  "file": "oc/htgf.f",
+  "regex": "AGP10= SITAGE \\+ 5\\.0"
+ },
+ {
+  "id": "htg-wc-agp",
+  "type": "regex_in_file",
+  "doc": "WC potential height growth uses 10 years",
+  "file": "wc/htgf.f",
+  "regex": "AGP10= SITAGE\\+10\\.0"
+ },
+ {
+  "id": "htg-ls-gmod",
+  "type": "regex_in_file",
+  "doc": "LS height modifier 0.8",
+  "file": "ls/htgf.f",
+  "regex": "GMOD=\\(1\\.0-\\(\\(1\\.0-GMOD\\)\\*\\(1\\.0-RELHTA\\)\\)\\)\\*0\\.8"
+ },
+ {
+  "id": "htg-ne-ivar",
+  "type": "regex_in_file",
+  "doc": "NE IVAR 3",
+  "file": "ne/htgf.f",
+  "regex": "IVAR=3"
+ },
+ {
+  "id": "htg-cs-ivar",
+  "type": "regex_in_file",
+  "doc": "CS IVAR 2",
+  "file": "cs/htgf.f",
+  "regex": "IVAR=2"
+ },
+ {
+  "id": "htg-sb-zadj",
+  "type": "regex_in_file",
+  "doc": "Johnson SB ZADJ",
+  "file": "ie/htgf.f",
+  "regex": "ZADJ = \\.1 - \\.10273\\*Z \\+ \\.00273\\*Z\\*Z"
+ },
+ {
+  "id": "htg-sb-acc",
+  "type": "regex_in_file",
+  "doc": "Johnson SB accelerator",
+  "file": "ie/htgf.f",
+  "regex": "ZADJ=\\.3564\\*DG\\(I\\)\\*FINT/YR"
+ },
+ {
+  "id": "htg-sb-psi",
+  "type": "regex_in_file",
+  "doc": "Johnson SB PSI",
+  "file": "ie/htgf.f",
+  "regex": "PSI= COF8\\*\\(\\(DIA-0\\.1\\)/\\(0\\.1 \\+ COF1 - DIA\\)\\)\\*\\*COF9"
+ },
+ {
+  "id": "htg-hdg-em",
+  "type": "regex_in_file",
+  "doc": "EM LL HDG form",
+  "file": "em/htgf.f",
+  "regex": "HTG\\(I\\)=EXP\\(CON\\+HDGCOF\\*ALOG\\(DG\\(I\\)\\)\\) \\+ 0\\.4809"
+ },
+ {
+  "id": "htg-hdg-tt",
+  "type": "regex_in_file",
+  "doc": "TT PP HDG form",
+  "file": "tt/htgf.f",
+  "regex": "HTG\\(I\\)=EXP\\(CON \\+ 0\\.62144\\*ALOG\\(DG\\(I\\)\\)\\) \\+ 0\\.4809"
+ },
+ {
+  "id": "htg-em-ralph",
+  "type": "regex_in_file",
+  "doc": "EM POTHTG correction",
+  "file": "em/htgf.f",
+  "regex": "PHTG = PHTG \\* 0\\.706 \\* \\(1\\.0-EXP\\(-10\\.19\\*CR\\)\\)"
+ },
+ {
+  "id": "htg-em-htmod",
+  "type": "regex_in_file",
+  "doc": "EM relative height modifier",
+  "file": "em/htgf.f",
+  "regex": "RLHTMD = EXP\\(C3MOD\\*\\(\\(H/AVH\\)\\*\\*C4MOD-1\\.0\\)\\)"
+ },
+ {
+  "id": "htg-gemht-aspen",
+  "type": "regex_in_file",
+  "doc": "CR GEMHT aspen factor",
+  "file": "cr/htgf.f",
+  "regex": "ASPFAC = 0\\.6253 \\+ 0\\.00583\\*TEMSI"
+ },
+ {
+  "id": "htg-gemht-dstag",
+  "type": "regex_in_file",
+  "doc": "CR height DSTAG half effect",
+  "file": "cr/htgf.f",
+  "regex": "HTG\\(I\\)=HTG\\(I\\)\\*\\(DSTAG\\+1\\.0\\)\\*\\.5"
+ },
+ {
+  "id": "htg-gemht-xwt",
+  "type": "regex_in_file",
+  "doc": "CR height blend weight",
+  "file": "cr/htgf.f",
+  "regex": "XWT = \\(\\(PCT\\(I\\)-10\\.\\)\\*\\(10\\./3\\.\\)\\)/100\\."
+ },
+ {
+  "id": "htg-ak-hgbnd",
+  "type": "regex_in_file",
+  "doc": "AK height bound",
+  "file": "ak/htgf.f",
+  "regex": "HGBND= 1\\.0 - \\(\\(HT\\(I\\) - HTLO\\(ISPC\\)\\)/\\(HTHI\\(ISPC\\) - HTLO\\(ISPC\\)\\)\\)"
+ },
+ {
+  "id": "htg-ak-dg004",
+  "type": "regex_in_file",
+  "doc": "AK height: 0.1 when DG at most 0.04",
+  "file": "ak/htgf.f",
+  "regex": "IF\\(DG\\(I\\) \\.LE\\. 0\\.04\\) HTG\\(I\\) = 0\\.1"
+ },
+ {
+  "id": "htg-ws-default",
+  "type": "regex_in_file",
+  "doc": "WS default height equation",
+  "file": "ws/htgf.f",
+  "regex": "HTG\\(I\\) = HTCON\\(ISPC\\)"
+ },
+ {
+  "id": "htg-bm-aasm",
+  "type": "regex_in_file",
+  "doc": "BM height at HTMAX",
+  "file": "bm/htgf.f",
+  "regex": "HTG\\(I\\)=AASM\\(ISPC\\) \\+ BASM\\(ISPC\\) \\* RELSI"
+ },
+ {
+  "id": "htg-bm-pp",
+  "type": "regex_in_file",
+  "doc": "BM asymptotic POTHTG for PP and OS",
+  "file": "bm/htgf.f",
+  "regex": "POTHTG = -1\\.31 \\+ 0\\.05 \\* SINDX"
+ },
+ {
+  "id": "htg-ec-wo",
+  "type": "regex_in_file",
+  "doc": "EC Oregon white oak MAXGUESS",
+  "file": "ec/htgf.f",
+  "regex": "MAXGUESS = SINDX - 18\\.6024/ALOG\\(2\\.7 \\+ BA\\)"
+ },
+ {
+  "id": "htg-ec-halfdg",
+  "type": "regex_in_file",
+  "doc": "EC height 0.5*DG",
+  "file": "ec/htgf.f",
+  "regex": "HTG\\(I\\)=0\\.5 \\* DG\\(I\\)"
+ },
+ {
+  "id": "htg-ci-mc",
+  "type": "regex_in_file",
+  "doc": "CI MC site curve",
+  "file": "ci/htgf.f",
+  "regex": "HGUESS = \\(SINDX - 4\\.5\\) / \\( 0\\.6192 - 5\\.3394/\\(SINDX - 4\\.5\\)"
+ },
+ {
+  "id": "htg-sn-curve",
+  "type": "regex_in_file",
+  "doc": "SN closed-form height curve",
+  "file": "sn/htcalc.f",
+  "regex": "HTG1= HTGP5 - HTG0"
+ },
+ {
+  "id": "htg-bc-v3htg",
+  "type": "regex_in_file",
+  "doc": "BC V3HTG",
+  "file": "canada/bc/htgf.f",
+  "regex": "REAL FUNCTION V3HTG\\(ISPC,HT,DBH,DG\\)"
+ },
+ {
+  "id": "htg-fixhtg-norm",
+  "type": "regex_in_file",
+  "doc": "FIXHTG normalizes only the multiplier",
+  "file": "base/grincr.f",
+  "regex": "IF \\(PRM\\(2\\) \\.LT\\. 0\\.\\)  PRM\\(2\\)=0\\.\\s*\\nCCCC     IF \\(PRM\\(2\\) \\.GT\\. 1\\.0\\) PRM\\(2\\)=1\\.0\\s*\\n\\s*IF \\(ITRN\\.GT\\.0\\) THEN"
+ },
+ {
+  "id": "reg-smhgdg-boost",
+  "type": "regex_in_file",
+  "doc": "SMHGDG BOOST",
+  "file": "vwc/smhgdg.f",
+  "regex": "BOOST = 1/\\(1\\+EXP\\(-3\\.1 \\+ 0\\.18\\*PTBA\\)\\)"
+ },
+ {
+  "id": "reg-smhgdg-dgs",
+  "type": "regex_in_file",
+  "doc": "SMHGDG DGS",
+  "file": "vwc/smhgdg.f",
+  "regex": "DGS=DMAX\\(ISPC\\)/\\(1\\.\\+EXP\\(ALPHA\\(0,ISPC\\)"
+ },
+ {
+  "id": "reg-cr-ab",
+  "type": "regex_in_file",
+  "doc": "CR REGENT AB",
+  "file": "cr/regent.f",
+  "regex": "1\\.11436,-\\.011493,\\.43012E-4,-\\.72221E-7,\\.5607E-10,-\\.1641E-13"
+ },
+ {
+  "id": "reg-wc-ab",
+  "type": "regex_in_file",
+  "doc": "WC REGENT AB(3)",
+  "file": "wc/regent.f",
+  "regex": "1\\.11436, -0\\.011493, 0\\.43015E-4"
+ },
+ {
+  "id": "reg-cr-vigor",
+  "type": "regex_in_file",
+  "doc": "CR VIGOR",
+  "file": "cr/regent.f",
+  "regex": "VIGOR = \\(150\\.0 \\* \\(X\\*\\*3\\.0\\)\\*EXP\\(-6\\.0\\*X\\)\\)\\+0\\.3"
+ },
+ {
+  "id": "reg-cr-pothtg",
+  "type": "regex_in_file",
+  "doc": "CR POTHTG",
+  "file": "cr/regent.f",
+  "regex": "POTHTG = SITEAR\\(ISPC\\)/\\(15\\.0 - 4\\.0\\*RELSI\\) \\* HTADJ\\(ISPC\\)"
+ },
+ {
+  "id": "reg-cr-aspen",
+  "type": "regex_in_file",
+  "doc": "CR aspen height",
+  "file": "cr/regent.f",
+  "regex": "HITE1 = 26\\.9825 \\* AG1\\*\\*1\\.1752"
+ },
+ {
+  "id": "reg-cr-mid",
+  "type": "regex_in_file",
+  "doc": "CR establishment mid-period CCF",
+  "file": "cr/regent.f",
+  "regex": "CCF=\\(5\\.0/FINT\\)\\*RELDEN \\+\\(\\(FINT-5\\.0\\)/FINT\\)\\*ATCCF"
+ },
+ {
+  "id": "reg-kt-sub",
+  "type": "regex_in_file",
+  "doc": "KT survival 0.985 per year",
+  "file": "kt/regent.f",
+  "regex": "PN=P\\*0\\.985\\*\\*K"
+ },
+ {
+  "id": "reg-kt-split",
+  "type": "regex_in_file",
+  "doc": "KT even split of periods",
+  "file": "kt/regent.f",
+  "regex": "KPER\\(I\\)=ITOT/N"
+ },
+ {
+  "id": "reg-kt-htgrl",
+  "type": "regex_in_file",
+  "doc": "KT small-tree height equation",
+  "file": "kt/regent.f",
+  "regex": "HTGRL=RHCONS\\+BH\\*H1\\+HTHS2\\*H1\\*H1\\+BBAL\\*BAL\\+BBA\\*ALBA\\+HTPC1\\*PCCF1"
+ },
+ {
+  "id": "reg-ie-ni",
+  "type": "regex_in_file",
+  "doc": "IE NI small-tree height form",
+  "file": "ie/regent.f",
+  "regex": "HTGRL=\\(CON\\+BH\\*ALOG\\(H1\\)\\+BCCF\\*RDJ\\+BBAL\\*BAL\\)"
+ },
+ {
+  "id": "reg-ie-tt",
+  "type": "regex_in_file",
+  "doc": "IE TT small-tree height constants",
+  "file": "ie/regent.f",
+  "regex": "BETA1=EXP\\(1\\.17527 - 0\\.42124\\*ALOG\\(TPCCF\\)\\)"
+ },
+ {
+  "id": "reg-ci-form",
+  "type": "regex_in_file",
+  "doc": "CI small-tree height form",
+  "file": "ci/regent.f",
+  "regex": "HTGRL = SCNST \\+ SHTBA\\*RELHT\\*PTBAA\\(IP\\) \\+ SPBAL\\*PTBALI"
+ },
+ {
+  "id": "reg-tt-ci",
+  "type": "regex_in_file",
+  "doc": "TT PP small-tree height form",
+  "file": "tt/regent.f",
+  "regex": "HTGRL = 2\\.764559 - 0\\.009643\\*BA \\+ 0\\.025303\\*RCR\\*RCR"
+ },
+ {
+  "id": "reg-ut-pothtg",
+  "type": "regex_in_file",
+  "doc": "UT small-tree POTHTG",
+  "file": "ut/regent.f",
+  "regex": "POTHTG = SJ/5\\.0"
+ },
+ {
+  "id": "reg-ca-gsrw",
+  "type": "regex_in_file",
+  "doc": "CA GS and RW averaged once",
+  "file": "ca/regent.f",
+  "regex": "HTG\\(K\\)=HTGR\\*\\(1\\.0-XWT\\) \\+ XWT\\*LTHG"
+ },
+ {
+  "id": "reg-bc-sei",
+  "type": "regex_in_file",
+  "doc": "BC SEISTHG error",
+  "file": "canada/bc/regent.f",
+  "regex": "RAN = BACHLO\\(0\\.0,0\\.62921,RANN\\)"
+ },
+ {
+  "id": "reg-bc-xmaxv2",
+  "type": "regex_in_file",
+  "doc": "BC XMAXv2",
+  "file": "canada/bc/regent.f",
+  "regex": "DATA XMAXv2/6\\*10\\.0,5\\.0,8\\*10\\.0/"
+ },
+ {
+  "id": "reg-ws-mc",
+  "type": "regex_in_file",
+  "doc": "WS MC small-tree POTHTG",
+  "file": "ws/regent.f",
+  "regex": "POTHTG = \\(\\(1\\.47043 \\+ 0\\.23317\\*SI\\)/\\(31\\.56252 - 0\\.05586\\*SI\\)\\)\\*10\\."
+ },
+ {
+  "id": "reg-ws-gb",
+  "type": "regex_in_file",
+  "doc": "WS GB small-tree POTHTG",
+  "file": "ws/regent.f",
+  "regex": "POTHTG = \\(\\(SI/5\\.0\\)\\*\\(SI\\*1\\.5-H\\)/\\(SI\\*1\\.5\\)\\)\\* 0\\.83"
+ },
+ {
+  "id": "reg-smhtgf-ca-pine",
+  "type": "regex_in_file",
+  "doc": "CA SMHTGF pine equation",
+  "file": "ca/smhtgf.f",
+  "regex": "HTGR = EXP\\(0\\.7452 - 0\\.003271\\*BAL - 0\\.1632\\*CR \\+ 0\\.0217\\*CR\\*CR"
+ },
+ {
+  "id": "reg-smhtgf-bm-chap",
+  "type": "regex_in_file",
+  "doc": "BM SMHTGF Chapman constants",
+  "file": "bm/smhtgf.f",
+  "regex": "C1= 0\\.375045"
+ },
+ {
+  "id": "reg-smhtgf-ec-chap",
+  "type": "regex_in_file",
+  "doc": "EC SMHTGF second Chapman constants",
+  "file": "ec/smhtgf.f",
+  "regex": "C1= 0\\.752842"
+ },
+ {
+  "id": "reg-smhtgf-so-af",
+  "type": "regex_in_file",
+  "doc": "SO SMHTGF AF",
+  "file": "so/smhtgf.f",
+  "regex": "DOMHTGR= 5\\*\\(2\\.2227 \\+ 0\\.4314\\*SI\\)/\\(29\\.0 - 0\\.05\\*SI\\)"
+ },
+ {
+  "id": "reg-smhtgf-ws-oak",
+  "type": "regex_in_file",
+  "doc": "WS SMHTGF oaks",
+  "file": "ws/smhtgf.f",
+  "regex": "HTGR = EXP\\(3\\.817 - 0\\.7829\\*ALOG\\(TEMBAL\\)\\)"
+ },
+ {
+  "id": "find-wc-htmax",
+  "type": "regex_in_file",
+  "doc": "WC FINDAG HTMAX",
+  "file": "wc/findag.f",
+  "regex": "HTMAX=HDRAT1\\(MAPPHD\\)\\*D\\+HDRAT2\\(MAPPHD\\)"
+ },
+ {
+  "id": "find-bm-htmax",
+  "type": "regex_in_file",
+  "doc": "BM FINDAG HTMAX",
+  "file": "bm/findag.f",
+  "regex": "HTMAX1 = AHMAX\\(ISPC\\) \\+ BHMAX\\(ISPC\\)\\*SINDX"
+ },
+ {
+  "id": "find-nc-htmax",
+  "type": "regex_in_file",
+  "doc": "NC FINDAG HTMAX",
+  "file": "nc/findag.f",
+  "regex": "HTMAX1 = 300\\."
+ },
+ {
+  "id": "find-sitage",
+  "type": "regex_in_file",
+  "doc": "FINDAG SITAGE above HTMAX",
+  "file": "wc/findag.f",
+  "regex": "SITAGE = AGMAX1 \\+ \\(H - HTMAX\\)/0\\.10"
  }
 ]
