@@ -3155,5 +3155,124 @@
   "doc": "LS CCFCAL: open-grown crown competition factor",
   "file": "ls/ccfcal.f",
   "regex": "0\\.001803"
+ },
+ {
+  "id": "triple-ltrip",
+  "type": "regex_in_file",
+  "doc": "Ch 4.3: LTRIP condition",
+  "file": "base/grincr.f",
+  "regex": "LTRIP\\s*=\\s*\\(\\s*ICYC\\.LE\\.ICL4\\.AND\\.ITRN\\.LE\\.\\(MAXTRE/3\\)\\.AND\\.\\.NOT\\.NOTRIP"
+ },
+ {
+  "id": "triple-icl4-ak",
+  "type": "regex_in_file",
+  "doc": "Ch 4.3: ICL4 default 2",
+  "file": "ak/grinit.f",
+  "regex": "ICL4\\s*=\\s*2"
+ },
+ {
+  "id": "triple-icl4-oc",
+  "type": "regex_in_file",
+  "doc": "Ch 4.3: ICL4 default 0 in OC",
+  "file": "oc/grinit.f",
+  "regex": "ICL4\\s*=\\s*0"
+ },
+ {
+  "id": "triple-icl4-op",
+  "type": "regex_in_file",
+  "doc": "Ch 4.3: ICL4 default 0 in OP",
+  "file": "op/grinit.f",
+  "regex": "ICL4\\s*=\\s*0"
+ },
+ {
+  "id": "triple-notriple",
+  "type": "regex_in_file",
+  "doc": "Ch 4.3: NOTRIPLE sets NOTRIP",
+  "file": "vbase/initre.f",
+  "regex": "NOTRIP\\s*=\\s*\\.TRUE\\."
+ },
+ {
+  "id": "triple-rdtrp",
+  "type": "regex_in_file",
+  "doc": "Ch 4.3: root disease limit IRRTRE/3",
+  "file": "rd/rdtrp.f",
+  "regex": "ILIM\\s*=\\s*IRRTRE\\s*/\\s*3"
+ },
+ {
+  "id": "triple-itfn",
+  "type": "regex_in_file",
+  "doc": "Ch 4.3: ITFN index",
+  "file": "base/triple.f",
+  "regex": "ITFN\\s*=\\s*ITRN\\s*\\+\\s*2\\*I\\s*-\\s*1"
+ },
+ {
+  "id": "triple-w25",
+  "type": "regex_in_file",
+  "doc": "Ch 4.3: second record weight 0.25",
+  "file": "base/triple.f",
+  "regex": "WEIGHT\\s*=\\s*0?\\.25"
+ },
+ {
+  "id": "triple-w15",
+  "type": "regex_in_file",
+  "doc": "Ch 4.3: third record weight 0.15",
+  "file": "base/triple.f",
+  "regex": "WEIGHT\\s*=\\s*0?\\.15"
+ },
+ {
+  "id": "triple-prob60",
+  "type": "regex_in_file",
+  "doc": "Ch 4.3: original PROB 0.60",
+  "file": "base/triple.f",
+  "regex": "PROB\\(I\\)\\s*=\\s*PROB\\(I\\)\\s*\\*\\s*0?\\.60"
+ },
+ {
+  "id": "triple-reass",
+  "type": "regex_in_file",
+  "doc": "Ch 4.3: REASS ITFN",
+  "file": "base/reass.f",
+  "regex": "ITFN\\s*=\\s*IREC1\\s*\\+\\s*2\\*I\\s*-\\s*1"
+ },
+ {
+  "id": "triple-grincr-x3",
+  "type": "regex_in_file",
+  "doc": "Ch 4.3: ITRN times 3",
+  "file": "base/grincr.f",
+  "regex": "ITRN\\s*=\\s*ITRN\\s*\\*\\s*3"
+ },
+ {
+  "id": "ffert-rdds",
+  "type": "regex_in_file",
+  "doc": "Ch 4.3: RDDS equation",
+  "file": "base/ffert.f",
+  "regex": "RDDS\\s*=\\s*EXP\\(0\\.1108\\*ALOG\\(D\\)\\s*\\+\\s*0\\.003004\\*BAL/ALOG\\(D\\+1\\.\\)\\)"
+ },
+ {
+  "id": "ffert-rdds-cap",
+  "type": "regex_in_file",
+  "doc": "Ch 4.3: RDDS cap 2.6",
+  "file": "base/ffert.f",
+  "regex": "RDDS\\s*\\.GT\\.\\s*2\\.6"
+ },
+ {
+  "id": "ffert-rht",
+  "type": "regex_in_file",
+  "doc": "Ch 4.3: RHT 1.1626",
+  "file": "base/ffert.f",
+  "regex": "RHT\\s*=\\s*1\\.1626"
+ },
+ {
+  "id": "ffert-ddsit",
+  "type": "regex_in_file",
+  "doc": "Ch 4.3: DDSIT",
+  "file": "base/ffert.f",
+  "regex": "DDSIT\\s*=\\s*\\(DDS/YR\\)\\*\\(RDDS\\*IFLEN\\*FEFF\\s*\\+\\s*IFINT-IFLEN\\)"
+ },
+ {
+  "id": "ffert-htgit",
+  "type": "regex_in_file",
+  "doc": "Ch 4.3: HTGIT",
+  "file": "base/ffert.f",
+  "regex": "HTGIT\\s*=\\s*\\(HTG\\(I\\)/YR\\)\\*\\(RHT\\*IFLEN\\*FEFF\\s*\\+\\s*IFINT-IFLEN\\)"
  }
 ]

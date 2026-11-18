@@ -419,3 +419,16 @@ Not documented (the text states only what was read):
 - The coefficients of the Bechtold, Crookston, Donnelly and Castle equations of the western CWCALC, of the equations of the eastern CWCALC, and of R5CRWD; the species caps; the forest values of BF (forests 601 to 999).
 - The ON species map (JSP2) and the ON crown ratio and crown width differences beyond the shared forms.
 - Crown width and crown competition factor equations in the CCFCAL routines of the western variants.
+
+## Record tripling and fertilizer (Chapter 4.3)
+
+Corrections made to the text: the citation of section 6.4.2 of the EFVS guide for the 60/25/15 split was replaced by the source (`base/triple.f`); FMTRIP copies tree-level fire arrays, not snag attributes; the auxiliary subroutine list was corrected (OPFIND/OPGET/OPDONE/OPDEL1/RCDSET belong to FFERT); NUMTRIP is the last cycle in which tripling can occur; the ISCT array holds (start, end) per species, not (start, count, pointer).
+
+Code observations (not changed):
+- `base/triple.f`: FOLI_BIO, ABVGRD_CARB, MERCH_CARB, CUBSAW_CARB, FOLI_CARB and CARB_FRAC are assigned at index ITRN, not ITFN, so the two new records do not receive them (about 80% a latent bug).
+- `fire/base/fmtrip.f` is called for the 0.6 weight with the third record's index and overwrites FMPROB of that record (about 70% harmless because FMMAIN/FMSDIT reset FMPROB).
+- `common/CONTRL.F77` lines 277-279 describe tripling as "ICYC 2 or less and ITRN 450 or less" (stale); the header of `base/ffert.f` says it is called by TREGRO (it is called by GRINCR).
+- FFERT: the habitat warning (ICL5 not 520 or 530) fires for nearly every stand; the 5-year-cycle warning fires when IFLEN is not 10 even if the whole cycle is covered; the species test (RELDSP(3)+RELDSP(4))/RELDEN is an index test with no RELDEN guard and is DF and GF only in IE; OPDONE is skipped when IACTK < 0.
+- The same ISCT description error ("start index, count, pointer") remains in the array table near line 1426 of `ModelStructure_FVS.Rmd`.
+
+Gaps: whether `orgfert.f` is compiled in OC and OP (about 70%); stop/restart handling of tripled records beyond the saved LTRIP, NOTRIP and ICL4; the YR value by variant used in FFERT.

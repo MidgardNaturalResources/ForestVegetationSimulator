@@ -3131,7 +3131,7 @@ kable(calib_keywords,
 
 **Randomization.** The random effects of FVS are assigned to the error in the prediction of ln(dds) (Dixon 2002, section 6.4.2; Stage 1973). The error is normally distributed with a mean of 0. Its variance is the variance of the calibrated model, SIGMA, of equation {3.6.2.6.6}, which is a weighted average of the variance of the model and the variance of the growth sample. The error is carried from one cycle to the next with a serial correlation that depends on the cycle length (subroutine AUTCOR). The error is bounded to plus or minus DGSD standard deviations, and DGSD is 2.0 by default (1.7 in CA, CI, EC, HI, PN and WC; 1.5 in BM; 0 in OC and OP), which keyword DGSTDEV changes. When DGSD is less than 1.0, no random variation is added to the diameter growth. The random numbers come from a multiplicative congruential generator (the multiplier is 16807 and the modulus is 2147483647) with one seed, which is reset at the start of each run, and keyword RANNSEED replaces the seed. A normal deviate is made from three uniform numbers. The manual (Dixon 2002, section 6.4.2) describes a Marsaglia-Bray generator with three seeds, which does not match the code.
 
-When the number of tree records is small, the record of each tree is tripled. Each tree record is divided into three records that have the same attributes, with 60, 25 and 15 percent of the trees per acre of the original record, and each of the three records is given a diameter growth that corresponds to one portion of the error distribution, so that the weighted average of the three equals the prediction. The number of times that records are tripled is set with keyword NUMTRIP (the default is 2, and 0 in OC and OP), the tripling is done only when the number of tree records is no more than one third of the maximum number of records (MAXTRE), and keyword NOTRIPLE suppresses it. In subroutine DGDRIV, the three growth errors are the constants FU (1.271), FM (-0.14228) and FL (-1.549), multiplied by the standard error SSIGMA and the serial correlation term, and added to the serial correlation of the previous error.
+When the number of tree records is small, the record of each tree is tripled. Each tree record is divided into three records that have the same attributes, with 60, 25 and 15 percent of the trees per acre of the original record, and each of the three records is given a diameter growth that corresponds to one portion of the error distribution, so that the weighted average of the three equals the prediction. Keyword NUMTRIP sets the last projection cycle in which records can be tripled (the default is 2, and 0 in OC and OP), the tripling is done only when the number of tree records is no more than one third of the maximum number of records (MAXTRE), and keyword NOTRIPLE suppresses it. In subroutine DGDRIV, the three growth errors are the constants FU (1.271), FM (-0.14228) and FL (-1.549), multiplied by the standard error SSIGMA and the serial correlation term, and added to the serial correlation of the previous error.
 
 **Multipliers.** The user can also change the model with multipliers. They are of four types (Dixon 2002, section 6.5.2), and each acts at a different point in relation to the calibration.
 
@@ -3502,7 +3502,7 @@ tripling_arrays <- data.frame(
     "Pointers that sort the tree list by descending diameter",
     "Pointers to the tree records in species order (one sector per species, see ISCT)",
     "Pointer work array used in the chain sort (INTREE and SETUP)",
-    "Species sort: (start index, count, pointer)",
+    "Species sort: (start index, end index) per species",
     "Total number of live tree records",
     "Percentile of each tree record in the basal area distribution"
   ),
@@ -5380,19 +5380,236 @@ Subroutines fvsGetRestartCode, getAmStopping, fvsGetRtnCode, and fvsStopPoint (t
 
 ## Record tripling and final adjustments
 
-Following estimation of tree growth and mortality, there are two more tasks that are part of the projection cycling phase. Tree records must be tripled and effects of fertilizer treatments on tree growth must be simulated.
+Following estimation of tree growth and mortality, there are two more tasks that are part of the projection cycling phase. Tree records must be tripled when the number of records is small, and the effects of fertilizer treatments on tree growth must be simulated.
 
 ### Subroutines involved and their function
 
-Subroutine GRINCR calls subroutine TRIPLE to triple tree records if record tripling is in effect. Subroutine TRIPLE partitions each tree record into three records. The trees per acre representation of each tree record is computed as described in section 6.4.2 of the EFVS guide. Tree diameter and height growth was tripled in subroutines DGDRIV and REGENT. For each tree record j, subroutine TRIPLE assigns other tree attributes like, species (ISP(j)), trees per acre (PROB(j)), height (HT(j)), crown ratio (ICR(j)), and so forth.
+**When records are tripled.** Subroutine GRINCR sets the logical variable LTRIP at the start of each projection cycle, with the condition in equation {4.3.1.1}. The condition is evaluated again in every cycle.
 
-Tripled tree records are added to the internal tree list in sequential order. If the original tree list contained 30 live tree records, then the tripled tree records for the first tree record would be stored as tree records 31 and 32; the second tree record as 33 and 34, …, and the 30th tree record as 89 and 90.
+$$
+LTRIP = \left(ICYC \le ICL4\right) \;\text{and}\; \left(ITRN \le \frac{MAXTRE}{3}\right) \;\text{and}\; \left(\text{not } NOTRIP\right)
+\tag{4.3.1.1}
+$$
 
-Various FVS extension specific code segments are called by subroutine TRIPLE to triple parameter values associated with the extension. For example, MISGET and MISPUT are called to triple the dwarf mistletoe rating for an individual tree record; and FMTRIP is called to triple snag attributes for the fire and fuels extension. These code segments will exist as subroutines if the extension is part of the program executable, or as entry points in the appropriate extension external subroutine (examples are EXMIST for the dwarf mistletoe extension and EXFIRE for the fire and fuels extension) if the extension is not part of the program executable.
+Where:
 
-Subroutine GRINCR calls subroutine REASS to realign the FVS internal pointers following tripling. Subroutine REASS resets the vectors IND(k), IND1(k), and the array ISCT(k1,k2).
+- LTRIP: Logical variable that is true when the records of the cycle are tripled
+- ICYC: Projection cycle number
+- ICL4: Number of the last cycle in which records can be tripled; the default is 2 in all variants except OC and OP, where it is 0, and keyword NUMTRIP sets it
+- ITRN: Number of tree records at the start of the cycle
+- MAXTRE: Maximum number of tree records (3000 in the variants whose limits were checked, so the limit on ITRN is 1000)
+- NOTRIP: Logical variable that is true after keyword NOTRIPLE, which has no fields, or after keyword COMPRESS
 
-Subroutine GRINCR calls subroutine FFERT to compute adjustments to diameter and height growth due to effects of applying fertilizer. For each tree FFERT converts DG(i) to a change in squared inside bark diameter, DDS = 2 × DIB × DG(i) + DG(i)², where DIB = DBH(i) × BRATIO(species, DBH(i), HT(i)). It multiplies the annual rate (DDS/YR) by a factor for the fertilizer response over the duration of the treatment within the cycle, converts the result to the YR basis by multiplying by YR/FINT, and computes DG(i) = sqrt(DIB² + DDS) − DIB. The result remains an inside bark increment on the YR basis, which subroutine GRADD scales to the cycle length. FFERT also changes HTG(i) in a similar way. Fertilizer treatments can be specified using the FERTILIZ keyword record. With the call to subroutine FFERT in this position, fertilizer treatments do not affect tree mortality through increased competition. This is probably an error but the effects would likely be small. Moving the call to subroutine FFERT before the call to subroutine MORTS should be considered.
+When the root disease model is active in a variant that includes it, subroutine RDTRP replaces the condition of equation {4.3.1.1} with ICYC <= ICL4 and ITRN <= IRRTRE / 3 and not NOTRIP, where IRRTRE is 1500, so that the limit on ITRN is 500 records. LTRIP is saved with the stand for stop and restart, with NOTRIP and ICL4.
+
+The sequence in subroutine GRINCR is: DGDRIV, HTGF and REGENT estimate the growth; the FIXDG and FIXHTG activities are applied; MORTS estimates the mortality; and, when LTRIP is true and ITRN is greater than 0, subroutine TRIPLE triples the records, ITRN is multiplied by 3, subroutine REASS realigns the pointers, and IREC1 is multiplied by 3. Subroutine FFERT is called last. Subroutines GRADD and UPDATE, called later from subroutine TREGRO, work with the tripled list. The tripled records are permanent records of the list; the code has no step that combines them again, except subroutine COMPRS, which merges records when the COMPRESS keyword is used. Subroutine ESTAB does not triple the records that it creates (it calls REGENT with the logical variable LESTB true).
+
+**Growth of the three records.** The records have the same attributes, but not the same growth. The records are, in the order that they are stored, the original record (60 percent of the trees per acre), the second record (25 percent) and the third record (15 percent). The next table lists how each is assigned.
+
+```{r tripling-growth, echo=FALSE}
+tripling_growth <- tibble::tribble(
+  ~Attribute, ~Original_Record, ~Second_and_Third_Records, ~Where_Assigned,
+  "DG(i), diameter increment", "FRM = FM x SSIGMA x RHOCP, error = FRM + CORR x OLDRN(i); DG = sqrt(DSQ + DDS x exp(error)) - D", "FRU = FU x SSIGMA x RHOCP for the second record, and FRL = FL x SSIGMA x RHOCP for the third record, with error = FRU (or FRL) + CORR x OLDRN(i) of the original record; FU = 1.271, FM = -0.14228 and FL = -1.549", "DGDRIV (subroutine DGSCOR is not called); OLDRN is stored for each record",
+  "HTG(i), height increment, large trees", "Estimated once", "The same value as the original, limited so that HT plus HTG does not exceed SIZCAP(species,4) for the height of each record", "HTGF",
+  "HTG(i), height increment, small trees", "Estimated first", "A new estimate with its own random draw for each record", "REGENT",
+  "FIXDG and FIXHTG multipliers", "Applied to DG(i) and HTG(i)", "The same multiplier is applied to the two new records; the diameter limits are tested on DBH(i) of the original record", "GRINCR",
+  "WK2(i), mortality, trees per acre", "0.60 of the amount", "0.25 and 0.15 of the amount", "TRIPLE",
+  "PROB(i), trees per acre", "0.60 of the value", "0.25 and 0.15 of the value", "TRIPLE"
+)
+
+kable(tripling_growth,
+      col.names = c("Attribute", "Original record", "Second and third records", "Where assigned"),
+      caption = "How the three records of a tripled tree are assigned",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "8em") %>%
+  column_spec(2, width = "14em") %>%
+  column_spec(3, width = "22em")
+```
+
+**Subroutine TRIPLE.** For each tree record I, from 1 to ITRN, subroutine TRIPLE stores the second record at ITFN = ITRN + 2I - 1 and the third record at ITFN + 1, as shown in equation {4.3.1.2}. The original record stays at position I. If the original tree list contains 30 tree records, the records of the first tree are 31 and 32, and the records of the 30th tree are 89 and 90. The trees per acre and the mortality are divided as shown in equation {4.3.1.3}; the 25 percent record is the second record, and the 15 percent record is the third record. The trees per acre of each record is therefore a fraction of the original value; it is not computed from the error distribution. The multiplier that inflates PROB for the sample tree display, TRM, is multiplied by 0.6.
+
+$$
+ITFN_{2} = ITRN + 2I - 1, \qquad ITFN_{3} = ITRN + 2I
+\tag{4.3.1.2}
+$$
+
+$$
+PROB(ITFN_{2}) = 0.25\, PROB(I), \qquad PROB(ITFN_{3}) = 0.15\, PROB(I), \qquad PROB(I) \leftarrow 0.60\, PROB(I)
+\tag{4.3.1.3}
+$$
+
+Where:
+
+- I: Index of the original tree record
+- ITRN: Number of tree records before tripling
+- ITFN: Index of the new record; the subscripts 2 and 3 identify the second and third records
+- PROB: Trees per acre of the record; WK2, the trees per acre that die in the cycle, is divided in the same way
+
+The attributes of the original record are copied to the two new records, as shown in the next table. The new records are given the same crown width, volume, defect, damage and identification values as the original record.
+
+```{r tripling-arrays-copied, echo=FALSE}
+tripling_copied <- tibble::tribble(
+  ~Group, ~Arrays, ~Treatment,
+  "Size and condition", "HT, ICR, IMC, ISP, ITRE, ITRUNC, NORMHT, KUTKOD, DEFECT, ISPECL, CULL, DECAYCD, WDLDSTEM, CRWDTH, HT2TD(,1) and HT2TD(,2)", "Copied unchanged",
+  "Volumes", "BFV, CFV, MCFV, SCFV, PTOCFV, PMRBFV, PMRCFV, PSCFV, NCFDEF, NBFDEF, PDBH, PHT", "Copied unchanged",
+  "Percentiles and work arrays", "OLDPCT, PCT, WK1, WK3", "Copied unchanged",
+  "Identification", "IESTAT, ABIRTH, LBIRTH, IDTREE, ZRAND", "Copied unchanged",
+  "Biomass", "ABVGRD_BIO, MERCH_BIO, CUBSAW_BIO", "Copied unchanged",
+  "Biomass and carbon", "FOLI_BIO, ABVGRD_CARB, MERCH_CARB, CUBSAW_CARB, FOLI_CARB, CARB_FRAC", "Assigned at index ITRN in the source, so the new records are not given these values",
+  "Trees per acre and mortality", "PROB, WK2", "Multiplied by 0.25 and 0.15 for the new records, and by 0.60 for the original record",
+  "Diameter and height increments", "DBH of the new records, DG, HTG, OLDRN", "Assigned in subroutines DGDRIV, HTGF and REGENT, not in TRIPLE"
+)
+
+kable(tripling_copied,
+      col.names = c("Group", "Arrays", "Treatment"),
+      caption = "Arrays assigned by subroutine TRIPLE",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "8em") %>%
+  column_spec(2, width = "22em")
+```
+
+Subroutine TRIPLE calls subroutine SVTRIP once for each original record, before the copy. SVTRIP assigns the stand visualization objects of the tree among the three records: the original record keeps NR x 0.6 rounded objects, the second record receives 0.625 of the others, rounded, and the third record receives the rest; nothing is changed when the tree has one object or fewer.
+
+Various FVS extension specific code segments are called by subroutine TRIPLE to triple parameter values associated with the extension. For each new record they are called with the index of the new record, the index of the original record and the weight, and they are called again for the original record with a weight of 0.6. The calls are ORGTRIP (ORGANON), MISGET and MISPUT (the dwarf mistletoe rating of the tree), and RDTRIP, BRTRIP, BMTRIP and FMTRIP (the root disease, blister rust, beetle and fire models). The routines exist as subroutines if the extension is part of the program executable, and as entry points of the stub subroutines of the extension if it is not (EXMIST for the dwarf mistletoe extension, EXRD for root disease, EXORGANON for ORGANON, EXBRUS for blister rust and EXBM for the beetle model). FMTRIP copies and multiplies the tree-level arrays of the fire model (FMPROB, FMICR, OLDHT, OLDCRL, GROW, OLDCRW and CROWNW) when the fire model is active; the header of the source file says it triples the fire and snag attributes. The next table shows which variants include each extension; the routines BRTRIP and BMTRIP are not in the source list of any variant, so the stubs are used.
+
+```{r tripling-hooks, echo=FALSE}
+tripling_hooks <- tibble::tribble(
+  ~Variant, ~SVTRIP, ~FMTRIP, ~MISGET_and_MISPUT, ~RDTRIP_and_RDTRP, ~ORGTRIP, ~FFERT,
+  "AK", "Yes", "Yes", "Yes", "Stub", "Stub", "Yes",
+  "BC", "Yes", "Yes", "Yes", "Yes", "Stub", "Stub",
+  "BM", "Yes", "Yes", "Yes", "Yes", "Stub", "Yes",
+  "CA", "Yes", "Yes", "Yes", "Stub", "Stub", "Yes",
+  "CI", "Yes", "Yes", "Yes", "Yes", "Stub", "Yes",
+  "CR", "Yes", "Yes", "Yes", "Yes", "Stub", "Yes",
+  "CS", "Yes", "Yes", "Stub", "Stub", "Stub", "Yes",
+  "EC", "Yes", "Yes", "Yes", "Yes", "Stub", "Yes",
+  "EM", "Yes", "Yes", "Yes", "Yes", "Stub", "Yes",
+  "HI", "Yes", "Yes", "Yes", "Yes", "Stub", "Yes",
+  "IE", "Yes", "Yes", "Yes", "Yes", "Stub", "Yes",
+  "KT", "Yes", "Yes", "Yes", "Yes", "Stub", "Yes",
+  "LS", "Yes", "Yes", "Stub", "Stub", "Stub", "Yes",
+  "NC", "Yes", "Yes", "Yes", "Yes", "Stub", "Yes",
+  "NE", "Yes", "Yes", "Stub", "Stub", "Stub", "Yes",
+  "OC", "Yes", "Yes", "Yes", "Stub", "Yes", "Yes",
+  "ON", "Yes", "Yes", "Stub", "Stub", "Stub", "Stub",
+  "OP", "Yes", "Yes", "Yes", "Stub", "Yes", "Yes",
+  "PN", "Yes", "Yes", "Yes", "Yes", "Stub", "Yes",
+  "SN", "Yes", "Yes", "Stub", "Stub", "Stub", "Yes",
+  "SO", "Yes", "Yes", "Yes", "Yes", "Stub", "Yes",
+  "TT", "Yes", "Yes", "Yes", "Yes", "Stub", "Yes",
+  "UT", "Yes", "Yes", "Yes", "Yes", "Stub", "Yes",
+  "WC", "Yes", "Yes", "Yes", "Yes", "Stub", "Yes",
+  "WS", "Yes", "Yes", "Yes", "Yes", "Stub", "Yes"
+)
+
+kable(tripling_hooks,
+      col.names = c("Variant", "SVTRIP", "FMTRIP", "MISGET and MISPUT", "RDTRIP and RDTRP", "ORGTRIP", "FFERT"),
+      caption = "Subroutines called for record tripling and fertilizer, by variant (Yes: the routine of the extension is in the source list; Stub: the stub is used)",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "4em")
+```
+
+**Subroutine REASS.** Subroutine GRINCR calls subroutine REASS to realign the FVS internal pointers following tripling. REASS copies IND1 into IND2 in species order and rewrites IND1 so that each group of three entries lists the second record (ITFN = IREC1 + 2I - 1), the original record (I) and the third record (ITFN + 1) of a tree. It then rewrites the species segments, ISCT(species,1) and ISCT(species,2), the first and last positions of the species in IND1, which hold three times the number of records. Finally, it rewrites the array IND in the same way. Subroutine RDPSRT, called later from subroutine GRADD, sorts the records again.
+
+**Fertilizer effects.** Subroutine GRINCR calls subroutine FFERT to compute adjustments to diameter and height growth due to effects of applying fertilizer. FFERT is the routine of the variants (the stub in BC and ON, where the FERTILIZ keyword is an error). The FERTILIZ keyword record (activity code 260) has the date or cycle, the nitrogen (pounds per acre), phosphorus and potassium, and a multiplier of the effect, FEFF, with a default of 1.0. Only an application of 200 pounds of nitrogen per acre can be represented: a blank or any other value of nitrogen is set to 200, and the phosphorus and potassium values are ignored. When several FERTILIZ activities are scheduled for the same cycle, FFERT uses the last one and deletes the others (OPDEL1).
+
+The effect starts at the beginning of the cycle in which FFERT finds the activity (IFFDAT = IY(ICYC)), whatever the date entered, and lasts 10 years. The number of years of the effect in the present cycle is shown in equation {4.3.1.4}. The effect continues in the later cycles with the same parameters, until the 10 years have passed. The tripled records are processed like the others.
+
+$$
+IFSTRT = IY(ICYC) - IFFDAT, \qquad IFFIN = \min\left(10, \; IFSTRT + IFINT\right), \qquad IFLEN = IFFIN - IFSTRT
+\tag{4.3.1.4}
+$$
+
+Where:
+
+- IY(ICYC): Year at the start of the cycle
+- IFFDAT: Year at the start of the cycle in which the activity was found
+- IFINT: Length of the cycle, FINT (years)
+- IFLEN: Number of years of the cycle that are affected by the fertilizer (years); FFERT does nothing when IFSTRT is more than 10 or IFLEN is 0 or less
+
+For each tree with a diameter greater than 0, FFERT calculates the ratio of the diameter increment with and without fertilizer, RDDS, as shown in equation {4.3.1.5}, and the new increments, as shown in equations {4.3.1.6} and {4.3.1.7}.
+
+$$
+BAL = \left(1 - \frac{PCT}{100}\right) BA, \qquad RDDS = \min\left[2.6, \; \exp\left(0.1108 \ln(DBH) + 0.003004 \,\frac{BAL}{\ln(DBH + 1)}\right)\right]
+\tag{4.3.1.5}
+$$
+
+$$
+\begin{aligned}
+DIB &= DBH \cdot BARK, \qquad DDS = 2 \cdot DIB \cdot DG + DG^{2} \\
+DDSIT &= \frac{DDS}{YR}\left[RDDS \cdot IFLEN \cdot FEFF + \left(IFINT - IFLEN\right)\right] \\
+DG &\leftarrow \sqrt{DIB^{2} + DDSIT \cdot \frac{YR}{FINT}} - DIB
+\end{aligned}
+\tag{4.3.1.6}
+$$
+
+$$
+HTG \leftarrow \frac{HTG}{YR}\left[RHT \cdot IFLEN \cdot FEFF + \left(IFINT - IFLEN\right)\right] \frac{YR}{FINT}, \qquad RHT = 1.1626
+\tag{4.3.1.7}
+$$
+
+Where:
+
+- PCT: Percentile of the tree in the basal area distribution (percent)
+- BA: Stand basal area (square feet per acre)
+- DBH: Diameter at breast height (inches)
+- BARK: Bark ratio, BRATIO(species, DBH, HT)
+- DIB: Diameter inside bark (inches)
+- DG: Diameter increment inside bark on the YR basis (inches)
+- DDS: Change in squared inside bark diameter on the YR basis (square inches)
+- RDDS: Ratio of the diameter increment with fertilizer to the increment without it (dimensionless), with a maximum of 2.6
+- FEFF: Multiplier of the effect of the FERTILIZ keyword (the fourth parameter of the activity)
+- YR: Period length of the growth models (years), set by the variant (CONTRL.F77)
+- FINT: Length of the cycle (years)
+- HTG: Height increment (feet)
+- RHT: Ratio of the height increment with fertilizer to the increment without it; a constant
+
+The result remains an inside bark increment on the YR basis, which subroutine GRADD scales to the cycle length. The effect of the fertilizer is on the 10 years; the response of a cycle that is shorter than 10 years is the response of IFLEN years, and FFERT prints a warning when IFLEN is not 10 (including a 5-year cycle in which the whole cycle is affected), and calls subroutine RCDSET with the code 1 after each warning. FFERT also prints a warning when the habitat code ICL5 is not 520 or 530, and when the contribution of the species with the sequence numbers 3 and 4 to the stand crown competition factor, (RELDSP(3) + RELDSP(4)) / RELDEN, is less than 0.5; these species are Douglas-fir and grand fir in the variants where those are the species 3 and 4 (the Inland Empire variant is an example), as shown in the next table.
+
+```{r ffert-species, echo=FALSE}
+ffert_species <- tibble::tribble(
+  ~Variant, ~Species_3, ~Species_4,
+  "AK", "YC", "TA",
+  "BM", "DF", "GF",
+  "CA", "RC", "WF",
+  "CI", "DF", "GF",
+  "CR", "DF", "GF",
+  "CS", "SP", "VP",
+  "EC", "DF", "SF",
+  "EM", "DF", "LM",
+  "HI", "GF", "AF",
+  "IE", "DF", "GF",
+  "KT", "DF", "GF",
+  "LS", "RN", "RP",
+  "NC", "DF", "WF",
+  "NE", "WS", "RS",
+  "OC", "RC", "GF",
+  "OP", "GF", "AF",
+  "PN", "GF", "AF",
+  "SN", "PI", "PU",
+  "SO", "DF", "WF",
+  "TT", "DF", "PM",
+  "UT", "DF", "WF",
+  "WC", "GF", "AF",
+  "WS", "WF", "GS"
+)
+
+kable(ffert_species,
+      col.names = c("Variant", "Species 3", "Species 4"),
+      caption = "Species tested by the species composition warning of subroutine FFERT",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "4em")
+```
+
+FFERT is called after subroutine MORTS, so fertilizer treatments do not affect tree mortality through increased competition in the cycle of the treatment. In the variants where subroutine MORTS uses DG(i), the increment of the treated cycle does enter the diameters of the later cycles. Moving the call to subroutine FFERT before the call to subroutine MORTS should be considered; it would have to be done before subroutine TRIPLE, which then would have to give the adjusted increments to the new records.
 
 Subroutine GRINCR is now done with its’ tasks; program control is returned to subroutine TREGRO for further processing.
 
@@ -5400,15 +5617,19 @@ Subroutine GRINCR is now done with its’ tasks; program control is returned to 
 
 Subroutine DBCHK is used to see if debug output should be written to the output file.
 
-OPDONE, an entry point in subroutine OPFIND, is used to mark the disposition of fertilizer activities scheduled during a projection cycle.
-
 Subroutine OPFIND is used to see if any fertilizer activities are scheduled during a projection cycle.
 
 OPGET, an entry point in subroutine OPFIND, is used to retrieve parameters associated with any fertilizer activities scheduled during a projection cycle.
 
-Subroutine RCDSET is used by subroutine FFERT to set return codes used by FVS. Return codes are used to signal FVS whether an error was encountered that is significant enough to warrant immediate termination of the projection.
+OPDONE, an entry point in subroutine OPFIND, is used to mark the disposition of fertilizer activities scheduled during a projection cycle.
+
+Subroutine OPDEL1 is used by subroutine FFERT to delete the fertilizer activities of a cycle other than the last.
+
+Subroutine RCDSET is used by subroutine FFERT to set return codes used by FVS. FFERT calls it with the code 1 after each warning; the projection continues.
 
 Subroutine SVTRIP is used to adjust the stand visualization file for record tripling.
+
+Subroutines ORGTRIP, MISGET, MISPUT, RDTRIP, BRTRIP, BMTRIP and FMTRIP, and the entry point RDTRP, are the extension routines that are called for record tripling.
 
 ## Disturbance effects and dynamics {#sec-disturbance-effects-and-dynamics}
 
