@@ -2723,7 +2723,13 @@ kable(organon_species_groups,
   column_spec(1, bold = TRUE, width = "4em")
 ```
 
-For the height of a tree, ORGANON uses one of two forms. The species group form, equation {3.6.2.3.10}, has three coefficients per species group, held in the array HDPAR(g, 1..3) of the subroutine of the model type: A_HD_SWO (`organon/start2.f:259-276`), HD_NWO (`organon/htgrowth.f:818-829`) and HD_SMC (`organon/htgrowth.f:858-869`). Model type 1 also has HD_SWO (`organon/htgrowth.f:773-790`), a second array of the same form. PREPARE (HDCALIB, PRDHT) and the diameter growth calibration use A_HD_SWO for model type 1 (`organon/start2.f:129,199`, `organon/diamcal.f:244-245`), whereas the dubbing of the height of ingrowth trees with a height of zero (`organon/execute2.f:1194-1210`) and the height growth of the minor species groups (`organon/htgrowth.f:223-224`) use HD_SWO. The source comments say that A_HD_SWO has parameters for all (undamaged and damaged) trees and that HD_SWO has parameters for undamaged trees, except RC, WO and RA (`start2.f:236-237`, `htgrowth.f:752`).
+ORGANON predicts the height of a tree with one of two equation forms, and the form depends on the use and on the stand. The species group form, equation {3.6.2.3.10}, has three coefficients per species group g, held in the array HDPAR(g, 1..3) of the subroutine of the model type. The stand form, equation {3.6.2.3.11}, is used only in HDCALIB and PRDHT, and only for a tree of a species group that makes up 80 percent or more of the basal area of an even-aged stand (conditions in the table below).
+
+- **HDCALIB and PRDHT (calibration and dubbing of heights):** the stand form when its conditions are met, and otherwise the species group form from A_HD_SWO for model type 1 (`organon/start2.f:259-276`), HD_NWO for model type 2 (`organon/htgrowth.f:818-829`) or HD_SMC for model type 3 (`organon/htgrowth.f:858-869`) (`organon/start2.f:84-150,189-220`).
+- **Diameter growth calibration (DGCALIB):** the species group form only, from A_HD_SWO, HD_NWO or HD_SMC for model types 1, 2 and 3 (`organon/diamcal.f:244-251`).
+- **Height growth of the minor species groups (the groups above IB):** the species group form only, from HD_SWO for model type 1 (`organon/htgrowth.f:773-790`) and from HD_NWO or HD_SMC for model types 2 and 3 (`organon/htgrowth.f:223-230`). HD_SWO is a second array of the same form for model type 1.
+
+The source comments say that A_HD_SWO has parameters for all (undamaged and damaged) trees and that HD_SWO has parameters for undamaged trees, except RC, WO and RA (`start2.f:236-237`, `htgrowth.f:752`). Subroutine INGRO_FILL (`organon/execute2.f:1153`) also uses HD_SWO, but no source file calls it.
 
 $$
 PTRHT = 4.5 + \exp\left(B_0 + B_1 \, DBH^{B_2}\right)
@@ -2861,6 +2867,142 @@ Where:
 - SI: Site index of western hemlock, SI_2 (feet)
 - AGE: Breast-height age of the stand, BHAGE (years)
 - b_kj: Coefficient k of the array b(6, 2) of SITEF_SI_EDIT (`start2.f:814-817`), with j = 1 when 0.3048 SI is 32.25953 or less and j = 2 otherwise
+
+**ORGANON crown ratio dubbing and calibration (OC and OP).** CRATET sends every live record to PREPARE with its crown ratio as a fraction, ICR/100, so a missing crown ratio is 0 (`oc/cratet.f:235`, `op/cratet.f:224`). EDIT sets MISSCR when any crown ratio is 0 or less, and treats a crown ratio above 1.0 as an error (`organon/prepare.f:262-267`). PREPARE then calls HDCALIB, PRDHT (only when a height is missing), CRCALIB (always) and PRDCR (only when MISSCR is set), in that order (`organon/prepare.f:119-132`), so the crown ratios are dubbed from heights that are already dubbed.
+
+CRCALIB and PRDCR predict the height to the crown base, HCB, of a tree, and the predicted crown ratio is PCR = 1 - HCB/HT (`organon/start2.f:353-373`, `start2.f:426-446`). They use subroutine A_HCB_SWO for model type 1 (`organon/start2.f:454`), and HCB_NWO and HCB_SMC for model types 2 and 3 (`organon/crngrow.f:244`, `organon/crngrow.f:311`). The three subroutines have the same form, equation {3.6.2.3.21}, and differ in the coefficient array HCBPAR(g, 1..7): A_HCB_SWO (`start2.f:482-523`), HCB_NWO (`crngrow.f:264-291`) and HCB_SMC (`crngrow.f:331-358`). Model type 1 also has HCB_SWO (`crngrow.f:155`, array at `crngrow.f:183`), a second array of the same form that ORGANON uses in the crown recession of the cycles (`crngrow.f:67`, `crngrow.f:92`). The species groups g are those of the table above.
+
+The inputs of equation {3.6.2.3.21} are the maximum crown width MCW of the trees, equation {3.6.2.3.17}, from subroutines MCW_SWO, MCW_NWO and MCW_SMC (`crngrow.f:440`, `514`, `573`, arrays `471-496`, `538-555`, `597-614`), and the stand summaries of subroutines SSUM and OLDGROWTH, which CRCALIB calls with the heights that were already dubbed (`start2.f:343-345`). The crown competition factor of the larger trees, CCFL, is equation {3.6.2.3.18}. It is read for the diameter of a tree by subroutine GET_CCFL_EDIT (`start2.f:1021-1035`): the diameter classes are 0.1 inch up to 50 inches; a tree above 50 inches uses a table by inch with the class INT(DBH - 49), and a tree above 100 inches has a CCFL of 0 (`organon/diamcal.f:486-560`). The stand basal area SBA is equation {3.6.2.3.19} and the old-growth indicator OG is equation {3.6.2.3.20} (`organon/diamcal.f:563-611`).
+
+$$
+\begin{aligned}
+MCW &= \begin{cases} \dfrac{HT}{4.5} \, B_0 & HT < 4.501 \\[1ex] B_0 + B_1 D' + B_2 D'^{2} & HT \ge 4.501 \end{cases} \\
+D' &= \min\left(DBH, \, PKDBH\right)
+\end{aligned}
+\tag{3.6.2.3.17}
+$$
+
+Where:
+
+- MCW: Maximum crown width of the tree (feet)
+- HT: Total height of the tree (feet)
+- DBH: Diameter at breast height of the tree (inches)
+- B_0, B_1, B_2: Coefficients MCWPAR(g, 1), MCWPAR(g, 2) and MCWPAR(g, 3) of the species group of the tree
+- PKDBH: Diameter above which the crown width no longer increases (inches), MCWPAR(g, 4)
+
+$$
+\begin{aligned}
+CCFL_j &= \sum_{i:\,k_i > k_j} 0.001803 \, MCW_i^{2} \, TPA_i \\
+k_i &= \mathrm{INT}\left(10 \, DBH_i + 0.5\right)
+\end{aligned}
+\tag{3.6.2.3.18}
+$$
+
+Where:
+
+- CCFL_j: Crown competition factor of the trees that are in a larger diameter class than tree j
+- MCW_i: Maximum crown width of record i from equation {3.6.2.3.17} (feet)
+- DBH_i: Diameter at breast height of record i (inches)
+- TPA_i: Trees per acre represented by record i, TDATAR(i, 4) divided by NPTS (trees per acre)
+
+$$
+SBA = 0.005454154 \sum_i DBH_i^{2} \, TPA_i
+\tag{3.6.2.3.19}
+$$
+
+Where:
+
+- SBA: Stand basal area (square feet per acre)
+- DBH_i: Diameter at breast height of record i (inches)
+- TPA_i: Trees per acre represented by record i (trees per acre)
+
+The indicator OG uses the 5 largest trees per acre of the major species groups (the groups up to IB). The records are accumulated in diameter classes of 1 inch, class INT(DBH) + 1 with a maximum of 100, from the largest class down, and the class that crosses 5 trees per acre is prorated so that the total is 5 trees per acre. OG is 0 when there is no such tree.
+
+$$
+\begin{aligned}
+OG &= \frac{DBH5 \times HT5}{10000} \\
+DBH5 &= \frac{\sum_i DBH_i \, TPA_i}{\sum_i TPA_i}, \qquad HT5 = \frac{\sum_i HT_i \, TPA_i}{\sum_i TPA_i}
+\end{aligned}
+\tag{3.6.2.3.20}
+$$
+
+Where:
+
+- OG: Old-growth indicator
+- DBH5: Mean diameter of the 5 largest trees per acre (inches)
+- HT5: Mean height of the 5 largest trees per acre (feet)
+- DBH_i: Diameter at breast height of record i (inches)
+- HT_i: Total height of record i (feet)
+- TPA_i: Trees per acre represented by record i, with the last class prorated so that the sum of TPA_i is 5 (trees per acre)
+
+The coefficients are HCBPAR(g, 1..7). The species group 3 (ponderosa pine in OC, western hemlock in OP) uses the site index SI_2, and every other group uses SI_1. Both site indices are reduced by 4.5 feet before the call (`start2.f:351-352`, `start2.f:426-427`).
+
+$$
+HCB = \frac{HT}{1 + \exp\left(B_0 + B_1 HT + B_2 CCFL + B_3 \ln SBA + B_4 \dfrac{DBH}{HT} + B_5 SI + B_6 OG^{2}\right)}
+\tag{3.6.2.3.21}
+$$
+
+Where:
+
+- HCB: Height to the crown base of the tree (feet)
+- HT: Total height of the tree (feet)
+- DBH: Diameter at breast height of the tree (inches)
+- CCFL: Crown competition factor of the larger trees from equation {3.6.2.3.18}
+- SBA: Stand basal area from equation {3.6.2.3.19} (square feet per acre)
+- SI: Site index minus 4.5 feet, SI_1 or SI_2 as stated above (feet)
+- OG: Old-growth indicator from equation {3.6.2.3.20}
+- B_0 to B_6: Coefficients HCBPAR(g, 1) to HCBPAR(g, 7) of the species group of the tree
+
+CRCALIB uses the trees with a measured crown ratio. For each group it calculates the ratio estimator of equation {3.6.2.3.22}, only when the group has at least 2 such trees and at least 1 record; otherwise the multiplier is 1.0 (`start2.f:337-387`). It then applies subroutine CALTST, as for the height calibration, with sums that are not weighted by the diameter; equation {3.6.2.3.7} applies with the DBH_i weights taken as 1. The multiplier is stored in ACALIB(2, g).
+
+$$
+\begin{aligned}
+\beta &= \frac{\sum_i Y_i X_i}{\sum_i X_i^{2}} \\
+X_i &= PCR_i = 1 - \frac{HCB_i}{HT_i}, \qquad Y_i = CR_i
+\end{aligned}
+\tag{3.6.2.3.22}
+$$
+
+Where:
+
+- β: Crown ratio calibration multiplier of the species group, ACALIB(2, g)
+- HCB_i: Height to the crown base of tree i from equation {3.6.2.3.21} (feet)
+- HT_i: Total height of tree i (feet)
+- CR_i: Measured crown ratio of tree i (fraction)
+
+PRDCR dubs each record with a crown ratio of 0 or less and a diameter above 0. The predicted crown ratio is multiplied by the calibration multiplier and limited to 0.05 to 1.0, as shown in equation {3.6.2.3.23} (`start2.f:447-449`).
+
+$$
+\begin{aligned}
+CR &= \min\left[1.0, \, \max\left(0.05, \, \beta \, PCR\right)\right] \\
+PCR &= 1 - \frac{HCB}{HT}
+\end{aligned}
+\tag{3.6.2.3.23}
+$$
+
+Where:
+
+- CR: Dubbed crown ratio of the tree (fraction)
+- β: Crown ratio calibration multiplier of the species group from equation {3.6.2.3.22}
+- HCB: Height to the crown base of the tree from equation {3.6.2.3.21} (feet)
+- HT: Total height of the tree (feet)
+
+CRATET then loads the crown ratio of the valid ORGANON trees back as ICR = NINT(100 CR) (`oc/cratet.f:359`, `op/cratet.f:348`). This value is not limited to 95 and has no minimum of 10. The records that are not valid ORGANON trees keep their missing crown ratio, and CROWN dubs them with the Weibull model, as described under "Crown ratio models" (CROWN returns without a change for a tree that has a crown ratio when it is first called; `oc/crown.f:228`).
+
+The multiplier that ORGANON uses in each cycle is attenuated, as shown in equation {3.6.2.3.24}, when the crown calibration flag INDS(2) is 1; otherwise it is 1.0 (`organon/execute2.f:94-96`, `execute2.f:241-246`). The default of INDS(2) is 1 (`oc/grinit.f:357`, `op/grinit.f:355`), and field 5 of the ORGINFO keyword sets it (`vorganon/orin.f:206-209`).
+
+$$
+CALIB_2 = \frac{1 + \beta}{2} + 0.5^{\,0.5 \, CYCLG} \, \frac{\beta - 1}{2}
+\tag{3.6.2.3.24}
+$$
+
+Where:
+
+- CALIB_2: Crown calibration multiplier that ORGANON uses in the cycle
+- β: Crown ratio calibration multiplier of the species group, ACALIB(2, g)
+- CYCLG: Number of cycles grown in ORGANON, which is the FVS cycle number minus 1
+
+The attenuated multiplier CALIB(2, g) is used only in the crown recession of model type 2: CROWGRO multiplies the predicted crown ratio by CALIB(2, g) for model type 2, and does not use it for model types 1, 3 and 4 (`organon/crngrow.f:69-81`, `crngrow.f:95-110`). In OC (model type 1) and in OP with model type 3 the crown calibration therefore affects only the dubbed crown ratios.
 
 **Missing crown ratios.** Subroutine INTREE converts the crown ratio of each input record. A value from 1 to 9 is a crown class code and is converted to a percent, ICR = 10 x code - 5 (the classes become 5, 15, and so on to 85). A value from 10 to 99 is kept as a percent, and a value above 99 is set to 99. A value of 0 or a negative value is not changed, and the crown ratio is considered missing. Dead tree records are converted in the same way before they are moved to the bottom of the tree arrays.
 

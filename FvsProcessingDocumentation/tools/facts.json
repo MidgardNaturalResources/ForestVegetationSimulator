@@ -4366,5 +4366,159 @@
   "doc": "DIAMCAL uses A_HD_SWO",
   "file": "organon/diamcal.f",
   "regex": "CALL A_HD_SWO\\(ISPGRP,STDATAR\\(I,1\\),PRSH\\)"
+ },
+ {
+  "id": "orgc-pcr",
+  "type": "regex_in_file",
+  "doc": "CRCALIB predicted crown ratio",
+  "file": "organon/start2.f",
+  "regex": "PCR\\(I\\)=1\\.0-PHCB/HT"
+ },
+ {
+  "id": "orgc-dub",
+  "type": "regex_in_file",
+  "doc": "PRDCR dub",
+  "file": "organon/start2.f",
+  "regex": "TDATAR\\(I,3\\)=PCR\\(I\\)\\*CALIB\\(2,TDATAI\\(I,2\\)\\)"
+ },
+ {
+  "id": "orgc-max",
+  "type": "regex_in_file",
+  "doc": "PRDCR max",
+  "file": "organon/start2.f",
+  "regex": "IF\\(TDATAR\\(I,3\\) \\.GT\\. 1\\.0\\) TDATAR\\(I,3\\)=1\\.0"
+ },
+ {
+  "id": "orgc-min",
+  "type": "regex_in_file",
+  "doc": "PRDCR min",
+  "file": "organon/start2.f",
+  "regex": "IF\\(TDATAR\\(I,3\\) \\.LT\\. 0\\.05\\) TDATAR\\(I,3\\)=0\\.05"
+ },
+ {
+  "id": "orgc-hcb",
+  "type": "regex_in_file",
+  "doc": "HCB form",
+  "file": "organon/start2.f",
+  "regex": "HCB=HT/\\(1\\.0\\+EXP\\(B0\\+B1\\*HT\\+B2\\*CCFL\\+B3\\*ALOG\\(BA\\)\\+B4\\*\\(DBH/HT\\)"
+ },
+ {
+  "id": "orgc-hcb-sg3",
+  "type": "regex_in_file",
+  "doc": "HCB group 3 uses SI_2",
+  "file": "organon/crngrow.f",
+  "regex": "IF\\(ISPGRP \\.EQ\\. 3\\) THEN\\s+HCB=HT/\\(1\\.0\\+EXP\\(B0\\+B1\\*HT\\+B2\\*CCFL\\+B3\\*ALOG\\(BA\\)\\+B4\\*\\(DBH/HT\\)\\s+\\S+\\s+\\+B5\\*SI_2"
+ },
+ {
+  "id": "orgc-mcw",
+  "type": "regex_in_file",
+  "doc": "MCW form",
+  "file": "organon/crngrow.f",
+  "regex": "MCW=B0\\+B1\\*DBH\\+B2\\*DBH\\*\\*2"
+ },
+ {
+  "id": "orgc-mcw-low",
+  "type": "regex_in_file",
+  "doc": "MCW low height",
+  "file": "organon/crngrow.f",
+  "regex": "MCW=HT/4\\.5\\*B0"
+ },
+ {
+  "id": "orgc-ccf",
+  "type": "regex_in_file",
+  "doc": "SSUM CCF",
+  "file": "organon/diamcal.f",
+  "regex": "CCF=0\\.001803\\*MCW\\*\\*2\\*TDATAR\\(I,4\\)/NPTS"
+ },
+ {
+  "id": "orgc-class",
+  "type": "regex_in_file",
+  "doc": "SSUM class",
+  "file": "organon/diamcal.f",
+  "regex": "L=INT\\(DBH\\*10\\.\\+\\.5\\)"
+ },
+ {
+  "id": "orgc-og",
+  "type": "regex_in_file",
+  "doc": "OLDGROWTH",
+  "file": "organon/diamcal.f",
+  "regex": "OG=DBH5\\*HT5/10000\\.0"
+ },
+ {
+  "id": "orgc-og5",
+  "type": "regex_in_file",
+  "doc": "OLDGROWTH 5 trees",
+  "file": "organon/diamcal.f",
+  "regex": "IF\\(TOTTR \\.GT\\. 5\\.0\\) THEN"
+ },
+ {
+  "id": "orgc-calib",
+  "type": "regex_in_file",
+  "doc": "CRCALIB min trees",
+  "file": "organon/start2.f",
+  "regex": "IF\\(ENTCR\\(I\\) \\.LT\\. 2\\)CYCLE"
+ },
+ {
+  "id": "orgc-atten",
+  "type": "regex_in_file",
+  "doc": "crown attenuation",
+  "file": "organon/execute2.f",
+  "regex": "CALIB\\(2,I\\)=\\(1\\.0\\+CALIB\\(5,I\\)\\)/2\\.0"
+ },
+ {
+  "id": "orgc-nwo-only",
+  "type": "regex_in_file",
+  "doc": "CROWGRO uses CALIB(2) only for NWO",
+  "file": "organon/crngrow.f",
+  "regex": "PCR1=CALIB\\(2,ISPGRP\\)\\*\\(1\\.0-HCB1/PHT\\)"
+ },
+ {
+  "id": "orgc-cr1-oc",
+  "type": "regex_in_file",
+  "doc": "CR1 fraction",
+  "file": "oc/cratet.f",
+  "regex": "CR1\\(I\\)= REAL\\(ICR\\(I\\)\\) / 100\\.0"
+ },
+ {
+  "id": "orgc-cr1-op",
+  "type": "regex_in_file",
+  "doc": "CR1 fraction",
+  "file": "op/cratet.f",
+  "regex": "CR1\\(I\\)= REAL\\(ICR\\(I\\)\\) / 100\\.0"
+ },
+ {
+  "id": "orgc-unload-oc",
+  "type": "regex_in_file",
+  "doc": "ICR reload",
+  "file": "oc/cratet.f",
+  "regex": "ICR\\(I\\) = NINT\\( CR1\\(KG\\) \\* 100\\.0 \\)"
+ },
+ {
+  "id": "orgc-unload-op",
+  "type": "regex_in_file",
+  "doc": "ICR reload",
+  "file": "op/cratet.f",
+  "regex": "ICR\\(I\\) = NINT\\( CR1\\(KG\\) \\* 100\\.0 \\)"
+ },
+ {
+  "id": "orgc-inds2-oc",
+  "type": "regex_in_file",
+  "doc": "INDS(2) default",
+  "file": "oc/grinit.f",
+  "regex": "INDS\\(2\\) = 1"
+ },
+ {
+  "id": "orgc-inds2-op",
+  "type": "regex_in_file",
+  "doc": "INDS(2) default",
+  "file": "op/grinit.f",
+  "regex": "INDS\\(2\\) = 1"
+ },
+ {
+  "id": "orgc-crown-skip",
+  "type": "regex_in_file",
+  "doc": "CROWN skip when CR present",
+  "file": "oc/crown.f",
+  "regex": "IF\\(LSTART \\.AND\\. ICR\\(I\\)\\.GT\\.0\\)GOTO 60"
  }
 ]
