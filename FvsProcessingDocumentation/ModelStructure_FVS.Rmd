@@ -2620,7 +2620,7 @@ kable(organon_valid_species,
   column_spec(5, width = "16em")
 ```
 
-For each species group, HDCALIB predicts the height of every tree with a measured height with the ORGANON height-diameter equation of the model type (subroutines HD_SWO, HD_NWO and HD_SMC), PTRHT. For the group of a species that makes up 80 percent or more of an even-aged stand it uses the stand height-diameter equations (HD40_SWO, HD40_NWO and HD40_SMC) with the species proportions PDF, PTF, PPP and PWH from subroutine SPMIX (`organon/start2.f:96-185`). The multiplier of the group is the ratio estimator of equation {3.6.2.3.6}. It is calculated only when the group has at least 2 trees with a measured height; otherwise it is 1.0 (`start2.f:162-167`).
+For each species group, HDCALIB predicts the height of every tree with a measured height with the ORGANON height-diameter equation of the model type, PTRHT, which is calculated as described after this paragraph (species group equations A_HD_SWO, HD_NWO and HD_SMC, or the stand equations HD40_SWO, HD40_NWO and HD40_SMC for the species that makes up 80 percent or more of an even-aged stand) (`organon/start2.f:96-185`). The multiplier of the group is the ratio estimator of equation {3.6.2.3.6}. It is calculated only when the group has at least 2 trees with a measured height; otherwise it is 1.0 (`start2.f:162-167`).
 
 $$
 \begin{aligned} \beta &= \frac{\sum_i Y_i X_i / DBH_i}{\sum_i X_i^{2} / DBH_i} \\ Y_i &= HT_i - 4.5, \qquad X_i = PTRHT_i - 4.5 \end{aligned}
@@ -2677,6 +2677,190 @@ Where:
 - CYCLG: Number of cycles grown in ORGANON, which is the FVS cycle number minus 1
 
 The height calibration is controlled in three ways. The default of INDS(1) is 1 (calibration on) in `oc/grinit.f:356` and `op/grinit.f:354`, and field 4 of the ORGINFO keyword (0 or 1; an invalid value is set to 1) sets it (`vorganon/orin.f:186-196`). Calibration values read from lines 2 to 4 of the ORGANON .INP file replace the calculated value of a species group when they are not 1.0 (`vorganon/org_intree.f:141-148`), and a calibration value computed by PREPARE is loaded into ACALIB only where the value of ACALIB is still 1.0 (`oc/cratet.f:394-400`). ORGANON stops with an error when any calibration value is below 0.5 or above 2.0 (`organon/execute2.f:591-596`).
+
+**ORGANON predicted height (PTRHT).** ORGANON assigns each tree to a species group from the FIA species code that ORGSPC returns for the FVS species (`oc/orgspc.f:55-65`, `op/orgspc.f:47-55`). Subroutine SPGROUP_EDIT (called by PREPARE, `organon/prepare.f:309`) and subroutine SPGROUP_RUN (`organon/execute2.f:917-961`) compare the code with the list of the model type, which are SCODE1 (model type 1, 19 codes in which 15 and 17 are both group 2) and SCODE2 (model types 2 and 3, 11 codes). The next table lists the FIA code and the species group of the valid species of each variant.
+
+```{r organon-species-groups, echo=FALSE}
+organon_species_groups <- tibble::tribble(
+  ~Variant, ~Species, ~FIA_Code, ~Group, ~Group_Name,
+  "OC", "IC", "081", 5, "incense-cedar",
+  "OC", "RC", "242", 7, "western redcedar",
+  "OC", "GF", "017", 2, "white/grand fir",
+  "OC", "DF", "202", 1, "Douglas-fir",
+  "OC", "WH", "263", 6, "western hemlock",
+  "OC", "SP", "117", 4, "sugar pine",
+  "OC", "PP", "122", 3, "ponderosa pine",
+  "OC", "PY", "231", 8, "Pacific yew",
+  "OC", "CY", "805", 12, "canyon live oak",
+  "OC", "WO", "815", 14, "Oregon white oak",
+  "OC", "BO", "818", 15, "California black oak",
+  "OC", "BM", "312", 13, "bigleaf maple",
+  "OC", "RA", "351", 16, "red alder",
+  "OC", "MA", "361", 9, "Pacific madrone",
+  "OC", "GC", "431", 10, "giant chinquapin",
+  "OC", "DG", "492", 17, "Pacific dogwood",
+  "OC", "TO", "631", 11, "tanoak",
+  "OC", "WI", "920", 18, "willow",
+  "OP", "GF", "017", 2, "grand fir",
+  "OP", "DF", "202", 1, "Douglas-fir",
+  "OP", "RC", "242", 4, "western redcedar",
+  "OP", "WH", "263", 3, "western hemlock",
+  "OP", "BM", "312", 7, "bigleaf maple",
+  "OP", "RA", "351", 9, "red alder",
+  "OP", "MA", "361", 6, "white alder / Pacific madrone",
+  "OP", "WO", "815", 8, "Oregon white oak / California black oak",
+  "OP", "PY", "231", 5, "Pacific yew",
+  "OP", "DG", "492", 10, "Pacific dogwood",
+  "OP", "WI", "920", 11, "willow"
+)
+
+kable(organon_species_groups,
+      col.names = c("Variant", "FVS species", "FIA code", "ORGANON species group", "Group name"),
+      caption = "FIA code and ORGANON species group of the valid species of OC and OP (sources: oc/orgspc.f:55-65, op/orgspc.f:47-55, organon/execute2.f:917-961, group names from the LABEL arrays of oc/cratet.f and op/cratet.f)",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "4em")
+```
+
+For the height of a tree, ORGANON uses one of two forms. The species group form, equation {3.6.2.3.10}, has three coefficients per species group, held in the array HDPAR(g, 1..3) of the subroutine of the model type: A_HD_SWO (`organon/start2.f:259-276`), HD_NWO (`organon/htgrowth.f:818-829`) and HD_SMC (`organon/htgrowth.f:858-869`). Model type 1 also has HD_SWO (`organon/htgrowth.f:773-790`), a second array of the same form. PREPARE (HDCALIB, PRDHT) and the diameter growth calibration use A_HD_SWO for model type 1 (`organon/start2.f:129,199`, `organon/diamcal.f:244-245`), whereas the dubbing of the height of ingrowth trees with a height of zero (`organon/execute2.f:1194-1210`) and the height growth of the minor species groups (`organon/htgrowth.f:223-224`) use HD_SWO. The source comments say that A_HD_SWO has parameters for all (undamaged and damaged) trees and that HD_SWO has parameters for undamaged trees, except RC, WO and RA (`start2.f:236-237`, `htgrowth.f:752`).
+
+$$
+PTRHT = 4.5 + \exp\left(B_0 + B_1 \, DBH^{B_2}\right)
+\tag{3.6.2.3.10}
+$$
+
+Where:
+
+- PTRHT: Total height of the tree predicted by the species group equation (feet)
+- DBH: Diameter at breast height of the tree (inches)
+- B_0, B_1, B_2: Coefficients of the species group of the tree, HDPAR(g, 1), HDPAR(g, 2) and HDPAR(g, 3) of the subroutine named above
+
+The stand form, equation {3.6.2.3.11}, uses the top height HT40 and the diameter D40 of the stand. Its coefficients are in the array HD40PAR(e, 1..3), where e is 1, 2 or 3 for Douglas-fir, true fir and ponderosa pine in HD40_SWO (`start2.f:931-934`) and 1 or 2 for Douglas-fir and western hemlock in HD40_NWO and HD40_SMC (`start2.f:955-958`, `start2.f:980-983`).
+
+$$
+PTRHT = 4.5 + \left(HT40 - 4.5\right) \frac{\exp\left(B_0 \, DBH^{\,B_1 + B_2 \left(HT40 - 4.5\right)}\right)}{\exp\left(B_0 \, D40^{\,B_1 + B_2 \left(HT40 - 4.5\right)}\right)}
+\tag{3.6.2.3.11}
+$$
+
+Where:
+
+- PTRHT: Total height of the tree predicted by the stand equation (feet)
+- HT40: Top height of the stand (feet), equations {3.6.2.3.14} to {3.6.2.3.16}
+- D40: Diameter of the 40 largest trees per acre (inches), equation {3.6.2.3.12}
+- DBH: Diameter at breast height of the tree (inches)
+- B_0, B_1, B_2: Coefficients HD40PAR(e, 1), HD40PAR(e, 2) and HD40PAR(e, 3) of equation e of the subroutine of the model type
+
+HDCALIB and PRDHT use the stand form for a tree only when the stand is even-aged (the flag INDS(4) is 1) and the species of the tree makes up 80 percent or more of the basal area, with the proportions of equation {3.6.2.3.13}. Otherwise they use the species group form (`organon/start2.f:84-150,189-220`). The default of INDS(4) is 1 in `oc/grinit.f:359` and `op/grinit.f:357`; field 2 of the ORGINFO keyword sets it (`vorganon/orin.f:163-170`), and SITSET sets it to 0 when the stand age (IAGE) is 0 (`oc/sitset.f:317-321`, `op/sitset.f:315-319`). The conditions are in the next table.
+
+```{r organon-ptrht-selection, echo=FALSE}
+organon_ptrht_selection <- tibble::tribble(
+  ~Model_Type, ~Stand_Equation, ~Condition, ~Top_Height, ~Otherwise,
+  "1 (SWO, OC)", "HD40_SWO(1)", "Group 1 and PDF >= 0.80", "HS_H40 with the Douglas-fir coefficients, SI_1", "A_HD_SWO",
+  "1 (SWO, OC)", "HD40_SWO(2)", "Group 2 and PTF >= 0.80", "HS_H40 with the Douglas-fir coefficients, SI_1", "A_HD_SWO",
+  "1 (SWO, OC)", "HD40_SWO(3)", "Group 3 and PPP >= 0.80", "HS_H40 with the ponderosa pine coefficients, SI_2", "A_HD_SWO",
+  "2 (NWO, OP)", "HD40_NWO(1)", "Group 1 and PDF >= 0.80", "B_H40, SI_1", "HD_NWO",
+  "2 (NWO, OP)", "HD40_NWO(2)", "Group 3 and PWH >= 0.80", "F_H40, SI_2", "HD_NWO",
+  "3 (SMC, OP)", "HD40_SMC(1)", "Group 1 and PDF >= 0.80", "B_H40, SI_1", "HD_SMC",
+  "3 (SMC, OP)", "HD40_SMC(2)", "Group 3 and PWH >= 0.80", "F_H40, SI_2", "HD_SMC"
+)
+
+kable(organon_ptrht_selection,
+      col.names = c("ORGANON model type", "Stand equation", "Condition", "Top height HT40 from", "Otherwise"),
+      caption = "Selection of the PTRHT equation in HDCALIB and PRDHT (source: organon/start2.f:84-150,189-220)",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "6em")
+```
+
+The diameter D40 is the mean diameter of the 40 largest trees per acre of the major species groups (the groups up to IB), as calculated by subroutine DFORTY (`start2.f:833-877`). The records with a diameter above zero are accumulated in diameter classes of 0.1 inch, from the largest class down, until the trees per acre exceed 40. The class that crosses 40 is prorated so that the total is exactly 40 trees per acre. D40 is 0 when no record is eligible. The trees per acre of a record are TDATAR(i, 4) divided by the number of points NPTS.
+
+$$
+D40 = \frac{\sum_i DBH_i \, TPA_i}{\sum_i TPA_i}
+\tag{3.6.2.3.12}
+$$
+
+Where:
+
+- D40: Mean diameter of the 40 largest trees per acre (inches)
+- DBH_i: Diameter at breast height of record i (inches)
+- TPA_i: Trees per acre represented by record i (trees per acre), with the last class prorated so that the sum of TPA_i is 40
+
+The proportions PDF, PTF, PPP, PWH and PRA are calculated by subroutine SPMIX (`start2.f:879-918`). Their species are the Douglas-fir (FIA code 202), the true firs (15 and 17), ponderosa pine (122), western hemlock (263) and red alder (351). The basal area of all the records is the denominator.
+
+$$
+P_s = \frac{\sum_{i \in s} DBH_i^{2} \, TPA_i}{\sum_i DBH_i^{2} \, TPA_i}
+\tag{3.6.2.3.13}
+$$
+
+Where:
+
+- P_s: Proportion of the basal area of species s, which is PDF, PTF, PPP, PWH or PRA
+- DBH_i: Diameter at breast height of record i (inches)
+- TPA_i: Trees per acre represented by record i (trees per acre)
+
+The top height HT40 is the height of the site index curve at the breast-height age. The age is BHAGE, which CRATET sets to STAGE - 6, where STAGE is the stand age IAGE plus the years from the first cycle to the current cycle, IY(ICYC) - IY(1) (`oc/cratet.f:257-264`, `op/cratet.f:246-253`). The site indices are SI_1, the Douglas-fir site index, and SI_2, the ponderosa pine site index in OC and the western hemlock site index in OP (`oc/sitset.f:324-325`, `op/sitset.f:322-323`; in the equations below the site index of the species is the SI of the equation). When EDIT finds that one of them is missing, it sets it from the other (`organon/prepare.f:356-368`): for model type 1, SI_1 = 1.062934 SI_2 and SI_2 = 0.940792 SI_1; for model types 2 and 3, SI_1 = 0.480 + 1.110 SI_2 and SI_2 = -0.432 + 0.899 SI_1 (Nigh 1995, as stated in the source comment).
+
+Model type 1 uses subroutine HS_H40, the dominant height curves of Hann and Scrivani (1987) for Douglas-fir (ISP = 1) and ponderosa pine (ISP = 2) (`start2.f:606-636`).
+
+$$
+\begin{aligned}
+HT40 &= 4.5 + \left(SI - 4.5\right) \frac{X(AGE)}{X(50)} \\
+X(t) &= 1 - \exp\left(-\exp\left(a + b \ln\left(SI - 4.5\right) + c \ln t\right)\right)
+\end{aligned}
+\tag{3.6.2.3.14}
+$$
+
+Where:
+
+- HT40: Top height of the stand (feet)
+- SI: Site index of the species (feet)
+- AGE: Breast-height age of the stand, BHAGE (years)
+- a, b, c: Coefficients of the species, which are -6.21693, 0.281176 and 1.14354 for Douglas-fir and -6.54707, 0.288169 and 1.21297 for ponderosa pine (`start2.f:622-630`)
+
+Model types 2 and 3 use subroutine B_H40 for Douglas-fir, the equation of Bruce (1981) (`start2.f:638-657`).
+
+$$
+\begin{aligned}
+HT40 &= SI \exp\left(A_1 \left[\left(AGE + 13.25 - \frac{SI}{20}\right)^{A_2} - \left(63.25 - \frac{SI}{20}\right)^{A_2}\right]\right) \\
+A_2 &= -0.447762 - 0.894427 \frac{SI}{100} + 0.793548 \left(\frac{SI}{100}\right)^{2} - 0.17166 \left(\frac{SI}{100}\right)^{3} \\
+A_1 &= \frac{\ln\left(4.5 / SI\right)}{\left(13.25 - SI/20\right)^{A_2} - \left(63.25 - SI/20\right)^{A_2}}
+\end{aligned}
+\tag{3.6.2.3.15}
+$$
+
+Where:
+
+- HT40: Top height of the stand (feet)
+- SI: Site index of Douglas-fir, SI_1 (feet)
+- AGE: Breast-height age of the stand, BHAGE (years)
+
+Model types 2 and 3 use subroutine F_H40 for western hemlock, the unpublished metric curves of J. Flewelling, as stated in the source comment (`start2.f:659-680`). The site index is converted to meters (0.3048) and the top height back to feet (3.2808). The age is not converted. The height-age equation is in SITECV_F_EDIT (`start2.f:723-763`), its parameters are in SITEF_C_EDIT (`start2.f:765-796`) and the productivity index ψ is approximated from the site index in SITEF_SI_EDIT (`start2.f:798-831`).
+
+$$
+\begin{aligned}
+HT40 &= 3.2808 \, HTOP \\
+HTOP &= \begin{cases} h_1 + \psi x + \dfrac{\left(1 - w\right) \psi x_k}{c + 1} \left[\left(\dfrac{x_k - x}{x_k}\right)^{c+1} - 1\right] & x < x_k \\[2ex] y_k + \alpha \left(1 - e^{-\beta \left(x - x_k\right)}\right) & x \ge x_k \end{cases} \\
+x &= AGE - 1 \\
+x_k &= 128.326 \, e^{-2.54871 \, \psi} \\
+w &= 0.2 + \frac{0.8}{1 + e^{5.33208 - 9.00622 \, \psi}} \\
+c &= 1 + 1.2 \, \psi \\
+\alpha &= 52.7948 \, \psi, \qquad \beta = \frac{\psi}{\alpha} \\
+h_1 &= \mathrm{INT}\left(1.3 + \frac{w \psi}{2}\right) \\
+y_k &= h_1 + \psi x_k \left(1 - \frac{1 - w}{c + 1}\right) \\
+\psi &= 0.75 + z \left(b_{1j} + z \left(b_{2j} + z \left(b_{3j} + z \left(b_{4j} + z \left(b_{5j} + z \, b_{6j}\right)\right)\right)\right)\right) \\
+z &= \frac{0.3048 \, SI - 32.25953}{10}
+\end{aligned}
+\tag{3.6.2.3.16}
+$$
+
+Where:
+
+- HT40: Top height of the stand (feet)
+- SI: Site index of western hemlock, SI_2 (feet)
+- AGE: Breast-height age of the stand, BHAGE (years)
+- b_kj: Coefficient k of the array b(6, 2) of SITEF_SI_EDIT (`start2.f:814-817`), with j = 1 when 0.3048 SI is 32.25953 or less and j = 2 otherwise
 
 **Missing crown ratios.** Subroutine INTREE converts the crown ratio of each input record. A value from 1 to 9 is a crown class code and is converted to a percent, ICR = 10 x code - 5 (the classes become 5, 15, and so on to 85). A value from 10 to 99 is kept as a percent, and a value above 99 is set to 99. A value of 0 or a negative value is not changed, and the crown ratio is considered missing. Dead tree records are converted in the same way before they are moved to the bottom of the tree arrays.
 

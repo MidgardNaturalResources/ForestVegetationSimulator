@@ -4128,5 +4128,243 @@
   "doc": "ORGANON height calibration: range error",
   "file": "organon/execute2.f",
   "regex": "IF\\(ACALIB\\(I,J\\) \\.GT\\. 2\\.0 \\.OR\\. ACALIB\\(I,J\\) \\.LT\\. 0\\.5\\) THEN"
+ },
+ {
+  "id": "orgh-hd-form",
+  "type": "regex_in_file",
+  "doc": "ORGANON species group height-diameter form (A_HD_SWO)",
+  "file": "organon/start2.f",
+  "regex": "PRDHT=4\\.5\\+EXP\\(B0\\+B1\\*DBH\\*\\*B2\\)"
+ },
+ {
+  "id": "orgh-hd-form-nwo",
+  "type": "regex_in_file",
+  "doc": "ORGANON HD_NWO form",
+  "file": "organon/htgrowth.f",
+  "regex": "HDPAR\\(11,3\\)"
+ },
+ {
+  "id": "orgh-hd40-form",
+  "type": "regex_in_file",
+  "doc": "ORGANON stand height-diameter form",
+  "file": "organon/start2.f",
+  "regex": "PTRHT=4\\.5\\+\\(HT40-4\\.5\\)\\*\\(EXD/EXD40\\)"
+ },
+ {
+  "id": "orgh-hd40-exd",
+  "type": "regex_in_file",
+  "doc": "ORGANON stand form exponent",
+  "file": "organon/start2.f",
+  "regex": "EXD=EXP\\(B0\\*DBH\\*\\*\\(B1\\+B2\\*\\(HT40-4\\.5\\)\\)\\)"
+ },
+ {
+  "id": "orgh-hd40-exd40",
+  "type": "regex_in_file",
+  "doc": "ORGANON stand form D40 exponent",
+  "file": "organon/start2.f",
+  "regex": "EXD40=EXP\\(B0\\*D40\\*\\*\\(B1\\+B2\\*\\(HT40-4\\.5\\)\\)\\)"
+ },
+ {
+  "id": "orgh-hd40-swo-sel",
+  "type": "regex_in_file",
+  "doc": "ORGANON type 1 stand equation selection",
+  "file": "organon/start2.f",
+  "regex": "IF\\(PDF \\.GE\\. 0\\.80 \\.AND\\. ISPGRP \\.EQ\\. 1\\) THEN\\s+CALL HD40_SWO\\(1,HT40,D40,DBH,PTRHT\\(I\\)\\)"
+ },
+ {
+  "id": "orgh-hd40-nwo-sel",
+  "type": "regex_in_file",
+  "doc": "ORGANON type 2 stand equation selection",
+  "file": "organon/start2.f",
+  "regex": "ELSEIF\\(PWH \\.GE\\. 0\\.80 \\.AND\\. ISPGRP \\.EQ\\. 3\\) THEN\\s+CALL HD40_NWO\\(2,HT40,D40,DBH,PTRHT\\(I\\)\\)"
+ },
+ {
+  "id": "orgh-even-default-oc",
+  "type": "regex_in_file",
+  "doc": "INDS(4) default OC",
+  "file": "oc/grinit.f",
+  "regex": "INDS\\(4\\) = 1"
+ },
+ {
+  "id": "orgh-even-default-op",
+  "type": "regex_in_file",
+  "doc": "INDS(4) default OP",
+  "file": "op/grinit.f",
+  "regex": "INDS\\(4\\) = 1"
+ },
+ {
+  "id": "orgh-even-sitset-oc",
+  "type": "regex_in_file",
+  "doc": "SITSET sets uneven-aged when IAGE is 0 (OC)",
+  "file": "oc/sitset.f",
+  "regex": "IF\\(IAGE \\.EQ\\. 0\\) THEN\\s+IF\\(INDS\\(4\\) \\.EQ\\. 1\\) THEN\\s+INDS\\(4\\) = 0"
+ },
+ {
+  "id": "orgh-bhage",
+  "type": "regex_in_file",
+  "doc": "BHAGE = STAGE - 6",
+  "file": "oc/cratet.f",
+  "regex": "BHAGE\\s+= STAGE - 6"
+ },
+ {
+  "id": "orgh-bhage-op",
+  "type": "regex_in_file",
+  "doc": "BHAGE = STAGE - 6 (OP)",
+  "file": "op/cratet.f",
+  "regex": "BHAGE\\s+= STAGE - 6"
+ },
+ {
+  "id": "orgh-d40-class",
+  "type": "regex_in_file",
+  "doc": "DFORTY class",
+  "file": "organon/start2.f",
+  "regex": "ID=IFIX\\(TDATAR\\(I,1\\)\\*10\\.0\\)"
+ },
+ {
+  "id": "orgh-d40-expan",
+  "type": "regex_in_file",
+  "doc": "DFORTY trees per acre",
+  "file": "organon/start2.f",
+  "regex": "EXPAN=TDATAR\\(I,4\\)/FLOAT\\(NPTS\\)"
+ },
+ {
+  "id": "orgh-d40-prorate",
+  "type": "regex_in_file",
+  "doc": "DFORTY proration",
+  "file": "organon/start2.f",
+  "regex": "TOTD=TOTD-DCL\\(I\\)\\+\\(\\(DCL\\(I\\)/TRCL\\(I\\)\\)\\*TRDIFF\\)"
+ },
+ {
+  "id": "orgh-spmix-ba",
+  "type": "regex_in_file",
+  "doc": "SPMIX basal area",
+  "file": "organon/start2.f",
+  "regex": "BA=\\(TDATAR\\(I,1\\)\\*\\*2\\*TDATAR\\(I,4\\)\\)\\*0\\.005454154/NPTS"
+ },
+ {
+  "id": "orgh-spmix-tf",
+  "type": "regex_in_file",
+  "doc": "SPMIX true fir codes",
+  "file": "organon/start2.f",
+  "regex": "TDATAI\\(I,1\\) \\.EQ\\. 15 \\.OR\\. TDATAI\\(I,1\\) \\.EQ\\. 17"
+ },
+ {
+  "id": "orgh-spmix-pdf",
+  "type": "regex_in_file",
+  "doc": "SPMIX proportion",
+  "file": "organon/start2.f",
+  "regex": "PDF=BADF/BATOT"
+ },
+ {
+  "id": "orgh-hs-df",
+  "type": "regex_in_file",
+  "doc": "HS_H40 Douglas-fir",
+  "file": "organon/start2.f",
+  "regex": "-6\\.21693 \\+ 0\\.281176\\*ALOG\\(S\\)"
+ },
+ {
+  "id": "orgh-hs-pp",
+  "type": "regex_in_file",
+  "doc": "HS_H40 ponderosa pine",
+  "file": "organon/start2.f",
+  "regex": "-6\\.54707 \\+ 0\\.288169\\*ALOG\\(S\\)"
+ },
+ {
+  "id": "orgh-hs-ht",
+  "type": "regex_in_file",
+  "doc": "HS_H40 height",
+  "file": "organon/start2.f",
+  "regex": "HT40 = 4\\.5 \\+ S\\*\\(X1/X2\\)"
+ },
+ {
+  "id": "orgh-bruce-a2",
+  "type": "regex_in_file",
+  "doc": "B_H40 A2",
+  "file": "organon/start2.f",
+  "regex": "A2 = -0\\.447762 - 0\\.894427\\*SI/100\\.0 \\+ 0\\.793548\\*\\(SI/100\\.0\\)\\*\\*2"
+ },
+ {
+  "id": "orgh-bruce-ht",
+  "type": "regex_in_file",
+  "doc": "B_H40 height",
+  "file": "organon/start2.f",
+  "regex": "HT40 = SI\\*EXP\\(A1\\*\\(\\(AGE \\+ 13\\.25 - \\(SI/20\\.0\\)\\)\\*\\*A2"
+ },
+ {
+  "id": "orgh-flew-conv",
+  "type": "regex_in_file",
+  "doc": "F_H40 conversions",
+  "file": "organon/start2.f",
+  "regex": "XSI = SI\\*0\\.3048"
+ },
+ {
+  "id": "orgh-flew-conv2",
+  "type": "regex_in_file",
+  "doc": "F_H40 back conversion",
+  "file": "organon/start2.f",
+  "regex": "HT40 = HTOP\\*3\\.2808"
+ },
+ {
+  "id": "orgh-flew-fp",
+  "type": "regex_in_file",
+  "doc": "SITEF_C_EDIT coefficients",
+  "file": "organon/start2.f",
+  "regex": "128\\.326\\s+,\\s+-2\\.54871"
+ },
+ {
+  "id": "orgh-flew-xk",
+  "type": "regex_in_file",
+  "doc": "SITEF_C_EDIT xk",
+  "file": "organon/start2.f",
+  "regex": "xk = fp\\(1\\) \\* exp\\( fp\\(2\\) \\* psi\\)"
+ },
+ {
+  "id": "orgh-flew-psi",
+  "type": "regex_in_file",
+  "doc": "SITEF_SI_EDIT pivot",
+  "file": "organon/start2.f",
+  "regex": "si_piv\\s+/ 32\\.25953/"
+ },
+ {
+  "id": "orgh-nigh",
+  "type": "regex_in_file",
+  "doc": "EDIT site index conversion type 2/3",
+  "file": "organon/prepare.f",
+  "regex": "SI_1=0\\.480 \\+\\( 1\\.110 \\* SI_2\\)"
+ },
+ {
+  "id": "orgh-swo-conv",
+  "type": "regex_in_file",
+  "doc": "EDIT site index conversion type 1",
+  "file": "organon/prepare.f",
+  "regex": "SI_1=1\\.062934\\*SI_2"
+ },
+ {
+  "id": "orgh-scode1",
+  "type": "regex_in_file",
+  "doc": "SPGROUP_RUN SCODE1",
+  "file": "organon/execute2.f",
+  "regex": "202,15,17,122,117,81,263,242,231,361,431,631,805,312,\\s+\\S+\\s+815,818,351,492,920"
+ },
+ {
+  "id": "orgh-scode2",
+  "type": "regex_in_file",
+  "doc": "SPGROUP_RUN SCODE2",
+  "file": "organon/execute2.f",
+  "regex": "202,17,263,242,231,361,312,815,351,492,920"
+ },
+ {
+  "id": "orgh-ingro-hd",
+  "type": "regex_in_file",
+  "doc": "INGRO_FILL uses HD_SWO",
+  "file": "organon/execute2.f",
+  "regex": "CALL HD_SWO\\(SPGRP\\(I\\),DBH\\(I\\),RHT\\)"
+ },
+ {
+  "id": "orgh-diamcal-ahd",
+  "type": "regex_in_file",
+  "doc": "DIAMCAL uses A_HD_SWO",
+  "file": "organon/diamcal.f",
+  "regex": "CALL A_HD_SWO\\(ISPGRP,STDATAR\\(I,1\\),PRSH\\)"
  }
 ]
