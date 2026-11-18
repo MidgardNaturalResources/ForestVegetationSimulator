@@ -3967,5 +3967,166 @@
   "doc": "Density section: ISDI rounding",
   "file": "vbase/disply.f",
   "regex": "ISDI\\(IKNT\\)=INT\\(SDIBCTMP/GROSPC \\+ 0\\.5\\)"
+ },
+ {
+  "id": "orgh-beta",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: ratio estimator",
+  "file": "organon/start2.f",
+  "regex": "BETA=YXS/XSS"
+ },
+ {
+  "id": "orgh-yxs",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: sum Y*X/DBH",
+  "file": "organon/start2.f",
+  "regex": "YXS\\(ISPGRP\\)=YXS\\(ISPGRP\\)\\+Y\\*X/WT"
+ },
+ {
+  "id": "orgh-min2",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: at least 2 trees",
+  "file": "organon/start2.f",
+  "regex": "IF\\(ENTHT\\(I\\) \\.LT\\. 2\\) CYCLE"
+ },
+ {
+  "id": "orgh-dub",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: dubbed height",
+  "file": "organon/start2.f",
+  "regex": "TDATAR\\(I,2\\)=4\\.5\\+CALIB\\(1,ISPGRP\\)\\*\\(PTRHT\\(I\\)-4\\.5\\)"
+ },
+ {
+  "id": "orgh-dubmin",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: dubbed height minimum",
+  "file": "organon/start2.f",
+  "regex": "IF\\(TDATAR\\(I,2\\) \\.LT\\. 4\\.6\\)TDATAR\\(I,2\\)=4\\.6"
+ },
+ {
+  "id": "orgh-mse",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: MSE",
+  "file": "organon/start2.f",
+  "regex": "MSE=\\(YSS-2\\.0\\*BETA\\*YXS\\+BETA\\*\\*2\\*XSS\\)/DEGF"
+ },
+ {
+  "id": "orgh-var",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: variance of beta",
+  "file": "organon/start2.f",
+  "regex": "VARBETA=MSE/XSS"
+ },
+ {
+  "id": "orgh-t",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: t statistic",
+  "file": "organon/start2.f",
+  "regex": "TTEST=ABS\\(BETA-1\\.0\\)/SQRT\\(VARBETA\\)"
+ },
+ {
+  "id": "orgh-tval",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: critical value array",
+  "file": "organon/start2.f",
+  "regex": "DATA TVAL/63\\.657, 9\\.925, 5\\.841"
+ },
+ {
+  "id": "orgh-atten",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: attenuation",
+  "file": "organon/execute2.f",
+  "regex": "CALIB\\(1,I\\)=\\(1\\.0\\+CALIB\\(4,I\\)\\)/2\\.0 \\+ \\(0\\.5\\*\\*\\(0\\.5\\*\\(CYCLG\\)\\)\\)"
+ },
+ {
+  "id": "orgh-ibswo",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: IB SWO",
+  "file": "organon/execute2.f",
+  "regex": "IB=5"
+ },
+ {
+  "id": "orgh-cyclg-oc",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: CYCLG OC",
+  "file": "oc/dgdriv.f",
+  "regex": "CYCLG = ICYC - 1"
+ },
+ {
+  "id": "orgh-cyclg-op",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: CYCLG OP",
+  "file": "op/dgdriv.f",
+  "regex": "CYCLG = ICYC - 1"
+ },
+ {
+  "id": "orgh-flag",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: keyword field 4",
+  "file": "vorganon/orin.f",
+  "regex": "INDS\\(1\\) = IFIX\\(ARRAY\\(4\\)\\)"
+ },
+ {
+  "id": "orgh-def-oc",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: default on OC",
+  "file": "oc/grinit.f",
+  "regex": "INDS\\(1\\) = 1"
+ },
+ {
+  "id": "orgh-def-op",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: default on OP",
+  "file": "op/grinit.f",
+  "regex": "INDS\\(1\\) = 1"
+ },
+ {
+  "id": "orgh-valid-oc",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: OC valid species",
+  "file": "oc/cratet.f",
+  "regex": "CASE\\(2,3,4,7,8,16,18,24,27,30,31,34,36,37,38,39,42,46\\)"
+ },
+ {
+  "id": "orgh-big-oc",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: OC major species",
+  "file": "oc/cratet.f",
+  "regex": "CASE\\(2,4,7,16,18\\)"
+ },
+ {
+  "id": "orgh-valid-op",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: OP valid species",
+  "file": "op/cratet.f",
+  "regex": "CASE\\(3,16,18,19,21,22,23,28,33,34,37\\)"
+ },
+ {
+  "id": "orgh-big-op",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: OP major species",
+  "file": "op/cratet.f",
+  "regex": "CASE\\(3,16\\)"
+ },
+ {
+  "id": "orgh-htg",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: height growth of minor species",
+  "file": "organon/htgrowth.f",
+  "regex": "PRDHT=\\(PRDHT2/PRDHT1\\)\\*TDATAR\\(K,2\\)"
+ },
+ {
+  "id": "orgh-acalib-load",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: load calibration",
+  "file": "oc/cratet.f",
+  "regex": "IF\\(\\(ACALIB\\(J,I\\) \\.EQ\\. 1\\.0\\) \\.AND\\."
+ },
+ {
+  "id": "orgh-range",
+  "type": "regex_in_file",
+  "doc": "ORGANON height calibration: range error",
+  "file": "organon/execute2.f",
+  "regex": "IF\\(ACALIB\\(I,J\\) \\.GT\\. 2\\.0 \\.OR\\. ACALIB\\(I,J\\) \\.LT\\. 0\\.5\\) THEN"
  }
 ]

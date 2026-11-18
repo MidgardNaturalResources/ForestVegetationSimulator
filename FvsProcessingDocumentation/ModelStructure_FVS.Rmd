@@ -2599,6 +2599,85 @@ kable(crown_variables,
   column_spec(1, bold = TRUE)
 ```
 
+**ORGANON height calibration (OC and OP).** In the two ORGANON-FVS variants, subroutine CRATET calls ORGANON subroutine PREPARE once for the stand, before the FVS height calibration described above. The call is skipped when the data were already prepared (LORGPREP is true), when there are no tree records, when ORGANON is not used for the stand (LORGANON is false), and when none of the records is a major ORGANON species (`oc/cratet.f:146,206-219`, `op/cratet.f:139,195-208`). PREPARE edits the tree records, dubs missing heights and crown ratios, and calibrates the ORGANON height-diameter equation (subroutine HDCALIB), the crown equation (subroutine CRCALIB) and, when radial growth data are present, the diameter growth equation (subroutine DGCALIB) (`organon/prepare.f:119-141`). The height-diameter calibration multiplier of species group g is stored in ACALIB(1, g).
+
+A record is a valid ORGANON tree when its diameter is 0.1 inch or more, its height is missing or above 4.5 feet, and its species is one of the valid species of the variant (IORG = 1). The next table lists the ORGANON model type, the number of ORGANON species groups (NSPN), the number of major species groups (IB), the valid species and the species that allow PREPARE to run. The names of the species groups are in the LABEL arrays of `oc/cratet.f` and `op/cratet.f`.
+
+```{r organon-valid-species, echo=FALSE}
+organon_valid_species <- tibble::tribble(
+  ~Variant, ~Model_Type, ~Species_Groups_NSPN, ~Major_Groups_IB, ~Valid_Species, ~Species_That_Allow_PREPARE,
+  "OC", "1 (SWO), the only valid type", "18", "5", "IC, RC, GF, DF, WH, SP, PP, PY, CY, WO, BO, BM, RA, MA, GC, DG, TO, WI", "IC, GF, DF, SP, PP",
+  "OP", "2 (NWO), or 3 (SMC); 2 when not set", "11", "3", "GF, DF, RC, WH, BM, RA, MA, WO, PY, DG, WI", "GF, DF"
+)
+
+kable(organon_valid_species,
+      col.names = c("Variant", "ORGANON model type", "Species groups (NSPN)", "Major groups (IB)", "Valid FVS species", "Species that allow PREPARE to run"),
+      caption = "ORGANON model type, species groups and valid species of OC and OP (sources: oc/cratet.f:166-205, op/cratet.f:155-194, organon/prepare.f:243-252, vorganon/orin.f)",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "4em") %>%
+  column_spec(5, width = "16em")
+```
+
+For each species group, HDCALIB predicts the height of every tree with a measured height with the ORGANON height-diameter equation of the model type (subroutines HD_SWO, HD_NWO and HD_SMC), PTRHT. For the group of a species that makes up 80 percent or more of an even-aged stand it uses the stand height-diameter equations (HD40_SWO, HD40_NWO and HD40_SMC) with the species proportions PDF, PTF, PPP and PWH from subroutine SPMIX (`organon/start2.f:96-185`). The multiplier of the group is the ratio estimator of equation {3.6.2.3.6}. It is calculated only when the group has at least 2 trees with a measured height; otherwise it is 1.0 (`start2.f:162-167`).
+
+$$
+\begin{aligned} \beta &= \frac{\sum_i Y_i X_i / DBH_i}{\sum_i X_i^{2} / DBH_i} \\ Y_i &= HT_i - 4.5, \qquad X_i = PTRHT_i - 4.5 \end{aligned}
+\tag{3.6.2.3.6}
+$$
+
+Where:
+
+- β: Height calibration multiplier of the species group, ACALIB(1, g)
+- DBH_i: Diameter at breast height of tree i (inches)
+- HT_i: Measured total height of tree i (feet)
+- PTRHT_i: Total height of tree i predicted by the ORGANON height-diameter equation (feet)
+
+Subroutine CALTST then tests whether β differs from 1.0, as shown in equation {3.6.2.3.7}. When t is less than the critical value, β is set to 1.0. The critical value is taken from the array TVAL of CALTST, with N - 1 degrees of freedom: 63.657 for 1 degree of freedom, 2.750 for 30, interpolated between 30 and 40, 40 and 60, 60 and 120, and 120 and 1000 degrees of freedom, and 2.576 above 1000. Otherwise, and when the variance is not positive, β is limited to 0.5 to 2.0 (`organon/start2.f:1037-1085`).
+
+$$
+\begin{aligned} t &= \frac{\left|\beta - 1\right|}{\sqrt{MSE \Big/ \sum_i X_i^{2} / DBH_i}} \\ MSE &= \frac{\sum_i Y_i^{2} / DBH_i - 2\beta \sum_i Y_i X_i / DBH_i + \beta^{2} \sum_i X_i^{2} / DBH_i}{N - 1} \\ Y_i &= HT_i - 4.5, \qquad X_i = PTRHT_i - 4.5 \end{aligned}
+\tag{3.6.2.3.7}
+$$
+
+Where:
+
+- t: Test statistic of the multiplier
+- β: Height calibration multiplier of the species group from equation {3.6.2.3.6}
+- DBH_i: Diameter at breast height of tree i (inches)
+- HT_i: Measured total height of tree i (feet)
+- PTRHT_i: Total height of tree i predicted by the ORGANON height-diameter equation (feet)
+- N: Number of trees of the species group with a measured height (trees)
+
+When records have a missing height, PREPARE dubs it with the calibrated equation, as shown in equation {3.6.2.3.8}, with a minimum of 4.6 feet (`organon/start2.f:225-226`). CRATET then loads the DBH, height and crown ratio of the valid ORGANON trees back into the FVS arrays, and counts the heights that ORGANON dubbed by species (KNTOHT) (`oc/cratet.f:350-360`). The FVS calibration described above then runs on all the records, including the heights that ORGANON dubbed; the source comment says that this brings the FVS and ORGANON equations closer together (`oc/cratet.f:210-213`).
+
+$$
+HT_i = \max\left[4.6, \; 4.5 + \beta \left(PTRHT_i - 4.5\right)\right]
+\tag{3.6.2.3.8}
+$$
+
+Where:
+
+- HT_i: Dubbed total height of tree i (feet)
+- β: Height calibration multiplier of the species group from equation {3.6.2.3.6}
+- PTRHT_i: Total height of tree i predicted by the ORGANON height-diameter equation (feet)
+
+The multiplier that ORGANON uses in each cycle is attenuated toward the midpoint between 1.0 and β, as shown in equation {3.6.2.3.9}, when the height calibration flag INDS(1) is 1; otherwise it is 1.0 (`organon/execute2.f:232-240`). CYCLG is ICYC - 1 (`oc/dgdriv.f:180`, `op/dgdriv.f:175`), so the multiplier of the first cycle is β. ORGANON uses it to calibrate the predicted heights in the height growth of the minor species groups (the groups above IB), where the 5-year height is the height of the tree multiplied by the ratio of the calibrated height-diameter predictions at the diameter DBH and at DBH minus the diameter growth of the tree (`organon/htgrowth.f:225-236`), and in the diameter growth calibration (`organon/diamcal.f:256-257`).
+
+$$
+CALIB_1 = \frac{1 + \beta}{2} + 0.5^{\,0.5 \, CYCLG} \, \frac{\beta - 1}{2}
+\tag{3.6.2.3.9}
+$$
+
+Where:
+
+- CALIB_1: Height calibration multiplier that ORGANON uses in the cycle
+- β: Height calibration multiplier of the species group, ACALIB(1, g)
+- CYCLG: Number of cycles grown in ORGANON, which is the FVS cycle number minus 1
+
+The height calibration is controlled in three ways. The default of INDS(1) is 1 (calibration on) in `oc/grinit.f:356` and `op/grinit.f:354`, and field 4 of the ORGINFO keyword (0 or 1; an invalid value is set to 1) sets it (`vorganon/orin.f:186-196`). Calibration values read from lines 2 to 4 of the ORGANON .INP file replace the calculated value of a species group when they are not 1.0 (`vorganon/org_intree.f:141-148`), and a calibration value computed by PREPARE is loaded into ACALIB only where the value of ACALIB is still 1.0 (`oc/cratet.f:394-400`). ORGANON stops with an error when any calibration value is below 0.5 or above 2.0 (`organon/execute2.f:591-596`).
+
 **Missing crown ratios.** Subroutine INTREE converts the crown ratio of each input record. A value from 1 to 9 is a crown class code and is converted to a percent, ICR = 10 x code - 5 (the classes become 5, 15, and so on to 85). A value from 10 to 99 is kept as a percent, and a value above 99 is set to 99. A value of 0 or a negative value is not changed, and the crown ratio is considered missing. Dead tree records are converted in the same way before they are moved to the bottom of the tree arrays.
 
 CRATET sets a logical variable, MISSCR, to true when any live or dead tree record has a crown ratio that is 0 or negative, and calls subroutine CROWN only then. A tree record that has a crown ratio is not changed.
