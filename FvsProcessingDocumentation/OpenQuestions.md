@@ -451,3 +451,8 @@ Code observations (read in source; not changed):
 - `base/dense.f` backdating: records with G above D are excluded from BAGR in the first loop (line 105) but are set to G = D in the second loop (line 124).
 
 Gaps (not documented in the section): the values of the SDICON, BAMAXA, R4SDI, R5SDI, C5, C6, FMSDI and RD1 to RDB coefficient arrays (cited by name and line only); CLMAXDEN equations (climate extension); BC and ON CCFCAL/SITSET internals beyond the lines cited; the ORGANON density code in OC and OP; RELSDI forms in the crown routines and the stagnation multiplier of TT and UT (only CR was read for SDIMAX use); thinning (CUTS, CUTSTK) and output (DISPLY, database, event monitor) uses of the density values; the use of CCFCAL from CRATET and the REGENT routines.
+
+Additional density-section findings (read in source):
+- `ak/ccfcal.f` comment (lines 112-113) gives the Russell and Weiskittel form as "MCW = B1 + DBH**B2"; the code (lines 131-132) is `MCW = B1*(D*2.54)**B2` followed by `MCW = MCW * 3.28`. The section documents the code.
+- The units of the AK arrays B1 and B2, and of the SILVAH coefficients, are not stated in the source or in Dixon (2002); the section says so.
+- The meaning of FINT during calibration (the equation RAT = FINTH / FINT in `base/dense.f:258`) was not traced; PLOT.F77 defines FINT as the length of the current cycle.
