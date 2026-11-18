@@ -182,7 +182,7 @@ density_stats <- data.frame(
     "ARRAYS.F77, CONTRL.F77; DBH(), PROB(), CFV(), BFV(), ISP(), PI, ALPHA"
   ),
   Output = c(
-    "BA, TPROB, RELDEN (CCF), RMSQD (QMD), AVH, PCT(), RELDSP()",
+    "BA, TPROB, RELDEN (CCF), RMSQD (QMD), AVH, PCT(), RELDSP(), DR016, RELDM1, OLDBA, PCCF(), PTPA(), PTPAA(), BAAA(), PRDA(), PTBAA(), PTBALT()",
     "PROB() - trees/acre based on plot design",
     "IND1() - species-ordered indices; ISCT(,1-2) - first/last by species; ITRN",
     "Stand statistics (mean, std dev, CV, confidence intervals); Species summaries"
@@ -725,7 +725,7 @@ dense_arrays <- data.frame(
     "Top height: average height of the 40 trees per acre with the largest DBH",
     "Percentile of each tree record in the basal area distribution",
     "CCF by species",
-    "Maximum SDI by species (for relative density)",
+    "Maximum SDI by species",
     ".TRUE. if DENSE is to backdate the diameters for model calibration",
     "Diameter growth (for backdating)"
   ),
@@ -1520,7 +1520,7 @@ calibration_arrays <- data.frame(
     "Quadratic mean diameter (inches)",
     "Top height: average height of the 40 trees per acre with the largest DBH",
     "Percentile of each tree record in the basal area distribution",
-    "Relative density by species"
+    "Crown competition factor by species"
   ),
   stringsAsFactors = FALSE
 )
@@ -2256,7 +2256,7 @@ Subroutine RCON calls special entry points that are contained in growth modeling
 
 Subroutine CRATET then calls subroutine DENSE to compute stand metrics needed during model calibration. FVS is a forward projecting model. Tree input data includes a tree’s current diameter and height, past diameter growth and height growth over some measurement period, and tree mortality. The basic idea in calibrating the growth models is to backdate the stand to its condition 10-years in the past, project the stand forward 10-years using the imbedded growth and mortality functions, compare the projected current stand to the observed current stand, and scale the growth functions so the projected current stand matches the observed current stand.
 
-Subroutine DENSE is called from various places in FVS. A logical variable, LBKDEN, is set to “.TRUE.” by subroutine CRATET when the input diameter growth data are previous increments or previous diameters (IDG less than 2), indicating DENSE needs to backdate the stand for model calibration. Backdating is not possible when there are no growth sample trees. Subroutine DENSE backdates the stand if it needs to, and calculates various other values and adjusts them for non-stockable points in the inventory. These other values include average height of the stand, crown competition factor, relative density by species, and point basal area in larger trees, for all tree records.
+Subroutine DENSE is called from various places in FVS. A logical variable, LBKDEN, is set to “.TRUE.” by subroutine CRATET when the input diameter growth data are previous increments or previous diameters (IDG less than 2), indicating DENSE needs to backdate the stand for model calibration. Backdating is not possible when there are no growth sample trees. Subroutine DENSE backdates the stand if it needs to, and calculates various other values and adjusts them for non-stockable points in the inventory. These other values include average height of the stand, crown competition factor by species, and point basal area in larger trees, for all tree records.
 
 #### Dead tree records
 
@@ -3889,7 +3889,7 @@ growth_variables <- tibble::tribble(
   "BARK", "Bark ratio, BRATIO(species, DBH, HT), inside bark diameter divided by outside bark diameter", "ratio",
   "CR", "Crown ratio as a proportion (ICR/100); in the CS and LS variants, as a percent; in the NC species 2, 6 and 9, CRID, the product of the crown ratio and the diameter", "proportion",
   "BA", "Stand basal area", "square feet per acre",
-  "BAL", "Basal area in trees larger than the subject tree, (1 - PCT/100) x BA, where PCT is the percentile of the tree in the diameter distribution; in the variants listed in the equation notes, BA is first divided by 100", "square feet per acre",
+  "BAL", "Basal area in trees larger than the subject tree, (1 - PCT/100) x BA, where PCT is the percentile of the tree in the basal area distribution; in the variants listed in the equation notes, BA is first divided by 100", "square feet per acre",
   "PBAL", "Basal area in larger trees on the point where the tree is located", "square feet per acre",
   "PCCF", "Crown competition factor of the point where the tree is located", "percent",
   "RELDEN", "Stand crown competition factor (CCF)", "percent",
@@ -4688,7 +4688,7 @@ kable(smhtgf_ca_ws,
 
 *Forms of REGENT in the variants with 5-year sub-cycles.* IE, EM, CI and TT assemble the small-tree equations from the variants where the equations of each species originated. The form is selected by species.
 
-1. **NI form (IE species WP, WL, DF, GF, WH, RC, LP, ES, AF, PP, MH, WB, LL and OS; EM species LL).** ln(HTGRL) = CON + BH x ln(H1) + BCCF x RDJ + BBAL x BAL, and H2 = H1 + exp(HTGRL) x (KPER / REGYR) x XRHGRO (x WK4(i) in IE), where KPER is the length of the period, RDJ is the relative density at the start of the period, BH is RHLH, BCCF is RHCCF and BBAL is RHBAL (arrays of the species), and CON is RHCON + HCOR in this form (RHCON x exp(HCOR) in the other forms; `ie/regent.f` lines 410 to 418). The diameter range of the weighting is XMIN to XMAX of the species (`ie/regent.f` lines 170 to 173).
+1. **NI form (IE species WP, WL, DF, GF, WH, RC, LP, ES, AF, PP, MH, WB, LL and OS; EM species LL).** ln(HTGRL) = CON + BH x ln(H1) + BCCF x RDJ + BBAL x BAL, and H2 = H1 + exp(HTGRL) x (KPER / REGYR) x XRHGRO (x WK4(i) in IE), where KPER is the length of the period, RDJ is the crown competition factor at the start of the period, BH is RHLH, BCCF is RHCCF and BBAL is RHBAL (arrays of the species), and CON is RHCON + HCOR in this form (RHCON x exp(HCOR) in the other forms; `ie/regent.f` lines 410 to 418). The diameter range of the weighting is XMIN to XMAX of the species (`ie/regent.f` lines 170 to 173).
 2. **TT form (IE species LM and PY; EM species LM; CI species WB, PY and LM; TT species WB, LM, DF, BS, AS, LP, ES, AF and OS).** BETA1 = exp(B0A + B1A x ln(TPCCF)), BETA2 = exp(B0B + B1B x ln(TPCCF)), HTG1 = BETA1 + BETA2 x CR, STDDEV = HTG1 x (S0 + S1 x CR), and HTGRL = HTG1 + ZRAND x STDDEV, with a lower bound of 0.1 foot, where CR is the crown ratio as a percent, TPCCF is the point CCF for the period (between 25 and 300), and ZRAND is a normal draw between -2.0 and 2.0 that is redrawn when the previous growth was 0.1 foot or less. In IE and CI the constants are B0A = 1.17527, B1A = -0.42124, B0B = -2.56002, B1B = -0.58642, S0 = 1.08720 and S1 = -0.00230; in EM and TT the constants are the arrays B0ACCF, B1ACCF, B0BCCF, B1BCCF, B0ASTD and B1BSTD (subroutine SMHTGF). H2 = H1 + HTGRL x (KPER / REGYR) x XRHGRO x CON (x WK4(i) in IE, CI and TT as coded).
 3. **CR and UT form (IE species PM, RM, AS, MM, PB, CO and OH; EM species RM, AS, PB, GA, CW, BA, PW, NC and OH; CI species AS, WJ, MC, CW and OH; TT species PM, UJ, RM, BI, MM, NC, MC and OH).** HTGRL = POTHTG x PCTRED x VIGOR x CON, with PCTRED and VIGOR as in equations {4.2.1.2.7} and {4.2.1.2.8}, and with POTHTG of the species: in IE, POTHTG = (SJ/5) x (1.5 x SJ - H) / (1.5 x SJ) x 0.83 for the species of the CR and UT form (SJ is the site index of the species); in EM, POTHTG = SI / (15 - 4 x RELSI) for species GA, CW, BA, PW, NC and OH, and (SI/10) x (1.5 x SI - H1) / (1.5 x SI) for species RM; in TT, POTHTG = (SJ/5) x (1.5 x SJ - H) / (1.5 x SJ) x 0.83 for the species other than MM. For the aspen species (IE species AS, MM and PB; EM species AS and PB; CI species AS; TT species MM), HTGRL = [26.9825 x (SITAGE + 10)^1.1752 - 26.9825 x SITAGE^1.1752] / (2.54 x 12) x RSIMOD x CON x 0.75, where SITAGE is the age from FINDAG (the age of the tree record, ABIRTH, in the establishment call) in IE, CI and TT, the age of the tree record, ABIRTH, in EM, and RSIMOD = 0.5 x (1 + RELSI). VIGOR is replaced by 1 - (1 - VIGOR) / 3 for species PM and RM in IE, species RM in EM, species WJ in CI, and species PM, UJ and RM in TT. H2 = H1 + HTGRL x SCALE in IE and in CR-type species, with SCALE = NTYR / YR (a 10-year estimate); in EM, H2 = H1 + HTGRL x FINT / 10.
 4. **CI form (CI species WP, WL, DF, GF, WH, RC, LP, ES, AF, PP and OS).** HTGRL = SCNST + SHTBA x RELHT x PTBAA + SPBAL x PTBALI + SBAL x TBAL + SHDM1 x RHDM1 + SHDM2 x RHDM2 + SPTBA x PTBAA, and H2 = H1 + HTGRL x SCALE x XRHGRO x CON, where PTBAA is the basal area of the point, PTBALI is the basal area in larger trees on the point, TBAL = (1 - PCT/100) x BA, RELHT is the relative height (maximum 1.5), and SCNST (the array CNST), SHTBA (HTBA), SPBAL (PBAL), SBAL (BAL), SHDM1 (HDM1), SHDM2 (HDM2) and SPTBA (PTBA) are arrays of the species in `ci/regent.f` lines 192 to 259; CON = RHCON x exp(HCOR); XMIN and XMAX are at lines 177 to 182. The potential growth of the CI-origin species of CI that use the CR and UT form is POTHTG = (SJ/5) x (1.5 x SJ - H) / (1.5 x SJ) x 0.83 (`ci/regent.f` line 602).
@@ -6452,6 +6452,471 @@ Subroutine OPFIND is used to find any CRNMULT or FIXCW activities scheduled for 
 OPGET, an entry point in subroutine OPFIND, is used to retrieve any CRNMULT or FIXCW activities scheduled for the projection cycle.
 
 Subroutine RANN is used to return a random number in subroutine CROWN: in the Weibull equation for a tree with a diameter of zero, and, through function BACHLO, when missing crown ratios are dubbed in the KT, EM, IE and BC variants.
+
+## Computing stand density and relative density {#sec-computing-stand-density}
+
+FVS describes the density of a stand with several measures that are computed in different subroutines and are used by the growth, mortality, crown, thinning, event monitor and reporting routines. This section describes how each measure is computed. The intent of each measure is described in Dixon (2002), sections 5.2.4.2.4, 7.1.2, 7.3.2 and 7.3.4.
+
+Three kinds of measure are used, and they are different quantities:
+
+- **Crown competition factor (CCF)** (Krajicek et al. 1961) is the percentage of an acre that would be covered by the crowns of the trees if they were open grown; the stand value is the sum of the tree values, and a value of 100 theoretically indicates that crowns just touch in an unthinned, evenly spaced stand (Dixon 2002, section 7.1.2). Variables RELDEN, RELDSP, ATCCF and PCCF are crown competition factor.
+- **Stand density index (SDI)** is based on Reineke (1933). FVS computes it by the tree-by-tree summation of Stage (1968), which gives the same result as Reineke's equation with the quadratic mean diameter, and by the summation of Zeide (1983) as simplified by Shaw (2000), which gives the same result as Reineke's equation with the Zeide diameter (Dixon 2002, section 7.3.4). The two methods do not give the same value; the Zeide value is lower, and the difference increases as a stand becomes more uneven aged. Variables SDIBC, SDIAC, SDIMAX, SDIDEF and DR016 are related to SDI.
+- **Relative density** in the guide is the measure of Curtis (1982), derived from Reineke's SDI formulation, and the measure of the SILVAH model (Marquis and Ernst 1992), which is used only in the NE variant (Dixon 2002, section 5.2.4.2.4). The point relative density PRDA is also a relative density, defined in the source as the Zeide SDI divided by the maximum SDI of the point.
+
+The source code of subroutine DENSE and the 2018 edition of this guide used the words "relative density by species" for the contribution of each species to stand crown competition factor. In this guide that quantity is called crown competition factor.
+
+### Subroutines involved and their function
+
+**Variables.** The variables of this section are defined in the next table.
+
+```{r density-variables, echo=FALSE}
+density_variables <- tibble::tribble(
+  ~Variable, ~Definition, ~Units_or_Values,
+  "ITRN, IREC1, IREC2", "Number of live tree records; index of the last live record; index of the first recently dead record", "records",
+  "PROB(i)", "Trees per acre represented by record i", "trees per acre",
+  "DBH(i)", "Diameter at breast height of record i", "inches",
+  "HT(i)", "Total height of record i", "feet",
+  "ICR(i)", "Crown ratio of record i", "percent",
+  "ISCT(s,1), ISCT(s,2)", "First and last positions of species s in the species-ordered list IND1", "index",
+  "IND(k)", "Record numbers in order of decreasing diameter", "index",
+  "WK3(i)", "Diameter of record i used for density; DBH(i), or the backdated diameter while calibrating", "inches",
+  "WK5(i)", "Squared diameter times trees per acre of record i", "square inches times trees per acre",
+  "TPROB", "Total trees per acre", "trees per acre",
+  "BA", "Stand basal area", "square feet per acre",
+  "RMSQD", "Stand quadratic mean diameter", "inches",
+  "DR016", "Reineke diameter calculated with the Zeide method", "inches",
+  "AVH", "Average height of the 40 trees per acre with the largest diameters", "feet",
+  "RELDSP(s)", "Contribution of species s to stand crown competition factor", "percent of an acre",
+  "RELDEN", "Stand crown competition factor", "percent of an acre",
+  "RELDM1, OLDBA", "Crown competition factor and basal area for the start of the height increment measurement period while calibrating; for the end of the last cycle in the projection", "percent of an acre; square feet per acre",
+  "PCT(i)", "Percentile of record i in the basal area distribution", "percent",
+  "PI", "Number of points inventoried, set in INITRE", "points",
+  "NONSTK", "Number of non-stockable points inventoried", "points",
+  "GROSPC", "Reciprocal of the stockable fraction of the points, 1 / ((PI - NONSTK) / PI), when it was not entered; compensates for non-stockable points", "dimensionless",
+  "REGNBK", "Break diameter between understory and overstory trees: 1.000 in AK, 0.499 in CR, 2.999 in all other variants", "inches",
+  "PCCF(p), PTPA(p), PTPAA(p), BAAA(p)", "Point p crown competition factor, trees per acre, trees per acre at or above REGNBK, and basal area at or above REGNBK", "as named",
+  "OVER(s,p)", "Basal area of species s on point p at or above REGNBK", "square feet per acre",
+  "PRDA(p)", "Point relative density: Zeide SDI of the trees at or above REGNBK divided by XMAXPT(p)", "dimensionless",
+  "PTBAA(p), PTBALT(i)", "Basal area of point p; basal area of the trees on the point of record i that are larger than record i", "square feet per acre",
+  "SDIDEF(s)", "Maximum SDI of species s", "trees per acre",
+  "SDIMAX", "Maximum SDI of the stand, weighted by species basal area", "trees per acre",
+  "BTSDIX, ATSDIX", "Maximum SDI of the stand before and after thinning, from SDICAL in GRINCR", "trees per acre",
+  "XMAXPT(p)", "Maximum SDI of point p, weighted by species basal area of the point", "trees per acre",
+  "BAMAX, LBAMAX", "Maximum basal area; LBAMAX is true when the user entered BAMAX", "square feet per acre; logical",
+  "PMSDIL, PMSDIU", "Percent of maximum SDI where density related mortality begins and where the stand reaches maximum density; 55 and 85 in every variant, in percent until subroutine SDICHK divides them by 100", "percent, then proportion",
+  "SDIBC, SDIAC", "Stage (Reineke) SDI of the stand before and after thinning", "trees per acre",
+  "SDIBC2, SDIAC2", "Zeide SDI of the stand before and after thinning", "trees per acre",
+  "DBHSTAGE, DBHZEIDE", "Minimum diameter in the Stage SDI and Curtis relative density sums, and in the Zeide SDI sums; set with the SDICALC keyword, default 0", "inches",
+  "DBHSDI", "Minimum diameter in the SDI sum of DENSE and in the SDI based mortality sums of CA, OC, ON, CS, LS and NE; 0 in every variant and no keyword sets it", "inches",
+  "LZEIDE, CALCSDI", "True when the Zeide method is used for SDI based mortality and by subroutine SDICHK; default by variant, set by the SDICALC keyword", "logical; text",
+  "LBKDEN", "True while subroutine CRATET calls DENSE with backdating of diameters", "logical",
+  "FINT, FINTH", "Length of the cycle; measurement period for small-tree height growth", "years",
+  "CCCOEF", "Canopy cover overlap coefficient, set with the CCADJ keyword; used by CCCLS", "dimensionless"
+)
+
+kable(density_variables,
+      col.names = c("Variable", "Definition", "Units or values"),
+      caption = "Variables used to compute stand density",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "9em") %>%
+  column_spec(2, width = "28em")
+```
+
+**Where the density measures are computed.** Subroutine DENSE computes the stand and point measures and calls subroutines CCFCAL, MBACAL, PCTILE and PTBAL. Subroutine SDICAL computes the maximum SDI; its entry points compute SDI and relative density for a class of trees. The next table lists where they are called.
+
+```{r density-calls, echo=FALSE}
+density_calls <- tibble::tribble(
+  ~Routine, ~Called_From, ~Condition_or_Purpose,
+  "DENSE", "CRATET, in every variant, three times (before the first DGDRIV call; with LBKDEN true; and after the calibration, followed by SDICHK)", "Calibration; LBKDEN = (IDG < 2) for the second call, and false afterwards (ak/cratet.f:104,191-193,652,664)",
+  "DENSE", "GRINCR (base/grincr.f:311; canada/bc/grincr.f:307)", "Only when ONTREM(7) > 0, that is, when a thinning occurred",
+  "DENSE", "COMCUP (base/comcup.f:203)", "After the tree list is compressed",
+  "DENSE", "GRADD (base/gradd.f:192 and 244)", "After mortality and updating of the tree records (following RDPSRT), and after regeneration establishment",
+  "SDICAL(0, BTSDIX) and SDICLS", "GRINCR (base/grincr.f:240-241)", "Before-thinning maximum SDI and SDI (SDIBC, SDIBC2)",
+  "SDICAL(0, ATSDIX) and SDICLS", "GRINCR (base/grincr.f:322-323)", "After-thinning maximum SDI and SDI (SDIAC, SDIAC2)",
+  "SDICLS", "FVS (base/fvs.f:196 and 440-442)", "Before calibration, so that crown ratios dub correctly; and at the end of the projection, where SDIAC is set equal to SDIBC",
+  "SDICAL", "MORTS (the morts.f of each variant; vls/morts.f for CS, LS and NE; vwc/morts.f for PN and WC)", "Maximum SDI for mortality",
+  "SDICAL", "DGF of AK, CA, CR, EM, HI, IE, NC, OC, OP, PN, TT, UT, WC and WS", "Maximum SDI by point (XMAXPT) with IWHO from the variant; CR, TT and UT call SDICAL(1, SDIMAX) (cr/dgf.f:155; tt/dgf.f:494; ut/dgf.f:499), and CR uses SDIMAX for RELSDI = STDSDI / SDIMAX of the stagnation multiplier (cr/dgf.f:150-160)",
+  "SDICAL", "CROWN of AK, CA, HI, NC, OC, OP, PN, WC and WS", "Maximum SDI by point (XMAXPT)",
+  "SDICAL", "CRATET (AK only, ak/cratet.f:186); SDICHK (base/sdichk.f:68); CLAUESTB of the climate extension", "Maximum SDI",
+  "SDICHK", "CRATET, in every variant, after the last DENSE call", "Reset of the maximum SDI when the initial stand exceeds it"
+)
+
+kable(density_calls,
+      col.names = c("Routine", "Called from", "Condition or purpose"),
+      caption = "Calls of the density routines",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "8em") %>%
+  column_spec(2, width = "18em")
+```
+
+Among the calls of subroutine GRINCR at the start of each cycle, the density routines are called in this order: SILFTY, SDICAL and SDICLS (before-thinning values), the saving of the last-cycle values (OLDTPA, OLDAVH, OLDBA, RELDM1 = RELDEN, ORMSQD, ODR016), CUTS, DENSE if a thinning occurred, the saving of the after-thinning values (ATAVD, ATDR016, ATAVH, ATBA, ATCCF = RELDEN, ATTPA), and SDICAL and SDICLS (after-thinning values).
+
+**Subroutine DENSE.** DENSE sums over the live tree records of each species, using the species ordering of ISCT and IND1. All live records are summed; there is no minimum diameter in the sums of TPROB, BA, RMSQD and crown competition factor. The stand values are given in equation {4.9.1.1}.
+
+$$
+\begin{aligned}
+TPROB &= \sum_i P_i, \qquad BA = \sum_i 0.005454154 \, D_i^{2} P_i, \qquad RMSQD = \sqrt{\frac{\sum_i D_i^{2} P_i}{TPROB}} \\
+DR016 &= \left(\frac{\sum_{D_i \ge DBHSDI} P_i D_i^{1.605}}{TPROB}\right)^{1/1.605}
+\end{aligned}
+\tag{4.9.1.1}
+$$
+
+Where:
+
+- P_i: Trees per acre of record i, PROB(i) (trees per acre)
+- D_i: Diameter of record i, WK3(i) (inches)
+- The sum of DR016 includes only records with a diameter at or above DBHSDI, but TPROB includes all records. DBHSDI is 0 in every variant (see the variable table).
+
+The stand crown competition factor is the sum of the tree values from subroutine CCFCAL, as shown in equation {4.9.1.2}. DENSE calls CCFCAL with MODE = 1 and LTHIN false.
+
+$$
+RELDSP_s = \sum_{i \in s} CCF_i, \qquad RELDEN = \sum_s RELDSP_s
+\tag{4.9.1.2}
+$$
+
+Where:
+
+- CCF_i: Crown competition factor of record i from CCFCAL, which includes the trees per acre of the record (percent of an acre)
+- s: Species
+
+The point values are the sums of equation {4.9.1.3}, where p is the point of the record. They are not recomputed on the second pass of a backdating call. The values with a diameter limit use only records with D at or above REGNBK.
+
+$$
+\begin{aligned}
+PCCF_p &= \sum_{i \in p} CCF_i \frac{PI}{GROSPC}, \qquad PTPA_p = \sum_{i \in p} P_i \frac{PI}{GROSPC} \\
+BAAA_p &= \sum_{i \in p,\, D_i \ge REGNBK} BA_i \frac{PI}{GROSPC}, \qquad PTPAA_p = \sum_{i \in p,\, D_i \ge REGNBK} P_i \frac{PI}{GROSPC} \\
+PRDA_p &= \sum_{i \in p,\, D_i \ge REGNBK} \frac{P_i \,(D_i/10)^{1.605} \, PI / GROSPC}{XMAXPT_p}
+\end{aligned}
+\tag{4.9.1.3}
+$$
+
+Where:
+
+- BA_i: Basal area of record i, 0.005454154 D_i^2 P_i (square feet per acre); OVER(s,p) is the same sum by species
+- XMAXPT_p: Maximum SDI of point p from subroutine SDICAL; PRDA is accumulated only when XMAXPT_p is greater than 0
+
+The average height of the dominants, AVH, is the average height of the 40 trees per acre with the largest diameters. DENSE walks IND from the largest diameter, adds the trees per acre of each record, limits the last record so that the cumulative trees per acre is 40, and averages the heights weighted by the trees per acre used. DENSE calls subroutine MBACAL to identify the site species, the species with the most basal area.
+
+**Backdating.** While calibrating (LBKDEN true, which CRATET sets when IDG is less than 2), DENSE estimates the density at the start of the diameter increment measurement period. The diameters are backdated as in equation {4.9.1.4}, using the average ratio of squared diameters at the start and end of the period (BAGR) of the records that have a measured increment.
+
+$$
+R_i = 1 - \frac{2 D_i G_i - G_i^{2}}{D_i^{2}}, \qquad WK3_i = \sqrt{D_i^{2} R_i}
+\tag{4.9.1.4}
+$$
+
+Where:
+
+- G_i: Diameter increment of record i, DG(i) (inches); when IDG is not 1 it is divided by the bark ratio BRATIO(species, DBH, HT) (and limited to D_i)
+- R_i: Ratio of squared diameters; BAGR, the average of R_i over the records with DG not below 0 and an increment not above the diameter, replaces R_i when DG(i) is below 0 or R_i is 0 or less
+- Records from IREC2 to MAXTRE keep their diameter in WK3, and records with IMC = 9 are given a diameter of 0
+
+The species loop is run twice. The first pass uses WK3 and gives RELDM1 and OLDBA; the percentile PCT is computed from that pass, and the point values of equation {4.9.1.3} are those of the backdated stand. The second pass uses the current diameters and gives RELDEN, BA, RMSQD and DR016. The values are then reassigned with equation {4.9.1.5}.
+
+$$
+\begin{aligned}
+RAT &= \frac{FINTH}{FINT} \\
+RELDM1 &\leftarrow RAT \,(RELDEN_{2} - RELDM1_{1}) + RELDM1_{1}, \qquad RELDEN \leftarrow RELDM1_{1} \\
+OLDBA &\leftarrow RAT \,(BA_{2} - OLDBA_{1}) + OLDBA_{1}, \qquad BA \leftarrow OLDBA_{1}
+\end{aligned}
+\tag{4.9.1.5}
+$$
+
+Where:
+
+- The subscript 1 is the value of the first (backdated) pass and 2 is the value of the second pass
+- RELDEN and BA are therefore the values at the start of the diameter increment period, and RELDM1 and OLDBA are interpolated to the start of the height increment period
+
+**Percentile of the basal area distribution.** Subroutine DENSE calls subroutine PCTILE with the array IND (record numbers in order of decreasing diameter) and the vector WK5 = D^2 P. PCTILE accumulates WK5 from the smallest record up to each record, divides by the total divided by 100, and sets the largest record to 100, as shown in equation {4.9.1.6}. PCT(i) is therefore the percentage of the basal area in record i and all records that are the same size or smaller (Dixon 2002, section 7.1.2). With one record PCT is 100. PCTILE returns before dividing if the total is 0 or less.
+
+$$
+PCT_{IND(k)} = 100 \, \frac{\sum_{j=k}^{ITRN} WK5_{IND(j)}}{\sum_{j=1}^{ITRN} WK5_{IND(j)}}
+\tag{4.9.1.6}
+$$
+
+Where:
+
+- k: Position of the record in IND, where position 1 is the largest diameter, so the sum is over the record and the records that follow it in IND (the same size or smaller)
+- The basal area in larger trees used by the growth equations is BAL = (1 - PCT/100) x BA, as described with each equation in the growth section
+
+**Point basal area in larger trees.** Subroutine PTBAL is called from DENSE. In the CS, LS, NE and ON variants it sets PTBALT and PTBAA to 0. In all other variants, for each point it walks the records of the point from the largest diameter down and assigns, as shown in equation {4.9.1.7}, the basal area accumulated before the record is added, so that PTBALT(i) does not include record i.
+
+$$
+PTBALT_i = XBALT_{before\; i}, \qquad XBALT \leftarrow XBALT + 0.005454154 \, WK5_i \frac{PI}{GROSPC}, \qquad PTBAA_p = XBALT_{end}
+\tag{4.9.1.7}
+$$
+
+Where:
+
+- XBALT: Running sum of basal area on the point, starting at 0 for each point (square feet per acre)
+
+**Stockable area.** INITRE computes GROSPC from the number of points and the number of non-stockable points when GROSPC is negative, that is, not entered (GROSPC = (PI - NONSTK) / PI, limited to 1), and then replaces it with its reciprocal (vbase/initre.f, near lines 350 to 381). When the value is not 1, FVS prints that stand attributes are calculated per acre of stockable area and that the values in the summary table are multiplied by the stockable fraction. Stand density index, crown competition factor and crown cover are based on stockable area (Dixon 2002, section 5.5.2.2).
+
+**Crown competition factor of a tree, subroutine CCFCAL.** CCFCAL(ISPC, D, H, JCR, P, LTHIN, CCFT, CRWDTH, MODE) returns the crown competition factor CCFT of a record in MODE 1, already multiplied by the trees per acre P, and, in some variants, a crown width in MODE 2, which DENSE does not use. The source file differs by variant (see the next table). CS, LS, NE, ON and SN use the file of LS; OC uses the file of CA; OP uses the file of PN. The variables that are not defined above are D (diameter, inches), H (total height, feet) and JCR (crown ratio, percent). The forms are given once, in equations {4.9.1.8} to {4.9.1.11}, and the table lists the form, the break diameter DB and the source of each species. The coefficient arrays RD1, RD2, RD3, RDA and RDB are in the files named in the table.
+
+$$
+\text{Form A:} \quad CCF = \begin{cases} RD1 + RD2 \, D + RD3 \, D^{2} & D \ge DB \\ RDA \, D^{RDB} & 0.1 < D < DB \\ 0.001 & D \le 0.1 \end{cases}
+\tag{4.9.1.8}
+$$
+
+$$
+\text{Form B:} \quad CCF = \begin{cases} RD1 + RD2 \, D + RD3 \, D^{2} & D \ge DB \\ D \,(RD1 + RD2 + RD3) & D < DB \end{cases}
+\tag{4.9.1.9}
+$$
+
+$$
+\text{Form C:} \quad CCF = 0.001803 \, CW^{2}
+\tag{4.9.1.10}
+$$
+
+$$
+\text{Form D (AK):} \quad MCW = \begin{cases} B1 + B2 \, D & EQMAP = 1 \\ 3.28 \, B1 \,(2.54 \, D)^{B2} & EQMAP = 2 \end{cases}, \qquad CCF = 100 \, \frac{3.14159 \,(MCW/2)^{2}}{43560}
+\tag{4.9.1.11}
+$$
+
+Form E (WS) is CCF = 0.001803 (RD1 + RD2 D)^2 for D at or above 1.0, and Form A for D below 1.0 with DB = 1.0. Every form is multiplied by P after it is evaluated. In Form A, CCF is set to 0.001 at D at or below 0.1 only where the table does not say "without the 0.001 floor". In Form C, CW is the crown width in feet: from R5CRWD or R6CRWD, or from CWCALC with a crown ratio of 90 in the variants that use the file of LS. In AK, Form D is also set to 0.001 for D at or below 0.1.
+
+Where:
+
+- CCF: Crown competition factor of the record per tree, before multiplying by P (percent of an acre)
+- DB: Break diameter of the table (inches)
+- CW: Crown width (feet)
+- MCW: Maximum crown width (feet); MCA, the crown area, is 3.14159 (MCW / 2)^2 (square feet)
+- B1, B2, EQMAP: Arrays of ak/ccfcal.f
+
+```{r ccf-by-variant, echo=FALSE}
+ccf_by_variant <- tibble::tribble(
+  ~Variant, ~Species, ~Form, ~Break_Diameter, ~Source,
+  "AK", "All species", "D", "not applicable", "ak/ccfcal.f:124-145; arrays B1, B2 (lines 82-93), EQMAP (96-100)",
+  "BC", "PW, LW, FD, BG, HW, CW, PL, SE, BL, PY, OC", "A, and CCF is set to 0.001 where it is below 0.001 (species 14 uses the coefficients of species 3)", "10.0", "canada/bc/ccfcal.f:85-130; arrays RD1 to RDB (11 each)",
+  "BC", "EP, AT, AC, OH", "B, with arrays pnRD1 to pnRD3 and INDCCF(24, 26, 27), floor 0.001", "1.0", "canada/bc/ccfcal.f:127-210",
+  "BM", "WP, WL, DF, GF, MH, WJ, LP, ES, AF, PP, WB, LM, AS, OS", "A", "1.0", "bm/ccfcal.f:160-168",
+  "BM", "PY, YC, CW, OH", "B", "1.0", "bm/ccfcal.f:172-178",
+  "CA, OC", "All species", "C (crown width from R5CRWD in every forest, including those that use R6CRWD for CRWDTH)", "not applicable", "ca/ccfcal.f:69-91",
+  "CI", "WB, PY, AS, WJ, LM", "A", "1.0", "ci/ccfcal.f:207-222",
+  "CI", "MC", "B (the linear form is used for all D below 1.0, including D at or below 0.1)", "1.0", "ci/ccfcal.f:207-222",
+  "CI", "CW, OH", "A", "10.0", "ci/ccfcal.f:224-232",
+  "CI", "WP, WL, DF, GF, WH, RC, LP, ES, AF, PP, OS", "A without the 0.001 floor", "10.0", "ci/ccfcal.f:233-239",
+  "CR", "AF, CB, DF, GF, WF, MH, RC, WL, BC, LM, LP, PI, PP, WB, SW, UJ, BS, ES, WS, AS, NC, PW, GO, AW, EM, BK, SO, PB, AJ, RM, OJ, ER, PM, PD, AZ, CI, OS, OH", "A", "10.0", "cr/ccfcal.f:150-156; coefficient set chosen by MAP1 to MAP5 (lines 87-111, 136-146)",
+  "CS, LS, NE, ON, SN", "All species", "C (crown width from CWCALC with CR = 90)", "not applicable", "ls/ccfcal.f:51-63",
+  "EC", "WP, WL, DF, SF, RC, GF, LP, ES, AF, PP, MH, WF, OS", "A", "1.0", "ec/ccfcal.f:219-229",
+  "EC", "WH, PY, WB, NF, LL, YC, WJ, BM, VN, RA, PB, GC, DG, AS, CW, WO, PL, WI, OH", "B without the 0.001 floor", "1.0", "ec/ccfcal.f:230-236",
+  "EM", "LL", "A without the 0.001 floor", "10.0", "em/ccfcal.f:164-170",
+  "EM", "WB, WL, DF, LM, RM, LP, ES, AF, PP, AS, PB, OS", "A", "1.0", "em/ccfcal.f:171-179",
+  "EM", "GA, CW, BA, PW, NC, OH", "A", "10.0", "em/ccfcal.f:180-188",
+  "HI", "All species", "B with arrays RD1 to RD3 (19 each) and INDCCF(45); floor 0.001", "1.0", "hi/ccfcal.f:74-117",
+  "IE", "WP, WL, DF, GF, WH, RC, LP, ES, AF, PP, MH, WB, LL, OS", "A without the 0.001 floor", "10.0", "ie/ccfcal.f:173-179",
+  "IE", "LM, PM, RM, PY, AS, MM, PB", "A", "1.0", "ie/ccfcal.f:180-188",
+  "IE", "CO, OH", "A", "10.0", "ie/ccfcal.f:189-197",
+  "KT", "WP, WL, DF, GF, WH, RC, LP, ES, AF, PP, OT", "A without the 0.001 floor", "10.0", "kt/ccfcal.f:106-113",
+  "NC", "OS, SP, DF, WF, MA, IC, BO, TO, RF, PP, OH, RW", "A", "1.0", "nc/ccfcal.f:118-127",
+  "PN, OP", "All species", "B with arrays RD1 to RD3 (19 each) and INDCCF(39); floor 0.001", "1.0", "pn/ccfcal.f:73-115",
+  "SO", "NF, WH, PY, WA, RA, BM, CW, CH, WI, GC, MC, MB, OH", "B", "1.0", "so/ccfcal.f (CASE(15,19:23,25,26,28:31,33) block)",
+  "SO", "SH, WO", "C (crown width from R5CRWD for IFOR 4 to 9, otherwise R6CRWD)", "not applicable", "so/ccfcal.f (CASE(9,27) block)",
+  "SO", "WP, SP, DF, WF, MH, IC, LP, ES, PP, WJ, GF, AF, SF, WB, WL, RC, AS, OS", "A (default case; species 11, 16 and 24 also recompute CRWDTH in MODE 2)", "1.0", "so/ccfcal.f (CASE DEFAULT block)",
+  "TT", "PP", "A (power curve also used at D at or below 0.1)", "10.0", "tt/ccfcal.f:134-159",
+  "TT", "NC, OH", "A", "10.0", "tt/ccfcal.f:134-159",
+  "TT", "BI, MC", "B (the linear form is used for all D below 1.0)", "1.0", "tt/ccfcal.f:134-159",
+  "TT", "WB, LM, DF, PM, BS, AS, LP, ES, AF, UJ, RM, MM, OS", "A", "1.0", "tt/ccfcal.f:134-159",
+  "UT", "GB, NC, FC, BE", "A", "10.0", "ut/ccfcal.f:144-167",
+  "UT", "MC, BI", "B (the linear form is used for all D below 1.0)", "1.0", "ut/ccfcal.f:144-167",
+  "UT", "WB, LM, DF, WF, BS, AS, LP, ES, AF, PP, PI, WJ, GO, PM, RM, UJ, OS, OH", "A", "1.0", "ut/ccfcal.f:144-167",
+  "WC", "All species", "B with arrays RD1 to RD3 (16 each) and INDCCF(MAXSP); no floor", "1.0", "wc/ccfcal.f:86-123",
+  "WS", "LP, WB, PM, KP, FP, CP, LM, GP, WE, WJ, UJ, CJ", "C (crown width from R5CRWD)", "not applicable", "ws/ccfcal.f (CASE(9,10,12,14:17,19,20,25:27) block)",
+  "WS", "MC", "B with fixed coefficients 0.0204, 0.0246 and 0.0074", "1.0", "ws/ccfcal.f (CASE(41) block)",
+  "WS", "GB", "A with fixed coefficients 0.01925, 0.01676, 0.00365, 0.009187 and 1.7600", "10.0", "ws/ccfcal.f (CASE(21) block)",
+  "WS", "SP, DF, WF, GS, IC, JP, RF, PP, WP, SF, MP, BD, RW, MH, LO, CY, BL, BO, VO, IO, TO, GC, AS, CL, MA, DG, BM, OS, OH", "E", "1.0", "ws/ccfcal.f (CASE DEFAULT block)"
+)
+
+kable(ccf_by_variant,
+      col.names = c("Variant", "Species", "Form", "Break diameter DB (in)", "Source"),
+      caption = "Crown competition factor form by variant and species (species by the two-character FVS code)",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 8) %>%
+  column_spec(1, bold = TRUE, width = "5em") %>%
+  column_spec(2, width = "16em") %>%
+  column_spec(3, width = "16em")
+```
+
+**Subroutine SDICAL: maximum SDI.** The maximum SDI of the stand is the average of the species maximums SDIDEF weighted by the basal area of each species, as shown in equation {4.9.1.12} (Dixon 2002, equation 7.3.2.1.1). The sums use the live records (index below IREC2) with the basal area 0.0054542 D^2 P. When IWHO is 1 during calibration, recently dead records (IMC = 7) are also included, with their trees per acre divided by FINT / FINTM; this is used by the stagnation calculation of the CR, TT and UT variants. The maximum SDI of each point, XMAXPT, is the same average of the species basal area on the point; it equals the stand value when the point has no basal area.
+
+$$
+SDIMAX = \frac{\sum_s SDIDEF_s \, BAXSP_s}{\sum_s BAXSP_s}, \qquad XMAXPT_p = \frac{\sum_s SDIDEF_s \, BAXPSP_{s,p}}{\sum_s BAXPSP_{s,p}}
+\tag{4.9.1.12}
+$$
+
+Where:
+
+- BAXSP_s, BAXPSP_{s,p}: Basal area of species s in the stand and on point p (square feet per acre)
+- SDIMAX is 1 when the stand has no basal area
+
+SDICAL then adjusts the basal area maximum and the SDI maximum so that they correspond, as shown in equation {4.9.1.13}. Subroutine CLMAXDEN, which is part of the climate extension, then changes the value returned.
+
+$$
+\begin{aligned}
+BAMAX &= SDIMAX \times 0.5454154 \times PMSDIU && \text{if the user did not enter BAMAX (LBAMAX false)} \\
+SDIMAX &= \frac{BAMAX}{0.5454154 \times PMSDIU'} && \text{if LBAMAX is true, where } PMSDIU' = PMSDIU/100 \text{ if } PMSDIU > 1
+\end{aligned}
+\tag{4.9.1.13}
+$$
+
+Where:
+
+- PMSDIU: Proportion of maximum SDI at which the stand reaches maximum density; it is a proportion after subroutine SDICHK has run
+- With a user BAMAX the value returned is computed from BAMAX and replaces the species weighted value; the point values XMAXPT still use the species values SDIDEF
+- Dixon (2002) equation 7.3.2.2.1 gives SDImax = BAmax / 0.54542; the code also divides by the proportion PMSDIU' (0.85 by default)
+
+**SDI of a class of trees, entry SDICLS.** SDICLS(JSPEC, DLO, DHI, IWHO, SDIC, SDIC2, A, B, JPNUM) returns the Stage SDI and the Zeide SDI of the live records of a species (0 for all, a negative number for a species group), in a diameter range from DLO up to but not including DHI, for one point (JPNUM greater than 0) or the stand (0). IWHO = 1 uses PROB and IWHO = 2 uses WK4, the trees per acre removed by a thinning. The Stage parameters A and B are computed from all live records at or above DBHSTAGE, as shown in equation {4.9.1.14}; the class sums are in equation {4.9.1.15}. For a point, the trees per acre are multiplied by PI minus NONSTK.
+
+$$
+\begin{aligned}
+A &= 10^{-1.605}\left(1 - \frac{1.605}{2}\right) QMD^{1.605}, \qquad B = 10^{-1.605}\,\frac{1.605}{2}\, QMD^{1.605 - 2}, \qquad QMD^{2} = \frac{\sum D_i^{2} T_i}{\sum T_i}
+\end{aligned}
+\tag{4.9.1.14}
+$$
+
+$$
+SDIC = \sum_{D_i \ge DBHSTAGE} \left(A + B \, D_i^{2}\right) T_i, \qquad SDIC2 = \sum_{D_i \ge DBHZEIDE} T_i \left(\frac{D_i}{10}\right)^{1.605}
+\tag{4.9.1.15}
+$$
+
+Where:
+
+- T_i: Trees per acre of the record, PROB(i) or WK4(i) (trees per acre)
+- When a species or a species group is specified (JSPEC not 0), records of species flagged in the array LEAVESP (the leave species of CONTRL.F77, set in vbase/cuts.f:1477 and 1488) are not included; JSPEC = 0 includes all live records
+- SDIC is SDIBC or SDIAC (Stage method; Dixon 2002, equation 7.3.2.1.2) and SDIC2 is SDIBC2 or SDIAC2 (Zeide method; Dixon 2002, equation 7.3.2.1.3)
+
+The default method used for SDI based mortality and for the SDI used by subroutine SDICHK, LZEIDE, is set by variant in GRINIT and by region in SITSET (when the SDICALC keyword has not been used), as shown in the next table. The SDICALC keyword sets DBHSTAGE (field 1), DBHZEIDE (field 2) and the method (field 3 of 1 or more gives Zeide, otherwise Reineke).
+
+```{r lzeide-defaults, echo=FALSE}
+lzeide_defaults <- tibble::tribble(
+  ~Variants, ~LZEIDE_Default, ~Region_Override,
+  "AK, CS, LS, NE, CR, SN, TT, UT, WS", "TRUE", "None",
+  "CA", "TRUE", "FALSE for IFOR of 6 or more (ca/sitset.f:94-95)",
+  "NC", "TRUE", "FALSE for IFOR 4 or 7 (nc/sitset.f:72-73)",
+  "SO", "TRUE", "FALSE for IFOR of 3 or less, or 10 (so/sitset.f:81-82)",
+  "CI", "TRUE", "FALSE for IFOR below 2 (ci/sitset.f:153)",
+  "BM, EC, EM, HI, IE, KT, OC, OP, PN, WC, BC, ON", "FALSE", "None in sitset.f"
+)
+
+kable(lzeide_defaults,
+      col.names = c("Variants", "LZEIDE default (grinit.f)", "Region override when CALCSDI is blank"),
+      caption = "Default SDI method by variant",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "14em")
+```
+
+**Subroutine SDICHK.** CRATET calls SDICHK after the last DENSE call of the calibration. It divides PMSDIL and PMSDIU by 100, calls SDICAL to get SDIMAX, and compares the initial trees per acre with the upper limit, as shown in equation {4.9.1.16} (Dixon 2002, section 7.3.2.1). The stand diameter of the comparison, D0, is RMSQD, or DR016 when LZEIDE is true. If the initial TPROB is more than UPMAX times the maximum trees per acre at the stand diameter, all species maximums SDIDEF are set to one value, a warning is written, and LFIXSD is set true. LFIXSD is not used elsewhere except by PUTSTD and GETSTD.
+
+$$
+\begin{aligned}
+CONST &= \frac{SDIMAX}{0.02483133}, \qquad TEMMAX = CONST \cdot D0^{-1.605}, \qquad UPMAX = \min\left(1, PMSDIU + 0.05\right) \\
+\text{if } TPROB &> UPMAX \cdot TEMMAX: \quad CONST \leftarrow \frac{\exp\left[\ln(TPROB + 1) + 1.605 \ln(D0)\right]}{PMSDIU}, \qquad SDIDEF_s \leftarrow 0.02483133 \cdot CONST
+\end{aligned}
+\tag{4.9.1.16}
+$$
+
+Where:
+
+- 0.02483133: 10 raised to the power -1.605
+- D0 has no minimum in this comparison; a copy of the diameter with a minimum of 0.3, and the maximum trees per acre at that diameter limited to 35000, are used only in the printed warning
+- All species receive the same SDIDEF
+
+**Maximum SDI and BAMAX by variant.** SITSET sets SDIDEF and BAMAX for the values that were not entered with the SDIMAX and BAMAX keywords. The SDIMAX keyword (field 2) sets SDIDEF for a species, a species group or all species, and sets MAXSDI to 1; fields 3 and 4 are not used; field 5 sets PMSDIL (not below 10); field 6 sets PMSDIU (not above 95); and field 7 is the stagnation indicator ISTAGF in CR, TT and UT. The BAMAX keyword sets BAMAX and LBAMAX, and the SETSITE keyword does the same in GRINCR with its field 2 (BAMAX) and field 6 (SDIDEF); neither base/grincr.f nor canada/bc/grincr.f contains a call to SITSET. The next table gives the source of the values of SITSET.
+
+```{r sdi-defaults, echo=FALSE}
+sdi_defaults <- tibble::tribble(
+  ~Variants, ~SDIDEF_Without_BAMAX, ~SDIDEF_With_BAMAX, ~BAMAX_Set_In_SITSET, ~Source,
+  "AK, CR, CS, LS, NE, SN, TT, UT, WS", "SDICON(species)", "BAMAX / (0.5454154 x PMSDIU / 100)", "Not set", "ak/sitset.f:114,177-182; cr:67,501-505; cs:35,119-123; ls:41,293-297; ne:43,494-498; sn:57,341-345; tt:49,85-89; ut:50,87-91; ws:102,169-173",
+  "EM", "SDICON(ISDI), with ISDI = MAPSDI(IEMTYP), or 5 when IEMTYP is not above 0 (SDICON(9) = 467, 634, 696, 768, 775, 751, 707, 661, 635)", "BAMAX / (0.5454154 x PMSDIU / 100)", "BAMAXA(ITYPE) when BAMAX is not above 0", "em/sitset.f:53,62,150-159",
+  "IE, KT", "BAMAX / (0.5454154 x PMSDIU / 100) with BAMAX = BAMAXA(ITYPE)", "BAMAX / (0.5454154 x PMSDIU / 100)", "BAMAXA(ITYPE) when BAMAX is not above 0", "ie/sitset.f:42,82-84; kt/sitset.f:32,39-41",
+  "CI", "IFOR below 2: BAMAX / (0.5454154 x PMSDIU / 100) with BAMAX = BAMAXA(ICINDX); otherwise R4SDI(species)", "BAMAX / (0.5454154 x PMSDIU / 100)", "BAMAXA(ICINDX) when BAMAX is not entered", "ci/sitset.f:75,88,153-166",
+  "CA, OC", "IFOR of 6 or more: SDIDEF of the site species K, limited to 850; otherwise R5SDI(species)", "BAMAX / (0.5454154 x PMSDIU / 100), limited to 850", "Not set", "ca/sitset.f:46,72,93-139,187-205; oc/sitset.f:49,75,203-221",
+  "NC, SO", "NC with IFOR 4 or 7, and SO with IFOR 3 or less or 10: SDIDEF(K) x C6(species) / C6(K), limited to 850; otherwise C5(species)", "BAMAX / (0.5454154 x PMSDIU / 100)", "Not set", "nc/sitset.f:45-48,158-171; so/sitset.f:48-54,234-247",
+  "BM", "SDIDEF(K), limited to 850", "BAMAX / (0.5454154 x PMSDIU / 100), limited to 850", "Not set", "bm/sitset.f:56,232-243",
+  "EC", "Species 1 to 10, 12, 16 and 31: SDIDEF(K) x SDICON(species) / SDICON(K), limited to 900; others: SDIDEF(K)", "Species 1 to 10, 12, 16 and 31: BAMAX / (0.5454154 x PMSDIU / 100), limited to 900; others: SDIDEF(K)", "SDIDEF(K) x PMSDIU / 100 x 0.54542 when BAMAX is not above 0", "ec/sitset.f:103,109,251-269",
+  "HI, OP, PN, WC", "SDIDEF of the site species ISISP", "Not used", "SDIDEF(ISISP) x PMSDIU / 100 x 0.54542 when BAMAX is not above 0", "hi/sitset.f:164-167; op/sitset.f:204-207; pn/sitset.f:164-167; wc/sitset.f:169-171",
+  "BC", "BAMAX / (0.5454154 x PMSDIU / 100), with BAMAX from the BEC zone, subzone and series (square meters per hectare, converted to square feet per acre); 10 square meters per hectare and a warning if undefined", "BAMAX / (0.5454154 x PMSDIU / 100)", "From the BEC zone, subzone and series", "canada/bc/sitset.f:38-66,240-262",
+  "ON", "BAMAX1(species) / (0.5454154 x PMSDIU / 100)", "BAMAX / (0.5454154 x PMSDIU / 100)", "Not set", "canada/on/sitset.f:53,507-511"
+)
+
+kable(sdi_defaults,
+      col.names = c("Variants", "SDIDEF if SDIMAX and BAMAX are not entered", "SDIDEF if BAMAX is entered", "BAMAX set in SITSET when not entered", "Source"),
+      caption = "Source of the maximum SDI and BAMAX by variant (K is the site species ISISP, or JSISP when SDIDEF(ISISP) is not set)",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 8) %>%
+  column_spec(1, bold = TRUE, width = "7em") %>%
+  column_spec(2, width = "14em") %>%
+  column_spec(3, width = "12em") %>%
+  column_spec(5, width = "16em")
+```
+
+In BM, EC, HI, OP, PN and WC, and in CA and OC (IFOR of 6 or more), NC (IFOR 4 or 7) and SO (IFOR 3 or less, or 10), the maximum SDI of the species of the ecological class code is first set from ECOCLS (RSDI, limited to the value FORMAX of the variant: 850 in BM, CA, NC, OC and SO; 900 in EC; 950 in HI, OP and PN; FMSDI(IFOR) in WC), before the table values are applied to the species that are still not set. SITSET changes BAMAX only where the table says so; where LBAMAX is false, SDICAL sets BAMAX again from SDIMAX each time it is called (equation {4.9.1.13}). When the ORGANON variables RVARS(3 to 5) and MSDI_1 to MSDI_3 are 0, OC and OP set them from SDIDEF of three species (OC: species 7, 4 and 18; OP: species 16, 3 and 19 for RVARS and 16, 15 and 3 for MSDI_1 to MSDI_3), as listed in oc/sitset.f:327-342 and op/sitset.f:325-340.
+
+**Relative density of a class of trees.** Entry RDCLS computes the relative density of Curtis (1982) with the summation of Lu et al. (2017), shown in equation {4.9.1.17}, for the records at or above DBHSTAGE (Dixon 2002, equation 5.2.4.2.4.1). Entries RDCLS2 and RDSLTR compute the SILVAH relative density (Marquis and Ernst 1992), shown in equation {4.9.1.18}; they are available only in NE and use records with a diameter of 1.0 inch or more. Entry CCCLS computes the percent canopy cover, shown in equation {4.9.1.19}. Entry SILFTY assigns the SILVAH forest type (0 to 5) in NE; the types are those defined in Dixon (2002), section 5.2.4.2.4, with the thresholds 0.65, 0.50 and 0.25 of basal area.
+
+$$
+RD = \sum_i \left(a + b \, D_i^{2}\right) T_i, \qquad a = \frac{0.25 \pi}{24^{2}} QMD^{1.5}, \qquad b = \frac{0.75 \pi}{24^{2}} QMD^{-0.5}
+\tag{4.9.1.17}
+$$
+
+$$
+RD_{SILVAH} = \sum_i \max\left[0, \left(a_g + b_g D_i + c_g D_i^{2}\right) T_i\right]
+\tag{4.9.1.18}
+$$
+
+$$
+CCCL = 100\left[1 - \exp\left(-\min\left(86, CCCOEF \cdot 100 \, \frac{0.785398 \sum_i CW_i^{2} T_i}{43560}\right)\right)\right]
+\tag{4.9.1.19}
+$$
+
+Where:
+
+- a, b: Parameters of equation {4.9.1.17} computed from all live records at or above DBHSTAGE; 3.14159 is used for pi
+- a_g, b_g, c_g: Coefficients of species group g (SILVAH); group 1: 0.0033033, 0.020426, 0.0006776; group 2: -0.027142, 0.024257, 0.0015225; group 3: -0.0027935, 0.0058959, 0.0047289; the group of a species is given by the array MAPNE in vbase/sdical.f
+- CW_i: Crown width of record i, CRWDTH(i) (feet)
+- The limit of 86 on the exponent avoids a numerical underflow (source comment)
+
+**Diameter limit of the SDI based mortality sums.** The mortality routines exclude trees below a diameter limit from the SDI sums, as shown in the next table.
+
+```{r sdi-mortality-limit, echo=FALSE}
+sdi_mortality_limit <- tibble::tribble(
+  ~Variants, ~Diameter_Limit, ~Source,
+  "AK, BM, CR, EC, EM, HI, NC, OP, PN, SN, SO, TT, UT, WC, WS", "DBHZEIDE when LZEIDE is true, otherwise DBHSTAGE", "morts.f of each variant; PN and WC use vwc/morts.f",
+  "CA, OC, ON, CS, LS, NE", "DBHSDI", "ca/morts.f:203,567; oc/morts.f:208,597; canada/on/morts.f:255,656; vls/morts.f:203,571"
+)
+
+kable(sdi_mortality_limit,
+      col.names = c("Variants", "Diameter limit of the SDI sums", "Source"),
+      caption = "Minimum diameter in the SDI based mortality sums",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "16em")
+```
+
+### Auxiliary subroutines
+
+Subroutine DBCHK is used to see if debug output should be written to the output file.
+
+Subroutine CCFCAL is used by subroutine DENSE to compute the crown competition factor of each tree record. It calls subroutines R5CRWD, R6CRWD or CWCALC in the variants that compute crown width.
+
+Subroutine MBACAL is used by subroutine DENSE to identify the species with the most basal area.
+
+Subroutine PCTILE is used by subroutine DENSE to compute the percentile of each tree record in the basal area distribution.
+
+Subroutine PTBAL is used by subroutine DENSE to compute the point basal area and the basal area in larger trees on the point.
+
+Subroutine CLMAXDEN is used by subroutine SDICAL to change the maximum SDI when the climate extension is active.
+
+Subroutine SDICHK is used to reset the maximum SDI when the initial stand is denser than the upper limit of density related mortality.
 
 ## End-Of-Cycle Updating of stand and output information
 

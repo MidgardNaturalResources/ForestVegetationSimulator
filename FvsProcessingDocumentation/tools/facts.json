@@ -3274,5 +3274,642 @@
   "doc": "Ch 4.3: HTGIT",
   "file": "base/ffert.f",
   "regex": "HTGIT\\s*=\\s*\\(HTG\\(I\\)/YR\\)\\*\\(RHT\\*IFLEN\\*FEFF\\s*\\+\\s*IFINT-IFLEN\\)"
+ },
+ {
+  "id": "dens-ccfcall",
+  "type": "regex_in_file",
+  "doc": "Density section: DENSE calls CCFCAL with MODE 1",
+  "file": "base/dense.f",
+  "regex": "CALL CCFCAL\\(ISPC,D,HT\\(I\\),ICR\\(I\\),P,\\.FALSE\\.,CCFT,CW,1\\)"
+ },
+ {
+  "id": "dens-reldsp",
+  "type": "regex_in_file",
+  "doc": "Density section: RELDSP sums CCFT",
+  "file": "base/dense.f",
+  "regex": "RELDSP\\(ISPC\\)=RELDSP\\(ISPC\\)\\+CCFT"
+ },
+ {
+  "id": "dens-reldt",
+  "type": "regex_in_file",
+  "doc": "Density section: RELDEN equals sum of RELDSP",
+  "file": "base/dense.f",
+  "regex": "RELDT=RELDT\\s*\\+\\s*RELDSP\\(ISPC\\)"
+ },
+ {
+  "id": "dens-ba",
+  "type": "regex_in_file",
+  "doc": "Density section: BA coefficient",
+  "file": "base/dense.f",
+  "regex": "BATREE=0\\.005454154\\*WK5\\(I\\)"
+ },
+ {
+  "id": "dens-dr016",
+  "type": "regex_in_file",
+  "doc": "Density section: DR016 equation",
+  "file": "base/dense.f",
+  "regex": "DR016=\\(SUMDR0/TPROB\\)\\*\\*\\(1\\./1\\.605\\)"
+ },
+ {
+  "id": "dens-sumdr0",
+  "type": "regex_in_file",
+  "doc": "Density section: SUMDR0 uses DBHSDI",
+  "file": "base/dense.f",
+  "regex": "IF\\(D\\.GE\\.DBHSDI\\)SUMDR0=SUMDR0\\+P\\*\\(D\\)\\*\\*1\\.605"
+ },
+ {
+  "id": "dens-pccf",
+  "type": "regex_in_file",
+  "doc": "Density section: point CCF",
+  "file": "base/dense.f",
+  "regex": "PCCF\\(IP\\)=PCCF\\(IP\\)\\+CCFT\\*PI/GROSPC"
+ },
+ {
+  "id": "dens-prda",
+  "type": "regex_in_file",
+  "doc": "Density section: point relative density PRDA",
+  "file": "base/dense.f",
+  "regex": "PRDA\\(IP\\)=PRDA\\(IP\\)\\+\\(P\\*\\(D/10\\.\\)\\*\\*1\\.605\\*PI/GROSPC\\)/XMAXPT\\(IP\\)"
+ },
+ {
+  "id": "dens-regnbk",
+  "type": "regex_in_file",
+  "doc": "Density section: REGNBK test for overstory sums",
+  "file": "base/dense.f",
+  "regex": "IF\\(D\\.LT\\.REGNBK\\) GO TO 10"
+ },
+ {
+  "id": "dens-rat",
+  "type": "regex_in_file",
+  "doc": "Density section: backdating interpolation weight",
+  "file": "base/dense.f",
+  "regex": "RAT=FINTH/FINT"
+ },
+ {
+  "id": "dens-bagr",
+  "type": "regex_in_file",
+  "doc": "Density section: backdated diameter",
+  "file": "base/dense.f",
+  "regex": "WK3\\(I\\)=SQRT\\(D\\*D\\*R\\)"
+ },
+ {
+  "id": "dens-avh",
+  "type": "regex_in_file",
+  "doc": "Density section: top height 40 tpa",
+  "file": "base/dense.f",
+  "regex": "IF\\(SSUMN\\+P\\.GT\\.40\\.0\\) P=40\\.0-SSUMN"
+ },
+ {
+  "id": "dens-ptbal-call",
+  "type": "regex_in_file",
+  "doc": "Density section: DENSE calls PTBAL",
+  "file": "base/dense.f",
+  "regex": "CALL PTBAL"
+ },
+ {
+  "id": "dens-pctile-call",
+  "type": "regex_in_file",
+  "doc": "Density section: DENSE calls PCTILE with WK5",
+  "file": "base/dense.f",
+  "regex": "CALL PCTILE\\(ITRN,IND,WK5,PCT,TOTAL\\)"
+ },
+ {
+  "id": "dens-mbacal",
+  "type": "regex_in_file",
+  "doc": "Density section: DENSE calls MBACAL",
+  "file": "base/dense.f",
+  "regex": "CALL MBACAL"
+ },
+ {
+  "id": "pctile-accum",
+  "type": "regex_in_file",
+  "doc": "Density section: PCTILE cumulative sum from smallest",
+  "file": "base/pctile.f",
+  "regex": "PERCNT\\(INDJ\\)=PERCNT\\(INDJP1\\)\\+CHAR\\(INDJ\\)"
+ },
+ {
+  "id": "ptbal-xbalt",
+  "type": "regex_in_file",
+  "doc": "Density section: PTBAL running basal area",
+  "file": "vbase/ptbal.f",
+  "regex": "XBALT=XBALT\\+\\(WK5\\(IND2\\(I\\)\\)\\*\\.005454154\\*PI/GROSPC\\)"
+ },
+ {
+  "id": "ptbal-zero",
+  "type": "regex_in_file",
+  "doc": "Density section: PTBAL zero variants",
+  "file": "vbase/ptbal.f",
+  "regex": "CASE \\('CS','LS','NE','ON'\\)"
+ },
+ {
+  "id": "sdi-xmax",
+  "type": "regex_in_file",
+  "doc": "Density section: stand maximum SDI weighted by BA",
+  "file": "vbase/sdical.f",
+  "regex": "XMAX = XMAX \\+ SDIDEF\\(I\\) \\* BAXSP\\(I\\)"
+ },
+ {
+  "id": "sdi-xmaxpt",
+  "type": "regex_in_file",
+  "doc": "Density section: point maximum SDI",
+  "file": "vbase/sdical.f",
+  "regex": "XMAXPT\\(II\\) = XMAXPT\\(II\\) \\+ SDIDEF\\(I\\) \\* BAXPSP\\(I,II\\)"
+ },
+ {
+  "id": "sdi-treeba",
+  "type": "regex_in_file",
+  "doc": "Density section: SDICAL basal area coefficient",
+  "file": "vbase/sdical.f",
+  "regex": "TREEBA = 0\\.0054542\\*DBH\\(I\\)\\*DBH\\(I\\)\\*PROB\\(I\\)"
+ },
+ {
+  "id": "sdi-bamax-from-sdi",
+  "type": "regex_in_file",
+  "doc": "Density section: BAMAX from SDIMAX",
+  "file": "vbase/sdical.f",
+  "regex": "BAMAX = XMAX \\* 0\\.5454154 \\* PMSDIU"
+ },
+ {
+  "id": "sdi-sdi-from-bamax",
+  "type": "regex_in_file",
+  "doc": "Density section: SDIMAX from BAMAX",
+  "file": "vbase/sdical.f",
+  "regex": "XMAX = BAMAX/\\(0\\.5454154\\*TEM\\)"
+ },
+ {
+  "id": "sdi-clmaxden",
+  "type": "regex_in_file",
+  "doc": "Density section: SDICAL calls CLMAXDEN",
+  "file": "vbase/sdical.f",
+  "regex": "CALL CLMAXDEN \\(SDIDEF,XMAX\\)"
+ },
+ {
+  "id": "sdi-stage-a",
+  "type": "regex_in_file",
+  "doc": "Density section: Stage A parameter",
+  "file": "vbase/sdical.f",
+  "regex": "A = \\(10\\.0\\*\\*\\(-1\\.605\\)\\)\\*\\(1\\.-1\\.605/2\\.\\)\\*\\(\\(SDSQ/SPROB\\)\\*\\*\\(1\\.605/2\\.\\)\\)"
+ },
+ {
+  "id": "sdi-stage-b",
+  "type": "regex_in_file",
+  "doc": "Density section: Stage B parameter",
+  "file": "vbase/sdical.f",
+  "regex": "B = \\(10\\.0\\*\\*\\(-1\\.605\\)\\)\\*\\(1\\.605/2\\.\\)\\*\\(\\(SDSQ/SPROB\\)\\*\\*\\(1\\.605/2\\. - 1\\.\\)\\)"
+ },
+ {
+  "id": "sdi-zeide-sum",
+  "type": "regex_in_file",
+  "doc": "Density section: Zeide SDI sum",
+  "file": "vbase/sdical.f",
+  "regex": "IF\\(DBH\\(I\\)\\.GE\\.DBHZEIDE\\)SDIC2=SDIC2\\+TPACRE\\*\\(DBH\\(I\\)/10\\.\\)\\*\\*1\\.605"
+ },
+ {
+  "id": "sdi-stage-sum",
+  "type": "regex_in_file",
+  "doc": "Density section: Stage SDI sum",
+  "file": "vbase/sdical.f",
+  "regex": "IF\\(DBH\\(I\\)\\.GE\\.DBHSTAGE\\)SDIC = SDIC \\+ \\(A\\+B\\*\\(DBH\\(I\\)\\*\\*2\\.0\\)\\)\\*TPACRE"
+ },
+ {
+  "id": "sdi-rd-24",
+  "type": "regex_in_file",
+  "doc": "Density section: Curtis RD constant 24 squared",
+  "file": "vbase/sdical.f",
+  "regex": "CMPNT2 = 24\\.0\\*\\*2\\.0"
+ },
+ {
+  "id": "sdi-rd-cmpnt1",
+  "type": "regex_in_file",
+  "doc": "Density section: Curtis RD 0.25 pi",
+  "file": "vbase/sdical.f",
+  "regex": "CMPNT1 = 0\\.25\\*3\\.14159"
+ },
+ {
+  "id": "sdi-rd-cmpnt6",
+  "type": "regex_in_file",
+  "doc": "Density section: Curtis RD 0.75 pi",
+  "file": "vbase/sdical.f",
+  "regex": "CMPNT6 = 0\\.75\\*3\\.14159"
+ },
+ {
+  "id": "sdi-silvah-g1",
+  "type": "regex_in_file",
+  "doc": "Density section: SILVAH group 1 coefficients",
+  "file": "vbase/sdical.f",
+  "regex": "0\\.0033033\\+0\\.020426\\*"
+ },
+ {
+  "id": "sdi-silvah-g2",
+  "type": "regex_in_file",
+  "doc": "Density section: SILVAH group 2 coefficients",
+  "file": "vbase/sdical.f",
+  "regex": "-0\\.027142\\+0\\.024257\\*"
+ },
+ {
+  "id": "sdi-silvah-g3",
+  "type": "regex_in_file",
+  "doc": "Density section: SILVAH group 3 coefficients",
+  "file": "vbase/sdical.f",
+  "regex": "-0\\.0027935\\+0\\.0058959\\*"
+ },
+ {
+  "id": "sdi-cccls",
+  "type": "regex_in_file",
+  "doc": "Density section: canopy cover",
+  "file": "vbase/sdical.f",
+  "regex": "CCCL = 100\\.0\\*CRA\\*0\\.785398/43560\\."
+ },
+ {
+  "id": "sdi-cccls-cap",
+  "type": "regex_in_file",
+  "doc": "Density section: canopy cover exponent limit",
+  "file": "vbase/sdical.f",
+  "regex": "TEM = MIN\\(86\\.0,\\(CCCOEF\\*CCCL\\)\\)"
+ },
+ {
+  "id": "sdi-silfty-65",
+  "type": "regex_in_file",
+  "doc": "Density section: SILVAH type threshold",
+  "file": "vbase/sdical.f",
+  "regex": "IF\\(RATIO1 \\.GE\\. 0\\.65\\)ISILFT=1"
+ },
+ {
+  "id": "sdichk-pm",
+  "type": "regex_in_file",
+  "doc": "Density section: SDICHK percent to proportion",
+  "file": "base/sdichk.f",
+  "regex": "PMSDIU = PMSDIU/100\\."
+ },
+ {
+  "id": "sdichk-upmax",
+  "type": "regex_in_file",
+  "doc": "Density section: SDICHK upper limit",
+  "file": "base/sdichk.f",
+  "regex": "UPMAX = PMSDIU \\+ \\.05"
+ },
+ {
+  "id": "sdichk-const",
+  "type": "regex_in_file",
+  "doc": "Density section: SDICHK reset constant",
+  "file": "base/sdichk.f",
+  "regex": "CONST = EXP\\(ALOG\\(TEMTPA \\+ 1\\.\\) \\+ 1\\.605\\*ALOG\\(TEMD0\\)\\) / PMSDIU"
+ },
+ {
+  "id": "sdichk-lfixsd",
+  "type": "regex_in_file",
+  "doc": "Density section: SDICHK sets LFIXSD",
+  "file": "base/sdichk.f",
+  "regex": "LFIXSD=\\.TRUE\\."
+ },
+ {
+  "id": "sdi-grinit-pmsdil",
+  "type": "regex_in_file",
+  "doc": "Density section: PMSDIL default 55",
+  "file": "ak/grinit.f",
+  "regex": "PMSDIL = 55\\."
+ },
+ {
+  "id": "sdi-grinit-pmsdiu",
+  "type": "regex_in_file",
+  "doc": "Density section: PMSDIU default 85",
+  "file": "ak/grinit.f",
+  "regex": "PMSDIU = 85\\."
+ },
+ {
+  "id": "sdi-grinit-dbhsdi",
+  "type": "regex_in_file",
+  "doc": "Density section: DBHSDI default 0",
+  "file": "ak/grinit.f",
+  "regex": "DBHSDI=0\\.0"
+ },
+ {
+  "id": "sdi-lzeide-ak",
+  "type": "regex_in_file",
+  "doc": "Density section: LZEIDE AK",
+  "file": "ak/grinit.f",
+  "regex": "LZEIDE = \\.TRUE\\."
+ },
+ {
+  "id": "sdi-lzeide-bm",
+  "type": "regex_in_file",
+  "doc": "Density section: LZEIDE BM",
+  "file": "bm/grinit.f",
+  "regex": "LZEIDE = \\.FALSE\\."
+ },
+ {
+  "id": "sdi-lzeide-ca",
+  "type": "regex_in_file",
+  "doc": "Density section: LZEIDE CA region override",
+  "file": "ca/sitset.f",
+  "regex": "IF\\(IFOR \\.GE\\. 6\\) THEN"
+ },
+ {
+  "id": "sdi-lzeide-nc",
+  "type": "regex_in_file",
+  "doc": "Density section: LZEIDE NC region override",
+  "file": "nc/sitset.f",
+  "regex": "IF\\(IFOR\\.EQ\\.4 \\.OR\\. IFOR\\.EQ\\.7\\) THEN"
+ },
+ {
+  "id": "sdi-lzeide-so",
+  "type": "regex_in_file",
+  "doc": "Density section: LZEIDE SO region override",
+  "file": "so/sitset.f",
+  "regex": "IF\\(IFOR\\.LE\\.3 \\.OR\\. IFOR\\.EQ\\.10\\) THEN"
+ },
+ {
+  "id": "sdi-lzeide-ci",
+  "type": "regex_in_file",
+  "doc": "Density section: LZEIDE CI region override",
+  "file": "ci/sitset.f",
+  "regex": "IF\\(CALCSDI\\.EQ\\.' ' \\.AND\\. IFOR \\.LT\\. 2\\) LZEIDE = \\.FALSE\\."
+ },
+ {
+  "id": "sdi-kw-pmsdil",
+  "type": "regex_in_file",
+  "doc": "Density section: SDIMAX field 5",
+  "file": "vbase/initre.f",
+  "regex": "IF \\(LNOTBK\\(5\\)\\) PMSDIL=ARRAY\\(5\\)"
+ },
+ {
+  "id": "sdi-kw-pmsdiu-cap",
+  "type": "regex_in_file",
+  "doc": "Density section: SDIMAX field 6 cap",
+  "file": "vbase/initre.f",
+  "regex": "IF\\(PMSDIU \\.GT\\. 95\\.\\) PMSDIU=95\\."
+ },
+ {
+  "id": "sdi-kw-sdicalc",
+  "type": "regex_in_file",
+  "doc": "Density section: SDICALC field 3",
+  "file": "vbase/initre.f",
+  "regex": "CALCSDI=\\\"ZEIDE\\\""
+ },
+ {
+  "id": "sdi-kw-bamax",
+  "type": "regex_in_file",
+  "doc": "Density section: BAMAX keyword",
+  "file": "vbase/initre.f",
+  "regex": "BAMAX=ARRAY\\(1\\)"
+ },
+ {
+  "id": "sdi-grincr-bt",
+  "type": "regex_in_file",
+  "doc": "Density section: GRINCR before-thin SDI",
+  "file": "base/grincr.f",
+  "regex": "CALL SDICAL\\(0,BTSDIX\\)"
+ },
+ {
+  "id": "sdi-grincr-at",
+  "type": "regex_in_file",
+  "doc": "Density section: GRINCR after-thin SDI",
+  "file": "base/grincr.f",
+  "regex": "CALL SDICAL\\(0,ATSDIX\\)"
+ },
+ {
+  "id": "sdi-grincr-dense",
+  "type": "regex_in_file",
+  "doc": "Density section: GRINCR DENSE after thinning",
+  "file": "base/grincr.f",
+  "regex": "IF \\(ONTREM\\(7\\)\\.GT\\.0\\.0\\) THEN"
+ },
+ {
+  "id": "sdi-fvs-sdiac",
+  "type": "regex_in_file",
+  "doc": "Density section: FVS sets SDIAC=SDIBC",
+  "file": "base/fvs.f",
+  "regex": "SDIAC=SDIBC"
+ },
+ {
+  "id": "reg-ak",
+  "type": "regex_in_file",
+  "doc": "Density section: REGNBK AK",
+  "file": "ak/blkdat.f",
+  "regex": "DATA REGNBK/1\\.000/"
+ },
+ {
+  "id": "reg-cr",
+  "type": "regex_in_file",
+  "doc": "Density section: REGNBK CR",
+  "file": "cr/blkdat.f",
+  "regex": "DATA REGNBK/0\\.499/"
+ },
+ {
+  "id": "reg-ie",
+  "type": "regex_in_file",
+  "doc": "Density section: REGNBK IE",
+  "file": "ie/blkdat.f",
+  "regex": "DATA REGNBK/2\\.999/"
+ },
+ {
+  "id": "ccf-ls-cr90",
+  "type": "regex_in_file",
+  "doc": "Density section: LS CCF crown width call",
+  "file": "ls/ccfcal.f",
+  "regex": "CR=90\\."
+ },
+ {
+  "id": "ccf-ls-form",
+  "type": "regex_in_file",
+  "doc": "Density section: LS CCF form",
+  "file": "ls/ccfcal.f",
+  "regex": "CCFT = 0\\.001803 \\* TEMCW\\*\\*2\\."
+ },
+ {
+  "id": "ccf-ca-form",
+  "type": "regex_in_file",
+  "doc": "Density section: CA CCF form",
+  "file": "ca/ccfcal.f",
+  "regex": "CCFT= CRWD5\\s+\\* CRWD5\\s+\\* 0\\.001803"
+ },
+ {
+  "id": "ccf-ak-mcw",
+  "type": "regex_in_file",
+  "doc": "Density section: AK CCF form 2",
+  "file": "ak/ccfcal.f",
+  "regex": "MCW = MCW \\* 3\\.28"
+ },
+ {
+  "id": "ccf-ak-mca",
+  "type": "regex_in_file",
+  "doc": "Density section: AK CCF crown area",
+  "file": "ak/ccfcal.f",
+  "regex": "MCA = 3\\.14159\\*\\(MCW/2\\)\\*\\*2"
+ },
+ {
+  "id": "ccf-cr-break",
+  "type": "regex_in_file",
+  "doc": "Density section: CR break diameter",
+  "file": "cr/ccfcal.f",
+  "regex": "IF \\(D \\.GE\\. 10\\.0\\) THEN"
+ },
+ {
+  "id": "ccf-kt-break",
+  "type": "regex_in_file",
+  "doc": "Density section: KT break diameter",
+  "file": "kt/ccfcal.f",
+  "regex": "IF \\(D\\.GE\\.10\\.0\\) THEN"
+ },
+ {
+  "id": "ccf-ws-e",
+  "type": "regex_in_file",
+  "doc": "Density section: WS default form",
+  "file": "ws/ccfcal.f",
+  "regex": "CCFT = \\(\\(RD1\\(ISPC\\)\\+D\\*RD2\\(ISPC\\)\\)\\*\\*2\\.0\\)\\*0\\.001803"
+ },
+ {
+  "id": "ccf-bm-b",
+  "type": "regex_in_file",
+  "doc": "Density section: BM linear species",
+  "file": "bm/ccfcal.f",
+  "regex": "CASE\\(13,14,16,18\\)"
+ },
+ {
+  "id": "ccf-ec-b",
+  "type": "regex_in_file",
+  "doc": "Density section: EC linear species",
+  "file": "ec/ccfcal.f",
+  "regex": "CASE\\(11,13:15,17:30,32\\)"
+ },
+ {
+  "id": "ccf-em-a10",
+  "type": "regex_in_file",
+  "doc": "Density section: EM break 10 species",
+  "file": "em/ccfcal.f",
+  "regex": "CASE\\(11,13:16,19\\)"
+ },
+ {
+  "id": "ccf-ie-a1",
+  "type": "regex_in_file",
+  "doc": "Density section: IE break 1 species",
+  "file": "ie/ccfcal.f",
+  "regex": "CASE\\(13,15,16,17,18,20,21\\)"
+ },
+ {
+  "id": "ccf-ie-a10",
+  "type": "regex_in_file",
+  "doc": "Density section: IE break 10 species",
+  "file": "ie/ccfcal.f",
+  "regex": "CASE\\(19,22\\)"
+ },
+ {
+  "id": "ccf-tt-break",
+  "type": "regex_in_file",
+  "doc": "Density section: TT break 10 species",
+  "file": "tt/ccfcal.f",
+  "regex": "CASE\\(10,15,18\\)"
+ },
+ {
+  "id": "ccf-ut-break",
+  "type": "regex_in_file",
+  "doc": "Density section: UT break 10 species",
+  "file": "ut/ccfcal.f",
+  "regex": "CASE\\(17:19,22\\)"
+ },
+ {
+  "id": "ccf-so-b",
+  "type": "regex_in_file",
+  "doc": "Density section: SO linear species",
+  "file": "so/ccfcal.f",
+  "regex": "CASE\\(15,19:23,25,26,28:31,33\\)"
+ },
+ {
+  "id": "ccf-bc-ni",
+  "type": "regex_in_file",
+  "doc": "Density section: BC NI species",
+  "file": "canada/bc/ccfcal.f",
+  "regex": "CASE \\(1:10,14\\)"
+ },
+ {
+  "id": "ccf-pn-index",
+  "type": "regex_in_file",
+  "doc": "Density section: PN INDCCF array",
+  "file": "pn/ccfcal.f",
+  "regex": "INTEGER INDCCF\\(39\\)"
+ },
+ {
+  "id": "ccf-hi-index",
+  "type": "regex_in_file",
+  "doc": "Density section: HI INDCCF array",
+  "file": "hi/ccfcal.f",
+  "regex": "INTEGER INDCCF\\(45\\)"
+ },
+ {
+  "id": "mort-cr-limit",
+  "type": "regex_in_file",
+  "doc": "Density section: CR mortality diameter limit",
+  "file": "cr/morts.f",
+  "regex": "IF\\(LZEIDE\\.AND\\.\\(D\\.LT\\.DBHZEIDE\\)\\)GO TO 12"
+ },
+ {
+  "id": "mort-ca-limit",
+  "type": "regex_in_file",
+  "doc": "Density section: CA mortality diameter limit",
+  "file": "ca/morts.f",
+  "regex": "IF\\(D\\.LT\\.DBHSDI\\)GO TO 12"
+ },
+ {
+  "id": "mort-vwc-limit",
+  "type": "regex_in_file",
+  "doc": "Density section: PN/WC mortality diameter limit",
+  "file": "vwc/morts.f",
+  "regex": "IF\\(LZEIDE\\.AND\\.\\(D\\.LT\\.DBHZEIDE\\)\\)GO TO 20"
+ },
+ {
+  "id": "mort-vls-limit",
+  "type": "regex_in_file",
+  "doc": "Density section: CS/LS/NE mortality diameter limit",
+  "file": "vls/morts.f",
+  "regex": "IF\\(D\\.LT\\.DBHSDI\\)GO TO 12"
+ },
+ {
+  "id": "sitset-ec-formax",
+  "type": "regex_in_file",
+  "doc": "Density section: EC FORMAX",
+  "file": "ec/sitset.f",
+  "regex": "DATA FORMAX/900\\./"
+ },
+ {
+  "id": "sitset-hi-formax",
+  "type": "regex_in_file",
+  "doc": "Density section: HI FORMAX",
+  "file": "hi/sitset.f",
+  "regex": "DATA FORMAX/950\\./"
+ },
+ {
+  "id": "sitset-bm-formax",
+  "type": "regex_in_file",
+  "doc": "Density section: BM FORMAX",
+  "file": "bm/sitset.f",
+  "regex": "DATA FORMAX/850\\./"
+ },
+ {
+  "id": "sitset-hi-bamax",
+  "type": "regex_in_file",
+  "doc": "Density section: HI BAMAX constant",
+  "file": "hi/sitset.f",
+  "regex": "BAMAX=SDIDEF\\(ISISP\\)\\*\\(PMSDIU/100\\.\\)\\*0\\.54542"
+ },
+ {
+  "id": "sitset-ie-bamax",
+  "type": "regex_in_file",
+  "doc": "Density section: IE BAMAX",
+  "file": "ie/sitset.f",
+  "regex": "IF\\(BAMAX\\.LE\\.0\\) BAMAX=BAMAXA\\(ITYPE\\)"
+ },
+ {
+  "id": "sitset-em-sdicon",
+  "type": "regex_in_file",
+  "doc": "Density section: EM SDICON",
+  "file": "em/sitset.f",
+  "regex": "DATA SDICON /467\\.,634\\.,696\\.,768\\.,775\\.,751\\.,707\\.,661\\.,635\\./"
+ },
+ {
+  "id": "sitset-on-bamax1",
+  "type": "regex_in_file",
+  "doc": "Density section: ON BAMAX1",
+  "file": "canada/on/sitset.f",
+  "regex": "SDIDEF\\(I\\)=BAMAX1\\(I\\)/\\(0\\.5454154\\*\\(PMSDIU/100\\.\\)\\)"
  }
 ]
