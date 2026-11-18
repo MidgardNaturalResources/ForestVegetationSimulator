@@ -3911,5 +3911,61 @@
   "doc": "Density section: ON BAMAX1",
   "file": "canada/on/sitset.f",
   "regex": "SDIDEF\\(I\\)=BAMAX1\\(I\\)/\\(0\\.5454154\\*\\(PMSDIU/100\\.\\)\\)"
+ },
+ {
+  "id": "rd-brden",
+  "type": "regex_in_file",
+  "doc": "Density section: BRDEN",
+  "file": "vbase/evtstv.f",
+  "regex": "TSTV1\\(17\\)=TSTV1\\(7\\)/\\(TSTV1\\(10\\)\\*\\*0\\.5\\)"
+ },
+ {
+  "id": "rd-arden",
+  "type": "regex_in_file",
+  "doc": "Density section: ARDEN",
+  "file": "vbase/evtstv.f",
+  "regex": "TSTV2\\(15\\)=TSTV2\\(5\\)/\\(TSTV2\\(8\\)\\*\\*0\\.5\\)"
+ },
+ {
+  "id": "rd-bba",
+  "type": "regex_in_file",
+  "doc": "Density section: before-thin BA per stockable",
+  "file": "vbase/evtstv.f",
+  "regex": "TSTV1\\(7\\)=BA/GROSPC"
+ },
+ {
+  "id": "rd-aba",
+  "type": "regex_in_file",
+  "doc": "Density section: after-thin BA per stockable",
+  "file": "vbase/evtstv.f",
+  "regex": "TSTV2\\(5\\)=BA/GROSPC"
+ },
+ {
+  "id": "rd-brden2",
+  "type": "regex_in_file",
+  "doc": "Density section: BRDEN2",
+  "file": "vbase/evtstv.f",
+  "regex": "TSTV1\\(18\\)=CRD/GROSPC"
+ },
+ {
+  "id": "rd-arden2",
+  "type": "regex_in_file",
+  "doc": "Density section: ARDEN2",
+  "file": "vbase/evtstv.f",
+  "regex": "TSTV2\\(17\\)=CRD/GROSPC"
+ },
+ {
+  "id": "rd-rdsdi",
+  "type": "regex_in_file",
+  "doc": "Density section: RDSDI",
+  "file": "vdbsqlite/dbssumry.f",
+  "regex": "DPRELDEN = REAL\\(IOSDI\\)/BTSDIX"
+ },
+ {
+  "id": "rd-isdi",
+  "type": "regex_in_file",
+  "doc": "Density section: ISDI rounding",
+  "file": "vbase/disply.f",
+  "regex": "ISDI\\(IKNT\\)=INT\\(SDIBCTMP/GROSPC \\+ 0\\.5\\)"
  }
 ]

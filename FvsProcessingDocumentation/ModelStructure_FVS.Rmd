@@ -2374,7 +2374,6 @@ Where:
 
 - AA: Calibrated intercept
 - K1: Number of trees in the calibration sample of the species
-- $i$: Index of a tree in the calibration sample
 - $HT_i$: Total height of tree $i$ (feet)
 - $DBH_i$: Diameter at breast height of tree $i$ (inches)
 - B2: Slope of equation {3.6.2.3.1}
@@ -2701,10 +2700,11 @@ Where:
 
 - CR: Crown ratio in tenths of a percent, which is multiplied by 10 to obtain the percent (in SN the result is already in percent)
 - A, B, C: Weibull parameters from equation {3.6.2.5.3}
-- X: Percentile of the tree, limited to 0.05 to 0.95
 - ISORT: Rank of the tree record by diameter (1 is the smallest)
 - ITRN: Number of tree records
 - SCALE: Density scalar, from 0.30 to 1.0
+
+The percentile X of the tree is limited to 0.05 to 0.95.
 
 The mean crown ratio, the scalar, and the minimum of B differ among the variants, as listed in the next table. In SN, RELSDI is ten times SDIAC divided by SDIDEF (6.0 when SDIDEF is not greater than 0), limited to 1.0 to 12.0, ACR is calculated with a function selected by species (for example Hoerl's equation, $ACR = \exp(a + b \ln RELSDI + c \cdot RELSDI)$), and equation {3.6.2.5.4} gives the crown ratio directly in percent. In WS, SCALE is $1.5 - RELSDI$ for the species LP, WB, PM, KP, FP, CP, LM, GP, WE, WJ, UJ and CJ; $1 - 0.00167\,(RELDEN - 100)$ for the species MC; and $1 - 0.00333\,(RELDEN - 50)$ for the other species. In all variants the scalar is limited to 0.30 to 1.0.
 
@@ -2749,7 +2749,6 @@ $$
 Where:
 
 - CR: Crown ratio (proportion)
-- CL: Crown length (feet)
 - HF: Total tree height at the end of the cycle (feet)
 - BA: Stand basal area (square feet per acre)
 - a, b, c: Coefficients; the two forms used outside CR are $CL = 5.17281 + 0.32552\,HF - 0.01675\,BA$ and $CL = -0.59373 + 0.67703\,HF$
@@ -3009,7 +3008,7 @@ Where:
 - BNX: Weighted mean of the predicted DDS of the sample trees
 - BPOPX: Weighted mean of the predicted DDS of the trees of the species within the diameter range of the sample
 - SLOP: Slope of the regression of r on the predicted DDS of the sample trees
-- DIST: Distance between BPOPX and BNX in units of the standard deviation of the predicted DDS of the sample trees, SDPRED
+- SDPRED: Standard deviation of the predicted DDS of the sample trees
 
 The regression estimator is used when the sample is similar to the population of the species in terms of the predicted growth (DIST of 1 or less), and the ratio estimator is used when it is not (DIST above 3).
 
@@ -3078,21 +3077,15 @@ The height scale factor is a direct multiplier of the predicted height increment
 **Attenuation of the scale factors.** The scale factors are attenuated over the projection, because the base model is assumed to be a more stable estimate of long-term growth than the scale factor (Dixon 2002, section 6.4.1). In the first cycle, the attenuation goal, WCI, is set to one half of the initial diameter growth calibration term. At the end of each cycle, the calibration terms for the next cycle are calculated with equation {3.6.2.6.8}. The attenuation applies to the diameter growth calibration term, COR, and to the height growth calibration term, HCOR, of a species when calibration is not suppressed for the species with keyword NOCALIB (LDGCAL is true).
 
 $$
-WCI = \frac{COR_0}{2}, \qquad CORMLT = \exp\left(-0.02773\,SFINT\right)
-$$
-
-$$
-COR = WCI\left(1 + CORMLT\right), \qquad HCOR = WCI + CORMLT\left(HCOR_0 - WCI\right)
+\begin{aligned} WCI &= \frac{COR_0}{2}, \qquad CORMLT = \exp\left(-0.02773\,SFINT\right) \\ COR &= WCI\left(1 + CORMLT\right), \qquad HCOR = WCI + CORMLT\left(HCOR_0 - WCI\right) \end{aligned}
 \tag{3.6.2.6.8}
 $$
 
 Where:
 
-- WCI: Attenuation goal, one half of the initial calibration term COR0 of the diameter growth model
 - COR0: Initial calibration term of the diameter growth model
 - HCOR0: Initial calibration term of the small-tree height growth model
 - SFINT: Years from the start of the projection to the end of the cycle just projected
-- CORMLT: Fraction of the initial departure from the goal that remains
 - COR, HCOR: Calibration terms used in the next cycle
 
 The factor CORMLT is 0.5 at 25 years, so half of the attenuation takes place in 25 years. The diameter growth term attenuates toward half of its initial value on the logarithmic scale. Because COR is a logarithm, the goal of the scale factor is the square root of its initial value. For an initial scale factor of 2.0 the goal is 1.41, and the values are 1.68, 1.54, 1.48 and 1.45 at 25, 50, 75 and 100 years. The manual (Dixon 2002, section 6.4.1 and figure 6-1) states the goal as one half of the difference between the initial scale factor and one, which is 1.5 in its example of 2.0; the two differ when the factor is not close to 1.0. The height growth term attenuates toward the same goal, WCI, which is one half of the diameter growth term and not one half of its own initial value. When the diameter growth model of a species was not calibrated, COR0 is 0, the goal is 0, and the height growth term attenuates to 0 (a scale factor of 1.0).
@@ -3927,8 +3920,8 @@ Where:
 
 - ln(DDS): Natural logarithm of the change in squared inside bark diameter over YR years (square inches); the value is bounded below at -9.21
 - CONSPP: Constant of the species; it is DGCON + COR, plus a density term in most variants (see the table)
-- DGCON: Site-specific constant of the species, calculated once in the entry point DGCONS (ln units)
-- COR: Calibration term of the species (ln units); it is zero when no calibration is done
+- DGCON: Site-specific constant of the species, calculated once in the entry point DGCONS
+- COR: Calibration term of the species; it is zero when no calibration is done
 - DGLD, DGDSQ, DGCR, DGCRSQ, DGBAL, DGDBAL: Coefficients of the species (arrays of the same names in subroutine DGF)
 - DBH: Diameter at breast height (inches)
 - CR: Crown ratio (proportion)
@@ -3964,6 +3957,17 @@ DIAGR &= (DF - DPP) \cdot BARK \\
 \tag{4.2.1.1.3}
 $$
 
+Where:
+
+- ln(DDS): Natural logarithm of the change in squared inside bark diameter over YR years (square inches), with a minimum of -9.21
+- DPP: Diameter at breast height, with a minimum of 1.0 inch (inches)
+- BATEM: Stand basal area, with a minimum of 1.0 square foot per acre (square feet per acre)
+- SI: Site index of the species (feet)
+- BARK: Bark ratio
+- CONSPP: Constant of the species, shown in the table
+
+DF is the predicted diameter at the end of the period (inches). If DIAGR is zero or less, ln(DDS) is set to -9.21.
+
 $$
 \begin{aligned}
 DF &= 0.24506 + 1.01291 \cdot DPP - 0.00084659 \cdot BA + 0.00631 \cdot SI, \quad DF \le 36.0, \quad DF \ge DPP \\
@@ -3972,6 +3976,18 @@ DIAGR &= (DF - DPP) \cdot BARK \\
 \end{aligned}
 \tag{4.2.1.1.4}
 $$
+
+Where:
+
+- ln(DDS): Natural logarithm of the change in squared inside bark diameter over YR years (square inches), with a minimum of -9.21
+- DPP: Diameter at breast height, with a minimum of 1.0 inch (inches)
+- BA: Stand basal area (square feet per acre)
+- SI: Site index of the species (feet)
+- BARK: Bark ratio
+- COR: Calibration term of the species
+- DGCON: Constant of the species from equation {4.2.1.1.2}
+
+DF is the predicted diameter at the end of the period (inches). If DIAGR is zero or less, ln(DDS) is set to -9.21.
 
 $$
 \begin{aligned}
@@ -3984,19 +4000,18 @@ $$
 
 Where:
 
-- DF: Predicted diameter at the end of the period (inches)
+- ln(DDS): Natural logarithm of the change in squared inside bark diameter over YR years (square inches), with a minimum of -9.21
 - DPP: Diameter at breast height, with a minimum of 1.0 inch (inches)
-- BATEM: Stand basal area, with a minimum of 1.0 square foot per acre in equation {4.2.1.1.3} and a minimum of 5.0 square feet per acre in equation {4.2.1.1.5} (square feet per acre)
+- BATEM: Stand basal area, with a minimum of 5.0 square feet per acre (square feet per acre)
 - BA: Stand basal area (square feet per acre)
 - SI: Site index of the species (feet)
 - BAU: Basal area in the diameter classes that are larger than the class of the tree (square feet per acre); the classes are 1-inch classes numbered INT(DBH + 1), with a maximum of 41, and the basal area of the stand is calculated by subroutine BADIST
-- DIAGR: Diameter increment (inches); if it is zero or less, ln(DDS) is set to -9.21
 - BARK: Bark ratio
 - DSTAG: Stagnation multiplier; 1.0 unless the SDIMAX keyword activates the stagnation option (ISTAGF is not 0) for the species, in which case DSTAG = 3.33333 x (1 - RELSDI) when RELSDI is greater than 0.7, where RELSDI is the stand SDI divided by the maximum SDI, with a maximum of 0.85
-- CONSPP: Constant of the species, shown in the table
-- COR: Calibration term of the species (ln units)
-- DGCON: Constant of the species from equation {4.2.1.1.2} (ln units)
-- ln(DDS): Natural logarithm of the change in squared inside bark diameter (square inches), with a minimum of -9.21
+- COR: Calibration term of the species
+- DGCON: Constant of the species from equation {4.2.1.1.2}
+
+DF is the predicted diameter at the end of the period (inches). If DIAGR is zero or less, ln(DDS) is set to -9.21.
 
 Equation {4.2.1.1.3} is the juniper and pinyon form, equation {4.2.1.1.4} is the form of the CR variant for Douglas-fir-type hardwood and other species, and equation {4.2.1.1.5} is the form of the CR variant for spruce and fir. In species GB of the UT variant the DF of equation {4.2.1.1.3} is used with the minimum BATEM of 5.0 and the DSTAG factor of equation {4.2.1.1.5}.
 
@@ -4014,13 +4029,13 @@ $$
 
 Where:
 
-- POT: Potential diameter increment (inches)
 - CR: Crown ratio (percent)
 - RMSQD: Quadratic mean diameter of the stand (inches)
 - BA*: Stand basal area (square feet per acre), set to 305 when it is 310 or more
-- FOFR, GOFAD, VALMOD: Intermediate terms (dimensionless)
-- PREDGR: Predicted diameter increment (inches)
 - ASPDG: ln(DDS) of the aspen equation (ln square inches); the ln(DDS) of the tree is ASPDG + ln(COR2) + COR
+- DBH: Diameter at breast height (inches)
+- SI: Site index of the species (feet)
+- BARK: Bark ratio
 
 The next table lists, by variant and species, the equation that DGF uses. CONSPP is the constant of the species. BAL is shown in each row because the scale differs among rows: BAL is (1 - PCT/100) x BA, and in some rows it is divided by 100 as noted. PCCF is the crown competition factor of the point of the tree. The species are listed in the order of the variants.
 
@@ -4111,11 +4126,17 @@ $$
 
 Where:
 
-- DDSS5: ln of the 5-year change in squared diameter of the small-tree equation (ln square inches)
 - SMCONS: SMCON + COR; SMCON and the coefficients SMLD, SMLBA, SMCR, SMCRSQ, SMDS, SMDBAL and SMPCCF are arrays of the species group (index SMMAPS) in subroutine DGF
-- DDSS: ln(DDS) of the small-tree equation changed to 10 years; it is 0 when the argument of the logarithm is zero or less
 - DDSL: ln(DDS) of the large-tree row of the table
 - XWT: Weight of the small-tree value, defined above
+- DBH: Diameter at breast height (inches)
+- BA: Stand basal area (square feet per acre)
+- CR: Crown ratio (proportion)
+- BAL: Basal area in larger trees (square feet per acre), as given in the table
+- PCCF: Crown competition factor of the point of the tree (percent)
+- ln(DDS): Natural logarithm of the change in squared inside bark diameter over YR years (square inches)
+
+DDSS5 is the ln of the 5-year change in squared diameter of the small-tree equation (ln square inches), and DDSS is that value changed to 10 years; DDSS is 0 when the argument of the logarithm is zero or less.
 
 **Other forms of the equation.** The remaining variants, and some species in the variants above, use other forms. In each form the result is stored in WK2(i) as ln(DDS).
 
@@ -4202,10 +4223,22 @@ BJRHO_1 = \frac{(1 - \phi\theta)(\phi - \theta)}{1 + \theta(\theta - 2\phi)}, \q
 \tag{4.2.1.1.8}
 $$
 
+Where:
+
+- BJRHO_i: Autocorrelation of the annual errors at a lag of i years (dimensionless)
+- φ: Autoregressive parameter, BJPHI; the default is 0.74 in all variants
+- θ: Moving average parameter, BJTHET; the default is 0.42 in all variants
+
 $$
 VMLT = N + 2 \sum_{i=1}^{N-1} BJRHO_i \,(N - i)
 \tag{4.2.1.1.9}
 $$
+
+Where:
+
+- VMLT: Variance multiplier of the current cycle (dimensionless)
+- N: Length of the current cycle (years); N is INT(YR) at the start of the projection and FINT in the cycles
+- BJRHO_i: Autocorrelation of the annual errors at a lag of i years, equation {4.2.1.1.8} (dimensionless)
 
 $$
 COVMLT = \sum_{i=1}^{L} BJRHO_i \, T_i
@@ -4214,14 +4247,10 @@ $$
 
 Where:
 
-- BJRHO(i): Autocorrelation of the annual errors at a lag of i years (dimensionless)
-- φ: Autoregressive parameter, BJPHI; the default is 0.74 in all variants
-- θ: Moving average parameter, BJTHET; the default is 0.42 in all variants
-- N: Length of the current cycle (years); N is INT(YR) at the start of the projection and FINT in the cycles
-- VMLT: Variance multiplier of the current cycle (dimensionless)
 - COVMLT: Covariance multiplier between the current cycle and the preceding cycle (dimensionless)
+- BJRHO_i: Autocorrelation of the annual errors at a lag of i years, equation {4.2.1.1.8} (dimensionless)
 - L: Smaller of N plus the length of the preceding cycle, minus 1, and 40
-- $T_i$: Number of pairs of years that are i years apart in the two cycles; T increases by 1 for each lag up to the smaller of the two cycle lengths, stays constant up to the larger of the two cycle lengths, and decreases by 1 for each lag after that
+- T_i: Number of pairs of years that are i years apart in the two cycles; T increases by 1 for each lag up to the smaller of the two cycle lengths, stays constant up to the larger of the two cycle lengths, and decreases by 1 for each lag after that
 
 The keyword SERLCORR changes φ and θ. DGDRIV uses VMLT and COVMLT as follows. The correlation of the errors of two successive cycles is CORR = COVMLT / sqrt(VMLT x PVMLT), where PVMLT is VMLT of the preceding cycle. For each species, the standard deviation of the ln(DDS) error is SSIGMA = sqrt(ln[(sqrt(1 + 4 x VARDG x VMLT) + 1) / 2]), and SIG1 is calculated in the same way with PVMLT. The serial correlation of the species is RHO = ln[1 + CORR x sqrt((EVARP1 - 1)(EVARP2 - 1))] / (SIG1 x SSIGMA), where EVARP1 and EVARP2 are the values inside the logarithms of SIG1 and SSIGMA. RHOCP = sqrt(1 - RHO²). VARDG is the variance of the diameter growth error of the species and is calculated from the calibration (SIGMA). Subroutine DGSCOR then computes the error of tree i as FRM = BACHLO(0, SSIGMA) x RHOCP + RHO x OLDRN(i), where BACHLO returns a draw from a normal distribution with a mean of 0 and a standard deviation of SSIGMA. A new draw is made until |FRM| is no larger than DGSD x SSIGMA. The error is zero when DGSD is less than 1.0. It is also set to zero when the predicted ln(DDS) is greater than 5.0, and it is multiplied by (ln(DDS) - 4.0) when the predicted ln(DDS) is between 4.0 and 5.0. OLDRN(i) is then replaced by FRM, which is stored on the ln scale, and the multiplier of DDS is exp(FRM).
 
@@ -4259,10 +4288,26 @@ HGMDCR = \min\left[1.0,\; CRA \left(\frac{ICR}{100}\right)^{CRB} \exp\left(CRC \
 \tag{4.2.1.1.12}
 $$
 
+Where:
+
+- HGMDCR: Crown ratio contribution (dimensionless), bounded above by 1.0
+- ICR: Crown ratio (percent)
+- CRA, CRB, CRC: Coefficients of the species; CRA is 100, CRB is 3.0 and CRC is -5.0 in CI
+
 $$
 HGMDRH = RHK \left[1 + FCTRKX \cdot \exp\left(FCTRRB \cdot FCTRXB\right)\right]^{FCTRM}
 \tag{4.2.1.1.13}
 $$
+
+Where:
+
+- HGMDRH: Relative height contribution (dimensionless)
+- RHK: Coefficient, 1.0
+- FCTRKX: (RHK / RHYXS)^(RHM - 1) - 1, where RHYXS is a coefficient of the species and RHM is a coefficient of the species (1.10 in WC)
+- FCTRRB: -RHR / (1 - RHB), where RHR and RHB are coefficients of the species
+- FCTRXB: RELHT^(1 - RHB) - RHXS^(1 - RHB), where RHXS is 0
+- FCTRM: -1 / (RHM - 1)
+- RELHT: HT / AVH, with a maximum of 1.5
 
 $$
 HTGMOD = 0.25 \cdot HGMDCR + 0.75 \cdot HGMDRH
@@ -4271,17 +4316,9 @@ $$
 
 Where:
 
-- HGMDCR: Crown ratio contribution (dimensionless), bounded above by 1.0
-- ICR: Crown ratio (percent)
-- CRA, CRB, CRC: Coefficients of the species; CRA is 100, CRB is 3.0 and CRC is -5.0 in CI
-- HGMDRH: Relative height contribution (dimensionless)
-- RHK: Coefficient, 1.0
-- FCTRKX: (RHK / RHYXS)^(RHM - 1) - 1, where RHYXS is a coefficient of the species and RHM is a coefficient of the species (1.10 in WC)
-- FCTRRB: -RHR / (1 - RHB), where RHR and RHB are coefficients of the species
-- FCTRXB: RELHT^(1 - RHB) - RHXS^(1 - RHB), where RHXS is 0
-- FCTRM: -1 / (RHM - 1)
-- RELHT: HT / AVH, with a maximum of 1.5
 - HTGMOD: Height growth modifier (dimensionless), bounded between 0.1 and 2.0; a value of zero or less is replaced by 0.1
+- HGMDCR: Crown ratio contribution from equation {4.2.1.1.12} (dimensionless)
+- HGMDRH: Relative height contribution from equation {4.2.1.1.13} (dimensionless)
 
 The height increment for the cycle is HTG = POTHTG x HTGMOD, with a lower bound of 0.1 foot. The coefficients RHR, RHYXS and RHB are arrays of the species in subroutine HTGF (the values of the WC variant are in wc/htgf.f). In SN the lower bound is applied when HTGMOD is 0.1 or less.
 
@@ -4415,26 +4452,24 @@ XWT =
 \tag{4.2.1.2.1}
 $$
 
+Where:
+
+- XWT: Weight applied to the growth estimates
+- DBH_i: Diameter at breast height of tree i (inches)
+- X_max: Maximum DBH, XMAX(i), in the diameter range (inches)
+- X_min: Minimum DBH, XMIN(i), in the diameter range (inches)
+
 $$
 \text{Estimated growth} = \left[(1 - XWT) \times STGE\right] + \left[XWT \times LTGE\right]
 \tag{4.2.1.2.2}
 $$
 
-where:
+Where:
 
-iis the FVS tree index
-
-XWT is the weight applied to the growth estimates
-
-DBH(i) is tree diameter at breast height
-
-Xmax is the maximum DBH, XMAX(i), in the diameter range
-
-Xmin is the minimum DBH, XMIN(i), in the diameter range
-
-STGE is the height growth estimate obtained using the small-tree equations
-
-LTGE is the height growth estimate obtained using the large-tree equations
+- Estimated growth: Growth estimate of the tree record: the weighted combination of the small-tree and large-tree estimates
+- XWT: Weight applied to the growth estimates, equation {4.2.1.2.1}
+- STGE: Growth estimate obtained using the small-tree equations
+- LTGE: Growth estimate obtained using the large-tree equations
 
 For diameter growth, the small-tree estimate is considered only for trees with DBH(i) less than a threshold diameter that is specific to the variant and often to the species. The threshold may be contained locally in subroutine REGENT (for example in the arrays XMAX(i), DGMIN(i) or DGMAX(i), or in the variable BKPT), or it may be contained in an array subscripted by species called BREAK(i) in the GGCOM labeled COMMON block and initialized in subroutine BLKDAT. The values are listed in the table in [Diameter increment through the projection cycle](#sec-diameter-increment-through-the-projection-cycle). Trees with DBH(i) greater than or equal to the threshold diameter keep the diameter growth estimate obtained using the large tree equations. For trees below the threshold, the small-tree estimate either replaces the large-tree estimate or is averaged with it, depending on the variant and the species. Averaging is used in the AK, CA, CS, HI, LS, NC, NE, OC, ON, OP, PN, SO, WC and WS variants for the species shown in that table, which also gives the weights. In the other variants, and for the other species of the variants listed, the small-tree estimate replaces the large-tree estimate.
 
@@ -4483,6 +4518,18 @@ DGS = \frac{DMAX}{1 + \exp\left[\alpha_0 + \alpha_1 PTBA + \alpha_2 \ln(PTBA + 2
 \tag{4.2.1.2.3}
 $$
 
+Where:
+
+- DGS: Five-year diameter increment (inches)
+- DMAX: Coefficient of the species (array in subroutine SMHGDG)
+- α0 to α9: Coefficients of the species (the array ALPHA in subroutine SMHGDG)
+- PTBA: Basal area of the point where the tree is located (square feet per acre)
+- PTBAL: Basal area in larger trees on the point (square feet per acre)
+- BOOST: Term of equation {4.2.1.2.4}
+- CR: Crown ratio (proportion)
+- RELHT: HT / AVHT, with a maximum of 1.5; AVHT is AVH, and for the regular call in the first 5 years AVHT is (5 / FINT) x AVH + ((FINT - 5) / FINT) x ATAVH
+- SI: Site index (feet); for species DF in WC, 5.21486 + 0.66486 x SI is used
+
 $$
 BOOST =
 \begin{cases}
@@ -4491,6 +4538,11 @@ BOOST =
 \end{cases}
 \tag{4.2.1.2.4}
 $$
+
+Where:
+
+- BOOST: Term of the five-year diameter increment equation {4.2.1.2.3}
+- PTBA: Basal area of the point where the tree is located (square feet per acre)
 
 $$
 HG5 = \frac{DGS}{BETA}, \qquad DG5 =
@@ -4504,17 +4556,12 @@ $$
 
 Where:
 
-- DGS: Five-year diameter increment (inches)
-- DMAX, BETA: Coefficients of the species (arrays in subroutine SMHGDG)
-- α0 to α9: Coefficients of the species (the array ALPHA in subroutine SMHGDG)
-- PTBA: Basal area of the point where the tree is located (square feet per acre)
-- PTBAL: Basal area in larger trees on the point (square feet per acre)
-- CR: Crown ratio (proportion)
-- RELHT: HT / AVHT, with a maximum of 1.5; AVHT is AVH, and for the regular call in the first 5 years AVHT is (5 / FINT) x AVH + ((FINT - 5) / FINT) x ATAVH
-- SI: Site index (feet); for species DF in WC, 5.21486 + 0.66486 x SI is used
-- HG5: Five-year height increment (feet)
 - DG5: Five-year diameter increment (inches)
+- DGS: Five-year diameter increment from equation {4.2.1.2.3} (inches)
+- BETA: Coefficient of the species (array in subroutine SMHGDG)
 - HT: Tree height (feet)
+
+HG5 is the five-year height increment (feet).
 
 In WC, PN and HI the equation is evaluated twice in each cycle to build a 10-year increment, because REGYR is 10 years in those variants; in OP it is evaluated once, with REGYR of 5 years. REGENT then forms HTGR = (HTGR + ZZRAN x 0.1) x XRHGRO x SCALE x CON x WK4(i), where ZZRAN is a normal draw redrawn when it is above 0.5 or below -2.0, XRHGRO is the user-supplied small-tree height growth multiplier (REGHMULT), CON is the calibration multiplier of the species, and WK4(i) is the climate multiplier. HTGR has a lower bound of 0.1 foot.
 
@@ -4525,10 +4572,27 @@ HTGR = POTHTG \cdot PCTRED \cdot VIGOR \cdot CON, \qquad POTHTG = \frac{SITEAR}{
 \tag{4.2.1.2.6}
 $$
 
+Where:
+
+- HTGR: Height increment before the weighting with the large-tree estimate (feet)
+- PCTRED: Density modifier from equation {4.2.1.2.7}, between 0.01 and 1.0
+- VIGOR: Vigor modifier from equation {4.2.1.2.8}; for species BC, PI, UJ, GO, AW, EM, BK, SO, AJ, RM, OJ, ER, PM, PD and AZ, it is replaced by 1 - (1 - VIGOR) / 3
+- CON: RHCON x exp(HCOR), the calibrated multiplier of the species
+- SITEAR: Site index of the species (feet)
+- RELSI: (SI - SITELO) / (SITEHI - SITELO), where SI is bounded by the arrays SITELO and SITEHI of the species
+- HTADJ: Adjustment of the species (array in subroutine REGENT; 1.10 for species RC and WL, and 1.00 for the others)
+
 $$
 PCTRED = AB_1 + X\left(AB_2 + X\left(AB_3 + X\left(AB_4 + X\left(AB_5 + X \cdot AB_6\right)\right)\right)\right), \qquad X = \min\left[300, \; AVHT \cdot \frac{CCF}{100}\right]
 \tag{4.2.1.2.7}
 $$
+
+Where:
+
+- PCTRED: Density modifier, between 0.01 and 1.0
+- AB_1 to AB_6: 1.11436, -0.011493, 0.43012E-4, -0.72221E-7, 0.5607E-10 and -0.1641E-13
+- AVHT: Average height of the 40 largest trees per acre (feet); in the establishment call, interpolated: (5 / FINT) x AVH + ((FINT - 5) / FINT) x ATAVH, and likewise for CCF
+- CCF: Stand crown competition factor (percent)
 
 $$
 VIGOR = \min\left[1.0, \; 150\, CR^{3} \exp(-6\, CR) + 0.3\right]
@@ -4537,17 +4601,8 @@ $$
 
 Where:
 
-- HTGR: Height increment before the weighting with the large-tree estimate (feet)
-- POTHTG: Potential height growth (feet)
-- SITEAR: Site index of the species (feet); RELSI = (SI - SITELO) / (SITEHI - SITELO), where SI is bounded by the arrays SITELO and SITEHI of the species
-- HTADJ: Adjustment of the species (array in subroutine REGENT; 1.10 for species RC and WL, and 1.00 for the others)
-- PCTRED: Density modifier, between 0.01 and 1.0
-- AB(1) to AB(6): 1.11436, -0.011493, 0.43012E-4, -0.72221E-7, 0.5607E-10 and -0.1641E-13
-- AVHT: Average height of the 40 largest trees per acre (feet); in the establishment call, interpolated: (5 / FINT) x AVH + ((FINT - 5) / FINT) x ATAVH, and likewise for CCF
-- CCF: Stand crown competition factor (percent)
-- VIGOR: Vigor modifier; for species BC, PI, UJ, GO, AW, EM, BK, SO, AJ, RM, OJ, ER, PM, PD and AZ, it is replaced by 1 - (1 - VIGOR) / 3
+- VIGOR: Vigor modifier
 - CR: Crown ratio (proportion)
-- CON: RHCON x exp(HCOR), the calibrated multiplier of the species
 
 For species AS and PB, HTGR = [26.9825 x (AGE + 10)^1.1752 - 26.9825 x AGE^1.1752] / (2.54 x 12) x RSIMOD x CON x 0.75, with RSIMOD = 0.5 x (1 + RELSI) and AGE the age of the tree (minimum 5 years). Then HTGR = (HTGR + ZZRAN x 0.2) x XRHGRO x SCALE x WK4(i), where ZZRAN is a normal draw redrawn when it is above 0.5 or below -2.0 (zero when DGSD is below 1.0), and the weighting of the next paragraph is applied. For trees that are not established by the establishment model, SCALE is FNT / REGYR, where FNT is FINT, or FINT - 5 in the establishment call.
 
@@ -4575,9 +4630,10 @@ Where:
 - SI: Site index of the species (feet)
 - H: Height of the tree (feet)
 - DTIME: Length of the period (years)
-- EFFAGE: Effective age of the tree on the curve (years); in EC species RC, EFFAGE is 100 when the argument of the logarithm is zero or less
 - C1 to C4: Constants given in the table
 - MODE: Argument of the subroutine, 0 or 1 (EFFAGE is 0 when MODE is 0, and is calculated from H when MODE is 1)
+
+In EC species RC, EFFAGE is 100 when the argument of the logarithm is zero or less.
 
 SO species AF uses equation {4.2.1.2.10}.
 
@@ -4588,9 +4644,10 @@ $$
 
 Where:
 
-- DOMHTGR: Dominant height growth (feet)
 - CR: Crown ratio as a proportion (the percent divided by 100 in SO; the percent divided by 10 in CA and OC, as coded)
 - RELHT: HT / AVH
+- HHT: Height growth (feet)
+- SI: Site index of the species (feet)
 
 ```{r smhtgf-forms, echo=FALSE}
 smhtgf_forms <- tibble::tribble(
@@ -4938,17 +4995,13 @@ $$
 
 Where:
 
-- DQ10: Quadratic mean diameter 10 years hence (inches)
 - P: PROB, trees per acre of a tree record
 - D: Diameter at breast height (inches)
 - DG: Diameter increment of the cycle, outside bark (inches)
-- G: Inside bark diameter increment (inches)
 - BARK: Bark ratio of the tree
 - BA: Stand basal area (square feet per acre)
 - BAMAX: Maximum stand basal area (square feet per acre)
-- BA10: Basal area 10 years hence (square feet per acre)
 - T: Stand trees per acre
-- TB: Trees per acre that correspond to BA10 and DQ10
 - Rb: Annual stand mortality rate for the approach to the maximum basal area
 
 *The individual rate.* The annual mortality rate of each tree record, Ra, is calculated with equation {4.2.1.4.2} from the tree diameter, the diameter increment of the tree, the relative diameter, the stand basal area, a species constant, and a habitat or national forest effect.
@@ -4963,7 +5016,6 @@ $$
 
 Where:
 
-- z: Logit of the annual survival rate, limited to -70 to 70 for the species WB, PY, AS, WJ, MC, LM, CW and OH of CI and in BC, and to -88.5 to 88.5 for the other species of CI and for PP in TT (the limits of the other variants are in the source file `morts.f` of the variant)
 - D: Diameter at breast height (inches), with a minimum of 0.5
 - BA: Stand basal area (square feet per acre)
 - G: Diameter increment multiplied by GMULT, described below (inches per year)
@@ -4971,6 +5023,8 @@ Where:
 - RELDBH: Diameter of the tree divided by the average diameter of the stand
 - REIN: Potential factor, described below
 - Ra: Annual mortality rate of the tree record
+
+The logit z of the annual survival rate is limited to -70 to 70 for the species WB, PY, AS, WJ, MC, LM, CW and OH of CI and in BC, and to -88.5 to 88.5 for the other species of CI and for PP in TT (the limits of the other variants are in the source file `morts.f` of the variant).
 
 The increment G is the diameter increment of the previous cycle, WK1, divided by the length of the previous cycle, OLDFNT, and by the bark ratio. In the first cycle, and when the previous increment is 0, and the predicted increment is more than 0.5 inch, G is the predicted increment divided by the bark ratio and 10. The previous increment is not less than 0.05 inch per year for a tree of 1.0 inch or less, and not less than 0.05(5 - D)/4 for a tree between 1.0 and 5.0 inches. The increment is multiplied by GMULT(1) for a tree larger than 5.0 inches and by GMULT(2) for a tree of 5.0 inches or less. GMULT and REIN are calculated once by subroutine MORCON with equation {4.2.1.4.3}.
 
@@ -4985,7 +5039,8 @@ $$
 Where:
 
 - POTEN1, POTEN2: Value of the potential array POT for the habitat type or plant association of the stand, for trees larger than 5.0 inches and for trees of 5.0 inches or less
-- POT(k): 0.25 + 0.05(k - 1), for k from 1 to 54, so POT is 0.25 to 2.90
+
+POT(k) is 0.25 + 0.05(k - 1), for k from 1 to 54, so POT is 0.25 to 2.90.
 
 The index of POT for each habitat type is the array IPDG (larger trees) or IPDG2 (smaller trees), by habitat type (30 values) and national forest (11 values in CI, IE and KT, 6 in EM, 15 in BC). These arrays are data statements of subroutine MORTS of the variant, and are not listed here. In TT the indexes are single values. The national forest is mapped to one of the IE national forests in CI by the array MAPFOR. The species constants PMSC of the Prognosis-type species are listed in the next table; the other species of the variant have a constant of 0.0.
 
@@ -5121,7 +5176,6 @@ $$
 
 Where:
 
-- CONST: Constant of the maximum SDI line, with 0.02483133 equal to $10^{-1.605}$
 - SDIMAX: Maximum SDI of the stand
 - TMD(d): Maximum trees per acre for a quadratic mean diameter d
 - d: Quadratic mean diameter (inches), DIA0 at the start of the cycle and D10 at the end
@@ -5225,7 +5279,6 @@ $$
 
 Where:
 
-- p5: Probability of mortality in 5 years
 - RIP: Annual mortality rate of the tree record
 - D: Diameter at breast height (inches), with a minimum of 0.5
 - CR: Crown ratio of the tree, as a proportion
@@ -5254,6 +5307,7 @@ Where:
 - BETA: Coefficient by species (0.216823 for most species)
 - HBH: Height of the tree, with a maximum of 4.5 feet
 - RELHT: Height of the tree divided by the average height of the 40 largest trees, with a maximum of 1.5
+- D: Diameter at breast height (inches)
 
 The rate RIP is not less than 0.001 (and, in WC and PN, not more than 0.999). The trees that die are $WKI = P\,[1 - (1 - RIP)^{FINT}]\,X$. The mortality of every record is then multiplied by the number of the pass, in repeated passes (up to 100), until the SDI is less than SDIMAX and the basal area is less than 550 square feet per acre. The form and the coefficients of each species are listed in the next table. The species of the WC, PN and OP variants differ only in the species of index 6 (blank in WC and SS in PN and OP), 23 and 24 (WA and PB in WC and PN, and MA and TO in OP).
 
@@ -5435,6 +5489,12 @@ ITFN_{2} = ITRN + 2I - 1, \qquad ITFN_{3} = ITRN + 2I
 \tag{4.3.1.2}
 $$
 
+Where:
+
+- ITFN_2, ITFN_3: Index of the second and third new record of the tree record I
+- I: Index of the original tree record
+- ITRN: Number of tree records before tripling
+
 $$
 PROB(ITFN_{2}) = 0.25\, PROB(I), \qquad PROB(ITFN_{3}) = 0.15\, PROB(I), \qquad PROB(I) \leftarrow 0.60\, PROB(I)
 \tag{4.3.1.3}
@@ -5442,10 +5502,9 @@ $$
 
 Where:
 
-- I: Index of the original tree record
-- ITRN: Number of tree records before tripling
-- ITFN: Index of the new record; the subscripts 2 and 3 identify the second and third records
 - PROB: Trees per acre of the record; WK2, the trees per acre that die in the cycle, is divided in the same way
+- I: Index of the original tree record
+- ITFN_2, ITFN_3: Index of the second and third new record, equation {4.3.1.2}
 
 The attributes of the original record are copied to the two new records, as shown in the next table. The new records are given the same crown width, volume, defect, damage and identification values as the original record.
 
@@ -5540,6 +5599,13 @@ BAL = \left(1 - \frac{PCT}{100}\right) BA, \qquad RDDS = \min\left[2.6, \; \exp\
 \tag{4.3.1.5}
 $$
 
+Where:
+
+- RDDS: Ratio of the diameter increment with fertilizer to the increment without it, with a maximum of 2.6
+- PCT: Percentile of the tree in the basal area distribution (percent)
+- BA: Stand basal area (square feet per acre)
+- DBH: Diameter at breast height (inches)
+
 $$
 \begin{aligned}
 DIB &= DBH \cdot BARK, \qquad DDS = 2 \cdot DIB \cdot DG + DG^{2} \\
@@ -5549,6 +5615,18 @@ DG &\leftarrow \sqrt{DIB^{2} + DDSIT \cdot \frac{YR}{FINT}} - DIB
 \tag{4.3.1.6}
 $$
 
+Where:
+
+- DG: Diameter increment inside bark on the YR basis (inches)
+- DBH: Diameter at breast height (inches)
+- BARK: Bark ratio, BRATIO(species, DBH, HT)
+- RDDS: Ratio of the diameter increment with fertilizer to the increment without it, equation {4.3.1.5}
+- IFLEN: Number of years of the cycle that are affected by the fertilizer, equation {4.3.1.4} (years)
+- IFINT: Length of the cycle, FINT (years)
+- FEFF: Multiplier of the effect of the FERTILIZ keyword (the fourth parameter of the activity)
+- YR: Period length of the growth models (years), set by the variant (CONTRL.F77)
+- FINT: Length of the cycle (years)
+
 $$
 HTG \leftarrow \frac{HTG}{YR}\left[RHT \cdot IFLEN \cdot FEFF + \left(IFINT - IFLEN\right)\right] \frac{YR}{FINT}, \qquad RHT = 1.1626
 \tag{4.3.1.7}
@@ -5556,19 +5634,12 @@ $$
 
 Where:
 
-- PCT: Percentile of the tree in the basal area distribution (percent)
-- BA: Stand basal area (square feet per acre)
-- DBH: Diameter at breast height (inches)
-- BARK: Bark ratio, BRATIO(species, DBH, HT)
-- DIB: Diameter inside bark (inches)
-- DG: Diameter increment inside bark on the YR basis (inches)
-- DDS: Change in squared inside bark diameter on the YR basis (square inches)
-- RDDS: Ratio of the diameter increment with fertilizer to the increment without it (dimensionless), with a maximum of 2.6
+- HTG: Height increment (feet)
+- IFLEN: Number of years of the cycle that are affected by the fertilizer, equation {4.3.1.4} (years)
+- IFINT: Length of the cycle, FINT (years)
 - FEFF: Multiplier of the effect of the FERTILIZ keyword (the fourth parameter of the activity)
 - YR: Period length of the growth models (years), set by the variant (CONTRL.F77)
 - FINT: Length of the cycle (years)
-- HTG: Height increment (feet)
-- RHT: Ratio of the height increment with fertilizer to the increment without it; a constant
 
 The result remains an inside bark increment on the YR basis, which subroutine GRADD scales to the cycle length. The effect of the fertilizer is on the 10 years; the response of a cycle that is shorter than 10 years is the response of IFLEN years, and FFERT prints a warning when IFLEN is not 10 (including a 5-year cycle in which the whole cycle is affected), and calls subroutine RCDSET with the code 1 after each warning. FFERT also prints a warning when the habitat code ICL5 is not 520 or 530, and when the contribution of the species with the sequence numbers 3 and 4 to the stand crown competition factor, (RELDSP(3) + RELDSP(4)) / RELDEN, is less than 0.5; these species are Douglas-fir and grand fir in the variants where those are the species 3 and 4 (the Inland Empire variant is an example), as shown in the next table.
 
@@ -5966,6 +6037,13 @@ PDIFPY &= \frac{CRNEW - ICR}{ICR \cdot FINT}
 \tag{4.8.1.1}
 $$
 
+Where:
+
+- CHG: Change in crown ratio of the cycle (percent); the limit is a fraction of the crown ratio at the start of the cycle (for example, ICR of 50 and FINT of 10 years allow a change of 5 percentage points)
+- ICR: Crown ratio of the tree at the start of the cycle, as an integer percent (percent)
+- CRNEW: Crown ratio of the tree from the crown ratio model (percent)
+- FINT: Length of the projection cycle (years)
+
 $$
 CRMAX = \frac{CRLN + HTG}{HT + HTG} \times 100, \qquad CRLN = \frac{HT \cdot ICR}{100}
 \tag{4.8.1.2}
@@ -5973,12 +6051,10 @@ $$
 
 Where:
 
-- CHG: Change in crown ratio of the cycle (percent); the limit is a fraction of the crown ratio at the start of the cycle (for example, ICR of 50 and FINT of 10 years allow a change of 5 percentage points)
-- PDIFPY: Relative change per year (per year)
 - CRMAX: Largest crown ratio that the height growth allows (percent)
-- CRLN: Crown length (feet)
 - HT: Total height of the tree (feet); the value is the height after the update
 - HTG: Height increment of the cycle (feet)
+- ICR: Crown ratio of the tree at the start of the cycle (percent)
 
 The height growth limit of equation {4.8.1.2} is not applied in the NI-type model of KT, BC, EM species LL and the NI-type species of IE, where the height of the tree enters the equation. In OC and OP it is applied to the ORGANON trees. HT in equation {4.8.1.2} is the height after the update, so the equation adds HTG to a height that already includes it. The same applies to HF in the crown length equations, where HF = HT + HTG.
 
@@ -5996,13 +6072,14 @@ $$
 
 Where:
 
-- ACRNEW: Mean crown ratio of the stand for the species, from relative density (percent)
 - C0, C1, WEIBA, WEIBB0, WEIBB1, WEIBC0, WEIBC1: Coefficients of the species (arrays of the same names in subroutine CROWN)
-- B: At least 1.0 or 3.0, as stated in the table
-- C: At least 2.0
-- X: Quantile of the tree, from its rank in the diameter distribution; the smallest tree has the smallest X
 - SCALE: Density scale, with the forms of equation {4.8.1.4}
 - CRNEW: Crown ratio of the model (percent); the factor 10 converts the Weibull value in tenths to percent
+- RELSDI: Relative density, SDIAC / SDIDEF (1.0 when SDIDEF is not positive), with a maximum of 1.5
+- ISORT: Rank of the tree in the diameter distribution of the stand, 1 for the smallest and ITRN for the largest
+- ITRN: Number of tree records
+
+B is at least 1.0 or 3.0, as stated in the table, and C is at least 2.0. The quantile X is smallest for the smallest tree.
 
 $$
 \begin{aligned}
@@ -6013,6 +6090,12 @@ SCALE_3 &= 1 - 0.00333\,(RELDEN - 50)
 \qquad (0.30 \le SCALE \le 1.0)
 \tag{4.8.1.4}
 $$
+
+Where:
+
+- SCALE: Density scale; the form used by each variant is given in the table
+- RELDEN: Stand crown competition factor (percent)
+- RELSDI: Relative density, SDIAC / SDIDEF (1.0 when SDIDEF is not positive), with a maximum of 1.5
 
 SCALE form 1 is used in the variants shown with that form in the table, and SCALE form 2 in CA, NC and OC. In WS, SCALE_2 is used for species LP, WB, PM, KP, FP, CP, LM, GP, WE, WJ, UJ, CJ, SCALE_3 for species SP, DF, WF, GS, IC, JP, RF, PP, WP, SF, MP, BD, RW, MH, LO, CY, BL, BO, VO, IO, TO, GC, AS, CL, MA, DG, BM, OS, OH, and SCALE_1 for species MC. The same Weibull form is used for dubbing missing crown ratios, as described in [Dub missing crown ratios](#sec-model-calibration-and-other-setup-tasks).
 
@@ -6034,6 +6117,7 @@ Where:
 
 - a: MCREQN(2); b: MCREQN(4) in forms 1 and 2, MCREQN(5) in form 4, MCREQN(6) in form 5; c: MCREQN(3) in forms 1 and 3 (the coefficients in the source are named AMCR, BMCR and CMCR)
 - RELSDI: Relative density, bounded 1 to 12
+- ACRNEW: Mean crown ratio of the stand for the species (percent)
 
 $$
 CRNEW = 100 \cdot \frac{CL}{HF}, \qquad CL = \min\left[HF, \; \max\left(1, \; CL_0\right)\right], \qquad CL_0 =
@@ -6046,9 +6130,9 @@ $$
 
 Where:
 
-- CL: Crown length of the tree at the end of the cycle (feet)
 - HF: HT + HTG (feet)
 - BA: Stand basal area (square feet per acre)
+- CRNEW: Crown ratio of the tree at the end of the cycle (percent)
 
 In equation {4.8.1.6} the crown ratio does not depend on the previous crown ratio of the tree except through the limits of equation {4.8.1.1}.
 
@@ -6066,6 +6150,8 @@ Where:
 - PRD: Relative density of the point where the tree is located: the Zeide relative density of the point divided by the maximum SDI of the point, and 0 when the maximum SDI of the point is not positive
 - QMDPLT: Quadratic mean diameter of the point, sqrt(PTBAA / PTPA / 0.005454) (inches), with a minimum of 1.0
 - HT: Total height of the tree after the update (feet); 12 x HT / DBH is the height-diameter ratio, HDR
+- DBH: Diameter at breast height (inches)
+- CRNEW: Crown ratio of the tree at the end of the cycle (percent)
 
 $$
 \begin{aligned}
@@ -6077,6 +6163,9 @@ $$
 Where:
 
 - BCR1 to BCR4: Coefficients of the species (arrays of the same names); in LS, NE and ON the equation is written with exp(BCR4 x DBH) and the coefficient BCR4 has the opposite sign
+- BA: Stand basal area (square feet per acre)
+- DBH: Diameter at breast height (inches)
+- CRNEW: Crown ratio of the tree at the end of the cycle (percent)
 
 $$
 \begin{aligned}
@@ -6094,6 +6183,14 @@ Where:
 - PCR(end): PCR with the attributes at the end of the cycle
 - PCR(start): PCR with the attributes at the start of the cycle: DBH - DG / BARK, HT - HTG, PCT of the previous cycle (OLDPCT, or the present PCT when the stand was thinned), and the stand BA and RELDEN of the previous cycle (when the CCF of the previous cycle was less than 100, the present BA and RELDEN)
 - PCT: Percentile of the tree in the basal area distribution, with a minimum of 0.01
+- BA: Stand basal area (square feet per acre)
+- RELDEN: Stand crown competition factor (percent)
+- DBH: Diameter at breast height (inches)
+- HT: Total height after the update (feet)
+- ICR: Crown ratio of the tree at the start of the cycle (percent)
+- CRNMLT: Crown ratio multiplier of the species from the CRNMULT keyword (1.0 when no multiplier is given)
+- CHG: Change in crown ratio of the cycle, a proportion in the NI-type model
+- ICRI: Crown ratio of the tree after the change, rounded to an integer (percent), before the limits of CROWN are applied
 
 In the NI-type model CHG is a proportion; it is limited to 1 percent of ICR per year (equation {4.8.1.1}, with CHG and ICR in the same units). In KT the minimum crown ratio is 5 (when CRNMLT is 1.0), and there is no minimum of 10 and no height growth limit (CRMAX). A random draw, BACHLO(CR, CRSD) with CRSD of 6.35, replaces the value only when missing crown ratios are dubbed with DGSD of 1.0 or more; it is not used in the cycles. A tree smaller than 3.0 inches at the start of the cycle (DBH - DG / BARK) in KT, EM (species LL) and IE (NI-type species) keeps its crown ratio; subroutine REGENT dubs the crown ratio when the tree reaches 3.0 inches.
 
@@ -6258,10 +6355,18 @@ $$
 
 Where:
 
+- CW: Crown width (feet)
 - a to f, k: Coefficients of the species and equation (constants in the CASE of the equation code in the source file)
-- Terms in brackets are included only for some species; model 05 has the terms of BAREA and EL, H, or CL omitted for some species (the 5-character case shows the terms)
 - D: Diameter at breast height (inches); equations 01 and 02 use MIND (5.0 inches) as the minimum diameter, equations 04, 05 and 06 use OMIND (1.0 inch), equation 03 uses 1.0 inch, and equation 08 gives 0.5 foot below 0.1 inch
-- Equation 07 (Moeur) is coded but is not assigned to any species
+- H: Total tree height (feet)
+- CR: Crown ratio (percent)
+- CL: Crown length, CR x H / 100 (feet)
+- BAREA: Stand basal area, with a minimum of 1.0 (square feet per acre)
+- EL: Elevation in hundreds of feet, limited to a range by species
+- HI: Hopkins index of the western equations, defined in the text above
+- BF: Multiplier of the Crookston R6 model 2 equations for the national forest, and 1.0 for the other forests
+
+Terms in brackets are included only for some species; model 05 has the terms of BAREA and EL, H, or CL omitted for some species (the 5-character case shows the terms). Equation 07 (Moeur) is coded but is not assigned to any species.
 
 For example, equation 01 of species 066 is CW = 2.1431 + 1.3447 x D - 0.0228 x D^2 (cap 29 feet), and equation 05 of species 122 is CW = 4.7762 x BF x D^0.74126 x H^-0.28734 x CL^0.17137 x (BAREA + 1)^-0.00602 x (e^EL)^-0.00209 (cap 50 feet; `vie/cwcalc.f` lines 1215 and 1773).
 
@@ -6395,10 +6500,13 @@ $$
 
 Where:
 
+- CW: Crown width (feet)
 - a, b, c, d, e: Coefficients of the species and equation (constants in the CASE of the equation code in the source file); equation 01 has three forms, with the terms for D alone, D and CR, or D, CR and HI
 - D: Diameter at breast height (inches)
 - CR: Crown ratio (percent)
-- Equation 05 (Smith) is coded in metric units and converted to feet
+- HI: Hopkins index of the eastern equations, defined in the text above
+
+Equation 05 (Smith) is coded in metric units and converted to feet.
 
 The forest-grown equation of the species (IWHO = 0) is used by CWIDTH. The open-grown equation (IWHO = 1) is used only by subroutine CCFCAL of the eastern variants to calculate the crown competition factor. The equations of each variant are shown in the next table, where each species is shown with its FIA species code of the forest-grown equation. Species that have no code in the species list of the variant are not shown.
 
@@ -7066,6 +7174,48 @@ Where:
 - T_i: Trees per acre of record i, PROB(i) when IWHO is 1 or WK4(i) when IWHO is 2 (trees per acre)
 
 The limit of 86 on the exponent avoids a numerical underflow (source comment).
+
+**Relative density of the stand.** The event monitor variables BRDEN and ARDEN are the relative density of Curtis (1982) of the stand before and after a thinning (Dixon 2002, section 5.5.2.2). Subroutine EVTSTV computes them from the stand values of DENSE, as shown in equation {4.9.1.30}, and sets them to 0 when RMSQD is 0 (vbase/evtstv.f:270,281,288-292 and 509,512,535-537); it does not use entry RDCLS.
+
+$$
+BRDEN, \; ARDEN = \frac{BA / GROSPC}{\sqrt{RMSQD}}
+\tag{4.9.1.30}
+$$
+
+Where:
+
+- BRDEN, ARDEN: Relative density of Curtis (1982) of the stand before and after a thinning
+- BA: Stand basal area before or after the thinning, equation {4.9.1.2} (square feet per acre)
+- GROSPC: Reciprocal of the stockable fraction of the points (dimensionless)
+- RMSQD: Quadratic mean diameter of the stand before or after the thinning, equation {4.9.1.3} (inches)
+
+The event monitor variables BRDEN2 and ARDEN2 are the relative density of SILVAH of the stand before and after a thinning. EVTSTV computes them with entry RDCLS2 for all species and all diameters, as shown in equation {4.9.1.31} (vbase/evtstv.f:294-295 and 562-563). RDCLS2 returns 0 outside the NE variant.
+
+$$
+BRDEN2, \; ARDEN2 = \frac{RD_{S}}{GROSPC}
+\tag{4.9.1.31}
+$$
+
+Where:
+
+- BRDEN2, ARDEN2: Relative density of SILVAH of the stand before and after a thinning
+- RD_{S}: Relative density of SILVAH of all live records of the stand at or above 1.0 inch, equation {4.9.1.28}
+- GROSPC: Reciprocal of the stockable fraction of the points (dimensionless)
+
+The ratio of the stand SDI to the maximum SDI is the column RDSDI of the FVS_Summary2 database table. The SDI of the summary table is the Zeide SDI when LZEIDE is true and the Stage SDI otherwise, rounded to an integer (vbase/disply.f:325,334,336-338). RDSDI is that integer divided by the maximum SDI before thinning, as shown in equation {4.9.1.32}; the records that report the after-thinning values use the after-thinning SDI as the numerator and the same denominator (vdbsqlite/dbssumry.f:301,509,528). The crown routines use the ratio of SDIAC to the maximum SDI of each species, RELSDI, which is described in [Computing crown ratio change and crown width](#sec-computing-crown-ratio-change-and-crown-width).
+
+$$
+\begin{aligned} RDSDI &= \frac{ISDI}{BTSDIX} \\ ISDI &= INT\left(\frac{SDI}{GROSPC} + 0.5\right) \end{aligned}
+\tag{4.9.1.32}
+$$
+
+Where:
+
+- RDSDI: Ratio of the SDI of the summary table to the maximum SDI before thinning
+- ISDI: SDI of the summary table (trees per acre)
+- BTSDIX: Maximum SDI of the stand before thinning, from SDICAL in GRINCR (trees per acre)
+- SDI: SDIBC2 or SDIBC (before thinning), or SDIAC2 or SDIAC (after thinning), as described in the text; SDIBC2 and SDIAC2 when LZEIDE is true (trees per acre)
+- GROSPC: Reciprocal of the stockable fraction of the points (dimensionless)
 
 **Diameter limit of the SDI based mortality sums.** The mortality routines exclude trees below a diameter limit from the SDI sums, as shown in the next table.
 
