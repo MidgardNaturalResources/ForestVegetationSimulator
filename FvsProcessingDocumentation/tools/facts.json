@@ -4800,5 +4800,124 @@
   "doc": "compress",
   "file": "estb/estab.f",
   "regex": "ITEMP=MXRR/2"
+ },
+ {
+  "id": "vol-lstart-skip",
+  "type": "regex_in_file",
+  "doc": "VOLS no DG when LSTART",
+  "file": "ie/vols.f",
+  "regex": "IF\\(\\.NOT\\.LSTART\\) D=D\\+DG\\(I\\)/BARK"
+ },
+ {
+  "id": "vol-lstart-org",
+  "type": "regex_in_file",
+  "doc": "VOLS no DG when LSTART (OC OP)",
+  "file": "organon/vols.f",
+  "regex": "IF\\(\\.NOT\\.LSTART\\) D=D\\+DG\\(I\\)/BARK"
+ },
+ {
+  "id": "vol-lstart-bc",
+  "type": "regex_in_file",
+  "doc": "VOLS no DG when LSTART (BC)",
+  "file": "canada/bc/vols.f",
+  "regex": "IF\\(\\.NOT\\.LSTART\\) D=D\\+DG\\(I\\)/BARK"
+ },
+ {
+  "id": "vol-lstart-on",
+  "type": "regex_in_file",
+  "doc": "VOLS no DG when LSTART (ON)",
+  "file": "canada/on/vols.f",
+  "regex": "IF\\(\\.NOT\\.LSTART\\) D=D\\+DG\\(I\\)/BARK"
+ },
+ {
+  "id": "vol-fvs-init",
+  "type": "regex_in_file",
+  "doc": "initial VOLS call after CRATET",
+  "file": "base/fvs.f",
+  "regex": "CALL CRATET[\\s\\S]{0,400}CALL VOLS"
+ },
+ {
+  "id": "vol-fvs-lstart",
+  "type": "regex_in_file",
+  "doc": "LSTART false after init",
+  "file": "base/fvs.f",
+  "regex": "LSTART = \\.FALSE\\."
+ },
+ {
+  "id": "vol-fvsstd0",
+  "type": "regex_in_file",
+  "doc": "FVSSTD(1)",
+  "file": "base/fvs.f",
+  "regex": "CALL FVSSTD \\(1\\)"
+ },
+ {
+  "id": "vol-cuts-wk2",
+  "type": "regex_in_file",
+  "doc": "removed total cubic",
+  "file": "vbase/cuts.f",
+  "regex": "WK2\\(IT\\)=PREM\\*CFV\\(IT\\)"
+ },
+ {
+  "id": "vol-cuts-prem2",
+  "type": "regex_in_file",
+  "doc": "PREM2",
+  "file": "vbase/cuts.f",
+  "regex": "PREM2 = AMAX1\\(0\\.0,PREM - DSNG\\(IT\\) - SSNG\\(IT\\)\\)"
+ },
+ {
+  "id": "vol-cuts-wk5",
+  "type": "regex_in_file",
+  "doc": "removed merch cubic",
+  "file": "vbase/cuts.f",
+  "regex": "WK5\\(IT\\)=PREM2\\*MCFV\\(IT\\)"
+ },
+ {
+  "id": "vol-cuts-wk7",
+  "type": "regex_in_file",
+  "doc": "removed sawlog cubic",
+  "file": "vbase/cuts.f",
+  "regex": "WK7\\(IT\\)=PREM2\\*SCFV\\(IT\\)"
+ },
+ {
+  "id": "vol-cuts-wk6",
+  "type": "regex_in_file",
+  "doc": "removed board foot",
+  "file": "vbase/cuts.f",
+  "regex": "WK6\\(IT\\)=PREM2\\*BFV\\(IT\\)"
+ },
+ {
+  "id": "vol-cuts-cfcut",
+  "type": "regex_in_file",
+  "doc": "CFCUT",
+  "file": "vbase/cuts.f",
+  "regex": "CFCUT=CFCUT\\+PREM\\*CFV\\(IT\\)"
+ },
+ {
+  "id": "vol-cuts-cmcut",
+  "type": "regex_in_file",
+  "doc": "CMCUT",
+  "file": "vbase/cuts.f",
+  "regex": "CMCUT=CMCUT\\+PREM\\*\\(1\\.-PRLOST\\)\\*MCFV\\(IT\\)"
+ },
+ {
+  "id": "vol-cuts-prtrls",
+  "type": "regex_in_file",
+  "doc": "PRTRLS 2 and 3",
+  "file": "vbase/cuts.f",
+  "regex": "CALL PRTRLS \\(2\\)[\\s\\S]{0,60}CALL PRTRLS \\(3\\)"
+ },
+ {
+  "id": "vol-prtrls-cfv",
+  "type": "regex_in_file",
+  "doc": "PRTRLS prints stored volumes",
+  "file": "vbase/prtrls.f",
+  "regex": "IDMR,PCT\\(I\\),IPTBAL,CFV\\(I\\),MCFV\\(I\\),SCFV\\(I\\),BFV\\(I\\)"
+ },
+ {
+  "id": "vol-grincr-cuts",
+  "type": "regex_in_file",
+  "doc": "CUTS before growth",
+  "file": "base/grincr.f",
+  "regex": "CALL CUTS"
  }
 ]

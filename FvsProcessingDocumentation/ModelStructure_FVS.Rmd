@@ -3598,6 +3598,8 @@ Subroutine FVS calls subroutine CWIDTH which calls subroutine CWCALC to estimate
 
 Subroutine FVS calls subroutine VOLS to compute volume estimates for the initial inventory. Tree record percentiles in the various volume distributions are then estimated when subroutine FVS calls subroutines PCTILE and DIST for the various volume attributes.
 
+**Volume at the start of the projection (cycle 0).** The logical variable LSTART is set true at the start of the run (`base/fvs.f:90`). Subroutine FVS calls CRATET before it calls VOLS (`fvs.f:197`, `fvs.f:211`), so the initial volumes use the heights and crown ratios that were dubbed in CRATET, and the diameters and heights of the inventory. VOLS adds no diameter increment while LSTART is true: the statement `IF(.NOT.LSTART) D=D+DG(I)/BARK` is skipped (`ie/vols.f:151`, `organon/vols.f:170`, `canada/bc/vols.f:143`, `canada/on/vols.f:132`). The per-tree volumes, biomass and carbon (CFV, BFV, MCFV, SCFV and the biomass and carbon arrays) are multiplied by PROB to give per-acre values for the percentile calculations (PCTILE and DIST), and then divided by PROB again to give per-tree values (`fvs.f:215-310`). Subroutine FVS then calls EXTREE, DISPLY and PRTRLS (argument 1), so the initial stand statistics and the initial tree list contain the volumes of the inventory trees (`fvs.f:321-328`). It calls FVSSTD with argument 1 to store the cycle 0 volumes (`fvs.f:337`), purges the dead trees of the inventory by setting IREC2 to MAXTP1 (`fvs.f:342`), and sets LSTART false (`fvs.f:355`). The per-tree volumes stored by this call are the volumes that the mortality volume in UPDATE and the removed volume in CUTS use in the first projection cycle. The paths of stop and restart that skip this block were not traced.
+
 Subroutine FVS then calls subroutine EXTREE to assign example trees to the arrays which will be used in the Attributes of Selected Sample Trees table in the main output file.
 
 If the cover extension is being used, subroutine FVS makes calls to cover extension subroutines to compute shrub densities, browse statistics, and canopy cover estimates for the initial stand inventory.
@@ -4177,6 +4179,35 @@ The DO 1700 loop implements results from the trial thinnings if minimum harvest 
 If the trees per acre representation for a tree record is reduced to zero (i.e. all of the trees represented by that tree record are cut), subroutine CUTS calls subroutine TREDEL to delete those tree records from the tree list. Subroutine SPESRT is then called to realign the species ordered sort for the remaining tree records and subroutine RDPSRT is called to sort the IND(i) array from largest to smallest, in terms of diameter, for residual trees in the stand.
 
 Subroutine CUTS calls several subroutines to produce tree lists for cut tree records and the residual stand. Subroutine PRTRLS produces a cut tree list, requested with the CUTLIST keyword record, and an after treatment live tree list; subroutine FVSSTD is called to write a cut tree list for the FVSStand post-processer, requested with the FVSSTAND keyword record; subroutines DBS_FIAVBC_CUTLST and DBS_FIAVBC_ATRTLS write the corresponding FIA-VBC cut list and after treatment tree list tables to the output database when those tables have been requested; and subroutine SVCUTS is called to write files needed for a stand visualization of the thinning if requested using the SVS keyword record.
+
+**Volume of the removed trees and of the after treatment records.** Subroutine CUTS does not call VOLS. It uses the per-tree volumes that were stored by the last call to VOLS, which is the call of the previous cycle (UPDATE) or, in the first cycle, the initial call of subroutine FVS. CUTS is called near the start of the cycle, before the growth is estimated (`base/grincr.f:292`), so the DBH and HT of the cut records and the volumes of the removed trees are the values of the start of the cycle. For each tree record that is cut, the removed volumes are the products of the trees per acre removed and the stored volumes, as shown in equation {4.1.1.1} (`vbase/cuts.f:1686-1691`). The biomass and carbon of the removed trees follow the same pattern: the non-product values (above-ground and foliage biomass and carbon) are multiplied by PREM, and the product values (merchantable and sawlog biomass and carbon) are multiplied by PREM2 (`cuts.f:1693-1702`). The totals that CUTS accumulates for the trial thinning, CFCUT, CMCUT, SCCUT and BFCUT, use the same stored volumes, with PREM x (1 - PRLOST) for the merchantable, sawlog and board foot volumes, where PRLOST is the proportion lost with the YARDLOSS keyword record (`cuts.f:1394-1397`). The stored volumes are also passed to the economics extension (`cuts.f:1666-1673`) and are used for the distribution of the removed volume (OCVREM and the other removal arrays, `cuts.f:1777-1778`).
+
+$$
+\begin{aligned}
+WK2 &= PREM \cdot CFV \\
+PREM2 &= \max\left(0, \; PREM - DSNG - SSNG\right) \\
+WK5 &= PREM2 \cdot MCFV \\
+WK7 &= PREM2 \cdot SCFV \\
+WK6 &= PREM2 \cdot BFV
+\end{aligned}
+\tag{4.1.1.1}
+$$
+
+Where:
+
+- WK2: Total cubic foot volume removed from the record (cubic feet per acre)
+- WK5: Merchantable cubic foot volume removed from the record (cubic feet per acre)
+- WK7: Sawlog cubic foot volume removed from the record (cubic feet per acre)
+- WK6: Merchantable board foot volume removed from the record (board feet per acre)
+- PREM: Trees per acre removed from the record (trees per acre)
+- DSNG: Trees per acre of the record left in the stand as down snags by the YARDLOSS keyword record (trees per acre)
+- SSNG: Trees per acre of the record left in the stand as standing snags by the YARDLOSS keyword record (trees per acre)
+- CFV: Total cubic foot volume of a tree of the record, as stored by the last call to VOLS (cubic feet per tree)
+- MCFV: Merchantable cubic foot volume of a tree of the record, as stored by VOLS (cubic feet per tree)
+- SCFV: Sawlog cubic foot volume of a tree of the record, as stored by VOLS (cubic feet per tree)
+- BFV: Merchantable board foot volume of a tree of the record, as stored by VOLS (board feet per tree)
+
+After the volumes are accumulated, CUTS calls PRTRLS with argument 2 for the cut list and with argument 3 for the after treatment list, and then the corresponding database routines (`cuts.f:1735-1740`). PRTRLS prints the stored CFV, MCFV, SCFV and BFV of each record, and does not calculate volumes (`vbase/prtrls.f:371-425`). The after treatment list holds the residual trees, whose PROB has been reduced by the cut. Their diameters, heights and volumes are the start-of-cycle values as well. All variants, including BC and ON, compile `vbase/cuts.f` (`bin/FVSbc_sourceList.txt:96`, `bin/FVSon_sourceList.txt:107`); BC and ON compile `metric/vbase/prtrls.f` instead of `vbase/prtrls.f` (`bin/FVSbc_sourceList.txt:93`, `bin/FVSon_sourceList.txt:103`), which was not compared. The file `canada/on/cuts.f` is not in the source list of ON.
 
 Processing control returns to subroutine GRINCR to do some post-thinning updating of stand statistics and other control variables. GRINCR calls subroutine DENSE to update stand density statistics if any thinning occurred. GRINCR next computes values of some predefined after-thinning event monitor variables. Subroutine SDICAL is called to compute the after-thinning stand SDI maximum; SDICLS, which is an entry point in subroutine SDICAL, is called to compute the after-thinning stand SDI by two methods (Reineke 1933 and Zeide 1983); SILFTY, an entry point in subroutine SDICAL, is called to compute the after-thinning SILVAH forest type; and subroutine SSTAGE is called to compute the after-thinning stand structural stage. Other code segments are called for extensions that may be part of the model (e.g. CVBROW and CVCNOP for the cover extension). These will be individual subroutines if the extension is part of the model, or entry points in the corresponding “EX__” subroutine if the extension is not part of the model (e.g. subroutine EXCOV for the cover extension). GRINCR is now ready to call the event monitor for processing after-thinning actions.
 
