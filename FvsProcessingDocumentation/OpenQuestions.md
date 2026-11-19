@@ -471,3 +471,18 @@ ORGANON crown ratio dubbing (OC and OP, section 3.6.2.3, equations {3.6.2.3.17} 
 - Dubbed ORGANON crown ratios are limited to 0.05 to 1.0 (5 to 100 percent), and the FVS Weibull dubbing in CROWN is limited to 5 to 95 percent; ORGANON values are not limited to 95 when loaded (`oc/cratet.f:359`).
 - All records, including those of non-valid species with a surrogate FIA code, enter CRCALIB and PRDCR, but only valid ORGANON trees are reloaded; the effect of the surrogate records on the calibration multiplier was not traced (same note as for heights).
 - The values of the coefficient arrays HCBPAR and MCWPAR are cited by name and line only. The CCFL for trees above 50 inches uses a table by inch (`organon/diamcal.f:540-558`); it is described in words only. Model type 4 (RAP) is not documented.
+
+ORGANON tripling (OC and OP, section 4.3.1, equations {4.3.1.8} and {4.3.1.9}):
+- INDS(5) is set to 0 in `oc/grinit.f:360` and `op/grinit.f:358` and nothing else in the `.f` and `.F77` files outside `archive/` and `working/` assigns it (grep), so GROW, DGTRIP, HGTRIP and XTRIP never triple in OC and OP. The code is described as inactive.
+- A record of a major group that DGTRIP triples is a candidate for HGTRIP in the same cycle (`organon/grow.f:110,115-153`), so up to nine records could result from one. This was read from the code, not tested.
+- The ORGANON split is one third of the trees per acre for each record; `oc/dgdriv.f:60-80` and `op/dgdriv.f` describe the FVS 60, 25 and 15 percent split. How FVS would read back a changed NTREES from EXECUTE if INDS(5) were 1 was not traced.
+- The wood quality arrays (BRCNT, BRHT, BRDIA, JCORE) that XTRIP also copies, and the extra record-count conditions when WOODQ is true, are not documented; WOODQ is off by default (`oc/grinit.f:365`).
+- The values of the arrays DGLRES, DGURES, HGLRES and HGURES are cited by name and line only.
+
+Regeneration record allocation (section 4.7, equations {4.7.1.1} to {4.7.1.7}):
+- The keyword PASSALL sets the variable CONFID (`estb/esin.f:556-557`), which is copied to PASMAX; the names do not match the meaning ("maximum number of excess trees passed per plot per species").
+- The number of records of excess trees uses the constant 5.0 (`estb/estab.f:1289`), not PASMAX, so PASMAX only limits the trees per acre of those records.
+- The shade adjustment of planted trees replaced an earlier formula that is still commented out (`estab.f:1004-1009`).
+- In the existing text of Step 12, "5 trees per stocked plot" is the default of PASMAX only; ingrowth uses 15 and PASSALL changes it.
+- The records are created for each plot copy, so a planting makes (number of plots) x DUP x m records per request (m from equation {4.7.1.7}); the existing text says one record per species per plot.
+- Not read, so not documented: ESTOCK, ESTPP, ESNSPE, ESPADV, ESPSUB, ESPXCS, ESDLAY, ESADVH, ESSUBH, ESXCSH, ESGENT, and the partial-model differences. ESB is the logit of the stocking of the inventory regeneration (`estab.f:302-326`); the coefficients -5.17397 and 0.85131 were not described in the text.

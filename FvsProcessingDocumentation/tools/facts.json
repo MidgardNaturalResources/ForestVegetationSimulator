@@ -4520,5 +4520,285 @@
   "doc": "CROWN skip when CR present",
   "file": "oc/crown.f",
   "regex": "IF\\(LSTART \\.AND\\. ICR\\(I\\)\\.GT\\.0\\)GOTO 60"
+ },
+ {
+  "id": "orgt-default-oc",
+  "type": "regex_in_file",
+  "doc": "ORGANON tripling off",
+  "file": "oc/grinit.f",
+  "regex": "INDS\\(5\\) = 0"
+ },
+ {
+  "id": "orgt-default-op",
+  "type": "regex_in_file",
+  "doc": "ORGANON tripling off",
+  "file": "op/grinit.f",
+  "regex": "INDS\\(5\\) = 0"
+ },
+ {
+  "id": "orgt-flag",
+  "type": "regex_in_file",
+  "doc": "TRIPLE flag",
+  "file": "organon/execute2.f",
+  "regex": "IF\\(INDS\\(5\\) \\.EQ\\. 1\\) THEN\\s+TRIPLE = \\.TRUE\\."
+ },
+ {
+  "id": "orgt-m1",
+  "type": "regex_in_file",
+  "doc": "M=1 test",
+  "file": "organon/grow.f",
+  "regex": "NTCAL1=\\(NTREES-NZERO\\)\\*3"
+ },
+ {
+  "id": "orgt-m2",
+  "type": "regex_in_file",
+  "doc": "M=2 test",
+  "file": "organon/grow.f",
+  "regex": "NTCAL3=\\(NTREES-NZERO\\)\\*2"
+ },
+ {
+  "id": "orgt-third",
+  "type": "regex_in_file",
+  "doc": "one third expansion",
+  "file": "organon/tripleorg.f",
+  "regex": "A=TDATAR\\(K,4\\)/3\\.0"
+ },
+ {
+  "id": "orgt-dg",
+  "type": "regex_in_file",
+  "doc": "DG split",
+  "file": "organon/tripleorg.f",
+  "regex": "DGRO=DG-\\(LRES\\+URES\\)\\*SQRT\\(DG\\)"
+ },
+ {
+  "id": "orgt-dg1",
+  "type": "regex_in_file",
+  "doc": "DG split upper",
+  "file": "organon/tripleorg.f",
+  "regex": "DGRO1=DG\\+URES\\*SQRT\\(DG\\)"
+ },
+ {
+  "id": "orgt-dg2",
+  "type": "regex_in_file",
+  "doc": "DG split lower",
+  "file": "organon/tripleorg.f",
+  "regex": "DGRO2=DG\\+LRES\\*SQRT\\(DG\\)"
+ },
+ {
+  "id": "orgt-hg1",
+  "type": "regex_in_file",
+  "doc": "HG split upper",
+  "file": "organon/tripleorg.f",
+  "regex": "GROWTH\\(J,1\\)=GROWTH\\(K,1\\)\\+URES"
+ },
+ {
+  "id": "orgt-hg2",
+  "type": "regex_in_file",
+  "doc": "HG split lower",
+  "file": "organon/tripleorg.f",
+  "regex": "GROWTH\\(J\\+1,1\\)=GROWTH\\(K,1\\)\\+LRES"
+ },
+ {
+  "id": "orgt-hg0",
+  "type": "regex_in_file",
+  "doc": "HG split original",
+  "file": "organon/tripleorg.f",
+  "regex": "GROWTH\\(K,1\\)=GROWTH\\(K,1\\)-\\(URES\\+LRES\\)"
+ },
+ {
+  "id": "orgt-hres",
+  "type": "regex_in_file",
+  "doc": "HG residual poly",
+  "file": "organon/tripleorg.f",
+  "regex": "LRES=A0\\+A1\\*HG\\+A2\\*HG\\*\\*2"
+ },
+ {
+  "id": "orgt-nt",
+  "type": "regex_in_file",
+  "doc": "NTREES after loop",
+  "file": "organon/grow.f",
+  "regex": "IF\\(TRIPLE\\)NTREES=J-1"
+ },
+ {
+  "id": "orgt-orgtrip",
+  "type": "regex_in_file",
+  "doc": "ORGTRIP copies IORG",
+  "file": "organon/orgtrip.f",
+  "regex": "IORG\\(ITFN\\)=IORG\\(I\\)"
+ },
+ {
+  "id": "esta-dup",
+  "type": "regex_in_file",
+  "doc": "DUPNPT",
+  "file": "estb/estab.f",
+  "regex": "DUPNPT=FLONPT\\*DUP"
+ },
+ {
+  "id": "esta-minrep",
+  "type": "regex_in_file",
+  "doc": "MINREP default",
+  "file": "estb/esinit.f",
+  "regex": "MINREP=50"
+ },
+ {
+  "id": "esta-minrep-min",
+  "type": "regex_in_file",
+  "doc": "MINPLOTS minimum",
+  "file": "estb/esin.f",
+  "regex": "IF\\(MINREP\\.LT\\.20\\) MINREP=20"
+ },
+ {
+  "id": "esta-ptree",
+  "type": "regex_in_file",
+  "doc": "PTREE",
+  "file": "estb/estab.f",
+  "regex": "PTREE=\\(PRMS\\(2\\)\\*\\(PRMS\\(3\\)/100\\.0\\)\\) /DUPNPT"
+ },
+ {
+  "id": "esta-shade1",
+  "type": "regex_in_file",
+  "doc": "shade 1",
+  "file": "estb/estab.f",
+  "regex": "PTREE=PTREE\\*NPTIDS\\*FTEMP/SUM1"
+ },
+ {
+  "id": "esta-shade2",
+  "type": "regex_in_file",
+  "doc": "shade 2",
+  "file": "estb/estab.f",
+  "regex": "PTREE=PTREE\\*NPTIDS\\*\\(SUM1/FTEMP\\)/SUM2"
+ },
+ {
+  "id": "esta-99",
+  "type": "regex_in_file",
+  "doc": "99 requests",
+  "file": "estb/estab.f",
+  "regex": "IF \\(ITPP\\+ITODO\\.GT\\.99\\) THEN"
+ },
+ {
+  "id": "esta-del",
+  "type": "regex_in_file",
+  "doc": "0.001 deletion",
+  "file": "estb/estab.f",
+  "regex": "IF\\(PRMS\\(2\\)\\.LE\\.0\\.001 \\.OR\\. PRMS\\(3\\)\\.LE\\. 0\\.001\\)"
+ },
+ {
+  "id": "esta-surv",
+  "type": "regex_in_file",
+  "doc": "survival default",
+  "file": "estb/esin.f",
+  "regex": "IF\\(ARRAY\\(4\\)\\.LT\\.0\\.001\\.OR\\.ARRAY\\(4\\)\\.GT\\.100\\.0\\) ARRAY\\(4\\)=100\\.0"
+ },
+ {
+  "id": "esta-prob1",
+  "type": "regex_in_file",
+  "doc": "PROB1 logistic",
+  "file": "estb/estab.f",
+  "regex": "FTEMP= 1\\.0/\\(1\\.0\\+EXP\\(-\\(PN\\+ESB-ESB1\\(NCOUNT\\) \\)\\)\\)"
+ },
+ {
+  "id": "esta-prob1-lim",
+  "type": "regex_in_file",
+  "doc": "PROB1 limits",
+  "file": "estb/estab.f",
+  "regex": "IF\\(FTEMP\\.GT\\.0\\.9990\\) FTEMP=0\\.9990"
+ },
+ {
+  "id": "esta-esb",
+  "type": "regex_in_file",
+  "doc": "ESB",
+  "file": "estb/estab.f",
+  "regex": "ESB= -1\\.0 \\* ALOG\\(1\\.0/FTEMP -1\\.0\\)"
+ },
+ {
+  "id": "esta-esprob",
+  "type": "regex_in_file",
+  "doc": "ESPROB first",
+  "file": "estb/estab.f",
+  "regex": "IF\\(I\\.LT\\.ITEMP\\+1\\) ESPROB\\(I\\)=FTEMP-PNN\\(NCOUNT\\)"
+ },
+ {
+  "id": "esta-esprob-in",
+  "type": "regex_in_file",
+  "doc": "ESPROB ingrowth",
+  "file": "estb/estab.f",
+  "regex": "IF\\(INGRO\\.EQ\\.1\\.OR\\.MATCH\\.EQ\\.1\\) ESPROB\\(I\\)=FTEMP\\*FTEMP2"
+ },
+ {
+  "id": "esta-best",
+  "type": "regex_in_file",
+  "doc": "best natural PROB",
+  "file": "estb/estab.f",
+  "regex": "PROB\\(ITRN\\)=\\(ESPROB\\(N\\)\\*300\\.0\\) /DUPNPT"
+ },
+ {
+  "id": "esta-iestat",
+  "type": "regex_in_file",
+  "doc": "IESTAT",
+  "file": "estb/estab.f",
+  "regex": "IESTAT\\(ITRN\\)= IDSDAT\\+20"
+ },
+ {
+  "id": "esta-brkup5",
+  "type": "regex_in_file",
+  "doc": "excess split",
+  "file": "estb/estab.f",
+  "regex": "IBRKUP=INT\\(EXCESS\\(I\\)/5\\.0 \\+ 1\\.0\\)"
+ },
+ {
+  "id": "esta-xcsmax",
+  "type": "regex_in_file",
+  "doc": "XCSMAX",
+  "file": "estb/estab.f",
+  "regex": "XCSMAX=EXCESS\\(I\\)/BRKUP"
+ },
+ {
+  "id": "esta-xcsprob",
+  "type": "regex_in_file",
+  "doc": "excess PROB",
+  "file": "estb/estab.f",
+  "regex": "PROB\\(ITRN\\)= \\(FTEMP2\\*300\\.0\\*XCSMAX\\) /DUPNPT"
+ },
+ {
+  "id": "esta-brkup10",
+  "type": "regex_in_file",
+  "doc": "planted split",
+  "file": "estb/estab.f",
+  "regex": "IBRKUP=INT\\(FTEMP/10\\.0 \\+ 1\\.0\\)"
+ },
+ {
+  "id": "esta-plprob",
+  "type": "regex_in_file",
+  "doc": "planted PROB",
+  "file": "estb/estab.f",
+  "regex": "PROB\\(ITRN\\)=FTEMP2"
+ },
+ {
+  "id": "esta-pasmax-def",
+  "type": "regex_in_file",
+  "doc": "CONFID default",
+  "file": "estb/esinit.f",
+  "regex": "CONFID=5\\.0"
+ },
+ {
+  "id": "esta-pasmax-ing",
+  "type": "regex_in_file",
+  "doc": "ingrowth PASMAX",
+  "file": "estb/estab.f",
+  "regex": "PASMAX=15\\.0"
+ },
+ {
+  "id": "esta-passall",
+  "type": "regex_in_file",
+  "doc": "PASSALL",
+  "file": "estb/esin.f",
+  "regex": "IF\\(CONFID\\.LT\\.1\\.0\\) CONFID=1\\.0"
+ },
+ {
+  "id": "esta-compress",
+  "type": "regex_in_file",
+  "doc": "compress",
+  "file": "estb/estab.f",
+  "regex": "ITEMP=MXRR/2"
  }
 ]

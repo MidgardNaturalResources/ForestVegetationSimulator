@@ -6089,6 +6089,46 @@ FFERT is called after subroutine MORTS, so fertilizer treatments do not affect t
 
 Subroutine GRINCR is now done with its’ tasks; program control is returned to subroutine TREGRO for further processing.
 
+**ORGANON tripling (OC and OP).** ORGANON subroutine GROW has its own record tripling, which is separate from the FVS tripling above. It is controlled by the ORGANON flag INDS(5), where 0 means no tripling and 1 means tripling (`common/ORGANON.F77:134`, `organon/execute2.f:104-106`). The default is 0 ("ORGANON TRIPLING OFF") in `oc/grinit.f:360` and `op/grinit.f:358`, and no other statement in the source files assigns INDS(5), so the tripling of subroutine GROW does not run in OC and OP. The record tripling of FVS is controlled by LTRIP and ICL4 instead (equation {4.3.1.1}); the ORGANON array IORG is copied to the new FVS records by subroutine ORGTRIP (`organon/orgtrip.f`). The ORGANON setting is printed as "TRIPLING: No" or "TRIPLING: Yes" in the ORGANON table of the output (`vorganon/orgtab.f:183-188`).
+
+When the flag is 1, subroutine GROW triples in the diameter growth loop and again in the loop of height growth of the major species groups (the groups up to IB), through subroutines DGTRIP and HGTRIP, and subroutine XTRIP copies the other tree variables (`organon/grow.f:60-153`, `organon/tripleorg.f`). Each loop first chooses a mode M from the number of records, with a limit of 2000 records (`grow.f:75-90`, `grow.f:115-130`). M is 1 (every tree is tripled) when three times the number of records that have trees per acre above 0 fits in 2000, and the total with the records that have no trees fits as well. Otherwise M is 2 (every other tree is tripled) when twice the number fits, and otherwise M is 0 (no tripling). Records with trees per acre of 0 or less are not grown or tripled. In the height loop the count is made for the major groups only, with the records that are not in a major group counted once. After each loop NTREES is set to the new number of records (`grow.f:110`, `grow.f:153`), and the height loop runs over all those records, so a record of a major group that was tripled in the diameter loop is also a candidate in the height loop.
+
+Each tripled record keeps the attributes of the original record, and each of the three records has one third of the trees per acre, of the mortality expansion and of the other expansion arrays (`organon/tripleorg.f:115-135`, `tripleorg.f:309-330`); the split differs from the 60, 25 and 15 percent split of the FVS tripling. The growth is different for the three records, as shown in equations {4.3.1.8} and {4.3.1.9}, where the first record is the original record, the second record is stored at J and the third at J + 1. The residuals L and U are those of the species group, in subroutines DGRES_SWO, DGRES_NWO and DGRES_SMC (`tripleorg.f:178-198`, `200-217`, `219-234`) for diameter growth and HGRES_SWO, HGRES_NWO and HGRES_SMC (`tripleorg.f:345-373`, `375-402`, `404-431`) for height growth. The diameter growth residuals are constants for each species group. The height growth residuals are polynomials of the height growth and exist only for the major groups, five groups in model type 1 and three in model types 2 and 3 (`tripleorg.f:345-431`).
+
+$$
+\begin{aligned}
+DG_1 &= \max\left[0, \; DG - \left(L + U\right)\sqrt{DG}\right] \\
+DG_2 &= DG + U \sqrt{DG} \\
+DG_3 &= \max\left[0, \; DG + L \sqrt{DG}\right]
+\end{aligned}
+\tag{4.3.1.8}
+$$
+
+Where:
+
+- DG_1, DG_2, DG_3: Diameter growth of the original record, the second record and the third record (inches)
+- DG: Diameter growth of the original record before tripling (inches)
+- L: Lower residual of the species group, DGLRES(g) of the subroutine DGRES_SWO, DGRES_NWO or DGRES_SMC
+- U: Upper residual of the species group, DGURES(g) of the same subroutine
+
+$$
+\begin{aligned}
+HG_1 &= \max\left[0, \; HG - \left(U + L\right)\right] \\
+HG_2 &= HG + U \\
+HG_3 &= \max\left[0, \; HG + L\right] \\
+L &= \min\left(0, \; A_0 + A_1 HG + A_2 HG^{2}\right) \\
+U &= \max\left(0, \; C_0 + C_1 HG + C_2 HG^{2}\right)
+\end{aligned}
+\tag{4.3.1.9}
+$$
+
+Where:
+
+- HG_1, HG_2, HG_3: Height growth of the original record, the second record and the third record (feet)
+- HG: Height growth of the original record before tripling (feet)
+- A_0, A_1, A_2: Coefficients HGLRES(g, 1), HGLRES(g, 2) and HGLRES(g, 3) of the species group, in the subroutine HGRES_SWO, HGRES_NWO or HGRES_SMC
+- C_0, C_1, C_2: Coefficients HGURES(g, 1), HGURES(g, 2) and HGURES(g, 3) of the species group, in the same subroutine
+
 ### Auxiliary subroutines
 
 Subroutine DBCHK is used to see if debug output should be written to the output file.
@@ -6356,6 +6396,173 @@ For all variants, subroutine ESGENT is called to grow the regeneration trees fro
 After the regeneration summary tables are printed, program control returns to subroutine ESNUTR. ESNUTR calls subroutine RDPSRT to reset the FVS diameter sort of the tree list which now includes regeneration tree records. Program control is returned to subroutine GRADD.
 
 Subroutine GRADD calls subroutine SVESTB to update files used for stand visualization since the FVS tree list now includes tree records created by the regeneration establishment model. It then calls subroutine ECCALC to calculate the costs and revenues for the cycle when the economics extension is active, and subroutine DENSE to calculate the post-establishment stand density statistics. This concludes tasks associated with the regeneration establishment extension. Next will be the calculation of crown ratio change.
+
+### Allocation of regeneration to tree records
+
+This subsection gives the arithmetic that subroutine ESTAB uses to turn the PLANT and NATURAL keyword records and the predicted natural regeneration into tree records. The line numbers are in `estb/estab.f` unless a file is named.
+
+**Plot replication.** The regeneration model processes each inventory plot DUP times, where DUP is the smallest number of copies for which the number of plots times DUP is at least MINREP, or the largest number for which the number of plots times DUP + 1 does not exceed MAXPLT (`estab.f:199-208`). MINREP is 50 by default (`estb/esinit.f:59`), and the MINPLOTS keyword sets it with a minimum of 20 (`estb/esin.f:587-588`). The copies of a plot are split among the site preparations (`estab.f:450-469`), and the records of the following paragraphs are created once for each copy, so the number of records is multiplied by the number of copies.
+
+$$
+DUPNPT = NPTIDS \times DUP
+\tag{4.7.1.1}
+$$
+
+Where:
+
+- DUPNPT: Number of plot copies that are processed
+- NPTIDS: Number of inventory plots
+- DUP: Number of copies of each inventory plot, as described above
+
+**Planted trees.** The PLANT and NATURAL keyword records have the fields species, trees per acre, percent survival, age, height and shade code (`estb/esin.f:206-243`). A survival percent outside 0.001 to 100 is set to 100 (`esin.f:234`), and a request with trees per acre or survival of 0.001 or less is deleted (`estab.f:415-422`). At most 99 requests are processed in a call; the others are cancelled with a warning (`estab.f:979-984`). For each request and each plot copy, the trees per acre of the record is PTREE, equation {4.7.1.2} (`estab.f:986-1014`). The shade code is 0 (no adjustment), 1 (more trees on plots with more basal area) or 2 (more trees on plots with less basal area).
+
+$$
+PTREE = \frac{TPA \cdot S / 100}{DUPNPT} \times f, \qquad
+f = \begin{cases} 1 & \text{shade code 0} \\[1ex] \dfrac{NPTIDS \cdot BAA}{SUM1} & \text{shade code 1} \\[1ex] \dfrac{NPTIDS \cdot SUM1 / BAA}{SUM2} & \text{shade code 2} \end{cases}
+\tag{4.7.1.2}
+$$
+
+Where:
+
+- PTREE: Trees per acre of the record of the request on one plot copy (trees per acre)
+- TPA: Trees per acre of the request, field 2 of the keyword record (trees per acre)
+- S: Survival of the request, field 3 of the keyword record (percent)
+- DUPNPT: Number of plot copies from equation {4.7.1.1}
+- NPTIDS: Number of inventory plots
+- BAA: Basal area of the plot, BAAA of the plot, limited to 1.0 to 400 (square feet per acre; `estab.f:482-484`)
+- SUM1: Sum over the inventory plots of BAAA, each limited to 1.0 or more (square feet per acre; `estab.f:426-438`)
+- SUM2: Sum over the inventory plots of SUM1 divided by BAAA, each BAAA limited to 1.0 or more (`estab.f:434-442`)
+
+The height of a planted tree is from ESSUBH, or, when field 5 is 0.1 or more, a lognormal draw around the given height that is kept within 0.5 and 2 times the given height; HTADJ is added, and the height is limited to the species minimum XMIN and maximum HHTMAX (`estab.f:1018-1040`). The age is field 4, set to 2.0 when it is below 0.5 and limited to 10.0 (`estab.f:987-989`). A record that is passed to the tree list is split when it has more than 10 trees per acre, as in equation {4.7.1.7}.
+
+**Natural regeneration.** In the variants with the full establishment model, the probability of stocking of a plot copy is PROB1, equation {4.7.1.3} (`estab.f:575-584`). The number of trees on a stocked plot, ITPP, is from ESTPP and is limited to 1 to MAXTPP of the habitat group (and to MAXING in ingrowth) (`estab.f:675-686`). NEWTPP is the increase in ITPP from the previous tally, with a minimum of 0. The number of species is from ESNSPE, and is limited by MAXSPP of the habitat group and by the number of species with a probability of advanced or subsequent regeneration above 0.0001 (`estab.f:693-737`). The species of the first trees come from the advanced and subsequent probabilities (PADV, PSUB) and the species of the other trees from the excess probabilities (PXCS) (`estab.f:738-926`). When STOADJ is below 0.0001 no natural trees are created (`estab.f:958-963`).
+
+$$
+PROB1 = \begin{cases} PNN + 0.0001 & P < PNN \\ P & P \ge PNN \end{cases}, \qquad
+P = \min\left[0.9990, \; \max\left(0.0001, \; \frac{STOADJ}{1 + e^{-\left(PN + ESB - ESB1\right)}}\right)\right]
+\tag{4.7.1.3}
+$$
+
+Where:
+
+- PROB1: Probability of stocking of the plot copy at the end of the cycle
+- STOADJ: Stocking adjustment multiplier, which is set to 0.001 when it is below 0.001 (`estab.f:578`); keyword STOCKADJ sets it
+- PN: Logit of the probability of stocking at the end of the cycle, from subroutine ESTOCK
+- ESB: Logit of the stocking of the inventory, calculated from the regeneration trees per acre of the inventory, and 0 when no correction applies (`estab.f:288`, `estab.f:302-326`)
+- ESB1: Logit of the stocking that the model predicts at the time of the inventory, from subroutine ESTOCK (`estab.f:536-537`)
+- PNN: Probability of stocking of the plot copy at the previous tally
+
+$$
+ESPROB_i = \begin{cases} \max\left(0.0001, \; PROB1 - PNN\right) & i \le ITPP - NEWTPP \\[1ex] \max\left(0.0001, \; PROB1\right) & i > ITPP - NEWTPP \end{cases}
+\tag{4.7.1.4}
+$$
+
+Where:
+
+- ESPROB_i: Probability of stocking assigned to natural tree i of the plot copy
+- PROB1: Probability of stocking from equation {4.7.1.3}
+- PNN: Probability of stocking of the plot copy at the previous tally
+- ITPP: Number of natural trees on the stocked plot
+- NEWTPP: Number of natural trees that are new in this tally
+
+In ingrowth (NTALLY of 99) and when the first tally of a stand follows an inventory more than 20 years after the disturbance (`estab.f:237`), ESPROB_i is PROB1 × NEWTPP / ITPP for every tree, with the same minimum (`estab.f:944-952`).
+
+**Best trees.** When there are 5 or more natural and planted records in the plot copy, the best trees are the two tallest trees, then the tallest tree of each other species, then the tallest remaining trees until there are at least 4; when there are fewer than 5 records all of them are best trees (`estab.f:1078-1143`). The natural records are not eligible when PROB1 is below 0.00011 (`estab.f:1088`).
+
+**Passing the records to the tree list.** The records are passed in three groups (`estab.f:1196-1446`). Every new record has DBH 0.1, a crown ratio of 0 and no growth, and is on the real plot of the copy; the new record count is ITRN + 1, and ESGENT then grows the records to the end of the cycle (`estab.f:1493`).
+
+1. **Natural best trees.** A record is created for a natural best tree when ESPROB is 0.00011 or more. The record is not subject to mortality for 20 years (IESTAT = IDSDAT + 20), and the tree value class IMC is 1.
+
+$$
+PROB = \frac{ESPROB \times 300}{DUPNPT}
+\tag{4.7.1.5}
+$$
+
+Where:
+
+- PROB: Trees per acre of the record, PROB(ITRN) (trees per acre)
+- ESPROB: Probability of stocking of the natural best tree from equation {4.7.1.4}
+- DUPNPT: Number of plot copies from equation {4.7.1.1}
+- 300: Number of 1/300th acre plots in an acre
+
+2. **Natural excess trees.** The trees of a species that are not best trees are accumulated by species. They are passed in INT(EXCESS/5 + 1) records of the species (`estab.f:1280-1359`), each with IMC 2 and the mean height of the excess trees of the species. The total number of excess trees that are passed per plot copy and species is limited to PASMAX, which is 5 by default (`estb/esinit.f:51`) and 15 in ingrowth (`estab.f:249`); field 1 of the PASSALL keyword sets it, with a minimum of 1 (`esin.f:556-557`). When the sum of ESPROB of a species is below 0.00011 it is added to the next species.
+
+$$
+\begin{aligned}
+n &= \mathrm{INT}\left(\frac{EXCESS}{5} + 1\right) \\
+PROB &= \frac{\left(SUMESP / EXCESS\right) \times 300 \times \min\left(EXCESS, PASMAX\right) / n}{DUPNPT}
+\end{aligned}
+\tag{4.7.1.6}
+$$
+
+Where:
+
+- n: Number of records of the species on the plot copy
+- PROB: Trees per acre of each record (trees per acre)
+- EXCESS: Number of excess trees of the species on the plot copy
+- SUMESP: Sum of ESPROB of the excess trees of the species
+- PASMAX: Maximum number of excess trees passed per plot copy and species, 5 by default and 15 in ingrowth
+- DUPNPT: Number of plot copies from equation {4.7.1.1}
+
+3. **PLANT and NATURAL trees.** A request with ESPROB below 0.00011 is added to the next request (`estab.f:1369-1373`). Each remaining request is split into INT(ESPROB/10 + 1) records of equal size, with IMC 1, or 2 when the tree is not a best tree and STOADJ is above 0 (`estab.f:1374-1386`). The total trees per acre of the request over the plot copies is then TPA × S / 100.
+
+$$
+\begin{aligned}
+m &= \mathrm{INT}\left(\frac{PTREE}{10} + 1\right) \\
+PROB &= \frac{PTREE}{m}
+\end{aligned}
+\tag{4.7.1.7}
+$$
+
+Where:
+
+- m: Number of records of the request on the plot copy
+- PROB: Trees per acre of each record (trees per acre)
+- PTREE: Trees per acre of the request on the plot copy from equation {4.7.1.2} (trees per acre)
+
+The next table lists the attributes of the three kinds of record.
+
+```{r regen-record-kinds, echo=FALSE}
+regen_record_kinds <- tibble::tribble(
+  ~Record_Kind, ~Trees_Per_Acre, ~IMC, ~IESTAT, ~WK4, ~ABIRTH,
+  "Natural best tree", "Equation 4.7.1.5", "1", "IDSDAT + 20", "HTIMLT of the tree", "AGADSB of the tree",
+  "Natural excess trees", "Equation 4.7.1.6", "2", "0", "STOMLT of the species", "AGEXC of the species",
+  "PLANT or NATURAL tree", "Equation 4.7.1.7", "1, or 2 for a non-best tree when STOADJ > 0", "0", "HTIMLT of the request", "AGEPL of the request"
+)
+
+kable(regen_record_kinds,
+      col.names = c("Record kind", "Trees per acre", "IMC", "IESTAT", "WK4", "ABIRTH"),
+      caption = "Attributes of the regeneration tree records (source: estb/estab.f:1196-1446)",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "9em")
+```
+
+After all plots are processed, GENTIM is added to ABIRTH of every new record (`estab.f:1496-1505`). When ITRN is within 99 records of the maximum, ESTAB calls ESGENT and ESCPRS, which compress the tree list to half of the maximum (`estab.f:1183-1188`). The limits of the allocation are in the next table.
+
+```{r regen-limits, echo=FALSE}
+regen_limits <- tibble::tribble(
+  ~Item, ~Value, ~Source,
+  "Plots after replication (MINREP)", "50 by default; at least 20 with MINPLOTS", "estb/esinit.f:59, estb/esin.f:587-588",
+  "PLANT and NATURAL requests per call", "99", "estab.f:979-984",
+  "Request deleted when trees per acre or survival is", "0.001 or less", "estab.f:417",
+  "Minimum ESPROB of a record", "0.0001 (record is created from 0.00011)", "estab.f:951, 1203, 1369",
+  "Stocking probability PROB1", "0.0001 to 0.9990, then at least PNN + 0.0001", "estab.f:581-583",
+  "Excess trees passed per plot copy and species (PASMAX)", "5 by default, 15 in ingrowth; PASSALL sets it", "estb/esinit.f:51, estab.f:249, estb/esin.f:556",
+  "Records per species for excess trees", "INT(EXCESS / 5 + 1)", "estab.f:1289",
+  "Records per PLANT or NATURAL request", "INT(PTREE / 10 + 1)", "estab.f:1374",
+  "Best trees", "At least 4, when 5 or more records", "estab.f:1078-1143"
+)
+
+kable(regen_limits,
+      col.names = c("Item", "Value", "Source"),
+      caption = "Limits and constants of the regeneration record allocation",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE, width = "14em")
+```
 
 ### Auxiliary subroutines
 
