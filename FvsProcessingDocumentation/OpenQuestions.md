@@ -502,3 +502,150 @@ Volume timing (initial pass, UPDATE, CUTS; text in "Volume at the start of the p
 - The trial totals CMCUT, SCCUT and BFCUT use PREM x (1 - PRLOST) (`vbase/cuts.f:1394-1397`) and the cut list arrays WK5, WK7 and WK6 use PREM2 = PREM - DSNG - SSNG (`cuts.f:1686-1691`). They agree when PRLOST is the same in all requests that cut a record; this equivalence was not verified.
 - The thinning requests that use a volume target, and the path of stop and restart that skips the initial block of `base/fvs.f`, were not traced for volume.
 - BC and ON compile `vbase/cuts.f` (`bin/FVSbc_sourceList.txt:96`, `bin/FVSon_sourceList.txt:107`); `canada/on/cuts.f` is in the repository but not in the ON source list. BC and ON compile `metric/vbase/prtrls.f` (`bin/FVSbc_sourceList.txt:93`, `bin/FVSon_sourceList.txt:103`), whose volume columns were not compared with `vbase/prtrls.f`.
+
+## Stop point 8 option
+
+Not implemented. Cycle 0 only. Goal: externally imputed heights, crown ratios and volumes overwrite the FVS values, are used in the stand-level calculations, and are written to the output database.
+
+### Summary
+
+- Stop point 7 (`base/fvs.f:185`) is before CRATET (`fvs.f:197`). The covariates needed to impute height and crown ratio (BAL, PCT, PCCF, PTPA, BAAA by point, SDIAC) come from DENSE inside CRATET and do not exist at stop 7. Stop 7 can only identify records with `ht` or `cratio` equal to 0.
+- OC (`oc/cratet.f`): PREPARE 269, first DENSE 499, height-diameter adjustment and height dubbing 578-755, `CALL CROWN` 856, DGDRIV calibration 875, REGENT 912, DENSE 937, SDICHK 948. For valid ORGANON trees PREPARE dubs height and crown ratio before the first DENSE, using ORGANON's own covariates.
+- After CRATET (`fvs.f`): ESFLTR 201, CWIDTH 207 (uses HT and ICR), VOLS 211 (overwrites CFV, MCFV, SCFV, BFV), totals 215-259, DISPLY 321 (loads the summary row from the totals), PRTRLS(1) 328 (database tree list through DBSTRLS), FVSSTD(1) 337. Any stop before line 215 reaches the output database.
+- Option 1, one stop after VOLS (before `fvs.f:215`): sets height, crown ratio and volume. Values computed earlier from FVS's heights and crown ratios stay stale: CRATET calibration (DG uses ICR and HT/AVH, `oc/dgf.f:331-335`), AVH and CCF from DENSE, CWIDTH crown widths (printed by PRTRLS, `vbase/prtrls.f:350,460`), ABIRTH from FINDAG (`oc/cratet.f:904`), ESFLTR best-tree flags (`estb/esfltr.f:117`), and the counts of missing heights and crown ratios.
+- Option 2, one stop before CWIDTH: cannot set volumes, because VOLS (`fvs.f:211`) overwrites them. Not viable alone.
+- Option 3, a stop inside CRATET plus a stop after VOLS: the only placement where the calibration, DENSE, SDICHK, CWIDTH and VOLS use the external values. It needs edits to `cratet.f` in 24 variants.
+- AVH (top height) and RELDEN (stand CCF) cannot be set through the API. `fvsTreeAttr` handles tree arrays; `fvsSpeciesAttr "spccf"` sets RELDSP but RELDEN is assigned only in DENSE (`dense.f:223-247, 285-297`); `fvsEvmonAttr "bccf"` and `"btopht"` write TSTV1 copies that EVTSTV reloads. DENSE recalculates AVH and RELDEN at each call (CRATET, `grincr.f:311`, `gradd.f:192,244`). To make them reflect external values, set the tree attributes before DENSE runs (option 3).
+- Risk of option 3: heights set before the height-diameter adjustment (`oc/cratet.f:578-`) are treated as measured heights and enter that calibration. There is no field that marks a height as imputed.
+- Stop 8 in option 3 is inside CRATET, which returns up the call stack. Locals of CRATET are lost unless saved. Restart from a stop-with-store file in a new process would not restore them; continuing in the same process would.
+
+### Suggested code modifications
+
+#### 1. `base/cmdline.f`: allow stop codes 8 and 9 (line 64)
+
+```fortran
+      keywordfile = " "
+-     maxStoppts = 7
++     maxStoppts = 9
+      stopptfile = " "
+      fvsRtnCode = 0
+```
+
+`fvsStopPoint` (`cmdline.f:400`) compares `LOCODE` with the requested code and has no other range check, so no other edit is needed there. `--stoppoint=` clamps to `maxStoppts` (`cmdline.f:125-130`).
+
+#### 2. `common/GLBLCNTL.F77`: document the codes (comment block, after the code 7 entry)
+
+```fortran
+C                        8 = Stop inside CRATET at cycle 0, after the first
+C                            call to DENSE and before heights and crown
+C                            ratios are dubbed.
+C                        9 = Stop at cycle 0 after VOLS and before the
+C                            volume totals are built.
+```
+
+#### 3. Option 1 only (one stop after VOLS): `base/fvs.f`
+
+Restart dispatch (lines 85-90):
+
+```fortran
+      if (IRSTRTCD.lt.0) return
+      if (IRSTRTCD.eq.7) goto 19
++     if (IRSTRTCD.eq.9) goto 22
+      if (IRSTRTCD.ge.1) goto 41
+```
+
+After VOLS (line 211):
+
+```fortran
+C     COMPUTE INITIAL VOLUME STATISTICS
+C
+      CALL VOLS
++C
++C     PROCESS STOPPOINT 9: EXTERNAL HEIGHT, CROWN RATIO AND VOLUMES
++C
++      CALL fvsStopPoint (9,ISTOPRES)
++      IF (ISTOPRES.NE.0) RETURN
++      CALL fvsGetRtnCode(IRTNCD)
++      IF (IRTNCD.NE.0) RETURN
++C     BRANCH HERE IF RESTARTING FROM STOPCODE 9
++   22 CONTINUE
+C
+C     COMPUTE INITIAL PERCENTILE POINTS IN THE DISTRIBUTION OF
+```
+
+(Use code 8 instead of 9 if this is the only new stop.)
+
+#### 4. Option 3, stop 8 inside CRATET
+
+`base/fvs.f`, restart dispatch and the CRATET call (lines 85-90 and 196-198):
+
+```fortran
+      if (IRSTRTCD.eq.7) goto 19
++     if (IRSTRTCD.eq.8) goto 19
+      if (IRSTRTCD.ge.1) goto 41
+...
+      CALL SDICLS(0,0.,999.,1,SDIAC,SDIAC2,STAGEA,STAGEB,0)
+      CALL CRATET
++     CALL fvsGetRtnCode(IRTNCD)
++     IF (IRTNCD.NE.0) RETURN
++     CALL getAmStopping (ISTOPDONE)
++     IF (ISTOPDONE.NE.0) RETURN
+C
+C     SET CALIBRATION AND FLAG BEST TREE RECORDS FOR ESTAB. MODEL.
+```
+
+`oc/cratet.f` (the same pattern is needed in each `cratet.f`; the insertion point differs by variant). Declarations, top of routine, and the stop:
+
+```fortran
+      SUBROUTINE CRATET
+      IMPLICIT NONE
+...
++     LOGICAL LRESUME
++     INTEGER ISTOPRES
++     SAVE
++     DATA LRESUME/.FALSE./
+...
+      CALL DBCHK (DEBUG,'CRATET',6,ICYC)
++C----------
++C  RESUMING AFTER STOP POINT 8: SKIP THE PART ALREADY DONE
++C----------
++     IF (LRESUME) GO TO 61
+```
+
+At label 60 (`oc/cratet.f:575`):
+
+```fortran
+   60 CONTINUE
+      DO 65 I=1,MAXSP
+      KNT(I)=0
+   65 CONTINUE
++C----------
++C  STOP POINT 8 (CYCLE 0 ONLY): TREE LIST AND DENSE STATISTICS ARE
++C  AVAILABLE; HEIGHTS AND CROWN RATIOS ARE NOT YET DUBBED.
++C----------
++     IF (LSTART) THEN
++       CALL fvsStopPoint (8,ISTOPRES)
++       IF (ISTOPRES.NE.0) THEN
++         LRESUME = .TRUE.
++         RETURN
++       ENDIF
++     ENDIF
++  61 CONTINUE
++     LRESUME = .FALSE.
+C----------
+C  ENTER LOOP TO ADJUST HEIGHT-DBH MODEL FOR LOCAL CONDITIONS.  IF
+```
+
+The `GO TO 60` earlier in the routine (when there are no dead records) lands on label 60, so the stop is reached on both paths. For OC and OP, PREPARE (`oc/cratet.f:269`, `op/cratet.f`) runs before this point, so heights and crown ratios of valid ORGANON trees are already dubbed there; for those trees the stop would have to be before the PREPARE call, where the DENSE statistics do not yet exist.
+
+`fvsTreeAttr` uses `IREC1` as the expected record count while LSTART is true (`apisubs.f`, `ntest = IREC1`).
+
+#### 5. Option 3, stop 9 after VOLS: `base/fvs.f`
+
+Same insertion as in section 3 (code 9, label 22, dispatch line `if (IRSTRTCD.eq.9) goto 22`). External volumes are then set after VOLS and before the per-acre conversion and percentile block, so OCVCUR and the other totals, DISPLY (`vbase/disply.f:298-302`), PRTRLS and the database use them.
+
+#### 6. Not covered by the modifications above
+
+- Rerunning DENSE or CWIDTH after an overwrite (option 1): add `CALL DENSE` and `CALL CWIDTH` after the new stop. CRATET's calibration cannot be rerun.
+- Biomass and carbon: no `fvsTreeAttr` name exists for ABVGRD_BIO and the related arrays.
+- Rmd: the stop-point table and the API section need rows for codes 8 and 9.
