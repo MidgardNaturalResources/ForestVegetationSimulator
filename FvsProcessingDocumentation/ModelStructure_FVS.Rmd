@@ -91,7 +91,7 @@ if (knitr::is_html_output()) {
 **Figure 2-1. Overview of the general FVS Processing Sequence for a single stand serial model run. Select a box to show the steps involved.**
 
 
-## Input and Output Arrays {-}
+## Subroutine summary tables and arrays {-}
 
 The following tables summarize the major FVS subroutines and the arrays they use:
 
@@ -1141,7 +1141,7 @@ The differences in program flow for a parallel run will be discussed in [Stop/re
 
 The FVS model must go through various steps and checks in preparation for a single stand growth projection. Model parameters and variables must be initialized to their default starting values. User model controls must be input and stored. Tree data (if any) must be input, any missing data values filled in, and the data expanded to a per-acre basis. Self-calibration of model equations to the input data needs to take place. Once this phase is completed FVS is calibrated to local stand conditions, knows what projection to make in terms of projection length, management actions, model output, and other user instructions, and has the tree data to make it. Upon completion of the projection initialization phase, tree data may not yet exist if this is a bare ground projection.
 
-## Input and Output Arrays {-}
+## Initialization arrays {-}
 
 The following tables document the major arrays used in each phase of projection initialization:
 
@@ -1616,7 +1616,7 @@ If needed, the second file opened is a file containing individual tree data reco
 
 The next four prompts are for output file names. The third prompt is for the main FVS output file; the fourth for the tree list output file (requested with the TREELIST keyword record); the fifth is for the summary output file (requested with the ECHOSUM keyword record); and the sixth is for an auxiliary file used for input to post-processing programs like CHEAPOII. Default file names exist for these files if the user enters “NUL” or a blank when FVS prompts for these file names. Detailed descriptions of these output files are provided in section 4.3 of the EFVS guide. In multi-stand runs, output from all stands included in the keyword record file will be written to these files. When you enter the name of the keyword record file on the command line, FVS does not prompt for these file names. It automatically creates the files if and when they are needed by replacing the suffix of the keyword record file name (generally, “.key”) with other suffices, as follows: “.out” for the output, “.trl” for tree list, “.chp” for the CHEAPOII file, and “.tre” for the input tree list (see table 3-2).
 
-### Subroutines involved and their function
+### Input and output file subroutines
 
 Subroutine FVS calls subroutine fvsSetCmdLine (source code contained in subroutine CMDLINE) which then calls subroutine GENRPT to initialize the multiple report file. The multiple report file is a scratch file that FVS uses to temporarily store information that will eventually end up in the main output file. Information for several output reports is written to this file as the output is computed along with a report number identifying which output report the information will eventually go to. At the end of a simulation of each stand, all the reports will be written to the FVS output files in proper projection sequence. If there are over 200 different reports saved in the file, then the file is converted to a permanent file and saved for post-projection processing.
 
@@ -1990,7 +1990,7 @@ kable(df,
 
 If some, or all, of the stand initialization parameters or individual tree data is being read directly from a database, database connections are not established at this point. Database connections will be established during the processing of keyword records, see [Processing keyword record requests](#sec-processing-keyword-record-requests) and [Reading stand and tree record input data](#sec-reading-stand-and-tree-record-input-data), when the DATABASE - END keyword record sequence is encountered in the keyword record file.
 
-### Auxiliary subroutines
+### Input and output file auxiliary subroutines
 
 Various other subroutines serve minor, but either necessary or nice, roles in this process.
 
@@ -2008,7 +2008,7 @@ FVS needs to initialize all model parameters to their starting values. Subroutin
 
 The goal upon completion of this task is that every model control parameter needed for the FVS projection of the individual stand will have a value. The value may be the model’s default value or a value set by the user, but all parameters will have a value. This is accomplished in three steps: 1) default values are assigned to all model control parameters; 2) keyword records are processed and user specified values replace some of the default values; and 3) default values for parameters that were not set by the user, but are dependent on other parameter values set by the user, are assigned.
 
-### Subroutines involved and their function
+### Parameter initialization subroutines
 
 For step 1, subroutine INITRE calls subroutine GRINIT to set the default conditions for the beginning of the simulation for a stand. Subroutine GRINIT contains variant-specific initializations for many model variables, including those variables that are either species-specific, used for output summarization, or stand-specific such as slope, aspect, and elevation.
 
@@ -2016,7 +2016,7 @@ Step 2, processing of the keyword records, is done by subroutine INITRE along wi
 
 For step 3, subroutine INITRE calls subroutine SITSET that is another variant-specific subroutine. The role of subroutine SITSET is to make sure those model control parameters that may be dependent on other parameter settings, all have a value. Examples are species-specific site index values or stand density index values where the user may have set values for a few, but not all, species recognized by the variant.
 
-### Auxiliary subroutines
+### Parameter initialization auxiliary subroutines
 
 The purpose of this document is to describe the program flow during model execution. However, from a programmer’s perspective it is worth mentioning there are other FVS subroutines involved in model initialization. Some are base model subroutines where values are loaded at compile time rather than run time.
 
@@ -2034,7 +2034,7 @@ And finally, the two ORGANON-FVS variants (OC and OP), contain a section of code
 
 Users communicate run control information to FVS through the use of keyword records. Consequently, use of the keyword record system is described throughout the EFVS guide and is the basis of FVS training sessions and tutorials. Keyword record processing is echoed to the main FVS output file unless a user turns this feature off with the NOECHO keyword record.
 
-### Subroutines involved and their function {#sec-processing-keyword-record-requests-subroutines-involved-and-their-function}
+### Keyword record processing subroutines {#sec-processing-keyword-record-requests-subroutines-involved-and-their-function}
 
 Subroutine INITRE orchestrates the processing of all keyword records. If the PARMS format, discussed in section 6.1 of the EFVS guide, is not being used, subroutine INITRE also checks the keyword record parameter fields for valid values and assigns default parameter values if some of the parameter values are missing. If values for required parameter fields are missing, or if supplied values are incorrect, then the keyword record is rejected. In this case, subroutine KEYDMP is called to echo the keyword record to the FVS main output file and subroutine ERRGRO is called to write an error message to the FVS main output file giving the user some idea of what problem was encountered. Processing then continues with the next keyword record. If the PARMS format is being used, parameter field checking is not done.
 
@@ -2070,7 +2070,7 @@ It is the responsibility of individual subroutines pertaining to the activity to
 
 “DELETED OR CANCELLED” means the activity was considered but parameter settings could not be satisfied. For example, if a diameter limit thinning in the DBH range 0.0” – 5.0” was specified for cycle 3, and there were no trees in the stand with diameters less than 5.0” in cycle 3, then this diameter limit thinning request would be “DELETED OR CANCELLED”.
 
-### Auxiliary subroutines
+### Keyword record processing auxiliary subroutines
 
 Subroutines used in reading event monitor instructions will be discussed in [Processing event monitor instructions](#sec-processing-event-monitor-instructions).
 
@@ -2122,7 +2122,7 @@ The event monitor within FVS can be used to conditionally schedule activities, c
 
 Stand management activities can be scheduled by year or cycle. They can also be scheduled contingent upon several factors, which can be called an event. An event is designated in FVS by an IF keyword record followed by a logical expression of some sort that defines the event. Following the logical expression, a THEN keyword record signals the end of the logical expression and the beginning of the activities that will be scheduled only when the event is true. The activities can include one or more FVS keyword records (including those found in extensions) that can be scheduled by year or cycle number. An ENDIF keyword record is entered to signal the end of an event monitor sequence.
 
-#### Subroutines involved and their function
+#### IF-THEN-ENDIF subroutines
 
 When subroutine INITRE encounters an IF keyword record, it immediately calls subroutine EVIF to begin processing the event monitor sequence. The variable LOPEVN is a logical variable having a value of “.TRUE.” if keyword records being currently entered by the user are part of an event monitor sequence. Subroutine EVIF first checks to see if LOPEVN is “.TRUE.” indicating that another event monitor sequence is already open. If it is, subroutine EVIF calls EVEND, an entry point in subroutine EVTACT, to close the event monitor sequence that is already open so a new sequence may be started.
 
@@ -2134,7 +2134,7 @@ When subroutine INITRE encounters a THEN keyword record, it calls EVTHEN, an ent
 
 When subroutine INITRE encounters an ENDIF keyword record, it calls EVEND, an entry point in subroutine EVTACT. EVEND signals an end to processing the event monitor sequence and increments the internal event number.
 
-#### Auxiliary subroutines
+#### IF-THEN-ENDIF auxiliary subroutines
 
 Subroutine ALGSPP is used to check for valid species codes or species group names.
 
@@ -2152,11 +2152,11 @@ Subroutine UPCASE is used to convert lower case characters to upper case charact
 
 Allowing users to define their own variables is one powerful feature of the event monitor. Values of these variables will be displayed in the Activity Summary portion of the main output file and can be used in logical expressions or specifications of keyword record parameter settings in a PARMS format. New variables are defined using the COMPUTE keyword record followed by a number of supplemental records defining the new variables. The sequence is closed with an END keyword record.
 
-#### Subroutines involved and their function
+#### New variable subroutines
 
 When subroutine INITRE encounters a COMPUTE keyword record it calls subroutine EVUSRV to compile and store the expressions defining the variables contained on the supplemental records. Subroutine EVUSRV calls subroutine ALGEXP to read an expression from a supplemental record and utilizes subroutines ALGKEY and EVMKV in a similar fashion as done in processing an IF-THEN-ENDIF sequence. Subroutine EVUSRV then calls subroutine ALGCMP to compile the expression. And since the computation of user-defined variables can be scheduled by year or cycle, subroutine EVUSRV calls subroutine OPNEW to place the action into the activity schedule with an activity code, or option code, 33.
 
-#### Auxiliary subroutines
+#### New variable auxiliary subroutines
 
 Subroutine ERRGRO contains the various FVS warning and error messages and sets return status codes.
 
@@ -2164,11 +2164,11 @@ Subroutine ERRGRO contains the various FVS warning and error messages and sets r
 
 With most keyword records that can be scheduled by year or cycle, users have the option of using the PARMS format to specify parameter values. The PARMS format allows users to specify expressions that will be used to calculate parameter values at the time the logical expression becomes true and the management activity is being done. This is a very powerful feature of the event monitor.
 
-#### Subroutines involved and their function
+#### PARMS notation subroutines
 
 As stated above, when subroutine INITRE encounters a keyword record using the PARMS option it calls subroutine OPNEWC to process it. Subroutine INITRE does not check any of the parameter fields for valid values when the PARMS statement is used (it can’t because their values are not known until the option is retrieved from the activity schedule with OPGET, an entry point in subroutine OPFIND).  Subroutine OPNEWC calls subroutine ALGCMP to compile expressions making up the parameter specifications, as described in the IF-THEN-ENDIF specification above. If valid parameters specifications are found, OPNEWC stores the activity in the activity schedule and marks it as “NOT ACCOMPLISHED”.  Parameter specifications will be evaluated at the time the management activity specified by the keyword record is triggered by year, cycle, or condition.
 
-#### Auxiliary subroutines
+#### PARMS notation auxiliary subroutines
 
 Subroutine ERRGRO contains the various FVS warning and error messages.
 
@@ -2184,7 +2184,7 @@ Tree record data, if there is any, may be read from a database or from a flat fi
 
 If there are there are not enough projectable tree records for a simulation, then one of two things will happen. If the variant includes the full regeneration establishment extension, subroutine INITRE calls ESEZCR, an entry point in subroutine ESINIT, to set flags that will trigger the regeneration establishment model to predict some advanced regeneration to start the simulation. If the variant includes the partial regeneration establishment extension model, entry ESEZCR in subroutine ESINIT is still called and the flags get set but the partial regeneration establishment model does not predict natural regeneration. In this case, the projection will run with no tree records (but they could be added using the PLANT or NATURAL keyword records).
 
-### Subroutines involved and their function {#sec-reading-stand-and-tree-record-input-data-subroutines-involved-and-their-function}
+### Stand and tree data input subroutines {#sec-reading-stand-and-tree-record-input-data-subroutines-involved-and-their-function}
 
 When subroutine INITRE encounters a DATABASE keyword record, signaling that the next set of keyword records pertains to the database extension, it calls subroutine DBSIN. Subroutine DBSIN reads and processes the database extension keyword records until an END keyword record is found, and then returns control to INITRE. The DSNIN keyword record causes subroutine DBSOPEN to open the input database immediately. For a STANDSQL keyword record, subroutine DBSPRSSQL replaces the percent sign delimited tokens in the SQL statement and subroutine DBSSTANDIN runs the query and stores the returned columns in the corresponding FVS stand level variables (the same variables that are set by keyword records such as STDINFO and DESIGN). For a TREESQL keyword record, subroutine DBSPRSSQL replaces the tokens, DBSIN prepares the query on the input database (opening the database first if necessary), and calls subroutine INTREE, which obtains each tree record from subroutine DBSTREESIN. If an SQL statement fails or a token cannot be replaced, a message is written to the main output file and the error severity is set so that FVS stops processing the stand.
 
@@ -2200,7 +2200,7 @@ Subroutine DAMPRO is called from subroutine INITRE to process damage codes for i
 
 Subroutine TRESOR is called from subroutine INITRE to match tree identification numbers with tree index numbers for FVS extensions
 
-### Auxiliary subroutines
+### Stand and tree data input auxiliary subroutines
 
 Subroutine DBCHK is used to see if a user has called for triggering extra write statements to the output file which will be useful in program debugging.
 
@@ -2311,6 +2311,8 @@ kable(htdbh_variables,
                 full_width = FALSE, font_size = 9) %>%
   column_spec(1, bold = TRUE)
 ```
+
+##### Height-diameter equation and calibration
 
 **Default equation.** In most variants the default equation is the logistic height-diameter equation of Wykoff et al. (1982), shown in equation {3.6.2.3.1}, with species-specific coefficients B1 = HT1 and B2 = HT2. The variants in which another form is used for the calibration or the dubbing are listed under "Variant differences" below.
 
@@ -2457,6 +2459,8 @@ kable(htdbh_calib_default,
   column_spec(1, bold = TRUE)
 ```
 
+##### Dubbing missing heights
+
 **Dubbing the missing heights.** CRATET then estimates the height of every live and dead tree record that has no height. A record that has a diameter of 0.1 inch or less is given a height of 1.01 feet. For the other records the height is calculated from equation {3.6.2.3.1}, with B1 equal to AA when the species was calibrated, and equal to HT1 otherwise. A height below 4.5 feet is set to 4.5 feet. In the variants that have subroutine HTDBH (see the next table), the height from that subroutine replaces this height when calibration is off for the species (LHTDRG is false), or when the species was not calibrated (IABFLG is 1). Subroutine HTDBH calculates the height from the diameter alone. Dead trees are dubbed in the same way. For a species with no live tree records, B1 is equal to HT1, and subroutine HTDBH replaces the height where the same condition holds.
 
 **Broken and dead tops.** For a record with a broken or dead top (NORMHT, the height of the tree without the damage, is negative), CRATET dubs the height the tree would have without the damage, and stores it in NORMHT, in hundredths of a foot. When the record has a measured height and the broken height, ITRUNC, is zero, ITRUNC is set to 80 percent of the measured height. When the height is missing and ITRUNC is zero, ITRUNC is set to 80 percent of the dubbed height, and the tree height is set to the dubbed height. When ITRUNC is given, a tree height that is smaller than ITRUNC is raised to ITRUNC.
@@ -2511,7 +2515,9 @@ Below the join diameter, the height is interpolated linearly between two points.
 
 Subroutine HTDBH in the HI and PN variants has two special cases. For the forest codes, IFOR, 2, 4 and 6 and the species DF, the join diameter is 5.0 inches instead of 3.0 inches (the code comment refers to Douglas-fir on the Siuslaw). For a diameter of 100 inches or more, the species SS and the forest code 1 or 3, the height is 0.25 x DBH + 248 (the code comment refers to Sitka spruce on the Olympic National Forest).
 
-**Variant differences.** The following variants differ from the description above.
+##### Variant differences in height calibration and dubbing
+
+The following variants differ from the description above.
 
 - AK does not call subroutine HTDBH. When calibration is off, or the species was not calibrated, the Chapman-Richards equation $HT = 4.5 + A(1 - e^{B \cdot DBH})^{C}$ is used, with the coefficients A, B and C coming from the arrays HTT11, HTT12 and HTT13. The dubbed height is then multiplied by 0.45 for the species AD, WI and OH, and by 0.65 for the species SU.
 
@@ -2542,64 +2548,9 @@ Subroutine HTDBH in the HI and PN variants has two special cases. For the forest
 
 The details of each of these variants are given in the variant overview documents. The unverified items found while reading the code are listed in OpenQuestions.md.
 
-#### Add dead trees to the snag list
+##### ORGANON height calibration (OC and OP)
 
-Subroutine CRATET calls FMSSEE to add the dead trees to the FFE snag list. FMSSEE will exist as a subroutine if the fire and fuels extension is part of the variant, or an entry point in subroutine EXFIRE if the fire and fuels extension in not part of the variant.
-
-#### Dub missing crown ratios
-
-After the heights have been dubbed, subroutine CRATET dubs the crown ratios that are missing in the input data, for the live and the dead tree records. The variables named in this section are defined in the next table.
-
-```{r crown-variables, echo=FALSE}
-crown_variables <- tibble::tribble(
-  ~Variable, ~Definition,
-  "ICR", "Crown ratio of a tree record, in percent; 0 or negative when missing",
-  "ICRI", "Integer working value of the crown ratio, in percent",
-  "CRNEW", "Crown ratio predicted by the crown model for a tree record",
-  "CR", "Crown ratio as a proportion from 0 to 1, or a crown class code, as returned by the equation named in the text",
-  "DBH", "Tree diameter at breast height, in inches",
-  "HT", "Total tree height, in feet",
-  "HF", "Total tree height at the end of the cycle, HT + HTG, in feet",
-  "HTG", "Height increment of the tree, in feet",
-  "BA", "Stand basal area, in square feet per acre",
-  "RELDEN", "Stand crown competition factor (CCF)",
-  "PCT", "Percentile of the tree in the basal area distribution of the stand",
-  "SDIAC", "Stand density index of the stand",
-  "SDIDEF", "Maximum stand density index of the species",
-  "RELSDI", "Relative stand density index of the species",
-  "ISORT", "Rank of the tree record by diameter among the ITRN tree records; 1 is the smallest",
-  "ITRN", "Number of tree records",
-  "X", "Percentile of the tree in the crown ratio distribution",
-  "SCALE", "Density scalar of the percentile X, from 0.30 to 1.0",
-  "ACR", "Mean crown ratio of the species predicted from relative stand density index",
-  "A", "Location parameter of the Weibull distribution of crown ratio",
-  "B", "Scale parameter of the Weibull distribution of crown ratio",
-  "C", "Shape parameter of the Weibull distribution of crown ratio",
-  "CL", "Crown length of the tree, in feet",
-  "PRD", "Relative density of the inventory point, the point Zeide SDI divided by the point maximum SDI",
-  "QMDPLT", "Quadratic mean diameter of the inventory point, in inches; at least 1.0",
-  "FCR", "Random error added to the linear predictor of DUBSCR",
-  "CRSD", "Standard error of the linear predictor of DUBSCR, by species",
-  "DGSD", "Standard deviation of the random error of diameter increment, set with keyword DGSTDEV",
-  "CRNMLT", "Crown ratio multiplier by species, set with keyword CRNMULT",
-  "DLOW", "Lower diameter limit of the CRNMULT multiplier, in inches",
-  "DHI", "Upper diameter limit of the CRNMULT multiplier, in inches",
-  "ICFLG", "Flag by species; 1 when keyword CRNMULT has a nonzero value in field 6",
-  "NORMHT", "Height of the tree without the broken or dead top, in hundredths of a foot",
-  "ITRUNC", "Broken height, in hundredths of a foot",
-  "LSTART", "Logical variable; true during the projection initialization, when missing values are dubbed"
-)
-
-kable(crown_variables,
-      col.names = c("Variable", "Definition"),
-      caption = "Variables used in the dubbing of crown ratios",
-      booktabs = TRUE) %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
-                full_width = FALSE, font_size = 9) %>%
-  column_spec(1, bold = TRUE)
-```
-
-**ORGANON height calibration (OC and OP).** In the two ORGANON-FVS variants, subroutine CRATET calls ORGANON subroutine PREPARE once for the stand, before the FVS height calibration described above. The call is skipped when the data were already prepared (LORGPREP is true), when there are no tree records, when ORGANON is not used for the stand (LORGANON is false), and when none of the records is a major ORGANON species (`oc/cratet.f:146,206-219`, `op/cratet.f:139,195-208`). PREPARE edits the tree records, dubs missing heights and crown ratios, and calibrates the ORGANON height-diameter equation (subroutine HDCALIB), the crown equation (subroutine CRCALIB) and, when radial growth data are present, the diameter growth equation (subroutine DGCALIB) (`organon/prepare.f:119-141`). The height-diameter calibration multiplier of species group g is stored in ACALIB(1, g).
+In the two ORGANON-FVS variants, subroutine CRATET calls ORGANON subroutine PREPARE once for the stand, before the FVS height calibration described above. The call is skipped when the data were already prepared (LORGPREP is true), when there are no tree records, when ORGANON is not used for the stand (LORGANON is false), and when none of the records is a major ORGANON species (`oc/cratet.f:146,206-219`, `op/cratet.f:139,195-208`). PREPARE edits the tree records, dubs missing heights and crown ratios, and calibrates the ORGANON height-diameter equation (subroutine HDCALIB), the crown equation (subroutine CRCALIB) and, when radial growth data are present, the diameter growth equation (subroutine DGCALIB) (`organon/prepare.f:119-141`). The height-diameter calibration multiplier of species group g is stored in ACALIB(1, g).
 
 A record is a valid ORGANON tree when its diameter is 0.1 inch or more, its height is missing or above 4.5 feet, and its species is one of the valid species of the variant (IORG = 1). The next table lists the ORGANON model type, the number of ORGANON species groups (NSPN), the number of major species groups (IB), the valid species and the species that allow PREPARE to run. The names of the species groups are in the LABEL arrays of `oc/cratet.f` and `op/cratet.f`.
 
@@ -2678,7 +2629,9 @@ Where:
 
 The height calibration is controlled in three ways. The default of INDS(1) is 1 (calibration on) in `oc/grinit.f:356` and `op/grinit.f:354`, and field 4 of the ORGINFO keyword (0 or 1; an invalid value is set to 1) sets it (`vorganon/orin.f:186-196`). Calibration values read from lines 2 to 4 of the ORGANON .INP file replace the calculated value of a species group when they are not 1.0 (`vorganon/org_intree.f:141-148`), and a calibration value computed by PREPARE is loaded into ACALIB only where the value of ACALIB is still 1.0 (`oc/cratet.f:394-400`). ORGANON stops with an error when any calibration value is below 0.5 or above 2.0 (`organon/execute2.f:591-596`).
 
-**ORGANON predicted height (PTRHT).** ORGANON assigns each tree to a species group from the FIA species code that ORGSPC returns for the FVS species (`oc/orgspc.f:55-65`, `op/orgspc.f:47-55`). Subroutine SPGROUP_EDIT (called by PREPARE, `organon/prepare.f:309`) and subroutine SPGROUP_RUN (`organon/execute2.f:917-961`) compare the code with the list of the model type, which are SCODE1 (model type 1, 19 codes in which 15 and 17 are both group 2) and SCODE2 (model types 2 and 3, 11 codes). The next table lists the FIA code and the species group of the valid species of each variant.
+##### ORGANON predicted height (PTRHT)
+
+ORGANON assigns each tree to a species group from the FIA species code that ORGSPC returns for the FVS species (`oc/orgspc.f:55-65`, `op/orgspc.f:47-55`). Subroutine SPGROUP_EDIT (called by PREPARE, `organon/prepare.f:309`) and subroutine SPGROUP_RUN (`organon/execute2.f:917-961`) compare the code with the list of the model type, which are SCODE1 (model type 1, 19 codes in which 15 and 17 are both group 2) and SCODE2 (model types 2 and 3, 11 codes). The next table lists the FIA code and the species group of the valid species of each variant.
 
 ```{r organon-species-groups, echo=FALSE}
 organon_species_groups <- tibble::tribble(
@@ -2868,7 +2821,66 @@ Where:
 - AGE: Breast-height age of the stand, BHAGE (years)
 - b_kj: Coefficient k of the array b(6, 2) of SITEF_SI_EDIT (`start2.f:814-817`), with j = 1 when 0.3048 SI is 32.25953 or less and j = 2 otherwise
 
-**ORGANON crown ratio dubbing and calibration (OC and OP).** CRATET sends every live record to PREPARE with its crown ratio as a fraction, ICR/100, so a missing crown ratio is 0 (`oc/cratet.f:235`, `op/cratet.f:224`). EDIT sets MISSCR when any crown ratio is 0 or less, and treats a crown ratio above 1.0 as an error (`organon/prepare.f:262-267`). PREPARE then calls HDCALIB, PRDHT (only when a height is missing), CRCALIB (always) and PRDCR (only when MISSCR is set), in that order (`organon/prepare.f:119-132`), so the crown ratios are dubbed from heights that are already dubbed.
+#### Add dead trees to the snag list
+
+Subroutine CRATET calls FMSSEE to add the dead trees to the FFE snag list. FMSSEE will exist as a subroutine if the fire and fuels extension is part of the variant, or an entry point in subroutine EXFIRE if the fire and fuels extension in not part of the variant.
+
+#### Dub missing crown ratios
+
+After the heights have been dubbed, subroutine CRATET dubs the crown ratios that are missing in the input data, for the live and the dead tree records. The variables named in this section are defined in the next table.
+
+```{r crown-variables, echo=FALSE}
+crown_variables <- tibble::tribble(
+  ~Variable, ~Definition,
+  "ICR", "Crown ratio of a tree record, in percent; 0 or negative when missing",
+  "ICRI", "Integer working value of the crown ratio, in percent",
+  "CRNEW", "Crown ratio predicted by the crown model for a tree record",
+  "CR", "Crown ratio as a proportion from 0 to 1, or a crown class code, as returned by the equation named in the text",
+  "DBH", "Tree diameter at breast height, in inches",
+  "HT", "Total tree height, in feet",
+  "HF", "Total tree height at the end of the cycle, HT + HTG, in feet",
+  "HTG", "Height increment of the tree, in feet",
+  "BA", "Stand basal area, in square feet per acre",
+  "RELDEN", "Stand crown competition factor (CCF)",
+  "PCT", "Percentile of the tree in the basal area distribution of the stand",
+  "SDIAC", "Stand density index of the stand",
+  "SDIDEF", "Maximum stand density index of the species",
+  "RELSDI", "Relative stand density index of the species",
+  "ISORT", "Rank of the tree record by diameter among the ITRN tree records; 1 is the smallest",
+  "ITRN", "Number of tree records",
+  "X", "Percentile of the tree in the crown ratio distribution",
+  "SCALE", "Density scalar of the percentile X, from 0.30 to 1.0",
+  "ACR", "Mean crown ratio of the species predicted from relative stand density index",
+  "A", "Location parameter of the Weibull distribution of crown ratio",
+  "B", "Scale parameter of the Weibull distribution of crown ratio",
+  "C", "Shape parameter of the Weibull distribution of crown ratio",
+  "CL", "Crown length of the tree, in feet",
+  "PRD", "Relative density of the inventory point, the point Zeide SDI divided by the point maximum SDI",
+  "QMDPLT", "Quadratic mean diameter of the inventory point, in inches; at least 1.0",
+  "FCR", "Random error added to the linear predictor of DUBSCR",
+  "CRSD", "Standard error of the linear predictor of DUBSCR, by species",
+  "DGSD", "Standard deviation of the random error of diameter increment, set with keyword DGSTDEV",
+  "CRNMLT", "Crown ratio multiplier by species, set with keyword CRNMULT",
+  "DLOW", "Lower diameter limit of the CRNMULT multiplier, in inches",
+  "DHI", "Upper diameter limit of the CRNMULT multiplier, in inches",
+  "ICFLG", "Flag by species; 1 when keyword CRNMULT has a nonzero value in field 6",
+  "NORMHT", "Height of the tree without the broken or dead top, in hundredths of a foot",
+  "ITRUNC", "Broken height, in hundredths of a foot",
+  "LSTART", "Logical variable; true during the projection initialization, when missing values are dubbed"
+)
+
+kable(crown_variables,
+      col.names = c("Variable", "Definition"),
+      caption = "Variables used in the dubbing of crown ratios",
+      booktabs = TRUE) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                full_width = FALSE, font_size = 9) %>%
+  column_spec(1, bold = TRUE)
+```
+
+##### ORGANON crown ratio dubbing and calibration (OC and OP)
+
+CRATET sends every live record to PREPARE with its crown ratio as a fraction, ICR/100, so a missing crown ratio is 0 (`oc/cratet.f:235`, `op/cratet.f:224`). EDIT sets MISSCR when any crown ratio is 0 or less, and treats a crown ratio above 1.0 as an error (`organon/prepare.f:262-267`). PREPARE then calls HDCALIB, PRDHT (only when a height is missing), CRCALIB (always) and PRDCR (only when MISSCR is set), in that order (`organon/prepare.f:119-132`), so the crown ratios are dubbed from heights that are already dubbed.
 
 CRCALIB and PRDCR predict the height to the crown base, HCB, of a tree, and the predicted crown ratio is PCR = 1 - HCB/HT (`organon/start2.f:353-373`, `start2.f:426-446`). They use subroutine A_HCB_SWO for model type 1 (`organon/start2.f:454`), and HCB_NWO and HCB_SMC for model types 2 and 3 (`organon/crngrow.f:244`, `organon/crngrow.f:311`). The three subroutines have the same form, equation {3.6.2.3.21}, and differ in the coefficient array HCBPAR(g, 1..7): A_HCB_SWO (`start2.f:482-523`), HCB_NWO (`crngrow.f:264-291`) and HCB_SMC (`crngrow.f:331-358`). Model type 1 also has HCB_SWO (`crngrow.f:155`, array at `crngrow.f:183`), a second array of the same form that ORGANON uses in the crown recession of the cycles (`crngrow.f:67`, `crngrow.f:92`). The species groups g are those of the table above.
 
@@ -3004,13 +3016,17 @@ Where:
 
 The attenuated multiplier CALIB(2, g) is used only in the crown recession of model type 2: CROWGRO multiplies the predicted crown ratio by CALIB(2, g) for model type 2, and does not use it for model types 1, 3 and 4 (`organon/crngrow.f:69-81`, `crngrow.f:95-110`). In OC (model type 1) and in OP with model type 3 the crown calibration therefore affects only the dubbed crown ratios.
 
+##### Missing crown ratios and subroutine CROWN
+
 **Missing crown ratios.** Subroutine INTREE converts the crown ratio of each input record. A value from 1 to 9 is a crown class code and is converted to a percent, ICR = 10 x code - 5 (the classes become 5, 15, and so on to 85). A value from 10 to 99 is kept as a percent, and a value above 99 is set to 99. A value of 0 or a negative value is not changed, and the crown ratio is considered missing. Dead tree records are converted in the same way before they are moved to the bottom of the tree arrays.
 
 CRATET sets a logical variable, MISSCR, to true when any live or dead tree record has a crown ratio that is 0 or negative, and calls subroutine CROWN only then. A tree record that has a crown ratio is not changed.
 
 **Subroutine CROWN.** Subroutine CROWN is used for two purposes. When LSTART is true, as it is when CRATET calls it, CROWN dubs the missing crown ratios. A tree record with ICR greater than 0 is skipped. At the end of each projection cycle, subroutine GRADD calls CROWN to change the crown ratios, as described in [Computing crown ratio change and crown width](#sec-computing-crown-ratio-change-and-crown-width).
 
-**Crown ratio models.** The crown ratio of a live tree is dubbed with the crown ratio model of the variant. A dead tree is dubbed with the same model in the variants that have no subroutine DUBSCR for the tree, and with subroutine DUBSCR in the other variants. The models are listed by variant in the next table. In the variants with subroutine DUBSCR other than SN, DUBSCR dubs the live trees that are smaller than a threshold diameter as well, and the model of the variant dubs the larger live trees.
+##### Crown ratio models
+
+The crown ratio of a live tree is dubbed with the crown ratio model of the variant. A dead tree is dubbed with the same model in the variants that have no subroutine DUBSCR for the tree, and with subroutine DUBSCR in the other variants. The models are listed by variant in the next table. In the variants with subroutine DUBSCR other than SN, DUBSCR dubs the live trees that are smaller than a threshold diameter as well, and the model of the variant dubs the larger live trees.
 
 ```{r crown-models, echo=FALSE}
 crown_models <- tibble::tribble(
@@ -3053,7 +3069,9 @@ kable(crown_models,
 
 The CR variant compiles subroutine DUBSCR but does not call it. The dead trees of the CR variant are dubbed with the crown length equations. The BC, EM and IE entries are described under "Variant differences" below.
 
-**TWIGS model (CS, LS, NE and ON).** The crown ratio is predicted from the stand basal area and the tree diameter with equation {3.6.2.5.1}, and the result is rounded to an integer percent.
+###### TWIGS model (CS, LS, NE and ON)
+
+The crown ratio is predicted from the stand basal area and the tree diameter with equation {3.6.2.5.1}, and the result is rounded to an integer percent.
 
 $$
 CRNEW = 10\left[\frac{BCR_1}{1 + BCR_2 \cdot BA} + BCR_3\left(1 - \exp\left(BCR_4 \cdot DBH\right)\right)\right]
@@ -3067,7 +3085,9 @@ Where:
 - BA: Stand basal area (square feet per acre)
 - DBH: Diameter at breast height (inches)
 
-**Weibull model.** In the variants that use the Weibull model, the crown ratio is a percentile of a Weibull distribution of the crown ratios of the species, and the percentile is the rank of the tree by diameter. The parameters of the distribution are calculated for each species from the relative stand density index. The steps are as follows.
+###### Weibull model
+
+In the variants that use the Weibull model, the crown ratio is a percentile of a Weibull distribution of the crown ratios of the species, and the percentile is the rank of the tree by diameter. The parameters of the distribution are calculated for each species from the relative stand density index. The steps are as follows.
 
 1. The mean crown ratio of the species, ACR, is calculated with equation {3.6.2.5.2} from RELSDI, where RELSDI is SDIAC divided by SDIDEF (1.0 when SDIDEF is not greater than 0), and is limited to 1.5.
 2. The Weibull parameters A, B and C are calculated from ACR with equation {3.6.2.5.3}. B is set to a minimum value that depends on the variant and the species (see the table after the equations), and C is set to 2.0 when it is less than 2.0.
@@ -3144,7 +3164,9 @@ kable(crown_weibull,
   column_spec(1, bold = TRUE)
 ```
 
-**Crown length equations.** In the CR variant, and for some species in CI, EM, IE, TT and UT, the crown length of the tree is predicted from the height of the tree and the crown ratio is the crown length divided by the height, as shown in equation {3.6.2.5.5}. The crown length is limited to a minimum of 1.0 foot and a maximum of HF.
+###### Crown length equations
+
+In the CR variant, and for some species in CI, EM, IE, TT and UT, the crown length of the tree is predicted from the height of the tree and the crown ratio is the crown length divided by the height, as shown in equation {3.6.2.5.5}. The crown length is limited to a minimum of 1.0 foot and a maximum of HF.
 
 $$
 CR = \frac{CL}{HF}, \qquad CL = a + b \cdot HF + c \cdot BA
@@ -3184,7 +3206,9 @@ kable(crown_cl_species,
   column_spec(1, bold = TRUE)
 ```
 
-**Subroutine DUBSCR.** Subroutine DUBSCR is a species-specific regression that dubs the crown ratio of small live trees and of dead trees. The coefficients, the form of each species, and the standard errors CRSD are in the DUBSCR source file of the variant (the OC variant uses the file of CA, and the OP and PN variants use the file of WC). DUBSCR has two forms, and each returns a crown ratio proportion that is limited to 0.05 to 0.95.
+###### Subroutine DUBSCR
+
+Subroutine DUBSCR is a species-specific regression that dubs the crown ratio of small live trees and of dead trees. The coefficients, the form of each species, and the standard errors CRSD are in the DUBSCR source file of the variant (the OC variant uses the file of CA, and the OP and PN variants use the file of WC). DUBSCR has two forms, and each returns a crown ratio proportion that is limited to 0.05 to 0.95.
 
 - Crown class form: a crown class code is calculated with a linear function of the height and the stand basal area, as shown in equation {3.6.2.5.6}, and it is converted to a proportion, $CR = ((code - 1) \cdot 10 + 1)/100$. In WC, for example, all species except RW use this form.
 - Logistic form: $CR = 1/(1 + \exp(Z + FCR))$, where Z is a linear function of the diameter, the height and the stand basal area. In some variants the function includes more terms (the point crown competition factor, the average height of the largest trees, and the mean annual increment). KT uses $Z = BCR_0 + BCR_1\,DBH + BCR_2\,HT + BCR_3\,BA$. For the species RW in WC, the form is $Z = -1.021064 + 0.309296\ln(12\,HT/DBH) + 0.869720\,PRD - 0.116274\,(DBH/QMDPLT)$ and the standard deviation of FCR is 0.15.
@@ -3204,6 +3228,8 @@ Where:
 
 The random error, FCR, is drawn from a normal distribution with a mean of 0 and a standard deviation of CRSD, and is drawn again until its absolute value does not exceed CRSD. In AK, BM, CA, EC, HI, NC, OC, OP, PN, SO, WC and WS the error is always added. In CI, EM, IE, KT, TT, UT and BC (V2) it is added only when DGSD is 1.0 or more. In SN the random error is not implemented. For the species that use the crown class form in CI, TT and UT, and for the species MC in WS, the error is not added to the crown class code.
 
+##### Bounds, adjustments and keyword CRNMULT
+
 **Bounds and adjustments.** After a crown ratio has been dubbed for a live tree, the following are applied. The crown ratio of a tree with a broken or dead top (ITRUNC is not zero) is reduced to the crown that remains, as shown in equation {3.6.2.5.7}. A dubbed crown ratio above 95 is set to 95, a value below 10 is set to 10 when CRNMLT is 1.0, and a value below 1 is set to 1. A dead tree that is dubbed is bounded to 10 to 95.
 
 $$
@@ -3220,7 +3246,9 @@ Where:
 
 **Keyword CRNMULT.** Keyword CRNMULT multiplies the crown ratios dubbed by CROWN. Field 1 is the date or cycle, field 2 the species, field 3 the multiplier (CRNMLT), field 4 the lower diameter limit (DLOW), field 5 the upper diameter limit (DHI, 99 inches when not given), and field 6 a flag. When DBH is within the limits, the dubbed crown ratio is multiplied by CRNMLT. When field 6 is greater than 0 (ICFLG is 1), the multiplier applies only to the dubbed values and CRNMLT is set to 1.0 after the dubbing.
 
-**Variant differences.** The following variants differ from the description above.
+##### Variant differences in crown ratio dubbing
+
+The following variants differ from the description above.
 
 - AK predicts the crown ratio of live trees of 1.0 inch or more with equation {3.6.2.5.8}, without a random error. The dead trees and the live trees below 1.0 inch are dubbed with DUBSCR, which uses the same relationship.
 - KT, the species WP, WL, DF, GF, WH, RC, LP, ES, AF, PP, MH, WB, LL and OS of IE, and the species LL of EM use a percentile regression with the habitat type for trees of 3.0 inches or more (equation {3.6.2.5.9}). Trees below 3.0 inches are dubbed with DUBSCR. When DGSD is 1.0 or more, a random error with a standard deviation (CRSD) of 6.35 percent is added at the dubbing in IE and EM.
@@ -3308,6 +3336,8 @@ kable(calib_variables,
                 full_width = FALSE, font_size = 9) %>%
   column_spec(1, bold = TRUE)
 ```
+
+##### Diameter growth model and calibration
 
 **Diameter growth model.** In most variants, FVS does not predict diameter increment directly. It predicts the change in squared inside bark diameter, dds, from which the diameter increment is derived with equation {3.6.2.6.1} (Dixon 2002, section 7.2.1; Stage 1973; Cole and Stage 1972). The model for ln(dds) is a regression in the site, stand and tree variables of the variant, which subroutine DGF evaluates.
 
@@ -3461,6 +3491,8 @@ Where:
 
 The ratio of the standard deviation of the sample residuals to SIGMAR is reported as the "ratio of standard errors" in the calibration statistics table. A ratio that is consistently above 1.0 indicates that the growth sample varies more than the data used to fit the model (Dixon 2002, section 4.3.1.1.3).
 
+##### Small-tree height growth calibration
+
 **Small-tree height growth model.** The small-tree model is calibrated with a scale factor that is a ratio of the observed and the predicted height increments. A tree record is used when it has a height increment of at least 0.001 foot, a height at the start of the growth period of at least 0.01 foot, and a diameter below 5.0 inches (3.0 inches in AK). The calibration is done for a species when the sample has NCALHT or more trees (5 by default, changed with keyword CALBSTAT, with a minimum of 3), and LHTCAL is true. The increment predicted for each sample tree is calculated with the small-tree height growth model of the variant, EDH, including the user multiplier RHCON. The scale factor is the ratio of the means of the sample, weighted by PROB, as shown in equation {3.6.2.6.7}, and the calibration term HCOR is its natural logarithm. In subroutine REGENT, the height increment of a small tree is multiplied by RHCON and by the exponential of HCOR. The same range as in equation {3.6.2.6.5} is tested, with the message "SMALL TREE HTG", and the scale factor is set to 1.0 and HCOR to 0.0 when the value is outside the range.
 
 $$
@@ -3478,6 +3510,8 @@ Where:
 - HCOR: Calibration term of the small-tree height growth model
 
 The height scale factor is a direct multiplier of the predicted height increment. It does not have a weight. The calculation is the same in every variant. In the variants that use more than one small-tree model for different species, the equation for EDH differs by species.
+
+##### Attenuation and calibration keywords
 
 **Attenuation of the scale factors.** The scale factors are attenuated over the projection, because the base model is assumed to be a more stable estimate of long-term growth than the scale factor (Dixon 2002, section 6.4.1). In the first cycle, the attenuation goal, WCI, is set to one half of the initial diameter growth calibration term. At the end of each cycle, the calibration terms for the next cycle are calculated with equation {3.6.2.6.8}. The attenuation applies to the diameter growth calibration term, COR, and to the height growth calibration term, HCOR, of a species when calibration is not suppressed for the species with keyword NOCALIB (LDGCAL is true).
 
@@ -3518,7 +3552,9 @@ kable(calib_keywords,
   column_spec(1, bold = TRUE)
 ```
 
-**Variant differences in the diameter growth calibration.** The calibration of the other variants has the same steps as described above, with the following differences.
+##### Variant differences in the diameter growth calibration
+
+The calibration of the other variants has the same steps as described above, with the following differences.
 
 - NC, ON and BC calculate the variance SIGMA of equation {3.6.2.6.6} even for a species for which calibration is suppressed with NOCALIB. The other variants use SIGMAR for such a species.
 - BC limits the diameter growth calibration term to 1.38629 (a scale factor of 4) in addition to the range of equation {3.6.2.6.5}.
@@ -3526,6 +3562,8 @@ kable(calib_keywords,
 - The prior variance PVAR is set by species in each variant (a data statement in the DGDRIV source file of the variant; 0.0898 or 0.089827273 in most of the variants that have a single value).
 - DBSCALIB, which writes the calibration statistics to the database, is not called in ON.
 - In OC and OP, the diameter growth of the trees that are valid for ORGANON is not calibrated by DGDRIV; this section does not describe how ORGANON calibrates those trees.
+
+##### Randomization and multipliers
 
 **Randomization.** The random effects of FVS are assigned to the error in the prediction of ln(dds) (Dixon 2002, section 6.4.2; Stage 1973). The error is normally distributed with a mean of 0. Its variance is the variance of the calibrated model, SIGMA, of equation {3.6.2.6.6}, which is a weighted average of the variance of the model and the variance of the growth sample. The error is carried from one cycle to the next with a serial correlation that depends on the cycle length (subroutine AUTCOR). The error is bounded to plus or minus DGSD standard deviations, and DGSD is 2.0 by default (1.7 in CA, CI, EC, HI, PN and WC; 1.5 in BM; 0 in OC and OP), which keyword DGSTDEV changes. When DGSD is less than 1.0, no random variation is added to the diameter growth. The random numbers come from a multiplicative congruential generator (the multiplier is 16807 and the modulus is 2147483647) with one seed, which is reset at the start of each run, and keyword RANNSEED replaces the seed. A normal deviate is made from three uniform numbers. The manual (Dixon 2002, section 6.4.2) describes a Marsaglia-Bray generator with three seeds, which does not match the code.
 
@@ -3568,7 +3606,7 @@ Stand Density Index (SDI) is used in many variants for estimating mortality and 
 
 This concludes the model calibration portion of the projection initialization phase but there are still a few more things to do before moving on to the projection cycling phase. Subroutine CRATET returns program control to subroutine FVS for further processing.
 
-### Auxiliary subroutines
+### Calibration and data dubbing auxiliary subroutines
 
 Subroutine DBCHK is called to see if debug write statements need to be executed in a subroutine.
 
@@ -3588,7 +3626,7 @@ Subroutine SPESRT is called by subroutine CRATET to realign pointers in the spec
 
 The remaining projection initialization tasks involve computing stand and tree level variables that have not yet been set, initializing variables used in FVS extensions, and writing initial tree and stand conditions to the various output tables.
 
-### Subroutines involved and their function
+### Final initialization subroutines
 
 Subroutine FVS calls subroutine ESFLTR in the regeneration establishment extension to collect inventory information for understory and overstory densities and to flag trees in the inventory as “best trees” for the purposes of regeneration establishment.
 
@@ -3620,7 +3658,7 @@ Subroutine FVS next calls BRSETP and BRPR to initialize the blister rust model. 
 
 The final steps in the projection initialization phase are to set the logical flag, LSTART that is carried in the CONTRL labeled COMMON block, to a value of “.FALSE.” indicating the project initialization phase has been completed, and then to call subroutine EVTSTV with an argument of -1 to define the type 1 event monitor variables for the inventory. Some subroutines used in projection initialization (e.g. subroutine DGDRIV) have two similar but distinct sections. One part is used in projection initialization and the other is used in projection cycling. These subroutines check the value of variable LSTART to determine which section should be used.
 
-### Auxiliary subroutines
+### Final initialization auxiliary subroutines
 
 Subroutine COMP is used to calculate the species and tree class percentage composition values for various volume categories.
 
@@ -3672,7 +3710,7 @@ Compare ICYC and NCYC; if ICYC is equal to NCYC then the projection cycling phas
 
 Step 1 happens in subroutine FVS. Subroutine FVS calls subroutine TREGRO which calls subroutine GRINCR to handle step 2 and subroutine GRADD to handle step 3. Both GRINCR and GRADD call several other subroutines, as outlined in the following sections. Subroutine FVS then calls several subroutines to handle step 4, and performs step 5. Steps 2-4 will be explained in detail in the following sections.
 
-## Input and Output Arrays {-}
+## Projection cycling arrays {-}
 
 The following tables document the major arrays used in the projection cycling phase:
 
@@ -4113,7 +4151,7 @@ kable(crown_arrays,
 
 Checking the event monitor and simulating harvest both occur at the beginning of a projection cycle in FVS. Subroutine FVS calls subroutine TREGRO which calls subroutine GRINCR to control these tasks.
 
-### Subroutines involved and their function
+### Event monitor and harvest subroutines
 
 There are some model control tasks that subroutine GRINCR needs to accomplish at the start of each projection cycle. First the cycle length, FINT, is set; next subroutine OPCSET is called to set up the option pointers for the cycle; the logical variable LTRIP is set to control whether record tripling will happen during the cycle; subroutine OPFIND, OPGET (an entry point in subroutine OPFIND), and OPDONE (another entry point in subroutine OPFIND) are called to process any SETSITE keyword records scheduled for the cycle; if a SETSITE keyword record is present, subroutine HABTYP gets called to decode the habitat type, if habitat type is being reset as part of the SETSITE options, and subroutine RCON gets called to recalculate growth equation species-level constants; and various subroutines get called to set up variables needed by FVS extensions (e.g. RDMN2 and RDTRP for root disease, FMSDIT for fire and fuel effects, and others).
 
@@ -4180,7 +4218,9 @@ If the trees per acre representation for a tree record is reduced to zero (i.e. 
 
 Subroutine CUTS calls several subroutines to produce tree lists for cut tree records and the residual stand. Subroutine PRTRLS produces a cut tree list, requested with the CUTLIST keyword record, and an after treatment live tree list; subroutine FVSSTD is called to write a cut tree list for the FVSStand post-processer, requested with the FVSSTAND keyword record; subroutines DBS_FIAVBC_CUTLST and DBS_FIAVBC_ATRTLS write the corresponding FIA-VBC cut list and after treatment tree list tables to the output database when those tables have been requested; and subroutine SVCUTS is called to write files needed for a stand visualization of the thinning if requested using the SVS keyword record.
 
-**Volume of the removed trees and of the after treatment records.** Subroutine CUTS does not call VOLS. It uses the per-tree volumes that were stored by the last call to VOLS, which is the call of the previous cycle (UPDATE) or, in the first cycle, the initial call of subroutine FVS. CUTS is called near the start of the cycle, before the growth is estimated (`base/grincr.f:292`), so the DBH and HT of the cut records and the volumes of the removed trees are the values of the start of the cycle. For each tree record that is cut, the removed volumes are the products of the trees per acre removed and the stored volumes, as shown in equation {4.1.1.1} (`vbase/cuts.f:1686-1691`). The biomass and carbon of the removed trees follow the same pattern: the non-product values (above-ground and foliage biomass and carbon) are multiplied by PREM, and the product values (merchantable and sawlog biomass and carbon) are multiplied by PREM2 (`cuts.f:1693-1702`). The totals that CUTS accumulates for the trial thinning, CFCUT, CMCUT, SCCUT and BFCUT, use the same stored volumes, with PREM x (1 - PRLOST) for the merchantable, sawlog and board foot volumes, where PRLOST is the proportion lost with the YARDLOSS keyword record (`cuts.f:1394-1397`). The stored volumes are also passed to the economics extension (`cuts.f:1666-1673`) and are used for the distribution of the removed volume (OCVREM and the other removal arrays, `cuts.f:1777-1778`).
+##### Volume of the removed trees and after treatment records
+
+Subroutine CUTS does not call VOLS. It uses the per-tree volumes that were stored by the last call to VOLS, which is the call of the previous cycle (UPDATE) or, in the first cycle, the initial call of subroutine FVS. CUTS is called near the start of the cycle, before the growth is estimated (`base/grincr.f:292`), so the DBH and HT of the cut records and the volumes of the removed trees are the values of the start of the cycle. For each tree record that is cut, the removed volumes are the products of the trees per acre removed and the stored volumes, as shown in equation {4.1.1.1} (`vbase/cuts.f:1686-1691`). The biomass and carbon of the removed trees follow the same pattern: the non-product values (above-ground and foliage biomass and carbon) are multiplied by PREM, and the product values (merchantable and sawlog biomass and carbon) are multiplied by PREM2 (`cuts.f:1693-1702`). The totals that CUTS accumulates for the trial thinning, CFCUT, CMCUT, SCCUT and BFCUT, use the same stored volumes, with PREM x (1 - PRLOST) for the merchantable, sawlog and board foot volumes, where PRLOST is the proportion lost with the YARDLOSS keyword record (`cuts.f:1394-1397`). The stored volumes are also passed to the economics extension (`cuts.f:1666-1673`) and are used for the distribution of the removed volume (OCVREM and the other removal arrays, `cuts.f:1777-1778`).
 
 $$
 \begin{aligned}
@@ -4223,7 +4263,7 @@ Next, subroutine GRINCR calls various code segments pertaining to insect and dis
 
 Subroutine GRINCR is now ready to predict tree growth and mortality for the current projection cycle.
 
-### Auxiliary subroutines
+### Event monitor and harvest auxiliary subroutines
 
 AUTSTK, an entry point in subroutine CUTSTK, is used to compute a value for normal full stocking for the automatic thinning option (THINAUTO keyword record).
 
@@ -4275,7 +4315,7 @@ Trees are considered “large” trees for FVS modeling purposes when they are l
 
 FVS mortality models are of four kinds: 1) the Prognosis-type mortality model; 2) the SDI-based mortality model; 3) individual tree survival models, which are used in the AK variant and in the HI, PN, WC and OP variants; and 4) the ORGANON mortality model. Some variants combine two models by species (EM and TT). A fifth type, the TWIGS based mortality model, has been replaced with the SDI-based mortality model in the Lake States (LS), Central States (CS), and Northeast (NE) variants. A general description of the Prognosis, SDI, and TWIGS mortality models can be found in section 7.3 of the EFVS Guide (Dixon 2002). A description of the ORGANON mortality model can be found in the overview documents for the two ORGANON-FVS variants (OC and OP). Structural differences of the ORGANON-FVS variants will be further discussed in [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants).
 
-### Subroutines involved and their function
+### Growth and mortality subroutines
 
 The order in which FVS simulates stand-changing events is important. FVS is a forward predicting model. That is to say, it predicts future stand conditions from current stand conditions. Harvesting occurs at the beginning of a growth projection cycle prior to growth prediction. So pruning and harvesting affects growth rates through modified crown ratio and stand density attributes.
 
@@ -4306,6 +4346,8 @@ Subroutine DGDRIV retrieves any multipliers or management flags scheduled for th
 Large tree diameter growth, expressed as ln(DDS), the natural logarithm of the change in squared inside bark diameter over YR years, is estimated using a regression equation (or, for some species, another form of equation, as described below) with independent variables being individual tree attributes and current stand conditions. An error term is added to the estimate. Error terms are correlated from cycle-to-cycle so the relative magnitude of an individual trees’ estimate is correlated from one projection cycle to the next. In effect, a tree growing well one cycle is likely to grow well the next cycle, and a tree growing poorly is likely to continue growing poorly, to some extent. The correlation of the errors between cycles is calculated from the autocorrelation function of an autoregressive moving average model, ARMA(1,1), of the annual increments, as described under Serial correlation and random error of the diameter increment. DGDRIV calls subroutine AUTCOR to compute the variance and covariance multipliers for the current projection cycle.
 
 Subroutine DGDRIV calls subroutine DGF to obtain large tree diameter growth estimates for all the tree records. Subroutine DGF contains regression equations for each species. It is structured as nested DO loops with the outside loop controlling species and the inside loop controlling tree records within species. The argument list for subroutine DGF consists of the array of tree diameters to be used. So in the calibration phase of projection initialization subroutine DGF is called with the array of backdated diameters, and in the growth estimation phase of projection cycling it is called with the tree diameters at the beginning of the projection cycle. Subroutine DGF stores estimated diameter growth for each tree record in terms of ln(DDS), the natural logarithm of the change in squared inside bark diameter, in work array WK2(i).
+
+##### Large-tree diameter increment
 
 **Equation for the large-tree diameter increment.** Subroutine DGF stores in WK2(i) the natural logarithm of the change in squared inside bark diameter over YR years, ln(DDS), for each tree record i. WK2(i) is not the logarithm of the basal area increment; the two differ by a constant factor, but DGF does not apply the factor. The variables used in this section are defined in the next table.
 
@@ -4698,7 +4740,9 @@ Subroutine HTGF has a similar construction as subroutine DGF does. It has nested
 
 For variants using site index curves to estimate height growth, two other subroutines play a major role in large tree height growth estimation. Subroutine HTCALC contains equations for the site index curves being used for each species. Subroutine HTGF calls subroutine FINDAG to estimate a trees’ age based on a trees’ height and species using the equations in subroutine HTCALC. Subroutine HTGF then adds 10 years to this age (5 years in the NC, OC and OP variants) and calls HTCALC to obtain an estimate of tree height at the end of the projection cycle based on tree age and species. Potential height growth is then the difference between the estimated beginning- and end-of cycle heights.
 
-**Large-tree height increment.** Subroutine HTGF estimates the height increment for the cycle for each tree record. The potential height growth, the modifier, and the scaling are described in the following paragraphs for the variants that use the equations; the forms differ by variant, as shown in the table that follows them.
+##### Large-tree height increment
+
+Subroutine HTGF estimates the height increment for the cycle for each tree record. The potential height growth, the modifier, and the scaling are described in the following paragraphs for the variants that use the equations; the forms differ by variant, as shown in the table that follows them.
 
 *Potential height growth from the site index curve.* BM, CA, CI (species MC), EC, HI, NC, OC, OP, PN, SO, TT, UT, WC and WS estimate the age of the tree from its height with subroutine FINDAG, and then calculate the height of the tree at the age plus 10 years (plus 5 years in NC, OC and OP) with subroutine HTCALC. FINDAG tries ages from 2 years in steps of 2 years until the site index curve height is within 2.0 feet of the height of the tree, or exceeds it. It returns the age, SITAGE, and the height of the curve at that age, SITHT; SITHT is not the height of the tree. The potential height growth is shown in equation {4.2.1.1.11}.
 
@@ -5364,7 +5408,9 @@ kable(mort_variables,
   column_spec(1, bold = TRUE)
 ```
 
-**Mortality models by variant.** Four kinds of mortality models are in the compiled code: the Prognosis-type model, the SDI-based model, an individual tree survival model that is applied to every tree record (AK, and the HI, PN, WC and OP variants), and the ORGANON model. Some variants combine models by species. The models are listed by variant in the next table. Subroutine MORTS calls a distribution subroutine in the variants that have one, which distributes the number of trees to kill over the tree records. In the other variants, MORTS calculates the trees per acre that die of every tree record directly. Subroutine SEAMRT is compiled in AK but is not called.
+##### Mortality models by variant
+
+Four kinds of mortality models are in the compiled code: the Prognosis-type model, the SDI-based model, an individual tree survival model that is applied to every tree record (AK, and the HI, PN, WC and OP variants), and the ORGANON model. Some variants combine models by species. The models are listed by variant in the next table. Subroutine MORTS calls a distribution subroutine in the variants that have one, which distributes the number of trees to kill over the tree records. In the other variants, MORTS calculates the trees per acre that die of every tree record directly. Subroutine SEAMRT is compiled in AK but is not called.
 
 ```{r mort-models, echo=FALSE}
 mort_models <- tibble::tribble(
@@ -5407,7 +5453,9 @@ kable(mort_models,
 
 The OC variant uses the VARMRT source file of the CA variant. In the ON variant, VARMRT has a fourth argument and uses metric equations. The variants that call CLMORTS compile the climate version when the climate extension is part of the executable, and an entry point in subroutine EXCLIM otherwise.
 
-**Steps common to the models.** Subroutine MORTS calls subroutine DBCHK to see if debug output is called for. It calls subroutines OPFIND, OPGET (an entry point in OPFIND) and OPDONE (another entry point in OPFIND) to process any mortality multipliers scheduled for the projection cycle with keyword MORTMULT. The multipliers are stored by species in XMMULT, with the lower and upper diameter limits XMDIA1 and XMDIA2, and the multiplier of a tree record is X.
+##### Steps common to the models
+
+Subroutine MORTS calls subroutine DBCHK to see if debug output is called for. It calls subroutines OPFIND, OPGET (an entry point in OPFIND) and OPDONE (another entry point in OPFIND) to process any mortality multipliers scheduled for the projection cycle with keyword MORTMULT. The multipliers are stored by species in XMMULT, with the lower and upper diameter limits XMDIA1 and XMDIA2, and the multiplier of a tree record is X.
 
 Maximum basal area and maximum stand density index are two measures of the maximum capacity of an area to grow trees. Maximum basal area can be entered with keyword BAMAX. Maximum SDI of the species can be entered with keyword SDIMAX, whose fields 5 and 6 also change the limits PMSDIL and PMSDIU. The maximum SDI of the stand, SDIMAX, is the average of the species values weighted by the basal area of the species. When a maximum basal area has not been entered, subroutine MORTS calls subroutine SDICAL, which sets BAMAX to SDIMAX x 0.5454154 x PMSDIU. This step also serves the climate extension.
 
@@ -5838,9 +5886,11 @@ In OP, when the model type is 3 (SMC) the DF (species 16) uses form 4 with $BM_0
 
 FVS is now done simulating mortality not related to insects, disease, or fire; program control returns to subroutine GRINCR.
 
-*ORGANON variants.* In the OC and OP variants, subroutine MORTS adds the ORGANON mortality estimates, MORTEXP, over all tree records. These were calculated by subroutine EXECUTE, called from DGDRIV. When the sum is greater than 0 and ORGANON is on (LORGANON is true), the trees that die are MORTEXP x FINT/5 for all tree records. The multiplier of keyword MORTMULT is not applied to these values. When the sum is 0, which includes the case where no "big 6" species is present and EXECUTE was skipped, OC calculates mortality with the SDI-based model described above (with VARMRT) and OP calculates it with the individual tree survival model described above. In OC, ORGANON mortality skips the distribution subroutine and the basal area check. Structural differences in the two ORGANON-FVS variants are discussed in more detail in [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants).
+###### ORGANON variants
 
-### Auxiliary subroutines
+In the OC and OP variants, subroutine MORTS adds the ORGANON mortality estimates, MORTEXP, over all tree records. These were calculated by subroutine EXECUTE, called from DGDRIV. When the sum is greater than 0 and ORGANON is on (LORGANON is true), the trees that die are MORTEXP x FINT/5 for all tree records. The multiplier of keyword MORTMULT is not applied to these values. When the sum is 0, which includes the case where no "big 6" species is present and EXECUTE was skipped, OC calculates mortality with the SDI-based model described above (with VARMRT) and OP calculates it with the individual tree survival model described above. In OC, ORGANON mortality skips the distribution subroutine and the basal area check. Structural differences in the two ORGANON-FVS variants are discussed in more detail in [Structural differences in the ORGANON-FVS variants](#sec-structural-differences-in-the-organon-fvs-variants).
+
+### Growth and mortality auxiliary subroutines
 
 Subroutine DBCHK is used to see if debug output should be written to the output file.
 
@@ -5872,7 +5922,7 @@ Subroutines fvsGetRestartCode, getAmStopping, fvsGetRtnCode, and fvsStopPoint (t
 
 Following estimation of tree growth and mortality, there are two more tasks that are part of the projection cycling phase. Tree records must be tripled when the number of records is small, and the effects of fertilizer treatments on tree growth must be simulated.
 
-### Subroutines involved and their function
+### Record tripling
 
 **When records are tripled.** Subroutine GRINCR sets the logical variable LTRIP at the start of each projection cycle, with the condition in equation {4.3.1.1}. The condition is evaluated again in every cycle.
 
@@ -6012,13 +6062,57 @@ kable(tripling_hooks,
 
 **Subroutine REASS.** Subroutine GRINCR calls subroutine REASS to realign the FVS internal pointers following tripling. REASS copies IND1 into IND2 in species order and rewrites IND1 so that each group of three entries lists the second record (ITFN = IREC1 + 2I - 1), the original record (I) and the third record (ITFN + 1) of a tree. It then rewrites the species segments, ISCT(species,1) and ISCT(species,2), the first and last positions of the species in IND1, which hold three times the number of records. Finally, it rewrites the array IND in the same way. Subroutine RDPSRT, called later from subroutine GRADD, sorts the records again.
 
-**Fertilizer effects.** Subroutine GRINCR calls subroutine FFERT to compute adjustments to diameter and height growth due to effects of applying fertilizer. FFERT is the routine of the variants (the stub in BC and ON, where the FERTILIZ keyword is an error). The FERTILIZ keyword record (activity code 260) has the date or cycle, the nitrogen (pounds per acre), phosphorus and potassium, and a multiplier of the effect, FEFF, with a default of 1.0. Only an application of 200 pounds of nitrogen per acre can be represented: a blank or any other value of nitrogen is set to 200, and the phosphorus and potassium values are ignored. When several FERTILIZ activities are scheduled for the same cycle, FFERT uses the last one and deletes the others (OPDEL1).
+#### ORGANON tripling (OC and OP)
 
-The effect starts at the beginning of the cycle in which FFERT finds the activity (IFFDAT = IY(ICYC)), whatever the date entered, and lasts 10 years. The number of years of the effect in the present cycle is shown in equation {4.3.1.4}. The effect continues in the later cycles with the same parameters, until the 10 years have passed. The tripled records are processed like the others.
+ORGANON subroutine GROW has its own record tripling, which is separate from the FVS tripling above. It is controlled by the ORGANON flag INDS(5), where 0 means no tripling and 1 means tripling (`common/ORGANON.F77:134`, `organon/execute2.f:104-106`). The default is 0 ("ORGANON TRIPLING OFF") in `oc/grinit.f:360` and `op/grinit.f:358`, and no other statement in the source files assigns INDS(5), so the tripling of subroutine GROW does not run in OC and OP. The record tripling of FVS is controlled by LTRIP and ICL4 instead (equation {4.3.1.1}); the ORGANON array IORG is copied to the new FVS records by subroutine ORGTRIP (`organon/orgtrip.f`). The ORGANON setting is printed as "TRIPLING: No" or "TRIPLING: Yes" in the ORGANON table of the output (`vorganon/orgtab.f:183-188`).
+
+When the flag is 1, subroutine GROW triples in the diameter growth loop and again in the loop of height growth of the major species groups (the groups up to IB), through subroutines DGTRIP and HGTRIP, and subroutine XTRIP copies the other tree variables (`organon/grow.f:60-153`, `organon/tripleorg.f`). Each loop first chooses a mode M from the number of records, with a limit of 2000 records (`grow.f:75-90`, `grow.f:115-130`). M is 1 (every tree is tripled) when three times the number of records that have trees per acre above 0 fits in 2000, and the total with the records that have no trees fits as well. Otherwise M is 2 (every other tree is tripled) when twice the number fits, and otherwise M is 0 (no tripling). Records with trees per acre of 0 or less are not grown or tripled. In the height loop the count is made for the major groups only, with the records that are not in a major group counted once. After each loop NTREES is set to the new number of records (`grow.f:110`, `grow.f:153`), and the height loop runs over all those records, so a record of a major group that was tripled in the diameter loop is also a candidate in the height loop.
+
+Each tripled record keeps the attributes of the original record, and each of the three records has one third of the trees per acre, of the mortality expansion and of the other expansion arrays (`organon/tripleorg.f:115-135`, `tripleorg.f:309-330`); the split differs from the 60, 25 and 15 percent split of the FVS tripling. The growth is different for the three records, as shown in equations {4.3.1.4} and {4.3.1.5}, where the first record is the original record, the second record is stored at J and the third at J + 1. The residuals L and U are those of the species group, in subroutines DGRES_SWO, DGRES_NWO and DGRES_SMC (`tripleorg.f:178-198`, `200-217`, `219-234`) for diameter growth and HGRES_SWO, HGRES_NWO and HGRES_SMC (`tripleorg.f:345-373`, `375-402`, `404-431`) for height growth. The diameter growth residuals are constants for each species group. The height growth residuals are polynomials of the height growth and exist only for the major groups, five groups in model type 1 and three in model types 2 and 3 (`tripleorg.f:345-431`).
+
+$$
+\begin{aligned}
+DG_1 &= \max\left[0, \; DG - \left(L + U\right)\sqrt{DG}\right] \\
+DG_2 &= DG + U \sqrt{DG} \\
+DG_3 &= \max\left[0, \; DG + L \sqrt{DG}\right]
+\end{aligned}
+\tag{4.3.1.4}
+$$
+
+Where:
+
+- DG_1, DG_2, DG_3: Diameter growth of the original record, the second record and the third record (inches)
+- DG: Diameter growth of the original record before tripling (inches)
+- L: Lower residual of the species group, DGLRES(g) of the subroutine DGRES_SWO, DGRES_NWO or DGRES_SMC
+- U: Upper residual of the species group, DGURES(g) of the same subroutine
+
+$$
+\begin{aligned}
+HG_1 &= \max\left[0, \; HG - \left(U + L\right)\right] \\
+HG_2 &= HG + U \\
+HG_3 &= \max\left[0, \; HG + L\right] \\
+L &= \min\left(0, \; A_0 + A_1 HG + A_2 HG^{2}\right) \\
+U &= \max\left(0, \; C_0 + C_1 HG + C_2 HG^{2}\right)
+\end{aligned}
+\tag{4.3.1.5}
+$$
+
+Where:
+
+- HG_1, HG_2, HG_3: Height growth of the original record, the second record and the third record (feet)
+- HG: Height growth of the original record before tripling (feet)
+- A_0, A_1, A_2: Coefficients HGLRES(g, 1), HGLRES(g, 2) and HGLRES(g, 3) of the species group, in the subroutine HGRES_SWO, HGRES_NWO or HGRES_SMC
+- C_0, C_1, C_2: Coefficients HGURES(g, 1), HGURES(g, 2) and HGURES(g, 3) of the species group, in the same subroutine
+
+### Fertilizer effects
+
+Subroutine GRINCR calls subroutine FFERT to compute adjustments to diameter and height growth due to effects of applying fertilizer. FFERT is the routine of the variants (the stub in BC and ON, where the FERTILIZ keyword is an error). The FERTILIZ keyword record (activity code 260) has the date or cycle, the nitrogen (pounds per acre), phosphorus and potassium, and a multiplier of the effect, FEFF, with a default of 1.0. Only an application of 200 pounds of nitrogen per acre can be represented: a blank or any other value of nitrogen is set to 200, and the phosphorus and potassium values are ignored. When several FERTILIZ activities are scheduled for the same cycle, FFERT uses the last one and deletes the others (OPDEL1).
+
+The effect starts at the beginning of the cycle in which FFERT finds the activity (IFFDAT = IY(ICYC)), whatever the date entered, and lasts 10 years. The number of years of the effect in the present cycle is shown in equation {4.3.1.6}. The effect continues in the later cycles with the same parameters, until the 10 years have passed. The tripled records are processed like the others.
 
 $$
 IFSTRT = IY(ICYC) - IFFDAT, \qquad IFFIN = \min\left(10, \; IFSTRT + IFINT\right), \qquad IFLEN = IFFIN - IFSTRT
-\tag{4.3.1.4}
+\tag{4.3.1.6}
 $$
 
 Where:
@@ -6028,11 +6122,11 @@ Where:
 - IFINT: Length of the cycle, FINT (years)
 - IFLEN: Number of years of the cycle that are affected by the fertilizer (years); FFERT does nothing when IFSTRT is more than 10 or IFLEN is 0 or less
 
-For each tree with a diameter greater than 0, FFERT calculates the ratio of the diameter increment with and without fertilizer, RDDS, as shown in equation {4.3.1.5}, and the new increments, as shown in equations {4.3.1.6} and {4.3.1.7}.
+For each tree with a diameter greater than 0, FFERT calculates the ratio of the diameter increment with and without fertilizer, RDDS, as shown in equation {4.3.1.7}, and the new increments, as shown in equations {4.3.1.8} and {4.3.1.9}.
 
 $$
 BAL = \left(1 - \frac{PCT}{100}\right) BA, \qquad RDDS = \min\left[2.6, \; \exp\left(0.1108 \ln(DBH) + 0.003004 \,\frac{BAL}{\ln(DBH + 1)}\right)\right]
-\tag{4.3.1.5}
+\tag{4.3.1.7}
 $$
 
 Where:
@@ -6048,7 +6142,7 @@ DIB &= DBH \cdot BARK, \qquad DDS = 2 \cdot DIB \cdot DG + DG^{2} \\
 DDSIT &= \frac{DDS}{YR}\left[RDDS \cdot IFLEN \cdot FEFF + \left(IFINT - IFLEN\right)\right] \\
 DG &\leftarrow \sqrt{DIB^{2} + DDSIT \cdot \frac{YR}{FINT}} - DIB
 \end{aligned}
-\tag{4.3.1.6}
+\tag{4.3.1.8}
 $$
 
 Where:
@@ -6056,8 +6150,8 @@ Where:
 - DG: Diameter increment inside bark on the YR basis (inches)
 - DBH: Diameter at breast height (inches)
 - BARK: Bark ratio, BRATIO(species, DBH, HT)
-- RDDS: Ratio of the diameter increment with fertilizer to the increment without it, equation {4.3.1.5}
-- IFLEN: Number of years of the cycle that are affected by the fertilizer, equation {4.3.1.4} (years)
+- RDDS: Ratio of the diameter increment with fertilizer to the increment without it, equation {4.3.1.7}
+- IFLEN: Number of years of the cycle that are affected by the fertilizer, equation {4.3.1.6} (years)
 - IFINT: Length of the cycle, FINT (years)
 - FEFF: Multiplier of the effect of the FERTILIZ keyword (the fourth parameter of the activity)
 - YR: Period length of the growth models (years), set by the variant (CONTRL.F77)
@@ -6065,13 +6159,13 @@ Where:
 
 $$
 HTG \leftarrow \frac{HTG}{YR}\left[RHT \cdot IFLEN \cdot FEFF + \left(IFINT - IFLEN\right)\right] \frac{YR}{FINT}, \qquad RHT = 1.1626
-\tag{4.3.1.7}
+\tag{4.3.1.9}
 $$
 
 Where:
 
 - HTG: Height increment (feet)
-- IFLEN: Number of years of the cycle that are affected by the fertilizer, equation {4.3.1.4} (years)
+- IFLEN: Number of years of the cycle that are affected by the fertilizer, equation {4.3.1.6} (years)
 - IFINT: Length of the cycle, FINT (years)
 - FEFF: Multiplier of the effect of the FERTILIZ keyword (the fourth parameter of the activity)
 - YR: Period length of the growth models (years), set by the variant (CONTRL.F77)
@@ -6120,47 +6214,7 @@ FFERT is called after subroutine MORTS, so fertilizer treatments do not affect t
 
 Subroutine GRINCR is now done with its’ tasks; program control is returned to subroutine TREGRO for further processing.
 
-**ORGANON tripling (OC and OP).** ORGANON subroutine GROW has its own record tripling, which is separate from the FVS tripling above. It is controlled by the ORGANON flag INDS(5), where 0 means no tripling and 1 means tripling (`common/ORGANON.F77:134`, `organon/execute2.f:104-106`). The default is 0 ("ORGANON TRIPLING OFF") in `oc/grinit.f:360` and `op/grinit.f:358`, and no other statement in the source files assigns INDS(5), so the tripling of subroutine GROW does not run in OC and OP. The record tripling of FVS is controlled by LTRIP and ICL4 instead (equation {4.3.1.1}); the ORGANON array IORG is copied to the new FVS records by subroutine ORGTRIP (`organon/orgtrip.f`). The ORGANON setting is printed as "TRIPLING: No" or "TRIPLING: Yes" in the ORGANON table of the output (`vorganon/orgtab.f:183-188`).
-
-When the flag is 1, subroutine GROW triples in the diameter growth loop and again in the loop of height growth of the major species groups (the groups up to IB), through subroutines DGTRIP and HGTRIP, and subroutine XTRIP copies the other tree variables (`organon/grow.f:60-153`, `organon/tripleorg.f`). Each loop first chooses a mode M from the number of records, with a limit of 2000 records (`grow.f:75-90`, `grow.f:115-130`). M is 1 (every tree is tripled) when three times the number of records that have trees per acre above 0 fits in 2000, and the total with the records that have no trees fits as well. Otherwise M is 2 (every other tree is tripled) when twice the number fits, and otherwise M is 0 (no tripling). Records with trees per acre of 0 or less are not grown or tripled. In the height loop the count is made for the major groups only, with the records that are not in a major group counted once. After each loop NTREES is set to the new number of records (`grow.f:110`, `grow.f:153`), and the height loop runs over all those records, so a record of a major group that was tripled in the diameter loop is also a candidate in the height loop.
-
-Each tripled record keeps the attributes of the original record, and each of the three records has one third of the trees per acre, of the mortality expansion and of the other expansion arrays (`organon/tripleorg.f:115-135`, `tripleorg.f:309-330`); the split differs from the 60, 25 and 15 percent split of the FVS tripling. The growth is different for the three records, as shown in equations {4.3.1.8} and {4.3.1.9}, where the first record is the original record, the second record is stored at J and the third at J + 1. The residuals L and U are those of the species group, in subroutines DGRES_SWO, DGRES_NWO and DGRES_SMC (`tripleorg.f:178-198`, `200-217`, `219-234`) for diameter growth and HGRES_SWO, HGRES_NWO and HGRES_SMC (`tripleorg.f:345-373`, `375-402`, `404-431`) for height growth. The diameter growth residuals are constants for each species group. The height growth residuals are polynomials of the height growth and exist only for the major groups, five groups in model type 1 and three in model types 2 and 3 (`tripleorg.f:345-431`).
-
-$$
-\begin{aligned}
-DG_1 &= \max\left[0, \; DG - \left(L + U\right)\sqrt{DG}\right] \\
-DG_2 &= DG + U \sqrt{DG} \\
-DG_3 &= \max\left[0, \; DG + L \sqrt{DG}\right]
-\end{aligned}
-\tag{4.3.1.8}
-$$
-
-Where:
-
-- DG_1, DG_2, DG_3: Diameter growth of the original record, the second record and the third record (inches)
-- DG: Diameter growth of the original record before tripling (inches)
-- L: Lower residual of the species group, DGLRES(g) of the subroutine DGRES_SWO, DGRES_NWO or DGRES_SMC
-- U: Upper residual of the species group, DGURES(g) of the same subroutine
-
-$$
-\begin{aligned}
-HG_1 &= \max\left[0, \; HG - \left(U + L\right)\right] \\
-HG_2 &= HG + U \\
-HG_3 &= \max\left[0, \; HG + L\right] \\
-L &= \min\left(0, \; A_0 + A_1 HG + A_2 HG^{2}\right) \\
-U &= \max\left(0, \; C_0 + C_1 HG + C_2 HG^{2}\right)
-\end{aligned}
-\tag{4.3.1.9}
-$$
-
-Where:
-
-- HG_1, HG_2, HG_3: Height growth of the original record, the second record and the third record (feet)
-- HG: Height growth of the original record before tripling (feet)
-- A_0, A_1, A_2: Coefficients HGLRES(g, 1), HGLRES(g, 2) and HGLRES(g, 3) of the species group, in the subroutine HGRES_SWO, HGRES_NWO or HGRES_SMC
-- C_0, C_1, C_2: Coefficients HGURES(g, 1), HGURES(g, 2) and HGURES(g, 3) of the species group, in the same subroutine
-
-### Auxiliary subroutines
+### Record tripling and fertilizer auxiliary subroutines
 
 Subroutine DBCHK is used to see if debug output should be written to the output file.
 
@@ -6182,13 +6236,13 @@ Subroutines ORGTRIP, MISGET, MISPUT, RDTRIP, BRTRIP, BMTRIP and FMTRIP, and the 
 
 Forest disturbance agents can include insects, diseases, and fire. Dynamics associated with each of these disturbance agents and their effects on tree growth and mortality need to be simulated if those disturbance agents are part of the variant. In addition, some disturbances can be simulated using FVS base model keyword records whether the extension associated with the disturbance agent is part of the variant or not. Lastly, using the stop and restart capabilities, and FVS as a shared library that is called from some other program, disturbances can be modeled outside of FVS and the effects applied using the FVS API calls (see [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)).
 
-### Subroutines involved and their function
+### Disturbance effects subroutines
 
 Subroutine TREGRO calls subroutine GRADD, which among other tasks, checks to see if any of the insect and disease extensions are active. Calls are made to MPBCUP to see if there is a mountain pine beetle outbreak this projection cycle; DFBWIN and DFBDRV for Douglas-fir beetle; MISTOE for dwarf mistletoe; TMCOUP for Douglas-fir tussock moth; BWECUP for western spruce budworm; FMMAIN and FMKILL for the fire and fuels extension (FMKILL is called a second time after the blister rust and root disease calls); BRTREG for blister rust; and RDTREG for western root disease. These auxiliary routines will exist as subroutines if the extension is part of the program executable, or entry points in the corresponding externals routine (e.g. subroutine EXRD for western root disease) if the extension in not part of the program executable. These extensions may modify or replace growth and mortality estimates computed previously in the projection cycle by the base FVS subroutines.
 
 Subroutine GRADD calls subroutine HTGSTP to process any HTGSTOP or FIXHTG keyword records. These keyword records can be used to modify or stop estimated height growth and are useful for simulating effects of disturbance agents such as tussock moth or budworm instead of using the extension itself.
 
-### Auxiliary subroutines
+### Disturbance effects auxiliary subroutines
 
 OPDONE, an entry point in subroutine OPFIND, is called by subroutine HTGSTP to mark the disposition of activities associated with the HTGSTOP and FIXHTG keyword records that are scheduled for the current projection cycle.
 
@@ -6204,7 +6258,7 @@ Subroutines fvsGetRestartCode, getAmStopping, fvsGetRtnCode, and fvsStopPoint (t
 
 FVS is now finished with estimation of growth and mortality for the projection cycle. The next tasks are to update the tree descriptions using these estimates, resort the tree records, calculate new stand density statistics, and make any computations needed for the cover extension.
 
-### Subroutines involved and their function
+### Tree description update subroutines
 
 Subroutine GRADD calls subroutine SVMORT to update the file needed for stand visualization. This update includes the effects of mortality that occurred during the projection cycle. Subroutine SVMORT assumes that all mortality trees are standing snags for purposes of stand visualization. SVMORT calls subroutine SVRMOV to remove tree records associated with mortality (normal, fire-caused, beetle-caused, etc.) from the file needed for stand visualization. Stop point 5 is processed immediately after this call, before the tree records are updated.
 
@@ -6229,7 +6283,7 @@ Subroutine GRADD then updates the array containing actual or approximated tree a
 
 FVS is now ready to simulate regeneration establishment.
 
-### Auxiliary subroutines
+### Tree description update auxiliary subroutines
 
 Subroutine DBCHK is used to see if debug output should be written to the output file.
 
@@ -6368,7 +6422,7 @@ When FIAVBC is active, the snag volume subroutine of the fire and fuels extensio
 
 The regeneration establishment extension is part of all variants. Regeneration is added near the end of the growth projection cycle. Climate may have an influence on regeneration if the climate extension is also part of the variant. The regeneration establishment extension is described in section 5.4 of the EFVS guide and any variant-specific parameter settings are given in the variant overview documents. Also, [Regeneration establishment in FVS variants](#sec-regeneration-establishment-in-fvs-variants) of this document presents a more detailed discussion of the regeneration establishment model structure.
 
-### Subroutines involved and their function
+### Regeneration establishment subroutines
 
 Subroutine GRADD calls CLAUESTB to determine if any regeneration is occurring because of changes in climate. CLAUESTB will exist as a subroutine if the climate extension is part of the program executable, or as an entry point in subroutine EXCLIM if the climate extension is not part of the program executable. The climate extension simulates regeneration due to climate change by adding planting activity records (i.e. PLANT keyword records) to the activity list. These planting activities will then get processed when the FVS regeneration establishment model is called at the next step.
 
@@ -6432,7 +6486,9 @@ Subroutine GRADD calls subroutine SVESTB to update files used for stand visualiz
 
 This subsection gives the arithmetic that subroutine ESTAB uses to turn the PLANT and NATURAL keyword records and the predicted natural regeneration into tree records. The line numbers are in `estb/estab.f` unless a file is named.
 
-**Plot replication.** The regeneration model processes each inventory plot DUP times, where DUP is the smallest number of copies for which the number of plots times DUP is at least MINREP, or the largest number for which the number of plots times DUP + 1 does not exceed MAXPLT (`estab.f:199-208`). MINREP is 50 by default (`estb/esinit.f:59`), and the MINPLOTS keyword sets it with a minimum of 20 (`estb/esin.f:587-588`). The copies of a plot are split among the site preparations (`estab.f:450-469`), and the records of the following paragraphs are created once for each copy, so the number of records is multiplied by the number of copies.
+#### Plot replication
+
+The regeneration model processes each inventory plot DUP times, where DUP is the smallest number of copies for which the number of plots times DUP is at least MINREP, or the largest number for which the number of plots times DUP + 1 does not exceed MAXPLT (`estab.f:199-208`). MINREP is 50 by default (`estb/esinit.f:59`), and the MINPLOTS keyword sets it with a minimum of 20 (`estb/esin.f:587-588`). The copies of a plot are split among the site preparations (`estab.f:450-469`), and the records of the following paragraphs are created once for each copy, so the number of records is multiplied by the number of copies.
 
 $$
 DUPNPT = NPTIDS \times DUP
@@ -6445,7 +6501,9 @@ Where:
 - NPTIDS: Number of inventory plots
 - DUP: Number of copies of each inventory plot, as described above
 
-**Planted trees.** The PLANT and NATURAL keyword records have the fields species, trees per acre, percent survival, age, height and shade code (`estb/esin.f:206-243`). A survival percent outside 0.001 to 100 is set to 100 (`esin.f:234`), and a request with trees per acre or survival of 0.001 or less is deleted (`estab.f:415-422`). At most 99 requests are processed in a call; the others are cancelled with a warning (`estab.f:979-984`). For each request and each plot copy, the trees per acre of the record is PTREE, equation {4.7.1.2} (`estab.f:986-1014`). The shade code is 0 (no adjustment), 1 (more trees on plots with more basal area) or 2 (more trees on plots with less basal area).
+#### Planted trees
+
+The PLANT and NATURAL keyword records have the fields species, trees per acre, percent survival, age, height and shade code (`estb/esin.f:206-243`). A survival percent outside 0.001 to 100 is set to 100 (`esin.f:234`), and a request with trees per acre or survival of 0.001 or less is deleted (`estab.f:415-422`). At most 99 requests are processed in a call; the others are cancelled with a warning (`estab.f:979-984`). For each request and each plot copy, the trees per acre of the record is PTREE, equation {4.7.1.2} (`estab.f:986-1014`). The shade code is 0 (no adjustment), 1 (more trees on plots with more basal area) or 2 (more trees on plots with less basal area).
 
 $$
 PTREE = \frac{TPA \cdot S / 100}{DUPNPT} \times f, \qquad
@@ -6466,7 +6524,9 @@ Where:
 
 The height of a planted tree is from ESSUBH, or, when field 5 is 0.1 or more, a lognormal draw around the given height that is kept within 0.5 and 2 times the given height; HTADJ is added, and the height is limited to the species minimum XMIN and maximum HHTMAX (`estab.f:1018-1040`). The age is field 4, set to 2.0 when it is below 0.5 and limited to 10.0 (`estab.f:987-989`). A record that is passed to the tree list is split when it has more than 10 trees per acre, as in equation {4.7.1.7}.
 
-**Natural regeneration.** In the variants with the full establishment model, the probability of stocking of a plot copy is PROB1, equation {4.7.1.3} (`estab.f:575-584`). The number of trees on a stocked plot, ITPP, is from ESTPP and is limited to 1 to MAXTPP of the habitat group (and to MAXING in ingrowth) (`estab.f:675-686`). NEWTPP is the increase in ITPP from the previous tally, with a minimum of 0. The number of species is from ESNSPE, and is limited by MAXSPP of the habitat group and by the number of species with a probability of advanced or subsequent regeneration above 0.0001 (`estab.f:693-737`). The species of the first trees come from the advanced and subsequent probabilities (PADV, PSUB) and the species of the other trees from the excess probabilities (PXCS) (`estab.f:738-926`). When STOADJ is below 0.0001 no natural trees are created (`estab.f:958-963`).
+#### Natural regeneration
+
+In the variants with the full establishment model, the probability of stocking of a plot copy is PROB1, equation {4.7.1.3} (`estab.f:575-584`). The number of trees on a stocked plot, ITPP, is from ESTPP and is limited to 1 to MAXTPP of the habitat group (and to MAXING in ingrowth) (`estab.f:675-686`). NEWTPP is the increase in ITPP from the previous tally, with a minimum of 0. The number of species is from ESNSPE, and is limited by MAXSPP of the habitat group and by the number of species with a probability of advanced or subsequent regeneration above 0.0001 (`estab.f:693-737`). The species of the first trees come from the advanced and subsequent probabilities (PADV, PSUB) and the species of the other trees from the excess probabilities (PXCS) (`estab.f:738-926`). When STOADJ is below 0.0001 no natural trees are created (`estab.f:958-963`).
 
 $$
 PROB1 = \begin{cases} PNN + 0.0001 & P < PNN \\ P & P \ge PNN \end{cases}, \qquad
@@ -6498,9 +6558,13 @@ Where:
 
 In ingrowth (NTALLY of 99) and when the first tally of a stand follows an inventory more than 20 years after the disturbance (`estab.f:237`), ESPROB_i is PROB1 × NEWTPP / ITPP for every tree, with the same minimum (`estab.f:944-952`).
 
-**Best trees.** When there are 5 or more natural and planted records in the plot copy, the best trees are the two tallest trees, then the tallest tree of each other species, then the tallest remaining trees until there are at least 4; when there are fewer than 5 records all of them are best trees (`estab.f:1078-1143`). The natural records are not eligible when PROB1 is below 0.00011 (`estab.f:1088`).
+#### Best trees
 
-**Passing the records to the tree list.** The records are passed in three groups (`estab.f:1196-1446`). Every new record has DBH 0.1, a crown ratio of 0 and no growth, and is on the real plot of the copy; the new record count is ITRN + 1, and ESGENT then grows the records to the end of the cycle (`estab.f:1493`).
+When there are 5 or more natural and planted records in the plot copy, the best trees are the two tallest trees, then the tallest tree of each other species, then the tallest remaining trees until there are at least 4; when there are fewer than 5 records all of them are best trees (`estab.f:1078-1143`). The natural records are not eligible when PROB1 is below 0.00011 (`estab.f:1088`).
+
+#### Passing the records to the tree list
+
+The records are passed in three groups (`estab.f:1196-1446`). Every new record has DBH 0.1, a crown ratio of 0 and no growth, and is on the real plot of the copy; the new record count is ITRN + 1, and ESGENT then grows the records to the end of the cycle (`estab.f:1493`).
 
 1. **Natural best trees.** A record is created for a natural best tree when ESPROB is 0.00011 or more. The record is not subject to mortality for 20 years (IESTAT = IDSDAT + 20), and the tree value class IMC is 1.
 
@@ -6595,7 +6659,7 @@ kable(regen_limits,
   column_spec(1, bold = TRUE, width = "14em")
 ```
 
-### Auxiliary subroutines
+### Regeneration establishment auxiliary subroutines
 
 Subroutine DBCHK is used to see if debug output should be written to the output file.
 
@@ -6627,9 +6691,9 @@ Subroutine SPESRT is used to reset the species order sort of tree records.
 
 Change in a tree’s crown ratio and a tree’s crown width are the last tree attributes to be estimated during a growth projection cycle. A tree’s crown ratio may decrease, stay the same, or increase. The change of a cycle is limited to 1 percent of the tree’s crown ratio per year of the cycle in all variants except AK, where the limit on an increase is 3 percent per year, and the new crown ratio is also limited to the value that the height growth of the cycle allows in most variants, as described below.
 
-### Subroutines involved and their function
+### Crown ratio change
 
-**Crown ratio change.** Subroutine CROWN estimates the crown ratio of each tree at the end of the cycle. Subroutine GRADD calls CROWN after subroutine UPDATE, so DBH(i) and HT(i) are already the end-of-cycle values when CROWN is called, and DG(i) and HTG(i) still hold the increments of the cycle. Crown ratio is carried as the integer percent ICR(i). The steps are the same in every variant, except as noted; the variables are defined in the next table.
+Subroutine CROWN estimates the crown ratio of each tree at the end of the cycle. Subroutine GRADD calls CROWN after subroutine UPDATE, so DBH(i) and HT(i) are already the end-of-cycle values when CROWN is called, and DG(i) and HTG(i) still hold the increments of the cycle. Crown ratio is carried as the integer percent ICR(i). The steps are the same in every variant, except as noted; the variables are defined in the next table.
 
 ```{r crown-change-variables, echo=FALSE}
 crown_change_variables <- tibble::tribble(
@@ -6934,7 +6998,9 @@ kable(crown_gemcr,
 
 Once the end-of-cycle crown ratios have been estimated for all trees, program control returns to subroutine GRADD.
 
-**Crown width.** Subroutine CWIDTH sets the crown width, CRWDTH(i) in feet, of every tree record. Subroutine GRADD calls it after subroutine CROWN, using the updated crown ratios, and subroutine FVS calls it once at the start of the projection (after subroutine CRATET) to give the initial crown widths. Regeneration and sprout records get their crown width from direct calls to subroutine CWCALC in the establishment and sprouting routines. CWIDTH has two loops of the same logic, one over the live tree records and one over the dead tree records of the first cycle (the records IREC2 to MAXTRE). Tripled records receive the crown width of the original record (subroutine TRIPLE). For each record, CWIDTH does the following.
+### Crown width
+
+Subroutine CWIDTH sets the crown width, CRWDTH(i) in feet, of every tree record. Subroutine GRADD calls it after subroutine CROWN, using the updated crown ratios, and subroutine FVS calls it once at the start of the projection (after subroutine CRATET) to give the initial crown widths. Regeneration and sprout records get their crown width from direct calls to subroutine CWCALC in the establishment and sprouting routines. CWIDTH has two loops of the same logic, one over the live tree records and one over the dead tree records of the first cycle (the records IREC2 to MAXTRE). Tripled records receive the crown width of the original record (subroutine TRIPLE). For each record, CWIDTH does the following.
 
 1. If the user supplied crown width coefficients for the species (keyword CWEQN), CW = CWDS0 + CWDS1 x DBH + CWDS2 x DBH^CWDS3 when DBH is less than the transition diameter CWTDBH of the species, and CW = CWDL0 + CWDL1 x DBH + CWDL2 x DBH^CWDL3 otherwise (equation {4.8.1.10}).
 2. Otherwise, CWIDTH calls subroutine CWCALC with the species, the tree diameter, height and crown ratio, and IWHO of 0 (forest-grown crown width).
@@ -6960,7 +7026,9 @@ Where:
 
 The fields of the CWEQN keyword record are the species (or species group, or ALL) and TC; the supplemental record holds the eight coefficients (format 8F10.0). The fields of the FIXCW keyword record are the date or cycle, the species, the multiplier (default 1.0), the lower DBH limit (default 0, inclusive) and the upper DBH limit (default 999, exclusive). In the metric variants (BC and ON) CWIDTH is in `metric/base/cwidth.f`; user equations are evaluated in centimeters and meters and CRWDTH is converted to feet, and the FIXCW diameter limits are in centimeters.
 
-**Crown width equations (subroutine CWCALC).** CWCALC is compiled from four files. The argument list is the same in all of them (species, trees per acre, diameter, height, crown ratio, integer crown ratio, crown width, IWHO).
+#### Crown width equations (subroutine CWCALC)
+
+CWCALC is compiled from four files. The argument list is the same in all of them (species, trees per acre, diameter, height, crown ratio, integer crown ratio, crown width, IWHO).
 
 ```{r cwcalc-files, echo=FALSE}
 cwcalc_files <- tibble::tribble(
@@ -7192,7 +7260,7 @@ When crown widths have been updated for all tree records, subroutine CWIDTH retu
 
 The growth projection portion of the projection cycle is now complete and subroutine TREGRO passes program control back to subroutine FVS which must now complete the end-of-cycle stand and output table updating.
 
-### Auxiliary subroutines
+### Crown ratio change and crown width auxiliary subroutines
 
 Subroutine DBCHK is used to see if debug output should be written to the output file.
 
@@ -7216,7 +7284,7 @@ Three kinds of measure are used, and they are different quantities:
 
 The source code of subroutine DENSE and the 2018 edition of this guide used the words "relative density by species" for the contribution of each species to stand crown competition factor. In this guide that quantity is called crown competition factor.
 
-### Subroutines involved and their function
+### Density variables and subroutines
 
 **Variables.** The variables of this section are defined in the next table.
 
@@ -7306,7 +7374,9 @@ kable(density_calls,
 
 Among the calls of subroutine GRINCR at the start of each cycle, the density routines are called in this order: SILFTY, SDICAL and SDICLS (before-thinning values), the saving of the last-cycle values (OLDTPA, OLDAVH, OLDBA, RELDM1 = RELDEN, ORMSQD, ODR016), CUTS, DENSE if a thinning occurred, the saving of the after-thinning values (ATAVD, ATDR016, ATAVH, ATBA, ATCCF = RELDEN, ATTPA), and SDICAL and SDICLS (after-thinning values).
 
-**Subroutine DENSE.** DENSE sums over the live tree records of each species, using the species ordering of ISCT and IND1. All live records are summed; there is no minimum diameter in the sums of TPROB, BA, RMSQD and crown competition factor. The stand values are given in equations {4.9.1.1} to {4.9.1.4}.
+### Subroutine DENSE
+
+DENSE sums over the live tree records of each species, using the species ordering of ISCT and IND1. All live records are summed; there is no minimum diameter in the sums of TPROB, BA, RMSQD and crown competition factor. The stand values are given in equations {4.9.1.1} to {4.9.1.4}.
 
 $$
 TPROB = \sum_{i=1}^{ITRN} PROB_i
@@ -7518,7 +7588,9 @@ Where:
 
 **Stockable area.** INITRE computes GROSPC from the number of points and the number of non-stockable points when GROSPC is negative, that is, not entered (GROSPC = (PI - NONSTK) / PI, limited to 1), and then replaces it with its reciprocal (vbase/initre.f, near lines 350 to 381). When the value is not 1, FVS prints that stand attributes are calculated per acre of stockable area and that the values in the summary table are multiplied by the stockable fraction. Stand density index, crown competition factor and crown cover are based on stockable area (Dixon 2002, section 5.5.2.2).
 
-**Crown competition factor of a tree, subroutine CCFCAL.** CCFCAL(ISPC, D, H, JCR, P, LTHIN, CCFT, CRWDTH, MODE) returns the crown competition factor CCFT of a record in MODE 1, already multiplied by the trees per acre P, and, in some variants, a crown width in MODE 2, which DENSE does not use. The source file differs by variant (see the next table). CS, LS, NE, ON and SN use the file of LS; OC uses the file of CA; OP uses the file of PN. The variables that are not defined above are D (diameter, inches), H (total height, feet) and JCR (crown ratio, percent). The forms are given once, in equations {4.9.1.16} to {4.9.1.20}, and the table lists the form, the break diameter DB and the source of each species. The coefficient arrays RD1, RD2, RD3, RDA and RDB are in the files named in the table.
+### Crown competition factor (subroutine CCFCAL)
+
+CCFCAL(ISPC, D, H, JCR, P, LTHIN, CCFT, CRWDTH, MODE) returns the crown competition factor CCFT of a record in MODE 1, already multiplied by the trees per acre P, and, in some variants, a crown width in MODE 2, which DENSE does not use. The source file differs by variant (see the next table). CS, LS, NE, ON and SN use the file of LS; OC uses the file of CA; OP uses the file of PN. The variables that are not defined above are D (diameter, inches), H (total height, feet) and JCR (crown ratio, percent). The forms are given once, in equations {4.9.1.16} to {4.9.1.20}, and the table lists the form, the break diameter DB and the source of each species. The coefficient arrays RD1, RD2, RD3, RDA and RDB are in the files named in the table.
 
 $$
 CCF = \begin{cases} RD1 + RD2 \, D + RD3 \, D^{2} & D \ge DB \\ RDA \, D^{RDB} & 0.1 < D < DB \\ 0.001 & D \le 0.1 \end{cases}
@@ -7633,6 +7705,8 @@ kable(ccf_by_variant,
   column_spec(2, width = "16em") %>%
   column_spec(3, width = "16em")
 ```
+
+### Stand density index (SDI)
 
 **Subroutine SDICAL: maximum SDI.** The maximum SDI of the stand is the average of the species maximums SDIDEF weighted by the basal area of each species, as shown in equations {4.9.1.21} and {4.9.1.22} (Dixon 2002, equation 7.3.2.1.1). The sums use the live records (index below IREC2) with the basal area 0.0054542 D^2 P. When IWHO is 1 during calibration, recently dead records (IMC = 7) are also included, with their trees per acre divided by FINT / FINTM; this is used by the stagnation calculation of the CR, TT and UT variants. The maximum SDI of each point, XMAXPT, is the same average of the species basal area on the point; it equals the stand value when the point has no basal area.
 
@@ -7777,6 +7851,8 @@ kable(sdi_defaults,
 
 In BM, EC, HI, OP, PN and WC, and in CA and OC (IFOR of 6 or more), NC (IFOR 4 or 7) and SO (IFOR 3 or less, or 10), the maximum SDI of the species of the ecological class code is first set from ECOCLS (RSDI, limited to the value FORMAX of the variant: 850 in BM, CA, NC, OC and SO; 900 in EC; 950 in HI, OP and PN; FMSDI(IFOR) in WC), before the table values are applied to the species that are still not set. SITSET changes BAMAX only where the table says so; where LBAMAX is false, SDICAL sets BAMAX again from SDIMAX each time it is called (equation {4.9.1.23}). When the ORGANON variables RVARS(3 to 5) and MSDI_1 to MSDI_3 are 0, OC and OP set them from SDIDEF of three species (OC: species 7, 4 and 18; OP: species 16, 3 and 19 for RVARS and 16, 15 and 3 for MSDI_1 to MSDI_3), as listed in oc/sitset.f:327-342 and op/sitset.f:325-340.
 
+### Relative density
+
 **Relative density of a class of trees.** Entry RDCLS computes the relative density of Curtis (1982) with the summation of Lu et al. (2017), shown in equation {4.9.1.27}, for the records at or above DBHSTAGE (Dixon 2002, equation 5.2.4.2.4.1). Entries RDCLS2 and RDSLTR compute the SILVAH relative density (Marquis and Ernst 1992), shown in equation {4.9.1.28}; they are available only in NE and use records with a diameter of 1.0 inch or more. Entry CCCLS computes the percent canopy cover, shown in equation {4.9.1.29}. Entry SILFTY assigns the SILVAH forest type (0 to 5) in NE; the types are those defined in Dixon (2002), section 5.2.4.2.4, with the thresholds 0.65, 0.50 and 0.25 of basal area.
 
 $$
@@ -7860,7 +7936,9 @@ Where:
 - SDI: SDIBC2 or SDIBC (before thinning), or SDIAC2 or SDIAC (after thinning), as described in the text; SDIBC2 and SDIAC2 when LZEIDE is true (trees per acre)
 - GROSPC: Reciprocal of the stockable fraction of the points (dimensionless)
 
-**Diameter limit of the SDI based mortality sums.** The mortality routines exclude trees below a diameter limit from the SDI sums, as shown in the next table.
+### Diameter limit of the SDI based mortality sums
+
+The mortality routines exclude trees below a diameter limit from the SDI sums, as shown in the next table.
 
 ```{r sdi-mortality-limit, echo=FALSE}
 sdi_mortality_limit <- tibble::tribble(
@@ -7878,7 +7956,7 @@ kable(sdi_mortality_limit,
   column_spec(1, bold = TRUE, width = "16em")
 ```
 
-### Auxiliary subroutines
+### Stand density auxiliary subroutines
 
 Subroutine DBCHK is used to see if debug output should be written to the output file.
 
@@ -7898,7 +7976,7 @@ Subroutine SDICHK is used to reset the maximum SDI when the initial stand is den
 
 FVS has several tasks to accomplish at the end of a projection cycle. Output tables must be updated, files used in post-processing programs may need to be written, and stand age might need to be reset.
 
-### Subroutines involved and their function
+### End-of-cycle updating subroutines
 
 Subroutine FVS calls subroutine EXTREE to assign values to the output arrays for example trees. Subscripts to trees used for printing in the output tables are carried in array INS(i), i=1,6, and passed in the CONTRL labeled COMMON block. The INS(i) array is loaded in subroutine DIST.
 
@@ -7914,7 +7992,7 @@ Calls to subroutines that write end-of-cycle tree list information for the proje
 
 Processing of the projection cycle is now complete. Subroutine FVS compares ICYC with NCYC. If this was not the last cycle of the projection, the restart code is cleared, the cycle number gets incremented, and the process starts over with the call to subroutine TREGRO as outlined in [Event monitor and harvest](#sec-event-monitor-and-harvest). If it was the last cycle, subroutine FVS processes stop point -1, which signals that stopping can no longer continue for this stand (see [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)), increments ICYC, sets ICL6 to -99 to indicate the projection is complete, calls DISPLY for the final time, and enters the projection summarization phase.
 
-### Auxiliary subroutines
+### End-of-cycle updating auxiliary subroutines
 
 Subroutine FORTYP is used to compute the FIA forest type based on stand stocking levels.
 
@@ -7930,7 +8008,7 @@ Subroutine SDICAL is called to compute the end-of-cycle SDI maximum.
 
 When all projection cycles have been completed, FVS enters the projection summarization phase. The final output reports must be produced, another projection of the same stand, or a different stand, may be called for, or the program might be directed to stop.
 
-## Input and Output Arrays {-}
+## Summarization arrays {-}
 
 ### Output Generation Arrays {-}
 
@@ -8061,7 +8139,7 @@ kable(multistand_arrays,
 ## Producing final FVS reports
 
 
-### Subroutines involved and their function
+### Final report subroutines
 
 After the last cycle, subroutine FVS processes stop point -1, which signals that stopping can no longer continue for this stand (see [Stop/restart and the FVS API](#sec-stop-restart-and-the-fvs-api)). It then increments ICYC and sets the scalar variable ICL6 to a value of -99 which will be used to signal subroutine DISPLY that the projection is complete. It saves some parameter values that will be needed when writing the final lines of the output tables and calls SDICLS, an entry point in subroutine SDICAL, to compute the stand SDI at the end of the projection. Subroutine FVS then calls subroutine DISPLY to write the final stand and tree statistics to the stand composition, sample tree, and summary statistics tables.
 
@@ -8081,7 +8159,7 @@ Code segments that write end-of-projection output for other extensions are calle
 
 Subroutine FVS then calls GENPRT, an entry point in subroutine GENRPT, which reads the reports that were saved in the multiple report scratch file as the projection ran and writes them to the main output file in report number order, so that the reports from each extension appear as complete tables for the entire projection of this stand.
 
-### Auxiliary subroutines
+### Final report auxiliary subroutines
 
 DBSCMPU is called by subroutine OPLIST and is used to populate a database with values of computed variables if a database is being used. DBSCMPU will exist as a subroutine in the database directory if the database extension is part of the program executable; it will exist as an entry point in subroutine EXDBS in the FVS base directory if the database extension is not part of the variant.
 
@@ -8252,7 +8330,7 @@ if (knitr::is_html_output()) {
 
 **Figure 7-2. Event monitor: compiling and evaluating an expression. Select a box to show the steps involved.**
 
-## Input and Output Arrays {-}
+## Event monitor arrays {-}
 
 ### Event Monitor Control Arrays {-}
 
@@ -8408,7 +8486,7 @@ kable(evmon_groups,
   column_spec(5, width = "6cm")
 ```
 
-## General logic and structure
+## Event monitor logic and structure
 
 An event is a logical expression that is entered with the IF keyword record. Subroutine EVIF is called to store information about the event. One of the first steps is to read and compile the logical expression by calling subroutine EVCOMP, which in turn calls subroutine ALGCMP. The logic of the expression is stored in memory areas in the OPCOM labeled COMMON block. Some of these memory arrays are described in [Option Processing Logic](#sec-option-processing-logic).
 
@@ -8588,7 +8666,7 @@ if (knitr::is_html_output()) {
 
 **Figure 8-2. Restarting after a stop. Select a box to show the steps involved.**
 
-## Input and Output Arrays {-}
+## Stop and restart arrays {-}
 
 ### Stop/Restart Control Arrays {-}
 
@@ -8761,7 +8839,7 @@ kable(persistence_arrays,
   column_spec(5, width = "7cm")
 ```
 
-## General logic and structure {#sec-stop-restart-and-the-fvs-api-general-logic-and-structure}
+## Stop and restart logic and structure {#sec-stop-restart-and-the-fvs-api-general-logic-and-structure}
 
 First, there are two major components to the stop and restart facility. The first component is the logic built into the program that supports the use of return codes for subroutine calls. It is essential that no FORTRAN STOP be executed except in MAIN. This means that if a fatal error state is created, FVS needs to issue an error message, set a non-zero return code, and return back to the calling routine. Changes were made to FVS in ~2011 to insure that this is always the case. Regardless of how deep into the calling sequence the program might be, if a fatal error condition is detected, control must be passed back up the call stack.
 
@@ -8773,7 +8851,7 @@ When used as a program (as opposed to being used as a shared library), FVS must 
 
 There is a wiki page that also covers the stop and restart logic in FVS stored at url:https://github.com/USDAForestService/ForestVegetationSimulator/wiki/Stop-Restart; it covers this topic in additional detail.
 
-## Subroutines involved and their function {#sec-stop-restart-and-the-fvs-api-subroutines-involved-and-their-function}
+## Stop and restart subroutines {#sec-stop-restart-and-the-fvs-api-subroutines-involved-and-their-function}
 
 Most of the code for supporting stop and restart can be found in subroutine CMDLINE, which contains several short subroutines.
 
@@ -8795,7 +8873,7 @@ It is also critical that all variables in COMMON be stored in the mass storage f
 
 The writing and subsequent reading of the stand information is done using subroutines PUTSTD and GETSTD. There is a set of subroutines that are called by these two basic functions. The origin of these subroutines is the now-retired Parallel Processing Extension (PPE, Crookston and Stage, 1991). A major difference between how PPE accomplished this task and how FVS does it now, is that the PPE used a single direct-access binary file with fixed records sizes. FVS uses two binary data streams, one for reading and another for writing (support for these binary data streams, where arbitrary read positions can be specified, is relatively new in FORTRAN being specified in the 2003 standard). There is no logical record size, the data is simply pushed out to the file system as a data stream and read by retrieving the data in the order it was stored. There is no requirement that both output and input streams be in use at the same time. There is a built-in ability to position the file before the reading starts so that a specific stand can be loaded, skipping others. So far, this capability is only used to “reload” a current stand, which is useful when the results from applying a set of options to a simulation are wanted on a trial bases. This capability was first used by to support some fuel management analyses where the efficiency of the management action depends on a several-year long projection. Those actions that did not meet decision criteria are ignored by restarting the projection at the time of the actions by calling subroutine fvsRestartLastStand (code contained in subroutine CMDLINE), that restarts from where the most recent stand stopped. Note projections can be stopped without calling subroutine PUTSTD. A call to fvsRestartLastStand without a call to PUTSTD would cause FVS to essentially “back up” to the point in the calculations defined in the restart file for the most recent stand.
 
-### Subroutines
+### Subroutines called within FVS
 
 See url:https://github.com/USDAForestService/ForestVegetationSimulator/wiki/FVS-API for information about the API subroutines. Those listed below are called within the FVS program.
 

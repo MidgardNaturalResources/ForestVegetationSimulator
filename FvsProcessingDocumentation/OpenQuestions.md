@@ -472,7 +472,7 @@ ORGANON crown ratio dubbing (OC and OP, section 3.6.2.3, equations {3.6.2.3.17} 
 - All records, including those of non-valid species with a surrogate FIA code, enter CRCALIB and PRDCR, but only valid ORGANON trees are reloaded; the effect of the surrogate records on the calibration multiplier was not traced (same note as for heights).
 - The values of the coefficient arrays HCBPAR and MCWPAR are cited by name and line only. The CCFL for trees above 50 inches uses a table by inch (`organon/diamcal.f:540-558`); it is described in words only. Model type 4 (RAP) is not documented.
 
-ORGANON tripling (OC and OP, section 4.3.1, equations {4.3.1.8} and {4.3.1.9}):
+ORGANON tripling (OC and OP, section 4.3.1, equations {4.3.1.4} and {4.3.1.5}):
 - INDS(5) is set to 0 in `oc/grinit.f:360` and `op/grinit.f:358` and nothing else in the `.f` and `.F77` files outside `archive/` and `working/` assigns it (grep), so GROW, DGTRIP, HGTRIP and XTRIP never triple in OC and OP. The code is described as inactive.
 - A record of a major group that DGTRIP triples is a candidate for HGTRIP in the same cycle (`organon/grow.f:110,115-153`), so up to nine records could result from one. This was read from the code, not tested.
 - The ORGANON split is one third of the trees per acre for each record; `oc/dgdriv.f:60-80` and `op/dgdriv.f` describe the FVS 60, 25 and 15 percent split. How FVS would read back a changed NTREES from EXECUTE if INDS(5) were 1 was not traced.
